@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String? @unique
+  password String?
+  username String? @unique
+  name     String?
+  avatar   String?
+  phone    String?
+  address  String?
+  city     String?
+  status   String?
+  role     String  @default("user")
+  googleId String? @unique
+
+  tokens      Token[]
+  orders      Order[]
+  userImages  UserImage[]
+  books       Book[]
+  couponUsage CouponUsage[]
+
+  @@index([status])
+  @@index([role])
+}
+
+model Token {
+  id           Int     @id @default(autoincrement())
+  userId       Int
+  refreshToken String  @unique
+  isRevoked    Boolean @default(false)
+  expiresAt    DateTime
+
+  user         User    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model UserImage {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  url      String
+  publicId String
+  width    Int?
+  height   Int?
+  size     Int?
+  bookId   Int?
+
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([bookId])
+}
+
+model Order {
+  id             Int      @id @default(autoincrement())
+  orderCode      String?
+  userId         Int
+  totalAmount    Float
+  depositInput   Float    @default(0)
+  paidAmount     Float    @default(0)
+  paymentMethod  String   @default("FULL")
+  payosOrderCode Int?     @unique
+  status         String   @default("PENDING_PAYMENT")
+  name           String?
+  phone          String?
+  address        String?
+  city           String?
+  note           String?
+  couponId       Int?
+  discountAmount Float    @default(0)
+  timeline       String?
+
+  user         User          @relation(fields: [userId], references: [id])
+  coupon       Coupon?       @relation(fields: [couponId], references: [id])
+  transactions Transaction[]
+  orderItems   OrderItem[]
+
+  @@index([userId])
+  @@index([couponId])
+  @@index([status])
+  @@index([orderCode])
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  orderId         Int
+  payosOrderCode  Int      @unique
+  amount          Float
+  paymentLinkId   String
+  reference       String?
+  status          String
+  transactionTime DateTime
+
+  order           Order    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model OrderItem {
+  id       Int   @id @default(autoincrement())
+  orderId  Int
+  bookId   Int
+  quantity Int   @default(1)
+  price    Float
+
+  order    Order @relation(fields: [orderId], references: [id])
+  book     Book  @relation(fields: [bookId], references: [id])
+
+  @@index([orderId])
+  @@index([bookId])
+}
+
+model Book {
+  id       Int     @id @default(autoincrement())
+  userId   Int
+  themeId  Int?
+  type     String  @default("TRAVEL")
+  title    String
+  style    String
+  font     String
+  cover    String  @default("softcover")
+  pages    Int     @default(0)
+  coverUrl String?
+  status   String  @default("DRAFT")
+
+  user       User        @relation(fields: [userId], references: [id])
+  theme      Theme?      @relation(fields: [themeId], references: [id])
+  bookPages  BookPage[]
+  orderItems OrderItem[]
+
+  @@index([userId])
+  @@index([themeId])
+  @@index([type])
+  @@index([status])
+}
+
+model Theme {
+  id           Int     @id @default(autoincrement())
+  name         String
+  code         String  @unique
+  description  String
+  category     String?
+  thumbnailUrl String
+
+  books        Book[]
+  decorAssets  DecorAsset[]
+  sampleBooks  SampleBook[]
+
+  @@index([category])
+}
+
+model SampleBook {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  themeId     Int?
+  type        String  @default("TRAVEL")
+  category    String?
+  style       String
+  font        String
+  cover       String  @default("softcover")
+  pageCount   Int     @default(0)
+  coverUrl    String?
+  price       Float   @default(0)
+  isActive    Boolean @default(true)
+
+  theme       Theme?           @relation(fields: [themeId], references: [id])
+  pages       SampleBookPage[]
+
+  @@index([themeId])
+  @@index([type])
+  @@index([category])
+  @@index([isActive])
+}
+
+model SampleBookPage {
+  id           Int     @id @default(autoincrement())
+  sampleBookId Int
+  pageNumber   Int
+  data         String
+  thumbnailUrl String?
+
+  sampleBook   SampleBook @relation(fields: [sampleBookId], references: [id])
+
+  @@index([sampleBookId])
+}
+
+model BookPage {
+  id           Int     @id @default(autoincrement())
+  bookId       Int
+  pageNumber   Int
+  data         String
+  thumbnailUrl String?
+
+  book         Book    @relation(fields: [bookId], references: [id])
+
+  @@index([bookId])
+}
+
+model DecorAsset {
+  id       Int    @id @default(autoincrement())
+  themeId  Int?
+  type     String
+  name     String
+  url      String
+  publicId String
+
+  theme Theme? @relation(fields: [themeId], references: [id])
+
+  @@index([themeId])
+  @@index([type])
+}
+
+model Coupon {
+  id                Int       @id @default(autoincrement())
+  code              String    @unique
+  discountType      String
+  discountValue     Float
+  minOrderAmount    Float     @default(0)
+  maxDiscountAmount Float?
+  maxUsageCount     Int       @default(0)
+  usedCount         Int       @default(0)
+  isActive          Boolean   @default(true)
+  expiresAt         DateTime?
+
+  orders            Order[]
+  usage             CouponUsage[]
+
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model CouponUsage {
+  id       Int      @id @default(autoincrement())
+  couponId Int
+  userId   Int
+  usedAt   DateTime @default(now())
+
+  coupon   Coupon   @relation(fields: [couponId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([couponId, userId])
+  @@index([userId])
+}

@@ -1,0 +1,11 @@
+packages:
+  - 'frontend'
+  - 'backend'
+allowBuilds:
+  bcrypt: set this to true or false
+onlyBuiltDependencies:
+  - prisma
+  - better-sqlite3
+  - sharp
+  - canvas
+  - '@prisma/engines'
