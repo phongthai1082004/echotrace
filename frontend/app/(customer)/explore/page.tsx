@@ -26,9 +26,7 @@ export default function ExplorePage() {
   const [tab, setTab] = useState<"samples" | "community">("samples");
 
   const api = (path: string) =>
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
 
   useEffect(() => {
     if (!accessToken) return;
@@ -36,37 +34,34 @@ export default function ExplorePage() {
     api("/api/explore/samples").then(r => r.json()).then(d => setSamples(d.data || [])).catch(() => {});
   }, [accessToken]);
 
-  const filteredSamples = samples.filter(s => {
-    if (!selectedCategory) return true;
-    return s.category === selectedCategory;
-  });
+  const filteredSamples = samples.filter(s => !selectedCategory || s.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] pt-15">
-      <div className="px-8 py-12" style={{ borderBottom: "0.5px solid #dbdad6" }}>
-        <h1 className="font-['Playfair_Display'] text-4xl text-[#1a1a1a]">Explore</h1>
-        <p className="font-['Inter'] text-sm mt-2" style={{ color: "rgba(26,26,26,0.5)" }}>Discover sample layouts and community journals.</p>
+      <div className="px-8 py-10" style={{ borderBottom: "0.5px solid #dbdad6" }}>
+        <h1 className="font-['Playfair_Display'] text-3xl lg:text-4xl text-[#1a1a1a]">Explore</h1>
+        <p className="font-['Inter'] text-sm mt-1" style={{ color: "rgba(26,26,26,0.5)" }}>Discover sample layouts and community journals.</p>
       </div>
 
-      <div className="flex px-8" style={{ minHeight: "calc(100vh - 200px)" }}>
-        <aside className="w-56 shrink-0 py-10" style={{ borderRight: "0.5px solid #dbdad6" }}>
-          <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-4" style={{ color: "rgba(26,26,26,0.35)" }}>Categories</p>
-          <div className="space-y-1">
+      <div className="flex flex-col lg:flex-row px-8">
+        <aside className="lg:w-48 shrink-0 py-8 lg:py-10 lg:pr-8" style={{ borderRight: "0.5px solid #dbdad6" }}>
+          <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-3" style={{ color: "rgba(26,26,26,0.35)" }}>Categories</p>
+          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
             <button onClick={() => setSelectedCategory(null)}
-              className={`block w-full text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${!selectedCategory ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
+              className={`shrink-0 text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${!selectedCategory ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
               <span className="font-medium">All</span>
             </button>
             {ALL_CATEGORIES.map(cat => (
               <button key={cat} onClick={() => setSelectedCategory(cat)}
-                className={`block w-full text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${selectedCategory === cat ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
+                className={`shrink-0 text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${selectedCategory === cat ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
                 {cat.charAt(0) + cat.slice(1).toLowerCase()}
               </button>
             ))}
           </div>
         </aside>
 
-        <main className="flex-1 py-10 px-10">
-          <div className="flex gap-6 mb-8" style={{ borderBottom: "0.5px solid #dbdad6" }}>
+        <main className="flex-1 py-8 lg:py-10 lg:pl-10">
+          <div className="flex gap-6 mb-6" style={{ borderBottom: "0.5px solid #dbdad6" }}>
             <button onClick={() => setTab("samples")}
               className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase pb-3 transition-colors"
               style={{ color: tab === "samples" ? "#1a1a1a" : "rgba(26,26,26,0.35)", borderBottom: tab === "samples" ? "1px solid #1a1a1a" : "1px solid transparent", marginBottom: "-0.5px" }}>
@@ -101,11 +96,9 @@ export default function ExplorePage() {
                       )}
                     </div>
                     <div className="p-4" style={{ borderTop: "0.5px solid #dbdad6" }}>
-                      <h3 className="font-['Playfair_Display'] text-lg text-[#1a1a1a] leading-tight mb-1">{s.name}</h3>
-                      {s.description && (
-                        <p className="font-['Inter'] text-[11px] line-clamp-2 mb-2" style={{ color: "rgba(26,26,26,0.45)" }}>{s.description}</p>
-                      )}
-                      <div className="flex items-center gap-2">
+                      <h3 className="font-['Playfair_Display'] text-base text-[#1a1a1a] leading-tight mb-1">{s.name}</h3>
+                      {s.description && <p className="font-['Inter'] text-[11px] line-clamp-2 mb-2" style={{ color: "rgba(26,26,26,0.45)" }}>{s.description}</p>}
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.35)" }}>{s.style}</span>
                         <span className="text-[#dbdad6]">·</span>
                         <span className="font-['JetBrains_Mono'] text-[9px]" style={{ color: "rgba(26,26,26,0.35)" }}>{s.pageCount} pg</span>

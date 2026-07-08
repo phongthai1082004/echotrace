@@ -20,9 +20,7 @@ export default function CheckoutPage() {
       <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>{label}</label>
       <input type={type} value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
         className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none"
-        style={{ borderBottom: "0.5px solid #dbdad6" }}
-        onFocus={(e) => { e.currentTarget.style.borderBottomColor = "#1a1a1a"; }}
-        onBlur={(e) => { e.currentTarget.style.borderBottomColor = "#dbdad6"; }} />
+        style={{ borderBottom: "0.5px solid #dbdad6" }} />
     </div>
   );
 
@@ -30,8 +28,8 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#FDFBF7] pt-15">
       <div className="px-8 lg:px-16 py-10" style={{ borderBottom: "0.5px solid #dbdad6" }}>
         <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-1" style={{ color: "rgba(26,26,26,0.38)" }}>Checkout</p>
-        <h1 className="font-['Playfair_Display'] text-4xl text-[#1a1a1a]">Your Cart</h1>
-        <div className="flex items-center gap-4 mt-8">
+        <h1 className="font-['Playfair_Display'] text-3xl lg:text-4xl text-[#1a1a1a]">Your Cart</h1>
+        <div className="flex items-center gap-4 mt-6">
           {(["cart", "delivery", "payment", "confirm"] as const).map((s, i) => (
             <div key={s} className="flex items-center gap-3">
               <div className="flex items-center gap-2" style={{ opacity: step === s ? 1 : 0.3 }}>
@@ -48,21 +46,21 @@ export default function CheckoutPage() {
         <div>
           {step === "cart" && (
             <div className="py-16 text-center">
-              <p className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] mb-3">Your cart is empty</p>
+              <p className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] mb-2">Your cart is empty</p>
               <p className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.35)" }}>Save a journal from Studio to get started</p>
             </div>
           )}
 
           {step === "delivery" && (
-            <div className="space-y-7 max-w-lg">
+            <div className="space-y-6 max-w-lg">
               <h2 className="font-['Playfair_Display'] text-2xl text-[#1a1a1a]">Delivery Details</h2>
               {field("Full Name", "name", "text", "Recipient name")}
               {field("Phone Number", "phone", "tel", "+84 …")}
               {field("Street Address", "address", "text", "House number, street…")}
               {field("City / Province", "city", "text", "Hà Nội, TP. HCM…")}
               {field("Note (optional)", "note", "text", "Special instructions…")}
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep("cart")} className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase px-6 py-3 hover:bg-[#f5f3ef]" style={{ border: "0.5px solid #dbdad6" }}>← Back</button>
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setStep("cart")} className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase px-5 py-3 hover:bg-[#f5f3ef]" style={{ border: "0.5px solid #dbdad6" }}>← Back</button>
                 <button onClick={() => setStep("payment")} disabled={!form.name || !form.phone || !form.address || !form.city}
                   className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase px-8 py-3 bg-[#0D1F1A] text-[#FDFBF7] hover:bg-[#1a1a1a] disabled:opacity-40">
                   Continue to Payment →
@@ -73,7 +71,7 @@ export default function CheckoutPage() {
 
           {step === "payment" && (
             <div className="max-w-sm">
-              <h2 className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] mb-6">Payment</h2>
+              <h2 className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] mb-5">Payment</h2>
               <div className="p-4 mb-4" style={{ border: "0.5px solid #dbdad6" }}>
                 <div className="w-44 h-44 mx-auto bg-[#1a1a1a] flex items-center justify-center">
                   <svg width="128" height="128" viewBox="0 0 160 160">
@@ -92,8 +90,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
               <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase text-center mb-2" style={{ color: "rgba(26,26,26,0.4)" }}>Scan with banking app · PayOS</p>
-              <p className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] text-center mb-6">₫{total.toLocaleString()}</p>
-              <div className="space-y-2 mb-6" style={{ borderTop: "0.5px solid #dbdad6", paddingTop: "1rem" }}>
+              <p className="font-['Playfair_Display'] text-2xl text-[#1a1a1a] text-center mb-5">₫{total.toLocaleString()}</p>
+              <div className="space-y-2 mb-5" style={{ borderTop: "0.5px solid #dbdad6", paddingTop: "1rem" }}>
                 {[["Recipient", form.name], ["Phone", form.phone], ["Address", `${form.address}, ${form.city}`]].map(([k,v]) => (
                   <div key={k} className="flex justify-between gap-4">
                     <span className="font-['JetBrains_Mono'] text-[9px] uppercase tracking-widest" style={{ color: "rgba(26,26,26,0.4)" }}>{k}</span>
@@ -111,11 +109,9 @@ export default function CheckoutPage() {
 
           {step === "confirm" && (
             <div className="max-w-md py-8">
-              <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-4" style={{ color: "rgba(26,26,26,0.38)" }}>Order Confirmed</p>
-              <h2 className="font-['Playfair_Display'] text-5xl text-[#1a1a1a] mb-4">TC-{Math.floor(Math.random() * 9000 + 1000)}</h2>
-              <p className="font-['Inter'] text-sm leading-relaxed mb-6" style={{ color: "rgba(26,26,26,0.55)" }}>
-                Thank you, {form.name}.
-              </p>
+              <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-3" style={{ color: "rgba(26,26,26,0.38)" }}>Order Confirmed</p>
+              <h2 className="font-['Playfair_Display'] text-4xl lg:text-5xl text-[#1a1a1a] mb-3">TC-{Math.floor(Math.random() * 9000 + 1000)}</h2>
+              <p className="font-['Inter'] text-sm leading-relaxed mb-6" style={{ color: "rgba(26,26,26,0.55)" }}>Thank you, {form.name}.</p>
               <div className="p-4 mb-8" style={{ background: "#f5f3ef", border: "0.5px solid #dbdad6" }}>
                 {[["Name", form.name], ["Phone", form.phone], ["Ship to", `${form.address}, ${form.city}`], ["Estimated", "7 working days"]].map(([k,v]) => (
                   <div key={k} className="flex justify-between py-1.5" style={{ borderBottom: "0.5px solid #dbdad6" }}>
@@ -150,13 +146,9 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="pt-2" style={{ borderTop: "0.5px solid #dbdad6" }}>
-                  <button
-                    onClick={() => setShowDiscount(true)}
-                    className="flex items-center gap-1.5 font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase py-1"
-                    style={{ color: "rgba(26,26,26,0.35)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#1a1a1a"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(26,26,26,0.35)"; }}
-                  >
+                  <button onClick={() => setShowDiscount(true)}
+                    className="flex items-center gap-1.5 font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase py-1 hover:text-[#1a1a1a] transition-colors"
+                    style={{ color: "rgba(26,26,26,0.35)" }}>
                     <Tag size={11} />
                     {discount ? "Change Code" : "Have a discount code?"}
                   </button>

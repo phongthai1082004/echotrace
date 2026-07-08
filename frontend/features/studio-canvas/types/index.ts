@@ -1,3 +1,5 @@
+export type StudioSection = "tools" | "templates" | "pages" | "photos" | "text" | "layers";
+
 export type CanvasElement = {
   id: string;
   type: "text" | "image";
