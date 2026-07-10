@@ -23,7 +23,7 @@ export function StudioSidebarPanel() {
   };
 
   return (
-    <div className="w-56 bg-[#FDFBF7] overflow-y-auto flex flex-col" style={{ scrollbarWidth: "none" }}>
+    <div className="w-56 bg-[#FFF7D6] overflow-y-auto flex flex-col border-r-[3px] border-[#222]" style={{ scrollbarWidth: "none" }}>
       {panels[activeMenu] || <TemplatesPanel />}
     </div>
   );

@@ -6,12 +6,6 @@ import { AppError } from "../middleware/app.error.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-function generateEmail(name: string) {
-  const suffix = Date.now().toString(36);
-  const slug = name.toLowerCase().replace(/[^a-z0-9]/g, ".");
-  return `${slug}.${suffix}@echotrace.local`;
-}
-
 export class AuthService {
   async loginWithGoogle(idToken: string) {
     const ticket = await googleClient.verifyIdToken({
@@ -43,10 +37,9 @@ export class AuthService {
     const existing = await prisma.user.findFirst({ where: { name } });
     if (existing) throw new AppError("username already taken", 409);
 
-    const email = generateEmail(name);
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, password: hashed, name },
+      data: { password: hashed, name },
     });
     return {
       user: { id: user.id, email: user.email, name: user.name },
@@ -55,11 +48,9 @@ export class AuthService {
     };
   }
 
-  async login(credential: string, password: string) {
+  async login(username: string, password: string) {
     const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: credential }, { name: credential }],
-      },
+      where: { name: username },
     });
     if (!user || !user.password) throw new AppError("invalid credentials", 401);
 
@@ -80,11 +71,29 @@ export class AuthService {
     });
   }
 
+  async refresh(token: string) {
+    let payload: { userId: string };
+    try {
+      payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { userId: string };
+    } catch {
+      throw new AppError("invalid or expired refresh token", 401);
+    }
+
+    const existing = await prisma.token.findFirst({
+      where: { refreshToken: token, isRevoked: false },
+    });
+    if (!existing) throw new AppError("refresh token revoked", 401);
+
+    return {
+      accessToken: this.generateAccessToken(payload.userId),
+    };
+  }
+
   private generateAccessToken(userId: string) {
-    return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "15m" });
+    return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "7d" });
   }
 
   private generateRefreshToken(userId: string) {
-    return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" });
+    return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "30d" });
   }
 }

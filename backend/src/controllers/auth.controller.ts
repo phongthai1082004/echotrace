@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
+import { AuthRequest } from "../middleware/auth.middleware.js";
 
 const authService = new AuthService();
 
@@ -32,11 +33,18 @@ export class AuthController {
     res.json(ApiResponse.success(result));
   }
 
-  async logout(req: Request, res: Response) {
-    const { userId } = req.body;
-    if (!userId) throw new AppError("userId is required", 400);
+  async logout(req: AuthRequest, res: Response) {
+    if (!req.userId) throw new AppError("not authenticated", 401);
 
-    await authService.logout(userId);
+    await authService.logout(req.userId);
     res.json(ApiResponse.message("logged out"));
+  }
+
+  async refresh(req: Request, res: Response) {
+    const { refreshToken } = req.body;
+    if (!refreshToken) throw new AppError("refreshToken is required", 400);
+
+    const result = await authService.refresh(refreshToken);
+    res.json(ApiResponse.success(result));
   }
 }

@@ -21,9 +21,9 @@ function BarChartSVG({ data }: { data: typeof analyticsData }) {
         const y = PAD.top + innerH - barH;
         return (
           <g key={d.month} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}>
-            <rect x={x} y={y} width={barW} height={barH} fill={hovered === i ? "#1a1a1a" : "#0D1F1A"} style={{ transition: "fill 0.1s" }} />
-            <text x={x + barW / 2} y={PAD.top + innerH + 16} textAnchor="middle" fontFamily="JetBrains Mono" fontSize={9} fill="rgba(26,26,26,0.4)">{d.month}</text>
-            {hovered === i && <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontFamily="JetBrains Mono" fontSize={9} fill="#1a1a1a">₫{(d.revenue / 1000000).toFixed(1)}M</text>}
+            <rect x={x} y={y} width={barW} height={barH} fill={hovered === i ? "#222" : "#222"} rx={2} style={{ transition: "all 0.1s" }} />
+            <text x={x + barW / 2} y={PAD.top + innerH + 16} textAnchor="middle" fontFamily="'DM Mono', monospace" fontSize={9} fontWeight="bold" fill="#999">{d.month}</text>
+            {hovered === i && <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontFamily="'DM Mono', monospace" fontSize={9} fontWeight="bold" fill="#222">₫{(d.revenue / 1000000).toFixed(1)}M</text>}
           </g>
         );
       })}
@@ -44,12 +44,12 @@ function LineChartSVG({ data }: { data: typeof analyticsData }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ overflow: "visible" }}>
-      <path d={pathD} fill="none" stroke="#0D1F1A" strokeWidth={1} />
+      <path d={pathD} fill="none" stroke="#222" strokeWidth={2} />
       {pts.map((p) => (
         <g key={p.d.month} onMouseEnter={() => setHovered(p.i)} onMouseLeave={() => setHovered(null)}>
-          <circle cx={p.x} cy={p.y} r={hovered === p.i ? 5 : 3} fill="#0D1F1A" />
-          <text x={p.x} y={PAD.top + innerH + 16} textAnchor="middle" fontFamily="JetBrains Mono" fontSize={9} fill="rgba(26,26,26,0.4)">{p.d.month}</text>
-          {hovered === p.i && <text x={p.x} y={p.y - 10} textAnchor="middle" fontFamily="JetBrains Mono" fontSize={9} fill="#1a1a1a">{p.d.orders}</text>}
+          <circle cx={p.x} cy={p.y} r={hovered === p.i ? 5 : 3} fill="#222" stroke="#FFF7D6" strokeWidth={2} />
+          <text x={p.x} y={PAD.top + innerH + 16} textAnchor="middle" fontFamily="'DM Mono', monospace" fontSize={9} fontWeight="bold" fill="#999">{p.d.month}</text>
+          {hovered === p.i && <text x={p.x} y={p.y - 10} textAnchor="middle" fontFamily="'DM Mono', monospace" fontSize={9} fontWeight="bold" fill="#222">{p.d.orders}</text>}
         </g>
       ))}
     </svg>
@@ -68,63 +68,63 @@ export default function AdminAnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] pt-15">
-      <div className="px-8 py-10" style={{ borderBottom: "0.5px solid #dbdad6" }}>
-        <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-1" style={{ color: "rgba(26,26,26,0.38)" }}>Admin — Analytics</p>
-        <h1 className="font-['Playfair_Display'] text-4xl text-[#1a1a1a]">Revenue Overview</h1>
+    <div className="min-h-screen pt-15">
+      <div className="px-8 py-10 border-b-[3px] border-[#222]">
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">Admin — Analytics</p>
+        <h1 className="text-4xl font-bold">Revenue Overview</h1>
       </div>
 
       <div className="px-8 py-10 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3" style={{ border: "0.5px solid #dbdad6" }}>
-          {kpis.map((kpi, i) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="p-8" style={i < 2 ? { borderRight: "0.5px solid #dbdad6" } : {}}>
+              <div key={kpi.label} className="p-8 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222]">
                 <div className="flex items-center gap-2 mb-4">
-                  <Icon size={13} style={{ color: "rgba(26,26,26,0.35)" }} />
-                  <p className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.38)" }}>{kpi.label}</p>
+                  <Icon size={13} className="text-[#666]" />
+                  <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#666]">{kpi.label}</p>
                 </div>
-                <p className="font-['Playfair_Display'] text-4xl text-[#1a1a1a]">{kpi.value}</p>
+                <p className="text-4xl font-bold">{kpi.value}</p>
               </div>
             );
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ border: "0.5px solid #dbdad6" }}>
-          <div className="p-8" style={{ borderRight: "0.5px solid #dbdad6" }}>
-            <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-6" style={{ color: "rgba(26,26,26,0.38)" }}>Monthly Revenue (₫)</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="p-8 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222]">
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-6 text-[#666]">Monthly Revenue (₫)</p>
             <BarChartSVG data={analyticsData} />
           </div>
-          <div className="p-8">
-            <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-6" style={{ color: "rgba(26,26,26,0.38)" }}>Monthly Orders</p>
+          <div className="p-8 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222]">
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-6 text-[#666]">Monthly Orders</p>
             <LineChartSVG data={analyticsData} />
           </div>
         </div>
 
-        <div style={{ border: "0.5px solid #dbdad6" }}>
-          <div className="px-6 py-4" style={{ borderBottom: "0.5px solid #dbdad6" }}>
-            <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.38)" }}>Recent Orders</p>
+        <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+          <div className="px-6 py-4 border-b-[3px] border-[#222]">
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Recent Orders</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ borderBottom: "0.5px solid #dbdad6" }}>
+                <tr className="border-b-[3px] border-[#222]">
                   {["Order ID", "Customer", "Journal", "Pages", "Amount", "Date", "Status"].map((h) => (
-                    <th key={h} className="text-left px-6 py-3 font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.3)" }}>{h}</th>
+                    <th key={h} className="text-left px-6 py-3 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {kanbanOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-[#f5f3ef] transition-colors" style={{ borderBottom: "0.5px solid #dbdad6" }}>
-                    <td className="px-6 py-4 font-['JetBrains_Mono'] text-[10px]" style={{ color: "rgba(26,26,26,0.45)" }}>{o.id}</td>
-                    <td className="px-6 py-4 font-['Inter'] text-sm text-[#1a1a1a]">{o.customer}</td>
-                    <td className="px-6 py-4 font-['Playfair_Display'] text-sm text-[#1a1a1a]">{o.journal}</td>
-                    <td className="px-6 py-4 font-['JetBrains_Mono'] text-[10px]" style={{ color: "rgba(26,26,26,0.45)" }}>{o.pages}</td>
-                    <td className="px-6 py-4 font-['JetBrains_Mono'] text-[10px] text-[#1a1a1a]">{o.amount}</td>
-                    <td className="px-6 py-4 font-['JetBrains_Mono'] text-[10px]" style={{ color: "rgba(26,26,26,0.38)" }}>{o.date}</td>
+                  <tr key={o.id} className="hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10">
+                    <td className="px-6 py-4 font-mono text-[10px] font-bold text-[#666]">{o.id}</td>
+                    <td className="px-6 py-4 text-sm font-bold">{o.customer}</td>
+                    <td className="px-6 py-4 text-sm font-bold">{o.journal}</td>
+                    <td className="px-6 py-4 font-mono text-[10px] font-bold text-[#666]">{o.pages}</td>
+                    <td className="px-6 py-4 font-mono text-[10px] font-bold">{o.amount}</td>
+                    <td className="px-6 py-4 font-mono text-[10px] font-bold text-[#999]">{o.date}</td>
                     <td className="px-6 py-4">
-                      <span className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase px-2 py-1" style={{ border: "0.5px solid #dbdad6", color: "rgba(26,26,26,0.55)" }}>{o.status}</span>
+                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 bg-[#e8e6e0] rounded-[4px] border-[2px] border-[#222]">{o.status}</span>
                     </td>
                   </tr>
                 ))}

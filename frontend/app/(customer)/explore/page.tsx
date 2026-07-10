@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { SidebarNav } from "@/components/sidebar-nav";
 
 interface Theme {
   id: number; name: string; code: string; description: string; category: string | null; thumbnailUrl: string;
@@ -37,73 +38,68 @@ export default function ExplorePage() {
   const filteredSamples = samples.filter(s => !selectedCategory || s.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] pt-15">
-      <div className="px-8 py-10" style={{ borderBottom: "0.5px solid #dbdad6" }}>
-        <h1 className="font-['Playfair_Display'] text-3xl lg:text-4xl text-[#1a1a1a]">Explore</h1>
-        <p className="font-['Inter'] text-sm mt-1" style={{ color: "rgba(26,26,26,0.5)" }}>Discover sample layouts and community journals.</p>
+    <div className="min-h-screen pt-15">
+      <div className="px-8 py-10 border-b-[3px] border-[#222]">
+        <h1 className="text-3xl lg:text-4xl font-bold">Explore</h1>
+        <p className="text-sm mt-1 text-[#666]">Discover sample layouts and community journals.</p>
       </div>
 
       <div className="flex flex-col lg:flex-row px-8">
-        <aside className="lg:w-48 shrink-0 py-8 lg:py-10 lg:pr-8" style={{ borderRight: "0.5px solid #dbdad6" }}>
-          <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-3" style={{ color: "rgba(26,26,26,0.35)" }}>Categories</p>
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-            <button onClick={() => setSelectedCategory(null)}
-              className={`shrink-0 text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${!selectedCategory ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
-              <span className="font-medium">All</span>
-            </button>
-            {ALL_CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 text-left font-['Inter'] text-sm px-3 py-2 transition-colors ${selectedCategory === cat ? "bg-[#1a1a1a] text-[#FDFBF7]" : "hover:bg-[#f5f3ef]"}`}>
-                {cat.charAt(0) + cat.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-        </aside>
+        <SidebarNav
+          title="Categories"
+          items={ALL_CATEGORIES.map(cat => ({ value: cat, label: cat.charAt(0) + cat.slice(1).toLowerCase() }))}
+          activeItem={selectedCategory}
+          onSelect={setSelectedCategory}
+        />
 
         <main className="flex-1 py-8 lg:py-10 lg:pl-10">
-          <div className="flex gap-6 mb-6" style={{ borderBottom: "0.5px solid #dbdad6" }}>
+          <div className="flex gap-0 mb-6">
             <button onClick={() => setTab("samples")}
-              className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase pb-3 transition-colors"
-              style={{ color: tab === "samples" ? "#1a1a1a" : "rgba(26,26,26,0.35)", borderBottom: tab === "samples" ? "1px solid #1a1a1a" : "1px solid transparent", marginBottom: "-0.5px" }}>
+              className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
+                tab === "samples" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
+              }`}>
               Sample Layouts
+              {tab === "samples" && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
             </button>
             <button onClick={() => setTab("community")}
-              className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase pb-3 transition-colors"
-              style={{ color: tab === "community" ? "#1a1a1a" : "rgba(26,26,26,0.35)", borderBottom: tab === "community" ? "1px solid #1a1a1a" : "1px solid transparent", marginBottom: "-0.5px" }}>
+              className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
+                tab === "community" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
+              }`}>
               Community Books
+              {tab === "community" && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
             </button>
           </div>
 
           {tab === "samples" && (
             filteredSamples.length === 0 ? (
-              <p className="font-['Inter'] text-sm" style={{ color: "rgba(26,26,26,0.4)" }}>No sample layouts in this category.</p>
+              <p className="text-sm text-[#999]">No sample layouts in this category.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {filteredSamples.map(s => (
-                  <div key={s.id} className="group cursor-pointer" style={{ border: "0.5px solid #dbdad6" }}>
+                  <div key={s.id} className="group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
                     <div className="aspect-[3/4] bg-[#e8e6e0] overflow-hidden relative">
                       {s.coverUrl ? (
-                        <img src={s.coverUrl} alt={s.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+                        <img src={s.coverUrl} alt={s.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.2)" }}>{s.name}</span>
+                          <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.name}</span>
                         </div>
                       )}
                       {s.theme && (
                         <div className="absolute top-3 left-3">
-                          <span className="font-['JetBrains_Mono'] text-[7px] tracking-widest uppercase px-1.5 py-0.5 bg-[#FDFBF7]/80 text-[#1a1a1a]">{s.theme.name}</span>
+                          <span className="font-mono text-[7px] font-bold tracking-widest uppercase px-1.5 py-0.5 bg-[#FFF7D6] border-[2px] border-[#222] rounded-[4px]">{s.theme.name}</span>
                         </div>
                       )}
                     </div>
-                    <div className="p-4" style={{ borderTop: "0.5px solid #dbdad6" }}>
-                      <h3 className="font-['Playfair_Display'] text-base text-[#1a1a1a] leading-tight mb-1">{s.name}</h3>
-                      {s.description && <p className="font-['Inter'] text-[11px] line-clamp-2 mb-2" style={{ color: "rgba(26,26,26,0.45)" }}>{s.description}</p>}
+                    <div className="p-4 border-t-[3px] border-[#222]">
+                      <h3 className="text-base font-bold leading-tight mb-1">{s.name}</h3>
+                      {s.description && <p className="text-[11px] line-clamp-2 mb-2 text-[#666]">{s.description}</p>}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.35)" }}>{s.style}</span>
-                        <span className="text-[#dbdad6]">·</span>
-                        <span className="font-['JetBrains_Mono'] text-[9px]" style={{ color: "rgba(26,26,26,0.35)" }}>{s.pageCount} pg</span>
+                        <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.style}</span>
+                        <span className="text-[#222]">·</span>
+                        <span className="font-mono text-[9px] font-bold text-[#999]">{s.pageCount} pg</span>
                         <span className="flex-1" />
-                        <span className="font-['JetBrains_Mono'] text-[10px] text-[#1a1a1a]">${s.price}</span>
+                        <span className="font-mono text-[10px] font-bold">${s.price}</span>
                       </div>
                     </div>
                   </div>
@@ -113,7 +109,7 @@ export default function ExplorePage() {
           )}
 
           {tab === "community" && (
-            <p className="font-['Inter'] text-sm" style={{ color: "rgba(26,26,26,0.3)" }}>Community books coming soon.</p>
+            <p className="text-sm text-[#999]">Community books coming soon.</p>
           )}
         </main>
       </div>

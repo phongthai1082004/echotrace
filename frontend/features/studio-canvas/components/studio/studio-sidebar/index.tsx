@@ -8,17 +8,16 @@ const iconSize = 16;
 
 export function StudioSidebar() {
   return (
-    <div className="w-16 flex flex-col bg-[#FDFBF7] shrink-0 overflow-y-auto" style={{ borderRight: "0.5px solid #dbdad6" }}>
+    <div className="w-16 flex flex-col bg-[#FFF7D6] shrink-0 overflow-y-auto border-r-[3px] border-[#222]">
       {navItems.map((item) => (
         <SidebarItem key={item.label} label={item.label}>
-          {/* Khung SVG CHUNG cho tất cả các icon */}
           <svg
             width={iconSize}
             height={iconSize}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           >

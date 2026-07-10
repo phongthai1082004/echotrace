@@ -13,18 +13,16 @@ export function SidebarItem({ label, children }: {
   return (
     <button 
       onClick={() => setActiveMenu(label)} 
-      className="flex flex-col items-center gap-1 w-full py-3 px-1 transition-colors duration-150 group cursor-pointer"
+      className={`flex flex-col items-center gap-1 w-full py-3 px-1 transition-all duration-150 group cursor-pointer ${
+        isActive ? "bg-[#222] text-white" : "hover:bg-[#e8e6e0]"
+      }`}
     >
-      <span 
-        style={{ color: isActive ? "#1a1a1a" : "rgba(26,26,26,0.45)" }} 
-        className="group-hover:text-[#1a1a1a] transition-colors"
-      >
+      <span className={isActive ? "text-white" : "text-[#222] group-hover:text-[#222]"}>
         {children}
       </span>
-      <span 
-        className="font-['JetBrains_Mono'] text-[7.5px] tracking-widest uppercase leading-none transition-colors" 
-        style={{ color: isActive ? "#1a1a1a" : "rgba(26,26,26,0.4)" }}
-      >
+      <span className={`font-mono text-[7.5px] font-bold tracking-widest uppercase leading-none transition-colors ${
+        isActive ? "text-white" : "text-[#666] group-hover:text-[#222]"
+      }`}>
         {label}
       </span>
     </button>

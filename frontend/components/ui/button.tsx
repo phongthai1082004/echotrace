@@ -2,9 +2,9 @@ import { type ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-[#0D1F1A] text-[#FDFBF7] hover:bg-[#1a1a1a]",
-  secondary: "hover:bg-[#f5f3ef] border border-[#dbdad6]",
-  ghost: "hover:bg-[#f5f3ef]",
+  primary: "bg-[#222] text-white border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]",
+  secondary: "bg-[#FFF7D6] text-[#222] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]",
+  ghost: "hover:bg-[#e8e6e0] rounded-[8px]",
 } as const;
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -16,7 +16,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        "font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase transition-colors duration-150 disabled:opacity-40",
+        "font-mono text-[10px] font-bold tracking-widest uppercase rounded-[8px] transition-all duration-150 disabled:opacity-40",
         variants[variant],
         className,
       )}

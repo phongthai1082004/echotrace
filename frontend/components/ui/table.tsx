@@ -10,7 +10,7 @@ Table.displayName = "Table";
 
 export const THead = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("border-b border-[#dbdad6]", className)} {...props} />
+    <thead ref={ref} className={cn("border-b-[3px] border-[#222]", className)} {...props} />
   ),
 );
 THead.displayName = "THead";
@@ -20,7 +20,7 @@ export const Th = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCel
     <th
       ref={ref}
       className={cn(
-        "text-left px-6 py-3 font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase text-[rgba(26,26,26,0.3)]",
+        "text-left px-6 py-3 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]",
         className,
       )}
       {...props}
@@ -33,7 +33,7 @@ export const Tr = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowEle
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn("hover:bg-[#f5f3ef] transition-colors border-b border-[#dbdad6]", className)}
+      className={cn("hover:bg-[#FFF7D6] transition-colors border-b-[2px] border-[#222]/10", className)}
       {...props}
     />
   ),

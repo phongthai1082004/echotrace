@@ -49,29 +49,21 @@ const handler = NextAuth({
 
         if (!res.ok) return false;
         const data = await res.json();
-        return !!data.data?.user;
+        (user as any).accessToken = data.data?.accessToken;
+        return true;
       }
-
-      if (account?.provider === "credentials") {
-        return !!user; 
-      }
-      return false;
+      return !!user;
     },
 
     async jwt({ token, user }) {
       if (user) {
-        // @ts-ignore
-        token.accessToken = user.accessToken;
+        (token as any).accessToken = (user as any).accessToken;
       }
       return token;
     },
     async session({ session, token }) {
-      // @ts-ignore
-      session.accessToken = token.accessToken;
-      if (session.user) {
-        // @ts-ignore
-        session.user.id = token.sub;
-      }
+      (session as any).accessToken = (token as any).accessToken;
+      if (session.user) (session.user as any).id = token.sub;
       return session;
     }
   },

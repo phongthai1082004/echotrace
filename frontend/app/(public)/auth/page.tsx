@@ -13,25 +13,27 @@ function validateUsername(u: string): string | null {
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
+  const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<"username" | "password" | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const usernameValue = isSignUp ? name : email;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setFieldError(null);
 
-    const uErr = validateUsername(usernameValue);
-    if (uErr) { setFieldError("username"); setError(uErr); return; }
-
-    if (isSignUp && password !== confirmPassword) { setError("passwords do not match"); return; }
+    if (isSignUp) {
+      const uErr = validateUsername(username);
+      if (uErr) { setFieldError("username"); setError(uErr); return; }
+      if (password !== confirmPassword) { setError("passwords do not match"); return; }
+    } else {
+      const uErr = validateUsername(credential);
+      if (uErr) { setFieldError("username"); setError(uErr); return; }
+    }
 
     setLoading(true);
     try {
@@ -39,122 +41,114 @@ export default function AuthPage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: name, password }),
+          body: JSON.stringify({ username, password }),
         });
         if (!res.ok) { const d = await res.json(); throw new Error(d.message || d.errors || "registration failed"); }
-        const data = await res.json();
-        const result = await signIn("credentials", { username: data.data.user.name, password, redirect: false });
-        if (result?.error) throw new Error("sign in failed after registration");
-        window.location.href = "/explore";
-      } else {
-        const result = await signIn("credentials", { username: email, password, redirect: false });
-        if (result?.error) setError("Invalid username or password");
-        else window.location.href = "/explore";
       }
+
+      const result = await signIn("credentials", {
+        username: isSignUp ? username : credential,
+        password,
+        redirect: false,
+      });
+      if (result?.error) throw new Error(result.error);
+
+      window.location.href = "/explore";
     } catch (err: any) { setError(err.message); }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       <div className="hidden lg:block lg:w-[55%] relative bg-[#e8e6e0] overflow-hidden min-h-screen">
         <img src="https://images.unsplash.com/photo-1765660996991-31f345c40247?w=1200&h=1600&fit=crop&auto=format" alt="" className="w-full h-full object-cover absolute inset-0" />
-        <div className="absolute inset-0 bg-[#1a1a1a]/18" />
-        <div className="absolute top-10 left-10"><p className="font-['Playfair_Display'] text-[#FDFBF7] text-2xl tracking-tight">Travel Canvas</p></div>
-        <div className="absolute bottom-10 left-10 right-10" style={{ borderTop: "0.5px solid rgba(253,251,247,0.25)", paddingTop: "1rem" }}>
-          <p className="font-['JetBrains_Mono'] text-[9px] text-[#FDFBF7]/60 tracking-widest uppercase mb-1">31.0601° N, 7.9150° W — Toubkal, Morocco</p>
-          <p className="font-['JetBrains_Mono'] text-[9px] text-[#FDFBF7]/35 tracking-widest">2024-01-31T11:05:00+01:00</p>
+        <div className="absolute top-10 left-10"><p className="text-white text-2xl font-bold tracking-tight">Travel Canvas</p></div>
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-white/20">
+          <p className="font-mono text-[10px] font-bold text-white/70 tracking-wider uppercase">31.06° N, 7.92° W — Toubkal, Morocco</p>
         </div>
       </div>
 
-      <div className="flex flex-col justify-center px-8 lg:px-14 py-12 lg:w-[45%]" style={{ borderLeft: "0.5px solid #dbdad6" }}>
-        <p className="lg:hidden font-['Playfair_Display'] text-2xl text-[#1a1a1a] mb-10">Travel Canvas</p>
+      <div className="flex flex-col px-8 lg:px-14 py-12 lg:w-[45%] bg-[#F8F2E5]">
+        <p className="lg:hidden text-2xl font-bold mb-10">Travel Canvas</p>
 
-        <div className="flex mb-8" style={{ borderBottom: "0.5px solid #dbdad6" }}>
+        <div className="flex gap-0 mb-8">
           {(["Sign In", "Create Account"] as const).map((label, i) => {
             const active = isSignUp === (i === 1);
             return (
               <button key={label} type="button" onClick={() => { setIsSignUp(i === 1); setError(""); setFieldError(null); }}
-                className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase pb-3 pr-8 transition-colors"
-                style={{ color: active ? "#1a1a1a" : "rgba(26,26,26,0.35)", borderBottom: active ? "1px solid #1a1a1a" : "1px solid transparent", marginBottom: "-0.5px" }}>{label}</button>
+                className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
+                  active ? "text-[#222]" : "text-[#999] hover:text-[#666]"
+                }`}>
+                {label}
+                {active && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
+              </button>
             );
           })}
         </div>
 
-        <h1 className="font-['Playfair_Display'] text-3xl lg:text-4xl text-[#1a1a1a] mb-1 leading-tight">{isSignUp ? "Begin Your Archive." : "Welcome Back."}</h1>
-        <p className="font-['Inter'] text-sm mb-8" style={{ color: "rgba(26,26,26,0.5)" }}>{isSignUp ? "Create an account to start designing your first travel journal." : "Sign in to continue building your journal."}</p>
+        <h1 className="text-3xl lg:text-4xl font-bold mb-1 leading-tight">{isSignUp ? "Begin Your Archive." : "Welcome Back."}</h1>
+        <p className="text-sm mb-8 text-[#666]">{isSignUp ? "Create an account to start designing your first travel journal." : "Sign in to continue building your journal."}</p>
 
         <form onSubmit={handleSubmit} className="space-y-5 max-w-sm">
           {isSignUp ? (
             <>
               <div>
-                <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>Username</label>
-                <input type="text" value={name}
-                  onChange={(e) => { setName(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "")); setFieldError(null); }}
+                <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Username</label>
+                <input type="text" value={username}
+                  onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "")); setFieldError(null); }}
                   onFocus={() => setFieldError(null)}
-                  onBlur={() => { const e = validateUsername(name); if (e) { setFieldError("username"); setError(e); } else { setError(""); } }}
+                  onBlur={() => { const e = validateUsername(username); if (e) { setFieldError("username"); setError(e); } else { setError(""); } }}
                   placeholder="amara.osei"
-                  className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none transition-colors"
-                  style={{ borderBottom: `0.5px solid ${fieldError === "username" ? "#8B2020" : "#dbdad6"}` }} />
+                  className={`w-full bg-[#FFF7D6] text-sm font-bold rounded-[8px] px-3 py-2.5 border-[2px] border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1px_1px_0_#222] transition-all ${fieldError === "username" ? "!border-[#B54843] !shadow-[#B54843]" : ""}`} />
               </div>
               <div>
-                <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>Password</label>
+                <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Password</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none"
-                  style={{ borderBottom: "0.5px solid #dbdad6" }} />
+                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-[8px] px-3 py-2.5 border-[2px] border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1px_1px_0_#222] transition-all" />
               </div>
               <div>
-                <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>Re-enter Password</label>
+                <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Re-enter Password</label>
                 <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none"
-                  style={{ borderBottom: "0.5px solid #dbdad6" }} />
+                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-[8px] px-3 py-2.5 border-[2px] border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1px_1px_0_#222] transition-all" />
               </div>
             </>
           ) : (
             <>
               <div>
-                <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>Username</label>
-                <input type="text" value={email} onChange={(e) => { setEmail(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "")); setFieldError(null); }}
+                <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Username</label>
+                <input type="text" value={credential} onChange={(e) => { setCredential(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "")); setFieldError(null); }}
                   placeholder="amara.osei"
-                  className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none"
-                  style={{ borderBottom: `0.5px solid ${fieldError === "username" ? "#8B2020" : "#dbdad6"}` }} />
+                  className={`w-full bg-[#FFF7D6] text-sm font-bold rounded-[8px] px-3 py-2.5 border-[2px] border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1px_1px_0_#222] transition-all ${fieldError === "username" ? "!border-[#B54843] !shadow-[#B54843]" : ""}`} />
               </div>
               <div>
-                <label className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase block mb-1.5" style={{ color: "rgba(26,26,26,0.45)" }}>Password</label>
+                <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Password</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full bg-transparent font-['Inter'] text-sm text-[#1a1a1a] pb-2 placeholder:text-[#1a1a1a]/25 focus:outline-none"
-                  style={{ borderBottom: "0.5px solid #dbdad6" }} />
+                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-[8px] px-3 py-2.5 border-[2px] border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-[1px_1px_0_#222] transition-all" />
               </div>
             </>
           )}
-          {error && <p className="font-['JetBrains_Mono'] text-[10px]" style={{ color: "#8B2020" }}>{error}</p>}
+          {error && <p className="font-mono text-[10px] font-bold" style={{ color: "#B54843" }}>{error}</p>}
           <button type="submit" disabled={loading}
-            className="w-full bg-[#1a1a1a] text-[#FDFBF7] font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase py-3.5 hover:bg-[#0D1F1A] transition-colors disabled:opacity-50">
+            className="w-full bg-[#222] text-white font-mono text-[10px] font-bold tracking-widest uppercase py-3.5 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all disabled:opacity-50">
             {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
           </button>
         </form>
 
         <div className="flex items-center gap-4 my-5 max-w-sm">
-          <div className="flex-1 h-px" style={{ background: "#dbdad6" }} />
-          <span className="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase" style={{ color: "rgba(26,26,26,0.35)" }}>or</span>
-          <div className="flex-1 h-px" style={{ background: "#dbdad6" }} />
+          <div className="flex-1 h-[3px] bg-[#222]" />
+          <span className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">or</span>
+          <div className="flex-1 h-[3px] bg-[#222]" />
         </div>
 
         <div className="max-w-sm">
           {isSignUp ? (
             <button onClick={() => { setIsSignUp(false); setError(""); setFieldError(null); }} type="button"
-              className="w-full flex items-center justify-center gap-2 font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase py-3.5 transition-colors"
-              style={{ border: "0.5px solid #dbdad6", color: "#1a1a1a" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.color = "#FDFBF7"; e.currentTarget.style.borderColor = "#1a1a1a"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#1a1a1a"; e.currentTarget.style.borderColor = "#dbdad6"; }}>
+              className="w-full flex items-center justify-center gap-2 font-mono text-[10px] font-bold tracking-widest uppercase py-3.5 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] bg-[#FFF7D6] text-[#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
               Sign In
             </button>
           ) : (
             <button onClick={() => signIn("google", { callbackUrl: "/explore" })} type="button"
-              className="w-full flex items-center justify-center gap-2 font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase py-3.5 transition-colors"
-              style={{ border: "0.5px solid #dbdad6", color: "#1a1a1a" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.color = "#FDFBF7"; e.currentTarget.style.borderColor = "#1a1a1a"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#1a1a1a"; e.currentTarget.style.borderColor = "#dbdad6"; }}>
+              className="w-full flex items-center justify-center gap-2 font-mono text-[10px] font-bold tracking-widest uppercase py-3.5 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] bg-[#FFF7D6] text-[#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
               <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

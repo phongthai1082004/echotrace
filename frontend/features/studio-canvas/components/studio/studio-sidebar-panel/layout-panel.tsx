@@ -12,20 +12,20 @@ const layouts = [
 export function LayoutPanel() {
   return (
     <div className="p-4">
-      <p className="font-['JetBrains_Mono'] text-[9px] tracking-widest uppercase mb-3" style={{ color: "rgba(26,26,26,0.38)" }}>Page Layouts</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Page Layouts</p>
       <div className="space-y-2">
         {layouts.map((l) => (
-          <div key={l.label} className="flex gap-3 p-2.5 cursor-pointer hover:bg-[#f5f3ef] transition-colors" style={{ border: "0.5px solid #dbdad6" }}>
-            <div className="w-16 h-20 bg-[#e8e6e0] shrink-0 relative overflow-hidden">
+          <div key={l.label} className="flex gap-3 p-2.5 cursor-pointer hover:bg-[#e8e6e0] transition-all rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]">
+            <div className="w-16 h-20 bg-[#e8e6e0] shrink-0 relative overflow-hidden rounded-[4px]">
               {l.cells.map(([x, y, w, h], i) => (
-                <div key={i} className="absolute bg-[#dbdad6]"
-                  style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: `${w * 100}%`, height: `${h * 100}%`, border: "0.5px solid #c0beba" }}
+                <div key={i} className="absolute bg-[#222]/20"
+                  style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: `${w * 100}%`, height: `${h * 100}%`, border: "2px solid #222" }}
                 />
               ))}
             </div>
             <div className="flex-1 min-w-0 self-center">
-              <p className="font-['JetBrains_Mono'] text-[10px] text-[#1a1a1a] mb-0.5">{l.label}</p>
-              <p className="font-['Inter'] text-[10px]" style={{ color: "rgba(26,26,26,0.45)" }}>{l.desc}</p>
+              <p className="font-mono text-[10px] font-bold mb-0.5">{l.label}</p>
+              <p className="text-[10px] text-[#666]">{l.desc}</p>
             </div>
           </div>
         ))}
