@@ -87,7 +87,7 @@ export default function ExplorePage() {
                       )}
                       {s.theme && (
                         <div className="absolute top-3 left-3">
-                          <span className="font-mono text-[7px] font-bold tracking-widest uppercase px-1.5 py-0.5 bg-[#FFF7D6] border-[2px] border-[#222] rounded-[4px]">{s.theme.name}</span>
+                          <span className="font-mono text-[7px] font-bold tracking-widest uppercase px-1.5 py-0.5 bg-[#FFF7D6] border-2 border-[#222] rounded-md">{s.theme.name}</span>
                         </div>
                       )}
                     </div>

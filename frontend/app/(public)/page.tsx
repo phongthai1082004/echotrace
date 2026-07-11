@@ -68,7 +68,7 @@ export default function HomePage() {
       <section className="flex flex-col lg:flex-row border-t-[3px] border-[#222]">
         <div className="p-12 lg:p-16 flex flex-col justify-center lg:w-1/2 border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#222]">
           <p className="text-xl lg:text-2xl font-bold leading-snug italic mb-6 text-[#444]">&ldquo;Memory is not storage. It is the texture of the paper on which a moment insists on being pressed.&rdquo;</p>
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">— Travel Canvas Manifesto</p>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">— Cabinet Memoir Manifesto</p>
         </div>
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-1/2 min-h-[300px] lg:min-h-[400px]">
           <img src="https://images.unsplash.com/photo-1762810629910-5ad48ad9b181?w=900&h=700&fit=crop&auto=format" alt="Field documentation" className="w-full h-full object-cover absolute inset-0" />
@@ -76,7 +76,7 @@ export default function HomePage() {
       </section>
 
       <footer className="px-8 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-t-[3px] border-[#222] bg-[#FFF7D6]">
-        <p className="text-lg font-bold">Travel Canvas</p>
+        <p className="text-lg font-bold">Cabinet Memoir</p>
         <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">© 2024 — Printed in Hanoi, Vietnam</p>
       </footer>
     </div>

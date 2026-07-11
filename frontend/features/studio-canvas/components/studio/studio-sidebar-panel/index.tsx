@@ -8,6 +8,7 @@ import { LayersPanel } from "./layers-panel";
 import { StickersPanel } from "./stickers-panel";
 import { LayoutPanel } from "./layout-panel";
 import { ThemePanel } from "./theme-panel";
+import { FilterPanel } from "./filter-panel";
 
 export function StudioSidebarPanel() {
   const activeMenu = useCanvasStore((s) => s.activeMenu);
@@ -20,6 +21,7 @@ export function StudioSidebarPanel() {
     Stickers: <StickersPanel />,
     Layout: <LayoutPanel />,
     Theme: <ThemePanel />,
+    Filter: <FilterPanel />,
   };
 
   return (

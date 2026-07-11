@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { kanbanOrders, type KanbanStatus } from "@/features/order-kanban/data";
-import { Dialog } from "@/components/ui/dialog";
+import { label, labelSm, card, neoBtn, neoBtnPrimary } from "@/lib/styles";
 
 const STATUS_META: Record<KanbanStatus, { label: string; color: string; text: string }> = {
   pending:        { label: "Pending",       color: "#FFF7D6", text: "#222" },
@@ -35,7 +35,7 @@ const FULL_ORDERS = kanbanOrders.map((o, i) => ({
 function StatusBadge({ status }: { status: KanbanStatus }) {
   const m = STATUS_META[status];
   return (
-    <span className="font-mono text-[9px] font-bold tracking-widest uppercase rounded-[4px] px-2 py-0.5 inline-block whitespace-nowrap"
+    <span className={`${label} rounded-md px-1.5 py-0.5 inline-block w-fit whitespace-nowrap`}
       style={{ background: m.color, color: m.text }}>
       {m.label}
     </span>
@@ -76,14 +76,14 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div className="min-h-screen pt-15">
+    <div>
       <div className="px-8 py-8 border-b-[3px] border-[#222]">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div>
-            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">Admin Panel</p>
+            <p className={`${label} mb-1 text-[#666]`}>Admin Panel</p>
             <h1 className="text-4xl font-bold">Orders</h1>
           </div>
-          <div className="flex items-center gap-3 lg:w-85 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] bg-[#FFF7D6]">
+          <div className={`flex items-center gap-3 lg:w-85 ${card}`}>
             <svg className="ml-3 shrink-0 text-[#999]" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
@@ -102,7 +102,7 @@ export default function AdminOrdersPage() {
                   statusFilter === s ? "text-[#222] border-b-[3px] border-[#222] -mb-[3px]" : "text-[#999]"
                 }`}>
                 {label}
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-[4px] ${
+                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-md ${
                   statusFilter === s ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#666]"
                 }`}>{counts[s]}</span>
               </button>
@@ -112,7 +112,7 @@ export default function AdminOrdersPage() {
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#666]">Sort</span>
             {([["date", "Date"], ["amount", "Amount"], ["pages", "Pages"]] as ["date" | "amount" | "pages", string][]).map(([k, label]) => (
               <button key={k} onClick={() => setSortBy(k)}
-                className={`font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 rounded-[6px] border-[2px] transition-all ${
+                className={`font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 rounded-[6px] border-2 transition-all ${
                   sortBy === k ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]" : "border-[#222] text-[#666] hover:bg-[#FFF7D6]"
                 }`}>{label}</button>
             ))}
@@ -123,7 +123,7 @@ export default function AdminOrdersPage() {
       <div>
         <div className="grid px-8 py-2.5 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr 1fr 1.5fr 1fr" }}>
           {["Order ID", "Customer", "Journal", "Pages", "Amount", "Status", "Date"].map((h) => (
-            <span key={h} className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{h}</span>
+            <span key={h} className={`${label} text-[#666]`}>{h}</span>
           ))}
         </div>
         {filtered.length === 0 && (
@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
         )}
         {filtered.map((order) => (
           <div key={order.id} onClick={() => setSelectedOrder(order)}
-            className="grid px-8 py-4 cursor-pointer hover:bg-[#FFF7D6] transition-colors items-center border-b-[2px] border-[#222]/10"
+            className="grid px-8 py-4 cursor-pointer hover:bg-[#e8e6e0] transition-colors items-center border-b-[2px] border-[#222]/10"
             style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr 1fr 1.5fr 1fr" }}>
             <span className="font-mono text-[10px] font-bold text-[#666]">{order.id}</span>
             <div>
@@ -153,25 +153,25 @@ export default function AdminOrdersPage() {
       {selectedOrder && (
         <>
           <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelectedOrder(null)} />
-          <div className="fixed top-15 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 400 }}>
+          <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 400 }}>
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">{selectedOrder.id}</p>
+                <p className={`${label} mb-1 text-[#666]`}>{selectedOrder.id}</p>
                 <h2 className="text-2xl font-bold">{selectedOrder.journal}</h2>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-[8px] border-[2px] border-[#222] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"><X size={16} /></button>
+              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-all"><X size={16} /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Status</p>
+                <p className={`${label} mb-3 text-[#666]`}>Status</p>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(STATUS_META) as KanbanStatus[]).map((s) => {
                     const active = selectedOrder.status === s;
                     const m = STATUS_META[s];
                     return (
                       <button key={s} onClick={() => updateStatus(selectedOrder.id, s)}
-                        className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none transition-all rounded-[6px] px-2.5 py-1.5 border-[2px] ${
+                        className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none transition-all rounded-[6px] px-2.5 py-1.5 border-2 ${
                           active ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100" : "border-transparent opacity-40 hover:opacity-70"
                         }`}
                         style={{ background: m.color, color: m.text }}>
@@ -183,7 +183,7 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">Customer</p>
+                <p className={`${label} mb-4 text-[#666]`}>Customer</p>
                 <div className="space-y-3">
                   {[["Name", selectedOrder.customer], ["Email", selectedOrder.email], ["Phone", selectedOrder.phone], ["Address", selectedOrder.address]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="text-sm font-bold">{v}</p></div>
@@ -192,14 +192,14 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">Order Details</p>
+                <p className={`${label} mb-4 text-[#666]`}>Order Details</p>
                 <div className="grid grid-cols-2 gap-4">
                   {[["Pages", `${selectedOrder.pages}pp`], ["Cover", selectedOrder.cover], ["Amount", selectedOrder.amount], ["Date", selectedOrder.date]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold capitalize">{v}</p></div>
                   ))}
                 </div>
                 {selectedOrder.notes && (
-                  <div className="mt-4 p-3 bg-[#FFF7D6] rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222]">
+                  <div className="mt-4 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
                     <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">Note</p>
                     <p className="text-sm font-bold">{selectedOrder.notes}</p>
                   </div>
@@ -207,7 +207,7 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="px-6 py-5">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">Timeline</p>
+                <p className={`${label} mb-4 text-[#666]`}>Timeline</p>
                 <div className="relative">
                   <div className="absolute left-[5px] top-2 bottom-2 w-[3px] bg-[#222]/20 rounded-full" />
                   <div className="space-y-4">
@@ -227,10 +227,10 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="px-6 py-4 flex gap-2 shrink-0 border-t-[3px] border-[#222]">
-              <button className="font-mono text-[10px] font-bold tracking-widest uppercase py-3 px-4 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] bg-[#FFF7D6] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all shrink-0">Print Label</button>
-              <button className="flex-1 font-mono text-[10px] font-bold tracking-widest uppercase py-3 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] bg-[#FFF7D6] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">View Journal</button>
+              <button className={`${neoBtn} ${labelSm} py-3 px-4 shrink-0`}>Print Label</button>
+              <button className={`${neoBtn} ${labelSm} flex-1 py-3`}>View Journal</button>
               <button onClick={() => updateStatus(selectedOrder.id, "shipped")}
-                className="flex-1 font-mono text-[10px] font-bold tracking-widest uppercase py-3 bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">Mark Shipped</button>
+                className={`${neoBtnPrimary} flex-1 py-3`}>Mark Shipped</button>
             </div>
           </div>
         </>

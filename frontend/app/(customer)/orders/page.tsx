@@ -124,11 +124,11 @@ export default function OrdersPage() {
                       )}
                     </div>
                     <div className="absolute top-3 left-3">
-                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-[4px]"
+                      <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
                         style={{ background: m.bg, color: m.text }}>{m.label}</span>
                     </div>
                     <div className="absolute bottom-3 right-3">
-                      <span className="font-mono text-[9px] font-bold text-white bg-[#222]/70 px-2 py-0.5 rounded-[4px]">
+                      <span className="font-mono text-[9px] font-bold text-white bg-[#222]/70 px-2 py-0.5 rounded-md">
                         {order.totalAmount.toLocaleString()}₫
                       </span>
                     </div>
@@ -163,14 +163,14 @@ export default function OrdersPage() {
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">{selectedOrder.orderCode}</p>
                 <h2 className="text-xl font-bold">Order Details</h2>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-[8px] border-[2px] border-[#222] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"><X size={16} /></button>
+              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-all"><X size={16} /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
                 <div className="flex items-center justify-between mb-4">
                   <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Status</p>
-                  <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-[4px]"
+                  <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
                     style={{ background: statusMeta[selectedOrder.status].bg, color: statusMeta[selectedOrder.status].text }}>
                     {statusMeta[selectedOrder.status].label}
                   </span>
@@ -182,8 +182,8 @@ export default function OrdersPage() {
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">Items</p>
                 <div className="space-y-3">
                   {selectedOrder.items.map((item) => (
-                    <div key={item.id} className="flex gap-3 p-3 bg-[#FFF7D6] rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222]">
-                      <div className="w-14 h-18 rounded-[4px] overflow-hidden bg-[#e8e6e0] shrink-0">
+                    <div key={item.id} className="flex gap-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
+                      <div className="w-14 h-18 rounded-md overflow-hidden bg-[#e8e6e0] shrink-0">
                         <img src={item.coverUrl} alt={item.bookTitle} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ export default function OrdersPage() {
                     </div>
                   ))}
                   {selectedOrder.note && (
-                    <div className="mt-3 p-3 bg-[#FFF7D6] rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222]">
+                    <div className="mt-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
                       <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">Note</p>
                       <p className="text-sm font-bold">{selectedOrder.note}</p>
                     </div>

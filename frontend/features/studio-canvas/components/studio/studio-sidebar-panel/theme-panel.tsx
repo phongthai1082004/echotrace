@@ -15,7 +15,7 @@ export function ThemePanel() {
       <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Color Themes</p>
       <div className="space-y-1.5">
         {themes.map((t) => (
-          <div key={t.name} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-[#e8e6e0] transition-all rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]">
+          <div key={t.name} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-[#e8e6e0] transition-all rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]">
             <div className="flex gap-0.5">
               {t.colors.map((c, i) => (
                 <div key={i} className="w-5 h-5 rounded-[3px]" style={{ background: c, border: "2px solid #222" }} />

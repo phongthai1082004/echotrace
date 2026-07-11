@@ -1,13 +1,10 @@
-import { getServerSession } from "next-auth";
-import { Nav } from "@/components/nav";
+import { AdminSidebar } from "./admin-sidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession();
-
   return (
-    <>
-      <Nav user={session?.user} />
-      <main className="flex-1">{children}</main>
-    </>
+    <div className="min-h-screen">
+      <AdminSidebar />
+      <main className="ml-56 min-h-screen">{children}</main>
+    </div>
   );
 }

@@ -12,9 +12,8 @@ const asyncHandler =
 router.use(authMiddleware);
 
 router.get("/profile", asyncHandler((req, res) => user.getProfile(req, res)));
-// router.put("/profile", asyncHandler((req, res) => user.updateProfile(req, res)));
-// router.get("/books", asyncHandler((req, res) => user.getMyBooks(req, res)));
-// router.get("/users", asyncHandler((req, res) => user.getUsers(req, res)));
-// router.get("/users/:userId/books", asyncHandler((req, res) => user.getOtherUserBooks(req, res)));
+router.put("/profile", asyncHandler((req, res) => user.updateProfile(req, res)));
+router.put("/change-password", asyncHandler((req, res) => user.changePassword(req, res)));
+router.post("/avatar", asyncHandler((req, res) => user.saveAvatarUrl(req, res)));
 
 export default router;

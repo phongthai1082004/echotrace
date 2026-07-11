@@ -30,7 +30,7 @@ export function Nav({ user }: NavProps) {
       <div className="flex items-center justify-between px-8 h-15">
         <div className="flex items-center gap-10">
           <Link href="/" className="font-bold text-base tracking-tight shrink-0 leading-none">
-            Travel Canvas
+            Cabinet Memoir
           </Link>
           <div className="hidden md:flex items-center gap-6">
             {links.map((link) => {

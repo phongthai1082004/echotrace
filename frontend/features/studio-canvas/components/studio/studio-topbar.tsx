@@ -5,9 +5,9 @@ import { Undo2, Redo2, Move, Type, ImageIcon, Trash2, Eye } from "lucide-react";
 function ToolBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="relative group">
-      <button className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-[2px] border-transparent hover:border-[#222] transition-all text-[#222]">{icon}</button>
+      <button className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">{icon}</button>
       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-[4px] whitespace-nowrap">
+        <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md whitespace-nowrap">
           {label}
         </div>
       </div>
@@ -18,9 +18,9 @@ function ToolBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
 function DelBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="relative group">
-      <button className="p-1.5 hover:bg-[#B54843]/10 hover:text-[#B54843] rounded-[6px] border-[2px] border-transparent hover:border-[#B54843] transition-all">{icon}</button>
+      <button className="p-1.5 hover:bg-[#B54843]/10 hover:text-[#B54843] rounded-[6px] border-2 border-transparent hover:border-[#B54843] transition-all">{icon}</button>
       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-[4px] whitespace-nowrap">
+        <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md whitespace-nowrap">
           {label}
         </div>
       </div>
@@ -39,7 +39,7 @@ const textStyles = [
 function TextTypeBtn() {
   return (
     <div className="relative group">
-      <button className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-[2px] border-transparent hover:border-[#222] transition-all text-[#222]">
+      <button className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">
         <Type size={14} />
       </button>
       <div className="absolute top-full left-1/2 -translate-x-1/2 w-52 h-2 z-50" />
@@ -47,7 +47,7 @@ function TextTypeBtn() {
         <div className="bg-[#FFF7D6] w-52 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 border-b-[3px] border-[#222]">
             <span className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">Add Text</span>
-            <span className="font-mono text-[7px] font-bold tracking-widest uppercase px-1 py-[1px] bg-[#222] text-white rounded-[4px]">
+            <span className="font-mono text-[7px] font-bold tracking-widest uppercase px-1 py-[1px] bg-[#222] text-white rounded-md">
               {textStyles.length}
             </span>
           </div>
@@ -86,7 +86,7 @@ export function StudioTopbar() {
       <DelBtn icon={<Trash2 size={iconSize} />} label="Delete" />
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="flex items-center rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
+        <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           <button className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">−</button>
           <button className="px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest border-x-[2px] border-[#222] flex items-center gap-1 hover:bg-[#e8e6e0] transition-colors">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -94,8 +94,14 @@ export function StudioTopbar() {
           </button>
           <button className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> Preview</button>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">Save Journal</button>
+        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> Preview</button>
+        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">Save Journal</button>
+        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 17L12 5l6 12"/><path d="M8 13h8"/>
+          </svg>
+          Order Print
+        </button>
       </div>
     </div>
   );
