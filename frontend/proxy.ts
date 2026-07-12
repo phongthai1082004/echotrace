@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const publicPaths = ["/", "/auth"];
 const customerPaths = ["/explore", "/my-journals", "/studio", "/orders", "/checkout", "/account"];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const role = (token as any)?.role;

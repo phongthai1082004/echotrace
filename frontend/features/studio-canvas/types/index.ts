@@ -1,4 +1,36 @@
-export type StudioSection = "tools" | "templates" | "pages" | "photos" | "text" | "layers";
+export type FormatKey = 'A4_PORTRAIT' | 'SQUARE' | 'LANDSCAPE';
+
+export const FORMATS: Record<FormatKey, { width: number; height: number; label: string }> = {
+  A4_PORTRAIT: { width: 840, height: 1188, label: 'A4' },
+  SQUARE:      { width: 840, height: 840,  label: '□' },
+  LANDSCAPE:   { width: 1188, height: 840, label: '⊞' },
+};
+
+export type LayoutCell = { x: number; y: number; w: number; h: number };
+
+export type Layout = {
+  id: string;
+  label: string;
+  desc: string;
+  formats: FormatKey[];
+  cells: LayoutCell[];
+};
+
+export const LAYOUTS: Layout[] = [
+  { id: "full-bleed",  label: "Full Page", desc: "Single full-bleed photo",  formats: ["A4_PORTRAIT" as FormatKey,"SQUARE" as FormatKey,"LANDSCAPE" as FormatKey], cells: [[0,0,1,1]] },
+  { id: "split",       label: "Split",     desc: "50/50 image & text",       formats: ["A4_PORTRAIT" as FormatKey,"SQUARE" as FormatKey,"LANDSCAPE" as FormatKey], cells: [[0,0,0.5,1],[0.5,0,0.5,1]] },
+  { id: "montage",     label: "Montage",   desc: "Three staggered photos",   formats: ["A4_PORTRAIT" as FormatKey,"LANDSCAPE" as FormatKey], cells: [[0,0,0.6,0.55],[0.6,0,0.4,0.4],[0.5,0.55,0.5,0.45]] },
+  { id: "canvas",      label: "Canvas",    desc: "Text column + image",      formats: ["A4_PORTRAIT" as FormatKey,"SQUARE" as FormatKey,"LANDSCAPE" as FormatKey], cells: [[0,0,0.35,1],[0.35,0,0.65,1]] },
+  { id: "grid-2x2",    label: "Grid 2×2",  desc: "Four equal photos",       formats: ["SQUARE" as FormatKey], cells: [[0,0,0.5,0.5],[0.5,0,0.5,0.5],[0,0.5,0.5,0.5],[0.5,0.5,0.5,0.5]] },
+  { id: "hero",        label: "Hero",      desc: "Wide image + caption",    formats: ["A4_PORTRAIT" as FormatKey,"LANDSCAPE" as FormatKey], cells: [[0,0,1,0.6],[0,0.6,1,0.4]] },
+].map(l => ({ ...l, cells: l.cells.map(c => ({ x: c[0], y: c[1], w: c[2], h: c[3] })) }));
+
+export type PageState = {
+  index: number;
+  canvasJson: string | null;
+  thumbnailUrl: string | null;
+  layoutId: string;
+};
 
 export type CanvasElement = {
   id: string;
@@ -29,58 +61,3 @@ export function fontCss(name: string | undefined): string {
 
 export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0];
 
-export const LAYOUT_TEMPLATES = [
-  { id: "t1", label: "Full Bleed", desc: "Single dramatic image" },
-  { id: "t2", label: "Split", desc: "50/50 image & text" },
-  { id: "t3", label: "Scrapbook", desc: "Offset photo collage" },
-  { id: "t4", label: "Editorial", desc: "Headline + caption" },
-  { id: "t5", label: "Map Log", desc: "Coordinates & route" },
-  { id: "t6", label: "Minimal", desc: "Text only, wide margin" },
-];
-
-export const STOCK_PHOTOS = [
-  { id: "sp1", url: "https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=300&h=400&fit=crop&auto=format", label: "Ha Long Bay" },
-  { id: "sp2", url: "https://images.unsplash.com/photo-1757679789909-29f58dfd065b?w=300&h=200&fit=crop&auto=format", label: "Connemara" },
-  { id: "sp3", url: "https://images.unsplash.com/photo-1533093814449-96af23c8f43f?w=300&h=400&fit=crop&auto=format", label: "Harvest Field" },
-  { id: "sp4", url: "https://images.unsplash.com/photo-1765660996991-31f345c40247?w=300&h=400&fit=crop&auto=format", label: "High Atlas" },
-  { id: "sp5", url: "https://images.unsplash.com/photo-1762810629910-5ad48ad9b181?w=300&h=400&fit=crop&auto=format", label: "Coastal Rocks" },
-];
-
-export const initialElements: CanvasElement[] = [
-  {
-    id: "el-1",
-    type: "text",
-    x: 60,
-    y: 80,
-    width: 340,
-    height: 120,
-    content: "West Africa Circuit",
-    fontSize: 48,
-    fontFamily: "Playfair Display",
-    zIndex: 1,
-  },
-  {
-    id: "el-2",
-    type: "image",
-    x: 420,
-    y: 40,
-    width: 360,
-    height: 480,
-    content: "",
-    zIndex: 2,
-    imageUrl:
-      "https://images.unsplash.com/photo-1533093814449-96af23c8f43f?w=720&h=960&fit=crop&auto=format",
-  },
-  {
-    id: "el-3",
-    type: "text",
-    x: 60,
-    y: 220,
-    width: 340,
-    height: 60,
-    content: "6.5235° N, 3.3823° E  —  2024-07-01T09:14:00+01:00",
-    fontSize: 11,
-    fontFamily: "JetBrains Mono",
-    zIndex: 3,
-  },
-];

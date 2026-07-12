@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 interface Theme {
   id: number; name: string; code: string; description: string; category: string | null; thumbnailUrl: string;
@@ -79,7 +80,7 @@ export default function ExplorePage() {
                   <div key={s.id} className="group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
                     <div className="aspect-[3/4] bg-[#e8e6e0] overflow-hidden relative">
                       {s.coverUrl ? (
-                        <img src={s.coverUrl} alt={s.name} className="w-full h-full object-cover" />
+                        <img src={cloudinaryUrl(s.coverUrl)} alt={s.name} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.name}</span>

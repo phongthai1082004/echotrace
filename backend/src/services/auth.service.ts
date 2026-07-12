@@ -27,6 +27,8 @@ export class AuthService {
           avatar: payload.picture,
         },
       });
+    } else if (user.status === "banned") {
+      throw new AppError("Account has been banned", 403);
     }
     return {
       user: { 
@@ -95,6 +97,7 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password) throw new AppError("invalid credentials", 401);
+    if (user.status === "banned") throw new AppError("Account has been banned", 403);
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new AppError("invalid credentials", 401);

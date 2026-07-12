@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 interface OrderItem {
   id: number;
@@ -114,7 +115,7 @@ export default function OrdersPage() {
                     <div className="grid grid-cols-2 h-full">
                       {order.items.slice(0, 2).map((item) => (
                         <div key={item.id} className="relative overflow-hidden">
-                          <img src={item.coverUrl} alt={item.bookTitle} className="w-full h-full object-cover" />
+                          <img src={cloudinaryUrl(item.coverUrl)} alt={item.bookTitle} className="w-full h-full object-cover" loading="lazy" />
                         </div>
                       ))}
                       {order.items.length === 1 && (

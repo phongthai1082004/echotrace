@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Search, ArrowUpDown } from "lucide-react";
 import { kanbanOrders, type KanbanStatus } from "@/features/order-kanban/data";
 import { label, labelSm, card, neoBtn, neoBtnPrimary } from "@/lib/styles";
+import { StatusBadge } from "@/components/status-badge";
 
 const STATUS_META: Record<KanbanStatus, { label: string; color: string; text: string }> = {
   pending:        { label: "Pending",       color: "#FFF7D6", text: "#222" },
@@ -32,15 +33,8 @@ const FULL_ORDERS = kanbanOrders.map((o, i) => ({
   ][i],
 }));
 
-function StatusBadge({ status }: { status: KanbanStatus }) {
-  const m = STATUS_META[status];
-  return (
-    <span className={`${label} rounded-md px-1.5 py-0.5 inline-block w-fit whitespace-nowrap`}
-      style={{ background: m.color, color: m.text }}>
-      {m.label}
-    </span>
-  );
-}
+const colWidths = ["110px", "1fr", "1fr", "120px", "1fr", "100px", "120px", "100px"];
+const gridCols = colWidths.join(" ");
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<FullOrder[]>(FULL_ORDERS);
@@ -48,11 +42,13 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<KanbanStatus | "all">("all");
   const [sortBy, setSortBy] = useState<"date" | "amount" | "pages">("date");
   const [selectedOrder, setSelectedOrder] = useState<FullOrder | null>(null);
+  const [page, setPage] = useState(0);
+  const perPage = 6;
 
   const filtered = orders
     .filter((o) => {
       const q = search.toLowerCase();
-      const matchSearch = !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.journal.toLowerCase().includes(q);
+      const matchSearch = !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.email.toLowerCase().includes(q) || o.journal.toLowerCase().includes(q);
       const matchStatus = statusFilter === "all" || o.status === statusFilter;
       return matchSearch && matchStatus;
     })
@@ -61,6 +57,9 @@ export default function AdminOrdersPage() {
       if (sortBy === "amount") return parseInt(b.amount.replace(/\D/g, "")) - parseInt(a.amount.replace(/\D/g, ""));
       return b.pages - a.pages;
     });
+
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paged = filtered.slice(page * perPage, (page + 1) * perPage);
 
   const counts = {
     all: orders.length,
@@ -76,78 +75,97 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div>
-      <div className="px-8 py-8 border-b-[3px] border-[#222]">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
-          <div>
-            <p className={`${label} mb-1 text-[#666]`}>Admin Panel</p>
-            <h1 className="text-4xl font-bold">Orders</h1>
-          </div>
-          <div className={`flex items-center gap-3 lg:w-85 ${card}`}>
-            <svg className="ml-3 shrink-0 text-[#999]" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search order ID, customer, journal…"
-              className="flex-1 bg-transparent text-sm font-bold py-2.5 pr-3 placeholder:text-[#999] focus:outline-none" />
-            {search && <button onClick={() => setSearch("")} className="mr-2 opacity-40 hover:opacity-70"><X size={12} /></button>}
-          </div>
+    <div className="h-screen flex flex-col">
+      <div className="px-8 py-6 border-b-[3px] border-[#222] flex items-end justify-between gap-4">
+        <div>
+          <p className={`${label} mb-1 text-[#666]`}>Admin — Orders</p>
+          <h1 className="text-3xl font-bold">Orders</h1>
         </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex border-b-[3px] border-[#222]">
-            {([["all", "All"], ["pending", "Pending"], ["printing", "Printing"], ["quality-check", "QC"], ["shipped", "Shipped"]] as [KanbanStatus | "all", string][]).map(([s, label]) => (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className={`font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 flex items-center gap-2 transition-all ${
-                  statusFilter === s ? "text-[#222] border-b-[3px] border-[#222] -mb-[3px]" : "text-[#999]"
-                }`}>
-                {label}
-                <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-md ${
-                  statusFilter === s ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#666]"
-                }`}>{counts[s]}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#666]">Sort</span>
-            {([["date", "Date"], ["amount", "Amount"], ["pages", "Pages"]] as ["date" | "amount" | "pages", string][]).map(([k, label]) => (
-              <button key={k} onClick={() => setSortBy(k)}
-                className={`font-mono text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 rounded-[6px] border-2 transition-all ${
-                  sortBy === k ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]" : "border-[#222] text-[#666] hover:bg-[#FFF7D6]"
-                }`}>{label}</button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2 bg-white rounded-lg border-2 border-[#222] px-3 w-full lg:w-72 shrink-0">
+          <Search size={13} className="text-[#999] shrink-0" />
+          <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            placeholder="Search ID, customer, journal…"
+            className="flex-1 text-sm font-bold py-2 placeholder:text-[#999] focus:outline-none bg-transparent" />
+          {search && <button onClick={() => { setSearch(""); setPage(0); }} className="opacity-40 hover:opacity-70"><X size={12} /></button>}
         </div>
       </div>
 
-      <div>
-        <div className="grid px-8 py-2.5 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr 1fr 1.5fr 1fr" }}>
-          {["Order ID", "Customer", "Journal", "Pages", "Amount", "Status", "Date"].map((h) => (
-            <span key={h} className={`${label} text-[#666]`}>{h}</span>
-          ))}
-        </div>
-        {filtered.length === 0 && (
-          <div className="px-8 py-16 text-center">
-            <p className="text-2xl font-bold mb-2">No orders found</p>
-            <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">Try adjusting your search or filter</p>
-          </div>
-        )}
-        {filtered.map((order) => (
-          <div key={order.id} onClick={() => setSelectedOrder(order)}
-            className="grid px-8 py-4 cursor-pointer hover:bg-[#e8e6e0] transition-colors items-center border-b-[2px] border-[#222]/10"
-            style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr 1fr 1.5fr 1fr" }}>
-            <span className="font-mono text-[10px] font-bold text-[#666]">{order.id}</span>
-            <div>
-              <p className="text-sm font-bold">{order.customer}</p>
-              <p className="font-mono text-[9px] font-bold mt-0.5 text-[#999]">{order.email}</p>
+      <div className="flex-1 flex flex-col px-8 py-6 gap-6 min-h-0 overflow-hidden">
+        <div className={`${card} p-4 shrink-0`}>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1">
+              {(["all", "pending", "printing", "quality-check", "shipped"] as const).map((s) => (
+                <button key={s} onClick={() => { setStatusFilter(s); setPage(0); }}
+                  className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-all ${
+                    statusFilter === s ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+                  }`}>
+                  {s === "all" ? "All" : STATUS_META[s].label} <span className={statusFilter === s ? "text-white/60" : "text-[#999]"}>({counts[s]})</span>
+                </button>
+              ))}
             </div>
-            <span className="text-sm font-bold">{order.journal}</span>
-            <span className="font-mono text-[10px] font-bold text-[#666]">{order.pages}</span>
-            <span className="font-mono text-[10px] font-bold">{order.amount}</span>
-            <StatusBadge status={order.status} />
-            <span className="font-mono text-[10px] font-bold text-[#999]">{order.date}</span>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown size={12} className="text-[#666]" />
+              {(["date", "amount", "pages"] as const).map((k) => (
+                <button key={k} onClick={() => setSortBy(k)}
+                  className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-all ${
+                    sortBy === k ? "bg-[#222] text-white border-[#222]" : "border-[#222] text-[#666] hover:bg-[#e8e6e0]"
+                  }`}>{k}</button>
+              ))}
+            </div>
           </div>
-        ))}
+        </div>
+
+        <div className={`${card} flex-1 flex flex-col min-h-0`}>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
+              {["Order ID", "Customer", "Email", "Phone", "Product", "Amount", "Status", "Date"].map((h) => (
+                <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
+              ))}
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col">
+              {paged.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center"><p className="text-lg font-bold mb-1">No orders found</p></div>
+              ) : (
+                <>
+                  {paged.map((order) => (
+                    <div key={order.id} onClick={() => setSelectedOrder(order)}
+                      className="grid flex-1 hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 cursor-pointer items-center"
+                      style={{ gridTemplateColumns: gridCols }}>
+                      <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{order.id}</div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap">{order.customer}</div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap">{order.email}</div>
+                      <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{order.phone}</div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 250 }}>{order.journal.length > 50 ? order.journal.slice(0, 50) + "…" : order.journal}</div>
+                      <div className="px-2 font-mono text-[10px] font-bold whitespace-nowrap">{order.amount}</div>
+                      <div className="px-2 whitespace-nowrap"><StatusBadge status={order.status} /></div>
+                      <div className="px-2 font-mono text-[10px] font-bold text-[#999] whitespace-nowrap">{order.date}</div>
+                    </div>
+                  ))}
+                  {Array.from({ length: perPage - paged.length }).map((_, i) => (
+                    <div key={`empty-${i}`} className="flex-1 grid border-b-[2px] border-[#222]/10" style={{ gridTemplateColumns: gridCols }}>
+                      {Array.from({ length: 8 }).map((_, j) => <div key={j} className="px-2" />)}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="px-6 py-3 border-t-[3px] border-[#222] flex items-center justify-between bg-[#FFF7D6] shrink-0">
+            <p className="font-mono text-[9px] font-bold text-[#666]">
+              Showing {page * perPage + 1}–{Math.min((page + 1) * perPage, filtered.length)} of {filtered.length} orders
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                className={`font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-all ${
+                  page === 0 ? "border-[#ccc] text-[#ccc]" : "border-[#222] text-[#666] hover:bg-[#e8e6e0]"
+                }`}>Previous</button>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                className={`font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-all ${
+                  page >= totalPages - 1 ? "border-[#ccc] text-[#ccc]" : "border-[#222] text-[#666] hover:bg-[#e8e6e0]"
+                }`}>Next</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {selectedOrder && (
@@ -159,7 +177,7 @@ export default function AdminOrdersPage() {
                 <p className={`${label} mb-1 text-[#666]`}>{selectedOrder.id}</p>
                 <h2 className="text-2xl font-bold">{selectedOrder.journal}</h2>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-all"><X size={16} /></button>
+              <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-all"><X size={16} /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>

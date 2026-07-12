@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 interface NavProps {
   user?: { name?: string | null; email?: string | null; image?: string | null } | null;
@@ -98,7 +99,7 @@ export function Nav({ user }: NavProps) {
                 className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all bg-[#FFF7D6]"
               >
                 {user.image ? (
-                  <img src={user.image} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  <img src={cloudinaryUrl(user.image)} alt="" className="w-7 h-7 rounded-full object-cover" loading="lazy" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-[#222] flex items-center justify-center shrink-0 overflow-hidden">
                     <span className="font-mono text-[10px] font-bold text-white leading-none">

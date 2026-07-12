@@ -12,5 +12,8 @@ const asyncHandler =
 router.use(authMiddleware);
 
 router.get("/get-upload-signature", asyncHandler((req, res) => uploadCtrl.getSignature(req, res)));
+router.post("/uploads/image", asyncHandler((req, res) => uploadCtrl.saveImage(req, res)));
+router.get("/uploads/images", asyncHandler((req, res) => uploadCtrl.listImages(req, res)));
+router.delete("/uploads/images/:id", asyncHandler((req, res) => uploadCtrl.deleteImage(req, res)));
 
 export default router;

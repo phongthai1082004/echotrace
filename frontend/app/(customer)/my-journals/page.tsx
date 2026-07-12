@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 interface JournalBook {
   id: number; title: string; coverUrl: string | null; pages: number; style: string;
@@ -77,7 +78,7 @@ export default function MyJournalsPage() {
                 <div key={j.id} className="shrink-0 w-64 group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
                   <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
                     {j.coverUrl ? (
-                      <img src={j.coverUrl} alt={j.title} className="w-full h-full object-cover" />
+                      <img src={cloudinaryUrl(j.coverUrl)} alt={j.title} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">No Cover</span>

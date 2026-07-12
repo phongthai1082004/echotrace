@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { BarChart3, Package, DollarSign, TrendingUp, Settings, UserCircle, LogOut } from "lucide-react";
+import { cloudinaryUrl } from "@/lib/cloudinary";
+import { BarChart3, Package, DollarSign, TrendingUp, Users, Settings, UserCircle, LogOut } from "lucide-react";
 
 const nav = [
   { href: "/admin/analytics", label: "Overview", icon: BarChart3 },
   { href: "/admin/finance", label: "Finance", icon: DollarSign },
   { href: "/admin/marketing", label: "Marketing", icon: TrendingUp },
   { href: "/admin/orders", label: "Orders", icon: Package },
+  { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/config", label: "Config", icon: Settings },
   { href: "/admin/account", label: "Account", icon: UserCircle },
 ];
@@ -44,7 +46,7 @@ export function AdminSidebar() {
         <div className="flex items-center gap-2.5 px-3 py-2">
           <div className="w-7 h-7 rounded-md bg-[#222] text-white flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
             {session?.user?.image ? (
-              <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+              <img src={cloudinaryUrl(session.user.image)} alt="" className="w-full h-full object-cover" loading="lazy" />
             ) : (
               session?.user?.email?.charAt(0).toUpperCase() || "?"
             )}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 const travelLogs = [
   { id: "1", title: "Ha Long Bay at Dawn", location: "Quảng Ninh, Vietnam", coords: "20.91° N, 107.18° E", image: "https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=800&h=1000&fit=crop&auto=format" },
@@ -14,7 +15,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <section className="pt-15 min-h-screen flex flex-col lg:flex-row">
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-[60%] min-h-[50vh] lg:min-h-[calc(100vh-60px)]">
-          <img src="https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=1400&h=1000&fit=crop&auto=format" alt="Ha Long Bay" className="w-full h-full object-cover object-center absolute inset-0" />
+          <img src="https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=1400&h=1000&fit=crop&auto=format" alt="Ha Long Bay" className="w-full h-full object-cover object-center absolute inset-0" loading="lazy" />
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-[#222]">
             <p className="font-mono text-[10px] font-bold text-white tracking-wider uppercase">20.91° N, 107.18° E — Ha Long Bay, Vietnam</p>
           </div>
@@ -53,7 +54,7 @@ export default function HomePage() {
           {travelLogs.map((log) => (
             <article key={log.id} className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
               <div className="overflow-hidden aspect-[3/4]">
-                <img src={log.image} alt={log.title} className="w-full h-full object-cover" />
+                <img src={cloudinaryUrl(log.image)} alt={log.title} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <div className="p-4 border-t-[3px] border-[#222]">
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] mb-2">{log.coords}</p>

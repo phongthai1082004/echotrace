@@ -27,7 +27,11 @@ const handler = NextAuth({
           }),
         });
         const data = await res.json();
-        if (!res.ok || !data?.data?.user) return null;
+        if (!res.ok) {
+          if (data?.message?.toLowerCase().includes("banned")) throw new Error("Account has been banned");
+          return null;
+        }
+        if (!data?.data?.user) return null;
 
         return {
           id: data.data.user.id,
@@ -49,8 +53,11 @@ const handler = NextAuth({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken: account.id_token }), 
         });
-        if (!res.ok) return false;
         const data = await res.json();
+        if (!res.ok) {
+          if (data?.message?.toLowerCase().includes("banned")) return "/auth?error=banned";
+          return false;
+        }
         (user as any).accessToken = data.data?.accessToken;
         (user as any).role = data.data?.user?.role || "user";
         user.image = data.data?.user?.avatar || null;
