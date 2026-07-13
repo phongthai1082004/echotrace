@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { useDrop } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
@@ -19,9 +19,6 @@ function enforceZLayers(canvas: fabric.Canvas) {
 export function StudioWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const isPanning = useRef(false);
-  const lastPan = useRef({ x: 0, y: 0 });
   const setCanvas = useCanvasStore((s) => s.setCanvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
@@ -60,16 +57,24 @@ export function StudioWorkspace() {
           enforceZLayers(c);
         });
       } else if (item.type === "STICKER") {
-        const text = new fabric.FabricText(item.char, {
-          left: pointer.x,
-          top: pointer.y,
-          fontSize: 48,
-          customProperties: { z: 251, layer: "element", id: `sticker-${Date.now()}` },
-        } as any);
-        c.add(text);
-        c.setActiveObject(text);
-        c.renderAll();
-        enforceZLayers(c);
+        if (item.url) {
+          useCanvasStore.getState().pushUndo();
+          fabric.FabricImage.fromURL(item.url, { crossOrigin: "anonymous" }).then((img) => {
+            const maxDim = 150;
+            const scale = Math.min(maxDim / (img.width || 1), maxDim / (img.height || 1));
+            img.set({
+              left: pointer.x - 37.5,
+              top: pointer.y - 37.5,
+              scaleX: scale,
+              scaleY: scale,
+              customProperties: { z: 251, layer: "element", id: `sticker-${Date.now()}` },
+            } as any);
+            c.add(img);
+            c.setActiveObject(img);
+            c.renderAll();
+            enforceZLayers(c);
+          });
+        }
       }
     },
   }), []);
@@ -84,39 +89,11 @@ export function StudioWorkspace() {
       selection: true,
       backgroundColor: "#fff",
     });
-    c.hoverCursor = "grab";
-    c.defaultCursor = "grab";
     c.renderAll();
     setCanvas(c);
 
     c.on("object:modified", () => enforceZLayers(c));
     c.on("object:added", () => enforceZLayers(c));
-
-    c.on("mouse:down", (opt: any) => {
-      if (!opt.target) {
-        isPanning.current = true;
-        lastPan.current = { x: opt.e.clientX, y: opt.e.clientY };
-        c.selection = false;
-        c.defaultCursor = "grabbing";
-        c.renderAll();
-      }
-    });
-    c.on("mouse:move", (opt: any) => {
-      if (isPanning.current) {
-        const dx = opt.e.clientX - lastPan.current.x;
-        const dy = opt.e.clientY - lastPan.current.y;
-        lastPan.current = { x: opt.e.clientX, y: opt.e.clientY };
-        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-      }
-    });
-    c.on("mouse:up", () => {
-      if (isPanning.current) {
-        isPanning.current = false;
-        c.selection = true;
-        c.defaultCursor = "grab";
-        c.renderAll();
-      }
-    });
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -139,18 +116,6 @@ export function StudioWorkspace() {
     };
   }, [bookMeta.format]);
 
-  const applyTransform = () => {
-    const { zoomIndex: zi } = useCanvasStore.getState();
-    const container = document.getElementById("canvas-scale-container");
-    if (container) {
-      container.style.transform = `scale(${ZOOM_LEVELS[zi]}) translate(${pan.x}px, ${pan.y}px)`;
-    }
-  };
-
-  useEffect(() => {
-    applyTransform();
-  }, [zoomIndex, pan]);
-
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -160,27 +125,39 @@ export function StudioWorkspace() {
         const { zoomIndex: zi, setZoomIndex: setZi } = useCanvasStore.getState();
         const dir = e.deltaY < 0 ? 1 : -1;
         const idx = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zi + dir));
+        if (idx === zi) return;
+        const oldS = ZOOM_LEVELS[zi];
+        const newS = ZOOM_LEVELS[idx];
+        const rect = el.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const sx = el.scrollLeft;
+        const sy = el.scrollTop;
+        el.scrollLeft = mx * (1 - newS / oldS) + sx * newS / oldS;
+        el.scrollTop = my * (1 - newS / oldS) + sy * newS / oldS;
         setZi(idx);
-      } else {
-        setPan((p) => ({ x: p.x + e.deltaX, y: p.y + e.deltaY }));
       }
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [bookMeta.format]);
 
+  const zoom = ZOOM_LEVELS[zoomIndex];
   const fmt = FORMATS[bookMeta.format];
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" ref={dropRef as any}>
-      <div ref={viewportRef} className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[#e8e6e0]"
+      <div ref={viewportRef}
+        className="flex-1 overflow-auto bg-[#e8e6e0]"
         style={{
           backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
           backgroundSize: "20px 20px",
         }}>
-        <div id="canvas-scale-container" style={{ transform: `scale(${ZOOM_LEVELS[zoomIndex]}) translate(${pan.x}px, ${pan.y}px)`, transformOrigin: "0 0", flexShrink: 0 }}>
-          <div style={{ width: fmt.width, height: fmt.height, border: "3px solid #222", boxShadow: "6px 6px 0 #222", position: "relative", overflow: "hidden", background: "#fff" }}>
-            <canvas ref={canvasRef} id="fabric-canvas-container" />
+        <div style={{ minWidth: "100%", minHeight: "100%", padding: 80, display: "flex", alignItems: "center", justifyContent: "center", width: "fit-content" }}>
+          <div style={{ width: fmt.width * zoom, height: fmt.height * zoom, position: "relative", flexShrink: 0 }}>
+            <div style={{ position: "absolute", top: 0, left: 0, width: fmt.width, height: fmt.height, transform: `scale(${zoom})`, transformOrigin: "0 0", border: "3px solid #222", boxShadow: "6px 6px 0 #222", overflow: "hidden", background: "#fff" }}>
+              <canvas ref={canvasRef} id="fabric-canvas-container" />
+            </div>
           </div>
         </div>
       </div>

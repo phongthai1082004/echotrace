@@ -1,10 +1,9 @@
 "use client";
 
-import { TrendingUp, Package, Users } from "lucide-react";
-import { kanbanOrders } from "@/features/order-kanban/data";
+import { TrendingUp, Package, AlertTriangle, DollarSign } from "lucide-react";
 import { label, card } from "@/lib/styles";
-import { StatusBadge } from "@/components/status-badge";
 import { BarChart, LineChart } from "@/components/charts";
+import { AdminHeader } from "@/components/admin-header";
 
 const months = ["Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul"];
 const yearlyRevenue = [28900000, 31200000, 27500000, 34800000, 41200000, 22100000, 19800000, 31200000, 28700000, 34500000, 41200000, 43800000];
@@ -15,23 +14,21 @@ const ordersData = months.map((label, i) => ({ label, value: yearlyOrders[i] }))
 export default function AdminAnalyticsPage() {
   const totalRevenue = yearlyRevenue.reduce((s, v) => s + v, 0);
   const totalOrders = yearlyOrders.reduce((s, v) => s + v, 0);
-  const avgOrder = Math.round(totalRevenue / totalOrders / 1000);
+  const totalProfit = Math.round(totalRevenue * 0.35);
 
   const kpis = [
     { label: "Total Revenue YTD", value: `₫${(totalRevenue / 1000000).toFixed(1)}M`, icon: TrendingUp },
     { label: "Total Orders", value: String(totalOrders), icon: Package },
-    { label: "Avg. Order Value", value: `₫${avgOrder}K`, icon: Users },
+    { label: "Cancellation Rate", value: "3.2%", icon: AlertTriangle },
+    { label: "Total Profit", value: `₫${(totalProfit / 1000000).toFixed(1)}M`, icon: DollarSign },
   ];
 
   return (
     <div>
-      <div className="px-8 py-8 border-b-[3px] border-[#222]">
-        <p className={`${label} mb-1 text-[#666]`}>Admin — Analytics</p>
-        <h1 className="text-3xl font-bold">Revenue Overview</h1>
-      </div>
+      <AdminHeader label="Admin — Analytics" title="Revenue Overview" />
 
       <div className="px-8 py-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (
@@ -54,36 +51,6 @@ export default function AdminAnalyticsPage() {
           <div className={`p-6 ${card}`}>
             <p className={`${label} mb-6 text-[#666]`}>Monthly Orders</p>
             <LineChart data={ordersData} />
-          </div>
-        </div>
-
-        <div className={`${card} overflow-hidden`}>
-          <div className="px-6 py-4 border-b-[3px] border-[#222]">
-            <p className={`${label} text-[#666]`}>Recent Orders</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-[3px] border-[#222]">
-                  {["Order ID", "Customer", "Journal", "Pages", "Amount", "Date", "Status"].map((h) => (
-                    <th key={h} className={`text-left px-4 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {kanbanOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10">
-                    <td className="px-4 py-3 font-mono text-[10px] font-bold text-[#666]">{o.id}</td>
-                    <td className="px-4 py-3 text-sm font-bold">{o.customer}</td>
-                    <td className="px-4 py-3 text-sm font-bold">{o.journal}</td>
-                    <td className="px-4 py-3 font-mono text-[10px] font-bold text-[#666]">{o.pages}</td>
-                    <td className="px-4 py-3 font-mono text-[10px] font-bold">{o.amount}</td>
-                    <td className="px-4 py-3 font-mono text-[10px] font-bold text-[#999]">{o.date}</td>
-                    <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>

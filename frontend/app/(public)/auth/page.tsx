@@ -57,7 +57,7 @@ export default function AuthPage() {
       const verifyData = await res.json();
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      window.location.href = verifyData.data?.user?.role === "admin" ? "/admin/orders" : "/explore";
+      window.location.href = verifyData.data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
     } catch (err: any) { setError(err.message); }
     setLoading(false);
   };
@@ -80,7 +80,7 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error(result.error);
-      window.location.href = data.data?.user?.role === "admin" ? "/admin/orders" : "/explore";
+      window.location.href = data.data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
     } catch (err: any) { setError(err.message); }
     setLoading(false);
   };

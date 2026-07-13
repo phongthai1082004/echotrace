@@ -23,7 +23,7 @@ interface SignatureData {
  */
 export async function uploadToCloudinary(
   file: File,
-  type: "avatar" | "gallery",
+  type: "avatar" | "gallery" | "sticker",
   accessToken: string
 ): Promise<string> {
   // Bước A: Lấy chữ ký từ backend

@@ -213,6 +213,7 @@ model DecorAsset {
   id       Int    @id @default(autoincrement())
   themeId  Int?
   type     String
+  category String?
   name     String
   url      String
   publicId String

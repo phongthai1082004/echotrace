@@ -69,7 +69,7 @@ export function DiscountModal({
               </div>
               <button
                 onClick={handleRemove}
-                className="w-full font-mono text-[9px] font-bold tracking-widest uppercase py-2 rounded-lg border-2 border-[#222] hover:bg-[#e8e6e0] transition-all"
+                className="w-full font-mono text-[9px] font-bold tracking-widest uppercase py-2 rounded-lg border-2 border-[#222] hover:bg-[#e8e6e0] transition-[background-color]"
               >
                 Remove Code
               </button>
@@ -82,12 +82,12 @@ export function DiscountModal({
                   onChange={(e) => { setCode(e.target.value); setFeedback(null); }}
                   onKeyDown={(e) => e.key === "Enter" && handleApply()}
                   placeholder="Enter code"
-                  className="flex-1 bg-white text-[13px] font-bold px-3 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all"
+                  className="flex-1 bg-white text-[13px] font-bold px-3 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
                 />
                 <button
                   onClick={handleApply}
                   disabled={!code.trim()}
-                  className="font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5 bg-[#222] text-white rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all disabled:opacity-40"
+                  className="font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5 bg-[#222] text-white rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] disabled:opacity-40"
                 >
                   Apply
                 </button>
@@ -103,8 +103,8 @@ export function DiscountModal({
                   {["WELCOME10", "FLAT50", "FREESHIP"].map((c) => (
                     <button
                       key={c}
-                      onClick={() => { setCode(c); }}
-                      className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1 rounded-[6px] border-2 border-[#222] text-[#666] hover:bg-[#e8e6e0] transition-all"
+                        onClick={() => { setCode(c); }}
+                      className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1 rounded-[6px] border-2 border-[#222] text-[#666] hover:bg-[#e8e6e0] transition-[background-color]"
                     >
                       {c}
                     </button>

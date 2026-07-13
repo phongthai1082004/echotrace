@@ -20,8 +20,8 @@ export async function proxy(req: NextRequest) {
   }
 
   if (isAdmin && role !== "admin") return NextResponse.redirect(new URL("/explore", req.url));
-  if (isCustomer && role === "admin") return NextResponse.redirect(new URL("/admin/orders", req.url));
-  if (isPublic && role === "admin") return NextResponse.redirect(new URL("/admin/orders", req.url));
+  if (isCustomer && role === "admin") return NextResponse.redirect(new URL("/admin/analytics", req.url));
+  if (isPublic && role === "admin") return NextResponse.redirect(new URL("/admin/analytics", req.url));
   if (isPublic && role !== "admin") return NextResponse.redirect(new URL("/explore", req.url));
 
   return NextResponse.next();

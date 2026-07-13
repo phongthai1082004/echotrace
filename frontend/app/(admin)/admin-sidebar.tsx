@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cloudinaryUrl } from "@/lib/cloudinary";
-import { BarChart3, Package, DollarSign, TrendingUp, Users, Settings, UserCircle, LogOut } from "lucide-react";
+import { BarChart3, DollarSign, TrendingUp, Package, Truck, Users, Sticker, UserCircle, LogOut } from "lucide-react";
 
 const nav = [
   { href: "/admin/analytics", label: "Overview", icon: BarChart3 },
   { href: "/admin/finance", label: "Finance", icon: DollarSign },
   { href: "/admin/marketing", label: "Marketing", icon: TrendingUp },
-  { href: "/admin/orders", label: "Orders", icon: Package },
+  { href: "/admin/dispatch", label: "Dispatch", icon: Package },
+  { href: "/admin/suppliers", label: "Suppliers", icon: Truck },
   { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/config", label: "Config", icon: Settings },
+  { href: "/admin/stickers", label: "Assets", icon: Sticker },
   { href: "/admin/account", label: "Account", icon: UserCircle },
 ];
 

@@ -90,7 +90,7 @@ export function AccountSettings() {
   };
 
   const inputClass = (field: string) =>
-    `w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 transition-all focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] placeholder:text-[#999] ${
+    `w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 transition-[border-color,box-shadow,transform] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] placeholder:text-[#999] ${
       fieldErrors[field] ? "border-[#B54843] shadow-[2px_2px_0_#B54843]" : "border-[#222] shadow-[2px_2px_0_#222]"
     }`;
 
@@ -99,7 +99,7 @@ export function AccountSettings() {
       <div className="flex items-center gap-1 overflow-x-auto pb-2 border-b-[3px] border-[#222] mb-8">
         {["information", "reset-password"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg transition-all ${
+            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg transition-[background-color,color,box-shadow] ${
               tab === t ? "bg-[#222] text-white shadow-[2px_2px_0_#222]" : "hover:bg-[#e8e6e0]"
             }`}>
             {t === "information" ? "Information" : "Reset Password"}
@@ -162,7 +162,7 @@ export function AccountSettings() {
                   <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">Connected</span>
                 </div>
               ) : (
-                <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+                <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]">
                   <span className="text-sm text-[#999]">Not connected</span>
                   <span className="flex items-center gap-2 font-mono text-[8px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#222] text-white rounded-md">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -194,7 +194,7 @@ export function AccountSettings() {
           </div>
 
           <button type="submit" disabled={!hasChanges}
-            className="font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-all"
+            className="font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-[background-color,color,border-color,box-shadow,transform]"
             style={{ background: hasChanges ? "#222" : "#999", color: "#fff", borderColor: hasChanges ? "#222" : "#999", boxShadow: hasChanges ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
             Save Changes
           </button>
@@ -210,20 +210,20 @@ export function AccountSettings() {
                 <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Current Password</label>
                 <input type="password" value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
-                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all" />
+                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]" />
               </div>
             )}
             <div>
               <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">New Password</label>
               <input type="password" value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
-                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all" />
+                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]" />
             </div>
             <div>
               <label className="font-mono text-[10px] font-bold tracking-widest uppercase block mb-1.5 text-[#666]">Confirm New Password</label>
               <input type="password" value={passwordForm.confirmPassword}
                 onChange={(e) => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all" />
+                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]" />
               {passwordForm.confirmPassword && passwordForm.confirmPassword !== passwordForm.newPassword && (
                 <p className="font-mono text-[9px] font-bold mt-1 text-[#B54843]">Passwords do not match</p>
               )}
@@ -233,7 +233,7 @@ export function AccountSettings() {
             </div>
           </div>
           <button type="submit" disabled={!canSubmitPassword}
-            className="mt-5 font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-all"
+            className="mt-5 font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-[background-color,color,border-color,box-shadow,transform]"
             style={{ background: canSubmitPassword ? "#222" : "#999", color: "#fff", borderColor: canSubmitPassword ? "#222" : "#999", boxShadow: canSubmitPassword ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
             {profile?.hasPassword ? "Update Password" : "Set Password"}
           </button>

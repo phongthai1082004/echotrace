@@ -40,7 +40,7 @@ export function Nav({ user }: NavProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`font-mono text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[6px] transition-all leading-none ${
+                  className={`font-mono text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[6px] transition-[background-color,color] leading-none ${
                     active ? "bg-[#222] text-white" : "text-[#666] hover:bg-[#e8e6e0] hover:text-[#222]"
                   }`}
                 >
@@ -56,7 +56,7 @@ export function Nav({ user }: NavProps) {
             <div className="relative"
               onMouseEnter={() => setCartOpen(true)}
               onMouseLeave={() => setCartOpen(false)}>
-              <button type="button" className="relative flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all bg-[#FFF7D6]">
+              <button type="button" className="relative flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#222]">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
                   <line x1="3" y1="6" x2="21" y2="6"/>
@@ -96,7 +96,7 @@ export function Nav({ user }: NavProps) {
             >
               <button
                 type="button"
-                className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all bg-[#FFF7D6]"
+                className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
               >
                 {user.image ? (
                   <img src={cloudinaryUrl(user.image)} alt="" className="w-7 h-7 rounded-full object-cover" loading="lazy" />
@@ -147,7 +147,7 @@ export function Nav({ user }: NavProps) {
           ) : (
             <Link
               href="/auth"
-              className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+              className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
             >
               Sign In
             </Link>

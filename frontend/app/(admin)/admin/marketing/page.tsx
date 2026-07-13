@@ -2,6 +2,7 @@
 import { Users, Percent } from "lucide-react";
 import { label, card } from "@/lib/styles";
 import { FunnelChart } from "@/components/charts";
+import { AdminHeader } from "@/components/admin-header";
 
 const kpis = [
   { label: "Total Visitors (This Week)", value: "12,840", change: "+5.2%", icon: Users },
@@ -27,10 +28,7 @@ const trafficSources = [
 export default function MarketingPage() {
   return (
     <div>
-      <div className="px-8 py-8 border-b-[3px] border-[#222]">
-        <p className={`${label} mb-1 text-[#666]`}>Admin — Marketing</p>
-        <h1 className="text-3xl font-bold">Traffic & Conversion Analytics</h1>
-      </div>
+      <AdminHeader label="Admin — Marketing" title="Traffic & Conversion Analytics" />
       <div className="px-8 py-8 space-y-8">
         <div className="grid grid-cols-4 gap-5">
           {kpis.map(k => {

@@ -9,7 +9,7 @@ const cloudinary = new CloudinaryService();
 
 export class UploadController {
   async getSignature(req: AuthRequest, res: Response) {
-    const { type } = req.query as { type: "avatar" | "gallery" };
+    const { type } = req.query as { type: "avatar" | "gallery" | "sticker" };
     const userId = req.userId!;
 
     const timestamp = Math.round(Date.now() / 1000);
@@ -23,6 +23,9 @@ export class UploadController {
       params.folder = folder;
       params.public_id = publicId;
       params.overwrite = 1;
+    } else if (type === "sticker") {
+      folder = "echotrace/stickers";
+      params.folder = folder;
     } else {
       folder = `echotrace/gallery/user_${userId}`;
       params.folder = folder;

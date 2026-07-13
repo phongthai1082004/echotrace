@@ -97,7 +97,7 @@ interface DualLineChartProps {
   formatValue2?: (v: number) => string;
 }
 
-export function DualLineChart({ data, color1 = "#222", color2 = "#5A8F4A", height = 260, formatValue1, formatValue2 }: DualLineChartProps) {
+export function DualLineChart({ data, color1 = "#222", color2 = "#5A8F4A", height = 260, formatValue1, formatValue2, labelInterval = 1 }: DualLineChartProps & { labelInterval?: number }) {
   const W = 600, H = height, pad = { top: 32, right: 16, bottom: 28, left: 16 };
   const maxVal = Math.max(...data.map((d) => Math.max(d.series1, d.series2))) * 1.3;
   const iw = W - pad.left - pad.right, ih = H - pad.top - pad.bottom;
@@ -130,18 +130,18 @@ export function DualLineChart({ data, color1 = "#222", color2 = "#5A8F4A", heigh
         <g key={`s1${i}`}>
           <circle cx={p.x} cy={p.y} r={3} fill={color1} stroke="#FFF7D6" strokeWidth={2}
             style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1 + i * 0.04}s forwards` }} />
-          <text x={p.x} y={p.y - 12} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={9} fontWeight="bold" fill={color1}
-            style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1 + i * 0.04}s forwards` }}>{fmt1(p.d.series1)}</text>
-          <text x={p.x} y={H - 4} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={9} fontWeight="bold" fill="#999"
-            style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1 + i * 0.04}s forwards` }}>{p.d.label}</text>
+          {i % labelInterval === 0 && <text x={p.x} y={p.y - 12} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={9} fontWeight="bold" fill={color1}
+            style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1 + i * 0.04}s forwards` }}>{fmt1(p.d.series1)}</text>}
+          {i % labelInterval === 0 && <text x={p.x} y={H - 4} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={9} fontWeight="bold" fill="#999"
+              style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1 + i * 0.04}s forwards` }}>{p.d.label}</text>}
         </g>
       ))}
       {pts2.map((p, i) => (
         <g key={`s2${i}`}>
           <circle cx={p.x} cy={p.y} r={2.5} fill={color2} stroke="#FFF7D6" strokeWidth={2}
             style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1.2 + i * 0.04}s forwards` }} />
-          <text x={p.x} y={p.y + 16} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={8} fontWeight="bold" fill={color2}
-            style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1.2 + i * 0.04}s forwards` }}>{fmt2(p.d.series2)}</text>
+          {i % labelInterval === 0 && <text x={p.x} y={p.y + 16} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize={8} fontWeight="bold" fill={color2}
+            style={{ opacity: 0, animation: `fadeUp 0.3s ease-out ${1.2 + i * 0.04}s forwards` }}>{fmt2(p.d.series2)}</text>}
         </g>
       ))}
     </svg>
@@ -168,7 +168,7 @@ export function FunnelChart({ data }: FunnelChartProps) {
               <p className={`font-mono text-[9px] font-bold tracking-widest ${isHovered ? "text-[#222]" : "text-[#666]"}`}>{f.step}</p>
             </div>
             <div className="flex-1 h-9">
-              <div className="h-full rounded-r-lg border-2 border-[#222] bg-[#222] transition-all duration-700 ease-out"
+              <div className="h-full rounded-r-lg border-2 border-[#222] bg-[#222] transition-[width] duration-700 ease-out"
                 style={{ width: mounted ? `${f.pct}%` : "0%" }} />
             </div>
             <div className="w-28 shrink-0" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.3s ease-out 0.6s" }}>
