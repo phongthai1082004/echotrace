@@ -1,8 +1,16 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { PaginationConfig, QueryProcessor } from "../utils/pagination.js";
+import { UserMapper } from "../dto/user/user.list.js";
 
 export class UserService {
+  async getUserList(params: PaginationConfig ) {
+    const queryConfig = new QueryProcessor(params).build();
+    const users = await prisma.user.findMany(queryConfig);
+    return UserMapper.toDTOList(users);
+  }
+
   async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
       where: {id: parseInt(userId)},

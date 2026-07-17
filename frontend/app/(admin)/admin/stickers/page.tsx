@@ -2,40 +2,29 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Trash2, X, Search } from "lucide-react";
+import { NeoSelect } from "@/components/neo-select";
 import { useSession } from "next-auth/react";
 import { uploadToCloudinary } from "@/lib/upload";
-import { label, card, neoBtn, input } from "@/lib/styles";
+import { label, card, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
+import { ASSET_CATEGORIES, CATEGORY_LABELS, CATEGORY_COLORS, type AssetCategory } from "@/lib/asset-category";
 
-type AssetType = "sticker" | "template" | "background" | "element";
+type AssetType = "sticker" | "background";
 
 interface Asset {
   id: number;
   url: string;
   name: string;
   type: AssetType;
-  category: string | null;
+  category: AssetCategory | null;
 }
 
-const ASSETS_META: Record<AssetType, { label: string; color: string }> = {
-  sticker:    { label: "Sticker",   color: "bg-[#FFD93D] text-[#222]" },
-  template:   { label: "Template",  color: "bg-[#3B82F6] text-white" },
-  background: { label: "Background",color: "bg-[#22C55E] text-white" },
-  element:    { label: "Element",   color: "bg-[#8B5CF6] text-white" },
+const ASSETS_META: Record<AssetType, { label: string; color: string; dotColor: string }> = {
+  sticker:    { label: "Sticker",   color: "bg-[#FFD93D] text-[#222]", dotColor: "bg-[#FFD93D]" },
+  background: { label: "Background",color: "bg-[#22C55E] text-white", dotColor: "bg-[#22C55E]" },
 };
 
-const MOCK_ASSETS: Asset[] = [
-  { id: 1, url: "https://placehold.co/200x200/FFD93D/222?text=🌿", name: "Tropical Leaf", type: "sticker", category: "travel" },
-  { id: 2, url: "https://placehold.co/200x200/FFD93D/222?text=⭐", name: "Gold Star", type: "sticker", category: null },
-  { id: 3, url: "https://placehold.co/200x200/3B82F6/fff?text=A4", name: "A4 Portrait Grid", type: "template", category: "grid" },
-  { id: 4, url: "https://placehold.co/200x200/3B82F6/fff?text=SQ", name: "Square Collage", type: "template", category: "collage" },
-  { id: 5, url: "https://placehold.co/200x200/22C55E/fff?text=🌸", name: "Sakura Bloom", type: "background", category: "floral" },
-  { id: 6, url: "https://placehold.co/200x200/22C55E/fff?text=🌊", name: "Ocean Wave", type: "background", category: "nature" },
-  { id: 7, url: "https://placehold.co/200x200/8B5CF6/fff?text=◇", name: "Diamond Frame", type: "element", category: null },
-  { id: 8, url: "https://placehold.co/200x200/8B5CF6/fff?text=○", name: "Circle Badge", type: "element", category: "badge" },
-];
-
-const ASSET_TYPES: AssetType[] = ["sticker", "template", "background", "element"];
+const ASSET_TYPES: AssetType[] = ["sticker", "background"];
 
 export default function AdminAssetsPage() {
   const { data: session } = useSession();
@@ -45,15 +34,16 @@ export default function AdminAssetsPage() {
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | AssetType>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | AssetCategory>("all");
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [assetType, setAssetType] = useState<AssetType>("sticker");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<AssetCategory | "">("");
   const fileRef = useRef<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchAssets = async () => {
-    if (!token) { setAssets(MOCK_ASSETS); setLoading(false); return; }
+    if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/stickers`, {
@@ -88,8 +78,10 @@ export default function AdminAssetsPage() {
     if (!file || !token || !name.trim()) return;
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file, "sticker", token);
-      const body: any = { url, publicId: "", name: name.trim(), category: category.trim() || null };
+      const cloudType = assetType === "background" ? "background" : "sticker";
+      const { url, publicId } = await uploadToCloudinary(file, cloudType, token);
+      const body: any = { url, publicId, name: name.trim() };
+      if (category) body.category = category;
       if (assetType !== "sticker") body.type = assetType;
       await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/stickers`, {
         method: "POST",
@@ -115,15 +107,14 @@ export default function AdminAssetsPage() {
   const filtered = assets.filter((a) => {
     const q = search.toLowerCase();
     return (!q || a.name.toLowerCase().includes(q)) &&
-      (filter === "all" || a.type === filter);
+      (filter === "all" || a.type === filter) &&
+      (categoryFilter === "all" || a.category === categoryFilter);
   });
 
   const counts = {
     all: assets.length,
     sticker: assets.filter((a) => a.type === "sticker").length,
-    template: assets.filter((a) => a.type === "template").length,
     background: assets.filter((a) => a.type === "background").length,
-    element: assets.filter((a) => a.type === "element").length,
   };
 
   return (
@@ -135,57 +126,85 @@ export default function AdminAssetsPage() {
         </button>
       </AdminHeader>
 
-      <div className="flex-1 px-8 py-6 overflow-y-auto space-y-6">
-        {/* filter + search */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-1">
-            {(["all", ...ASSET_TYPES] as const).map((t) => (
-              <button key={t} onClick={() => { setFilter(t as typeof filter); }}
-                className={`font-mono text-[8px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-[background-color,color,border-color] ${
-                  filter === t ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+      <div className="flex-1 flex overflow-hidden">
+        {/* category sidebar */}
+        <div className="w-48 shrink-0 border-r-2 border-[#222] p-4 overflow-y-auto">
+          <p className={`${label} mb-3`}>Categories</p>
+          <div className="flex flex-col gap-1">
+            <button onClick={() => setCategoryFilter("all")}
+              className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] border-2 ${
+                categoryFilter === "all"
+                  ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
+                  : "bg-[#FFF7D6] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+              }`}>
+              All
+            </button>
+            {ASSET_CATEGORIES.map((c) => (
+              <button key={c} onClick={() => setCategoryFilter(c)}
+                className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] border-2 ${
+                  categoryFilter === c
+                    ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
+                    : "bg-[#FFF7D6] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
                 }`}>
-                {t === "all" ? "All" : ASSETS_META[t].label} <span className={filter === t ? "text-white/60" : "text-[#999]"}>({counts[t]})</span>
+                {CATEGORY_LABELS[c]}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 bg-white rounded-lg border-2 border-[#222] px-3 w-60 shrink-0">
-            <Search size={13} className="text-[#999] shrink-0" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search assets…"
-              className="flex-1 text-sm font-bold py-2 placeholder:text-[#999] focus:outline-none bg-transparent" />
-            {search && <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70"><X size={12} /></button>}
-          </div>
         </div>
 
-        {/* grid */}
-        {loading ? (
-          <p className="text-sm text-[#999]">Loading...</p>
-        ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-lg font-bold text-[#999]">No assets found</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-6 gap-4">
-            {filtered.map((a) => (
-              <div key={a.id} className={`${card} p-2 relative group`}>
-                <div className="w-full aspect-square rounded-[6px] overflow-hidden bg-white border-2 border-[#222] flex items-center justify-center">
-                  <img src={a.url} alt={a.name} className="w-full h-full object-contain" loading="lazy" />
-                </div>
-                <p className="font-mono text-[7px] font-bold tracking-widest uppercase mt-1.5 text-center text-[#666] truncate">{a.name}</p>
-                <div className="flex items-center justify-center gap-1 mt-0.5">
-                  <span className={`font-mono text-[6px] font-bold tracking-wider uppercase px-1 py-0.5 rounded ${ASSETS_META[a.type].color}`}>
-                    {ASSETS_META[a.type].label}
-                  </span>
-                  {a.category && <span className="font-mono text-[6px] text-[#999] truncate">{a.category}</span>}
-                </div>
-                <button onClick={() => handleDelete(a.id)}
-                  className="absolute top-1 right-1 p-1.5 bg-[#B54843] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Trash2 size={12} />
+        {/* main content */}
+        <div className="flex-1 px-8 py-6 overflow-y-auto space-y-6">
+          {/* search + type filter */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-1">
+              {(["all", ...ASSET_TYPES] as const).map((t) => (
+                <button key={t} onClick={() => { setFilter(t as typeof filter); }}
+                    className={`font-mono text-[8px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-[background-color,color,border-color] ${
+                    filter === t ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+                  }`}>
+                  {t === "all" ? "All" : ASSETS_META[t].label} <span className={filter === t ? "text-white/60" : "text-[#999]"}> ({counts[t]})</span>
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="flex items-center gap-2 bg-white rounded-lg border-2 border-[#222] px-3 w-60 shrink-0">
+              <Search size={13} className="text-[#999] shrink-0" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search assets…"
+                className="flex-1 text-sm font-bold py-2 placeholder:text-[#999] focus:outline-none bg-transparent" />
+              {search && <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70"><X size={12} /></button>}
+            </div>
           </div>
-        )}
+
+          {/* grid */}
+          {loading ? (
+            <p className="text-sm text-[#999]">Loading...</p>
+          ) : filtered.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <p className="text-lg font-bold text-[#999]">No assets found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-6 gap-4">
+              {filtered.map((a) => (
+                <div key={a.id} className={`${card} p-2 relative group`}>
+                  <div className="w-full aspect-square rounded-[6px] overflow-hidden bg-white border-2 border-[#222] flex items-center justify-center">
+                    <img src={a.url} alt={a.name} className="w-full h-full object-contain" loading="lazy" />
+                  </div>
+                  <p className="font-mono text-[8px] font-bold tracking-widest uppercase mt-1.5 text-center text-[#666] truncate">{a.name}</p>
+                  <div className="flex items-center justify-center gap-1 mt-0.5">
+                    <span className={`font-mono text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${ASSETS_META[a.type].color}`}>
+                      {ASSETS_META[a.type].label}
+                    </span>
+                    {a.category && <span className="flex items-center gap-1 font-mono text-[8px] text-[#999] truncate"><span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLORS[a.category]}`} />{CATEGORY_LABELS[a.category] || a.category}</span>}
+                  </div>
+                  <button onClick={() => handleDelete(a.id)}
+                    className="absolute top-1 right-1 p-1.5 bg-[#B54843] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* upload modal */}
@@ -204,17 +223,14 @@ export default function AdminAssetsPage() {
               </div>
               <div>
                 <p className={`${label} mb-1`}>Type</p>
-                <select value={assetType} onChange={(e) => setAssetType(e.target.value as AssetType)}
-                  className={`${neoBtn} w-full text-sm px-3 py-2`}>
-                  {ASSET_TYPES.map((t) => (
-                    <option key={t} value={t}>{ASSETS_META[t].label}</option>
-                  ))}
-                </select>
+                <NeoSelect value={assetType} onChange={(v) => setAssetType(v as AssetType)}
+                  options={ASSET_TYPES.map((t) => ({ value: t, label: ASSETS_META[t].label, color: ASSETS_META[t].dotColor }))} />
               </div>
               <div>
                 <p className={`${label} mb-1`}>Category</p>
-                <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. travel"
-                  className={input} />
+                <NeoSelect value={category} onChange={(v) => setCategory(v as AssetCategory | "")}
+                  placeholder="No category"
+                  options={ASSET_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c], color: CATEGORY_COLORS[c] }))} />
               </div>
               <div>
                 <p className={`${label} mb-1`}>Image *</p>

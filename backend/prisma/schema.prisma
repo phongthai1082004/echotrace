@@ -80,9 +80,13 @@ model Order {
   couponId       Int?
   discountAmount Float    @default(0)
   timeline       String?
+  productionBatchId Int?
+  product        String?
+  coverType      String?
 
-  user         User          @relation(fields: [userId], references: [id])
-  coupon       Coupon?       @relation(fields: [couponId], references: [id])
+  user         User              @relation(fields: [userId], references: [id])
+  coupon       Coupon?           @relation(fields: [couponId], references: [id])
+  productionBatch ProductionBatch? @relation(fields: [productionBatchId], references: [id])
   transactions Transaction[]
   orderItems   OrderItem[]
 
@@ -90,6 +94,7 @@ model Order {
   @@index([couponId])
   @@index([status])
   @@index([orderCode])
+  @@index([productionBatchId])
 }
 
 model Transaction {
@@ -134,10 +139,11 @@ model Book {
   pages    Int     @default(0)
   coverUrl String?
   status   String  @default("DRAFT")
+  content  String?
+  createdAt DateTime @default(now())
 
   user       User        @relation(fields: [userId], references: [id])
   theme      Theme?      @relation(fields: [themeId], references: [id])
-  bookPages  BookPage[]
   orderItems OrderItem[]
 
   @@index([userId])
@@ -155,7 +161,6 @@ model Theme {
   thumbnailUrl String
 
   books        Book[]
-  decorAssets  DecorAsset[]
   sampleBooks  SampleBook[]
 
   @@index([category])
@@ -175,9 +180,9 @@ model SampleBook {
   coverUrl    String?
   price       Float   @default(0)
   isActive    Boolean @default(true)
+  content     String?
 
-  theme       Theme?           @relation(fields: [themeId], references: [id])
-  pages       SampleBookPage[]
+  theme       Theme? @relation(fields: [themeId], references: [id])
 
   @@index([themeId])
   @@index([type])
@@ -185,43 +190,46 @@ model SampleBook {
   @@index([isActive])
 }
 
-model SampleBookPage {
-  id           Int     @id @default(autoincrement())
-  sampleBookId Int
-  pageNumber   Int
-  data         String
-  thumbnailUrl String?
-
-  sampleBook   SampleBook @relation(fields: [sampleBookId], references: [id])
-
-  @@index([sampleBookId])
-}
-
-model BookPage {
-  id           Int     @id @default(autoincrement())
-  bookId       Int
-  pageNumber   Int
-  data         String
-  thumbnailUrl String?
-
-  book         Book    @relation(fields: [bookId], references: [id])
-
-  @@index([bookId])
-}
-
 model DecorAsset {
   id       Int    @id @default(autoincrement())
-  themeId  Int?
   type     String
   category String?
   name     String
   url      String
   publicId String
 
-  theme Theme? @relation(fields: [themeId], references: [id])
-
-  @@index([themeId])
   @@index([type])
+}
+
+model Supplier {
+  id          Int      @id @default(autoincrement())
+  name        String
+  contact     String
+  email       String
+  status      String   @default("active")
+  totalDebt   Float    @default(0)
+  overdueDebt Float    @default(0)
+  monthDebt   Float    @default(0)
+  lastPaymentDate DateTime?
+
+  productionBatches ProductionBatch[]
+}
+
+model ProductionBatch {
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
+  code        String   @unique
+  status      String   @default("pending")
+  totalAmount Float    @default(0)
+  notes       String?
+  assignedAt  DateTime @default(now())
+  completedAt DateTime?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  orders   Order[]
+
+  @@index([supplierId])
+  @@index([status])
 }
 
 model Coupon {

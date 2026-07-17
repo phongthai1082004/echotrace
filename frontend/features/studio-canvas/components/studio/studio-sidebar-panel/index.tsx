@@ -2,23 +2,24 @@
 
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { PhotosPanel } from "./photos-panel";
-
-import { LayersPanel } from "./layers-panel";
 import { StickersPanel } from "./stickers-panel";
-import { LayoutPanel } from "./layout-panel";
-import { ThemePanel } from "./theme-panel";
 import { FilterPanel } from "./filter-panel";
+import { BackgroundsPanel } from "./backgrounds-panel";
+import { LayoutsPanel } from "./layouts-panel";
+import { LayersPanel } from "./layers-panel";
+import { FramesPanel } from "./frames-panel";
 
 export function StudioSidebarPanel() {
   const activeMenu = useCanvasStore((s) => s.activeMenu);
 
   const panels: Record<string, React.ReactNode> = {
+    Layouts: <LayoutsPanel />,
     Photos: <PhotosPanel />,
-    Layout: <LayoutPanel />,
     Stickers: <StickersPanel />,
+    Frames: <FramesPanel />,
     Filter: <FilterPanel />,
+    Backgrounds: <BackgroundsPanel />,
     Layers: <LayersPanel />,
-    Theme: <ThemePanel />,
   };
 
   return (

@@ -125,7 +125,7 @@ export function AccountSettings() {
                     const file = e.target.files?.[0];
                     if (!file || !token) return;
                     try {
-                      const url = await uploadToCloudinary(file, "avatar", token);
+                      const { url } = await uploadToCloudinary(file, "avatar", token);
                       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/avatar`, {
                         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                         body: JSON.stringify({ url }),

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { UserController } from "../controllers/user.controller.js";
-import { authMiddleware, AuthRequest } from "../middleware/auth.middleware.js";
+import { UserController } from "../../controllers/user.controller.js";
+import { authMiddleware, AuthRequest } from "../../middleware/auth.middleware.js";
 
 const router = Router();
 const user = new UserController();

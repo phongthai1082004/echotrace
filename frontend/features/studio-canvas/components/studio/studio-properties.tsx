@@ -1,38 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FORMATS, FONTS } from "../../types";
 import * as fabric from "fabric";
+import { parseFilterSliders } from "../../lib/filters";
 
-const photoFilters = [
-  { name: "Warm", gradient: "from-[#8B6914]/60 to-[#F5E6D3]/40" },
-  { name: "Cool", gradient: "from-[#4A7C9B]/60 to-[#E8F0F8]/40" },
-  { name: "B&W", gradient: "from-[#444]/60 to-[#ccc]/40" },
-  { name: "Gold", gradient: "from-[#D4A574]/60 to-[#FFF7D6]/40" },
-  { name: "Mute", gradient: "from-[#7A9B6A]/60 to-[#F0F5EA]/40" },
-  { name: "Noir", gradient: "from-[#111]/60 to-[#eee]/40" },
+const SLIDER_KEYS = ["Brightness", "Contrast", "Saturation", "Vibrance"] as const;
+const defaultVals = { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 };
+
+const PRESET_COLORS = [
+  "#000000", "#FFFFFF", "#FF0000", "#FF6B00", "#FFD600",
+  "#4CAF50", "#2196F3", "#9C27B0", "#E91E63", "#795548",
+  "#607D8B", "#FF5722", "#8BC34A", "#00BCD4", "#3F51B5",
 ];
 
 export function StudioProperties() {
   const canvas = useCanvasStore((s) => s.canvas);
-  const selectedElementId = useCanvasStore((s) => s.selectedElementId);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
-  const { pushUndo } = useCanvasStore();
-  const [sliders, setSliders] = useState({ Brightness: 0, Contrast: 0, Saturation: 0, Sharpness: 0 });
+  const pushUndo = useCanvasStore((s) => s.pushUndo);
+  const filterVersion = useCanvasStore((s) => s.filterVersion);
+  const selectionVersion = useCanvasStore((s) => s.selectionVersion);
+  const storeSliderValues = useCanvasStore((s) => s.filterSliderValues);
+  const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
+
+  useEffect(() => {
+    const c = useCanvasStore.getState().canvas;
+    const selected = c?.getActiveObject();
+    if (!selected || selected.type !== "image") {
+      setFilterSliderValues({ ...defaultVals });
+      return;
+    }
+    const img = selected as fabric.FabricImage;
+    setFilterSliderValues(parseFilterSliders(img.filters || []));
+  }, [filterVersion, selectionVersion]);
 
   const selected = canvas?.getActiveObject();
-  const selectedImgSrc = selected?.type === "image" ? (selected as fabric.FabricImage).getSrc() : null;
 
   const updateSlider = (key: string, val: number) => {
-    setSliders((prev) => ({ ...prev, [key]: val }));
+    const newVals = { ...storeSliderValues, [key]: val };
+    setFilterSliderValues(newVals);
     if (!selected || selected.type !== "image") return;
     const img = selected as fabric.FabricImage;
-    const filters = img.filters || [];
+    const filters = [...(img.filters || [])];
     const filterMap: Record<string, any> = {
       Brightness: new fabric.filters.Brightness({ brightness: val / 100 }),
       Contrast: new fabric.filters.Contrast({ contrast: val / 100 }),
       Saturation: new fabric.filters.Saturation({ saturation: val / 100 }),
+      Vibrance: new fabric.filters.Vibrance({ vibrance: val / 100 }),
     };
     const filter = filterMap[key];
     if (filter) {
@@ -53,29 +68,66 @@ export function StudioProperties() {
     canvas?.renderAll();
   };
 
-  const applyFilterPreset = (name: string) => {
-    if (!selected || selected.type !== "image") return;
-    const img = selected as fabric.FabricImage;
+  const applyBold = () => {
+    if (!selected || selected.type !== "i-text") return;
+    const txt = selected as fabric.IText;
     pushUndo();
-    img.filters = [];
-    const filter = {
-      Warm: new fabric.filters.ColorMatrix({ matrix: [1,0,0,0,0.15, 0,1,0,0,0.08, 0,0,1,0,0, 0,0,0,1,0] }),
-      Cool: new fabric.filters.ColorMatrix({ matrix: [1,0,0,0,-0.08, 0,1,0,0,0, 0,0,1,0,0.12, 0,0,0,1,0] }),
-      "B&W": new fabric.filters.Grayscale(),
-      Gold: new fabric.filters.ColorMatrix({ matrix: [1,0,0,0,0.2, 0,1,0,0,0.1, 0,0,1,0,0, 0,0,0,1,0] }),
-      Mute: new fabric.filters.ColorMatrix({ matrix: [1,0,0,0,0.05, 0,1,0,0,0.05, 0,0,1,0,0.05, 0,0,0,0.85,0] }),
-      Noir: new fabric.filters.ColorMatrix({ matrix: [0.3,0.3,0.3,0,0, 0.3,0.3,0.3,0,0, 0.3,0.3,0.3,0,0, 0,0,0,1,0] }),
-    }[name];
-    if (filter) {
-      img.filters = [filter];
-      img.applyFilters();
-      canvas?.renderAll();
+    txt.set({ fontWeight: (txt.fontWeight === "bold" ? "normal" : "bold") as any });
+    canvas?.renderAll();
+  };
+
+  const applyItalic = () => {
+    if (!selected || selected.type !== "i-text") return;
+    const txt = selected as fabric.IText;
+    pushUndo();
+    txt.set({ fontStyle: txt.fontStyle === "italic" ? "normal" : "italic" });
+    canvas?.renderAll();
+  };
+
+  const applyUnderline = () => {
+    if (!selected || selected.type !== "i-text") return;
+    const txt = selected as fabric.IText;
+    pushUndo();
+    txt.set({ underline: !txt.underline });
+    canvas?.renderAll();
+  };
+
+  const applyColor = (color: string) => {
+    if (!selected || selected.type !== "i-text") return;
+    const txt = selected as fabric.IText;
+    pushUndo();
+    txt.set({ fill: color });
+    canvas?.renderAll();
+  };
+
+  const toHex = (color: string): string => {
+    if (color.startsWith("#")) return color.length === 4
+      ? "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3]
+      : color;
+    if (color.startsWith("rgb")) {
+      const m = color.match(/\d+/g);
+      if (m && m.length >= 3) {
+        return "#" + [m[0], m[1], m[2]].map((x) => (+x).toString(16).padStart(2, "0")).join("");
+      }
     }
+    return "#000000";
   };
 
   const selectedType = selected?.type;
   const isImage = selectedType === "image";
   const isText = selectedType === "i-text" || selectedType === "textbox";
+  const isFrame = (selected as any)?.customProperties?.layer === "frame";
+
+  const currentColor = toHex(((selected as any)?.fill as string) || "#000000");
+  const [hexInput, setHexInput] = useState(currentColor.replace("#", ""));
+  const photoFrameId = isImage ? (selected as any)?.customProperties?.frameId : null;
+  const photoFrame = photoFrameId && canvas?.getObjects().find((o: any) =>
+    (o as any).customProperties?.layer === "frame" && (o as any)._selId === photoFrameId
+  );
+
+  useEffect(() => {
+    setHexInput(currentColor.replace("#", ""));
+  }, [currentColor, selectionVersion]);
 
   const fmt = FORMATS[bookMeta.format];
 
@@ -89,7 +141,7 @@ export function StudioProperties() {
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Adjust</p>
                 <button onClick={() => {
-                  setSliders({ Brightness: 0, Contrast: 0, Saturation: 0, Sharpness: 0 });
+                  setFilterSliderValues({ ...defaultVals });
                   if (selected && selected.type === "image") {
                     const img = selected as fabric.FabricImage;
                     pushUndo();
@@ -98,37 +150,33 @@ export function StudioProperties() {
                     canvas?.renderAll();
                   }
                 }}
-                  className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-all bg-white">
+                  className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
                   Reset
                 </button>
               </div>
-              {["Brightness", "Contrast", "Saturation", "Sharpness"].map((key) => (
+              {SLIDER_KEYS.map((key) => (
                 <div key={key} className="mb-2">
                   <div className="flex justify-between mb-0.5">
                     <p className="font-mono text-[8px] font-bold text-[#999]">{key}</p>
-                    <p className="font-mono text-[8px] font-bold text-[#999]">{(sliders as any)[key]}</p>
+                    <p className="font-mono text-[8px] font-bold text-[#999]">{(storeSliderValues as any)[key]}</p>
                   </div>
-                  <input type="range" min={-100} max={100} value={(sliders as any)[key]}
+                  <input type="range" min={-100} max={100} value={(storeSliderValues as any)[key]}
                     onChange={(e) => updateSlider(key, Number(e.target.value))}
                     className="w-full h-1.5 bg-[#e8e6e0] rounded-full border-[1.5px] border-[#222] appearance-none cursor-pointer accent-[#222]" />
                 </div>
               ))}
             </div>
-            <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Filters</p>
-              <div className="grid grid-cols-3 gap-1.5">
-                {photoFilters.map((f) => (
-                  <button key={f.name} onClick={() => applyFilterPreset(f.name)}
-                    className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[0px_0px_0_#222] transition-all bg-[#FFF7D6]">
-                    <div className="w-full h-7 rounded-[2px] border-[1.5px] border-[#222] overflow-hidden relative">
-                      {selectedImgSrc && <img src={selectedImgSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${f.gradient}`} />
-                    </div>
-                    <span className="font-mono text-[6px] font-bold tracking-widest uppercase text-[#666]">{f.name}</span>
+            {photoFrame && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Frame</p>
+                  <button onClick={() => { canvas?.setActiveObject(photoFrame); canvas?.renderAll(); }}
+                    className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
+                    Select Frame
                   </button>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ) : isText ? (
           <div className="space-y-3">
@@ -137,7 +185,7 @@ export function StudioProperties() {
               <select value={(selected as any)?.fontFamily || ""} onChange={(e) => applyFont(e.target.value)}
                 className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white">
                 {FONTS.map((f) => (
-                  <option key={f.name} value={f.name}>{f.name}</option>
+                  <option key={f.name} value={f.css}>{f.name}</option>
                 ))}
               </select>
             </div>
@@ -151,6 +199,68 @@ export function StudioProperties() {
                   className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white" />
               </div>
             )}
+            <div>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Style</p>
+              <div className="flex gap-1">
+                <button onClick={applyBold}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] transition-all ${(selected as any)?.fontWeight === "bold" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                  B
+                </button>
+                <button onClick={applyItalic}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] italic transition-all ${(selected as any)?.fontStyle === "italic" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                  I
+                </button>
+                <button onClick={applyUnderline}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] underline transition-all ${(selected as any)?.underline ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                  U
+                </button>
+              </div>
+            </div>
+            <div>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Color</p>
+              <div className="grid grid-cols-5 gap-1 mb-2">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => { applyColor(c); setHexInput(c.replace("#", "")); }}
+                    className={`w-full aspect-square rounded-md border-2 transition-all ${currentColor.toUpperCase() === c.toUpperCase() ? "border-[#222] scale-110 shadow" : "border-[#ccc] hover:border-[#999]"}`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-[9px] font-bold text-[#999]">#</span>
+                <input
+                  type="text"
+                  value={hexInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+                    setHexInput(val);
+                    if (val.length === 6) applyColor("#" + val);
+                  }}
+                  onBlur={() => {
+                    if (/^[0-9a-fA-F]{6}$/.test(hexInput)) {
+                      applyColor("#" + hexInput);
+                    } else {
+                      setHexInput(currentColor.replace("#", ""));
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  maxLength={6}
+                  placeholder="000000"
+                  className="flex-1 font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white uppercase"
+                />
+              </div>
+            </div>
+          </div>
+        ) : isFrame ? (
+          <div>
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Frame</p>
+            <p className="font-mono text-[10px] font-bold text-[#999]">Resize or rotate in canvas</p>
           </div>
         ) : (
           <p className="font-mono text-[10px] font-bold text-[#999]">Select an element</p>

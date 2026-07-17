@@ -8,7 +8,6 @@ import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
 import { AdminPagination } from "@/components/admin-pagination";
 import type { User, UserStatus } from "@/lib/mock-users";
-import { MOCK_USERS } from "@/lib/mock-users";
 
 const colWidths = ["60px", "1fr", "1fr", "140px", "60px", "100px", "100px"];
 const gridCols = colWidths.join(" ");
@@ -24,7 +23,7 @@ export default function AdminUsersPage() {
   const perPage = 8;
 
   const fetchUsers = async () => {
-    if (!token) { setUsers(MOCK_USERS); setLoading(false); return; }
+    if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/users`, {

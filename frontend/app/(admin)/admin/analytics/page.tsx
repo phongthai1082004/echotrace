@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, Package, AlertTriangle, DollarSign } from "lucide-react";
+import { TrendingUp, Package, AlertTriangle, DollarSign, ShoppingCart } from "lucide-react";
 import { label, card } from "@/lib/styles";
 import { BarChart, LineChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
@@ -15,10 +15,12 @@ export default function AdminAnalyticsPage() {
   const totalRevenue = yearlyRevenue.reduce((s, v) => s + v, 0);
   const totalOrders = yearlyOrders.reduce((s, v) => s + v, 0);
   const totalProfit = Math.round(totalRevenue * 0.35);
+  const aov = Math.round(totalRevenue / totalOrders);
 
   const kpis = [
     { label: "Total Revenue YTD", value: `₫${(totalRevenue / 1000000).toFixed(1)}M`, icon: TrendingUp },
     { label: "Total Orders", value: String(totalOrders), icon: Package },
+    { label: "Avg. Order Value", value: `₫${(aov / 1000).toFixed(0)}K`, icon: ShoppingCart },
     { label: "Cancellation Rate", value: "3.2%", icon: AlertTriangle },
     { label: "Total Profit", value: `₫${(totalProfit / 1000000).toFixed(1)}M`, icon: DollarSign },
   ];
@@ -28,7 +30,7 @@ export default function AdminAnalyticsPage() {
       <AdminHeader label="Admin — Analytics" title="Revenue Overview" />
 
       <div className="px-8 py-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
             return (

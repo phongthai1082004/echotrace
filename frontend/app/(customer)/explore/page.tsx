@@ -6,10 +6,6 @@ import Link from "next/link";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { cloudinaryUrl } from "@/lib/cloudinary";
 
-interface Theme {
-  id: number; name: string; code: string; description: string; category: string | null; thumbnailUrl: string;
-}
-
 interface SampleBook {
   id: number; name: string; description: string | null; category: string | null;
   style: string; font: string; cover: string; pageCount: number; coverUrl: string | null;
@@ -22,7 +18,6 @@ export default function ExplorePage() {
   const { data: session } = useSession();
   const accessToken = (session as any)?.accessToken;
 
-  const [themes, setThemes] = useState<Theme[]>([]);
   const [samples, setSamples] = useState<SampleBook[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [tab, setTab] = useState<"samples" | "community">("samples");
@@ -32,7 +27,6 @@ export default function ExplorePage() {
 
   useEffect(() => {
     if (!accessToken) return;
-    api("/api/explore/themes").then(r => r.json()).then(d => setThemes(d.data || [])).catch(() => {});
     api("/api/explore/samples").then(r => r.json()).then(d => setSamples(d.data || [])).catch(() => {});
   }, [accessToken]);
 

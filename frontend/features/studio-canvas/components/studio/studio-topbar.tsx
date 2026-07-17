@@ -1,10 +1,22 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { Undo2, Redo2, Type, Trash2, Eye } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
+import { useToast } from "@/components/toast";
 import { ZOOM_LEVELS, FONTS } from "../../types";
+import { applyUndo, applyRedo } from "../../lib/layout-engine";
 import * as fabric from "fabric";
+
+const TEXT_PRESETS = [
+  { label: "Title", fontSize: 36, fontWeight: "bold", fontFamily: FONTS[0].css },
+  { label: "Heading", fontSize: 28, fontWeight: "bold", fontFamily: FONTS[0].css },
+  { label: "Subheading", fontSize: 22, fontWeight: "600", fontFamily: FONTS[3].css },
+  { label: "Body", fontSize: 16, fontWeight: "normal", fontFamily: FONTS[3].css },
+  { label: "Caption", fontSize: 12, fontWeight: "normal", fontFamily: FONTS[3].css },
+];
 
 function ToolBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
@@ -42,36 +54,44 @@ export function StudioTopbar() {
   const pushRedo = useCanvasStore((s) => s.pushRedo);
   const clearRedo = useCanvasStore((s) => s.clearRedo);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
+  const setBookMeta = useCanvasStore((s) => s.setBookMeta);
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
   const setZoomIndex = useCanvasStore((s) => s.setZoomIndex);
+  const viewMode = useCanvasStore((s) => s.viewMode);
+  const setViewMode = useCanvasStore((s) => s.setViewMode);
   const { saveFull } = useAutoSave();
+  const { showToast } = useToast();
+  const { data: session } = useSession();
+  const token = (session as any)?.accessToken;
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTitle && titleRef.current) {
+      titleRef.current.focus();
+      titleRef.current.select();
+    }
+  }, [editingTitle]);
+
+  const commitTitle = () => {
+    const t = titleDraft.trim();
+    if (t) setBookMeta({ title: t });
+    setEditingTitle(false);
+  };
 
   const iconSize = 14;
 
   const handleUndo = async () => {
     if (!canvas || undoStack.length === 0) return;
-    const current = JSON.stringify((canvas as any).toJSON(["z", "slotIndex", "layer"]));
-    pushRedo(current);
-    const prev = popUndo();
-    if (prev) {
-      canvas.clear();
-      canvas.backgroundColor = "#fff";
-      await canvas.loadFromJSON(JSON.parse(prev));
-      canvas.renderAll();
-    }
+    const s = useCanvasStore.getState();
+    await applyUndo(canvas, popUndo, pushRedo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
   };
 
   const handleRedo = async () => {
     if (!canvas || redoStack.length === 0) return;
-    const current = JSON.stringify((canvas as any).toJSON(["z", "slotIndex", "layer"]));
-    pushUndo();
-    const next = popRedo();
-    if (next) {
-      canvas.clear();
-      canvas.backgroundColor = "#fff";
-      await canvas.loadFromJSON(JSON.parse(next));
-      canvas.renderAll();
-    }
+    const s = useCanvasStore.getState();
+    await applyRedo(canvas, popRedo, pushUndo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
   };
 
   const handleDelete = () => {
@@ -89,22 +109,21 @@ export function StudioTopbar() {
   const handleZoom = (dir: 1 | -1) => {
     const idx = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomIndex + dir));
     setZoomIndex(idx);
-    const container = document.getElementById("canvas-scale-container");
-    if (container) {
-      container.style.transform = `scale(${ZOOM_LEVELS[idx]})`;
-    }
   };
 
-  const handleAddText = () => {
+  const handleAddText = (preset?: typeof TEXT_PRESETS[number]) => {
     if (!canvas) return;
     pushUndo();
-    const text = new fabric.IText("Double-click to edit", {
+    const id = `text-${Date.now()}`;
+    const text = new fabric.IText(preset ? preset.label : "Double-click to edit", {
       left: 100,
       top: 100,
-      fontSize: 24,
-      fontFamily: FONTS[0].css,
-      customProperties: { z: 251, layer: "element", id: `text-${Date.now()}` },
+      fontSize: preset?.fontSize || 24,
+      fontWeight: preset?.fontWeight || "normal",
+      fontFamily: preset?.fontFamily || FONTS[0].css,
+      customProperties: { z: Date.now(), layer: "element" },
     } as any);
+    (text as any)._selId = id;
     canvas.add(text);
     canvas.setActiveObject(text);
     canvas.renderAll();
@@ -137,20 +156,52 @@ export function StudioTopbar() {
 
   return (
     <div className="h-12 flex items-center px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222]">
-      <span className="font-bold text-sm mr-2">{bookMeta.title}</span>
+      {editingTitle ? (
+        <input ref={titleRef} value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={commitTitle} onKeyDown={(e) => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+          className="font-bold text-sm bg-transparent border-b-2 border-[#222] outline-none w-40" />
+      ) : (
+        <span onClick={() => { setTitleDraft(bookMeta.title); setEditingTitle(true); }}
+          className="font-bold text-sm mr-2 cursor-pointer hover:opacity-60 transition-opacity">{bookMeta.title}</span>
+      )}
 
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <ToolBtn icon={<Undo2 size={iconSize} />} label="Undo" onClick={handleUndo} />
       <ToolBtn icon={<Redo2 size={iconSize} />} label="Redo" onClick={handleRedo} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
-      <ToolBtn icon={<Type size={iconSize} />} label="Add Text" onClick={handleAddText} />
+      <div className="relative group">
+        <button onClick={() => handleAddText()} className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">
+          <Type size={iconSize} />
+        </button>
+        <div className="absolute top-full left-0 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto">
+          <div className="bg-[#FFF7D6] rounded-lg shadow-[4px_4px_0_#222] border-2 border-[#222] overflow-hidden min-w-[160px]">
+            {TEXT_PRESETS.map((preset, i) => (
+              <button
+                key={preset.label}
+                onClick={() => handleAddText(preset)}
+                className={`w-full px-4 py-2.5 text-left hover:bg-[#e8e6e0] transition-colors flex items-center gap-3 ${i < TEXT_PRESETS.length - 1 ? "border-b border-[#222]/10" : ""}`}
+              >
+                <span style={{ fontFamily: preset.fontFamily, fontSize: Math.min(preset.fontSize / 3, 14), fontWeight: preset.fontWeight as any }}
+                  className="text-[#222]">{preset.label}</span>
+                <span className="font-mono text-[8px] font-bold tracking-widest text-[#999] ml-auto">{preset.fontSize}px</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <DelBtn icon={<Trash2 size={iconSize} />} label="Delete" onClick={handleDelete} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20v2"/><path d="M12 14v-4"/><path d="M12 8V6"/><path d="M9 13l3-3 3 3"/><path d="M9 11l3 3 3-3"/></svg>} label="Flip H" onClick={handleFlipH} />
       <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 22v-4"/><path d="M12 10V6"/><path d="M9 13l3-3 3 3"/><path d="M9 15l3 3 3-3"/></svg>} label="Flip V" onClick={handleFlipV} />
-
       <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
+          {(["left", "spread", "right"] as const).map((v) => (
+            <button key={v} onClick={() => setViewMode(v)}
+              disabled={useCanvasStore.getState().pages.length <= 2 || useCanvasStore.getState().activePageIndex === 0 || useCanvasStore.getState().activePageIndex === useCanvasStore.getState().pages.length - 1}
+              className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${viewMode === v ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${v === "right" ? "" : "border-r-2 border-[#222]"} disabled:opacity-30 disabled:cursor-not-allowed`}>{v === "left" ? "L" : v === "right" ? "R" : "2P"}</button>
+          ))}
+        </div>
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           <button onClick={() => handleZoom(-1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">−</button>
           <button className="px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest border-x-[2px] border-[#222] flex items-center gap-1 hover:bg-[#e8e6e0] transition-colors">
@@ -160,7 +211,11 @@ export function StudioTopbar() {
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> Preview</button>
-        <button onClick={saveFull}
+        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+          Auto-Fill
+        </button>
+        <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? "Đã lưu thành công" : `Lưu thất bại: ${r.error}`, r.ok ? "success" : "error"); }}
           className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">Save Journal</button>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -1,0 +1,306 @@
+@startuml Echotrace Database Schema
+
+!theme plain
+skinparam backgroundColor #fefefe
+skinparam rectangle {
+  BackgroundColor #f5f5f5
+  BorderColor #222
+}
+skinparam arrow {
+  Color #666
+  Thickness 2
+}
+
+together {
+  rectangle User [
+    <b>User</b>
+    --
+    id: Int PK
+    email: String? <size:10>(unique)</size>
+    password: String?
+    name: String?
+    avatar: String?
+    phone: String?
+    address: String?
+    city: String?
+    status: String?
+    role: String <size:10>(default "user")</size>
+    googleId: String? <size:10>(unique)</size>
+    --
+    <size:10>↑ tokens, orders, images, books, coupon usage</size>
+  ]
+
+  rectangle Token [
+    <b>Token</b>
+    --
+    id: Int PK
+    userId: Int?
+    email: String?
+    refreshToken: String <size:10>(unique)</size>
+    tokenType: String <size:10>(default "session")</size>
+    isRevoked: Boolean <size:10>(default false)</size>
+    expiresAt: DateTime
+  ]
+
+  rectangle UserImage [
+    <b>UserImage</b>
+    --
+    id: Int PK
+    userId: Int FK
+    url: String
+    publicId: String
+    width: Int?
+    height: Int?
+    size: Int?
+    bookId: Int?
+  ]
+}
+
+rectangle Book [
+  <b>Book</b>
+  --
+  id: Int PK
+  userId: Int FK
+  themeId: Int?
+  type: String <size:10>(default "TRAVEL")</size>
+  title: String
+  style: String
+  font: String
+  cover: String <size:10>(default "softcover")</size>
+  pages: Int <size:10>(default 0)</size>
+  coverUrl: String?
+  status: String <size:10>(default "DRAFT")</size>
+]
+
+rectangle BookPage [
+  <b>BookPage</b>
+  --
+  id: Int PK
+  bookId: Int FK
+  pageNumber: Int
+  data: String <size:10>(JSON canvas)</size>
+  thumbnailUrl: String?
+]
+
+rectangle Theme [
+  <b>Theme</b>
+  --
+  id: Int PK
+  name: String
+  code: String <size:10>(unique)</size>
+  description: String
+  category: String?
+  thumbnailUrl: String
+]
+
+rectangle DecorAsset [
+  <b>DecorAsset</b>
+  --
+  id: Int PK
+  themeId: Int?
+  type: String <size:10>("sticker|template|background|element")</size>
+  category: String? <size:10>(AssetCategory enum)</size>
+  name: String
+  url: String
+  publicId: String
+]
+
+rectangle SampleBook [
+  <b>SampleBook</b>
+  --
+  id: Int PK
+  name: String
+  description: String?
+  themeId: Int?
+  type: String <size:10>(default "TRAVEL")</size>
+  category: String?
+  style: String
+  font: String
+  cover: String <size:10>(default "softcover")</size>
+  pageCount: Int <size:10>(default 0)</size>
+  coverUrl: String?
+  price: Float <size:10>(default 0)</size>
+  isActive: Boolean <size:10>(default true)</size>
+]
+
+rectangle SampleBookPage [
+  <b>SampleBookPage</b>
+  --
+  id: Int PK
+  sampleBookId: Int FK
+  pageNumber: Int
+  data: String <size:10>(JSON canvas)</size>
+  thumbnailUrl: String?
+]
+
+rectangle Order [
+  <b>Order</b>
+  --
+  id: Int PK
+  orderCode: String?
+  userId: Int FK
+  totalAmount: Float
+  depositInput: Float <size:10>(default 0)</size>
+  paidAmount: Float <size:10>(default 0)</size>
+  paymentMethod: String <size:10>(default "FULL")</size>
+  payosOrderCode: Int? <size:10>(unique)</size>
+  status: String <size:10>(default "PENDING_PAYMENT")</size>
+  name: String?
+  phone: String?
+  address: String?
+  city: String?
+  note: String?
+  couponId: Int?
+  discountAmount: Float <size:10>(default 0)</size>
+  timeline: String? <size:10>(JSON array)</size>
+  productionBatchId: Int?
+  product: String? <size:10>("photo book|calendar|print")</size>
+  coverType: String? <size:10>("softcover|hardcover")</size>
+]
+
+rectangle OrderItem [
+  <b>OrderItem</b>
+  --
+  id: Int PK
+  orderId: Int FK
+  bookId: Int FK
+  quantity: Int <size:10>(default 1)</size>
+  price: Float
+]
+
+rectangle Transaction [
+  <b>Transaction</b>
+  --
+  id: Int PK
+  orderId: Int FK
+  payosOrderCode: Int <size:10>(unique)</size>
+  amount: Float
+  paymentLinkId: String
+  reference: String?
+  status: String
+  transactionTime: DateTime
+]
+
+rectangle Coupon [
+  <b>Coupon</b>
+  --
+  id: Int PK
+  code: String <size:10>(unique)</size>
+  discountType: String <size:10>("PERCENT|FIXED")</size>
+  discountValue: Float
+  minOrderAmount: Float <size:10>(default 0)</size>
+  maxDiscountAmount: Float?
+  maxUsageCount: Int <size:10>(default 0)</size>
+  usedCount: Int <size:10>(default 0)</size>
+  isActive: Boolean <size:10>(default true)</size>
+  expiresAt: DateTime?
+]
+
+rectangle CouponUsage [
+  <b>CouponUsage</b>
+  --
+  id: Int PK
+  couponId: Int FK
+  userId: Int FK
+  usedAt: DateTime
+  --
+  <size:10>↑ unique(couponId, userId)</size>
+]
+
+' ── Models for Admin UI (dispatch, suppliers) ──
+
+rectangle Supplier [
+  <b>Supplier</b>
+  --
+  id: Int PK
+  name: String
+  contact: String
+  email: String
+  status: String <size:10>("active|inactive")</size>
+  totalDebt: Float <size:10>(default 0)</size>
+  overdueDebt: Float <size:10>(default 0)</size>
+  monthDebt: Float <size:10>(default 0)</size>
+  lastPaymentDate: DateTime?
+]
+
+rectangle ProductionBatch [
+  <b>ProductionBatch</b>
+  --
+  id: Int PK
+  supplierId: Int FK
+  code: String <size:10>(unique)</size>
+  status: String <size:10>("pending|printing|quality-check|shipped")</size>
+  totalAmount: Float <size:10>(default 0)</size>
+  notes: String?
+  assignedAt: DateTime
+  completedAt: DateTime?
+]
+
+' ── Relationships ──
+
+User  ||--o{ Token        : "has"
+User  ||--o{ UserImage    : "has"
+User  ||--o{ Order        : "places"
+User  ||--o{ Book         : "creates"
+User  ||--o{ CouponUsage  : "uses"
+
+Book  ||--o{ BookPage     : "contains"
+Book  ||--o{ OrderItem    : "sold in"
+
+Theme ||--o{ Book         : "used by"
+Theme ||--o{ SampleBook   : "has samples"
+
+SampleBook ||--o{ SampleBookPage : "contains"
+
+Order ||--o{ Transaction  : "has payments"
+Order ||--o{ OrderItem    : "has items"
+Order ||--o{ Coupon       : "applies"
+Order ||--o{ CouponUsage  : "tracks"
+
+Coupon ||--o{ CouponUsage : "tracks"
+
+' ── New relationships ──
+
+Supplier ||--o{ ProductionBatch : "produces"
+ProductionBatch ||--o{ Order     : "includes"
+
+' ── Notes ──
+
+note right of DecorAsset
+  <b>AssetCategory (app-level enum):</b>
+  travel, wedding, nature, floral,
+  food, baby, party, seasonal,
+  geometric, abstract
+end note
+
+note right of Order
+  <b>Order statuses:</b>
+  PENDING_PAYMENT → PAID →
+  PRINTING → QUALITY_CHECK →
+  SHIPPED → DELIVERED
+  --
+  <b>Dispatch statuses:</b>
+  pending → printing →
+  quality-check → shipped
+end note
+
+note right of Coupon
+  <b>discountType:</b>
+  PERCENT - % off
+  FIXED - fixed amount
+end note
+
+note top of Book
+  <b>Book type/format:</b>
+  TRAVEL, WEDDING, ... (from FormatKey)
+  Canvas stored per-page in BookPage
+end note
+
+note right of Supplier
+  <b>From admin UI:</b>
+  Suppliers CRUD + dispatch assignment.
+  Debt tracks production cost owed
+  to each printing partner.
+end note
+
+@enduml

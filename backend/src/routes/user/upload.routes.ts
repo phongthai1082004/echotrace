@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { UploadController } from "../controllers/upload.controller.js";
-import { authMiddleware, AuthRequest } from "../middleware/auth.middleware.js";
+import { UploadController } from "../../controllers/upload.controller.js";
+import { authMiddleware, AuthRequest } from "../../middleware/auth.middleware.js";
 
 const router = Router();
 const uploadCtrl = new UploadController();

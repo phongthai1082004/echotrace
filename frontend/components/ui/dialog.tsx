@@ -1,37 +1,24 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useCallback } from "react";
 
-export function Dialog({
-  open,
-  onClose,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  children: ReactNode;
-}) {
+export function Dialog({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
     }
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  }, [open, handleKeyDown]);
 
   if (!open) return null;
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40"
-        style={{ background: "rgba(26,26,26,0.18)" }}
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {children}
-      </div>
-    </>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}>{children}</div>
+    </div>
   );
 }

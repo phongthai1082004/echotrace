@@ -23,9 +23,9 @@ interface SignatureData {
  */
 export async function uploadToCloudinary(
   file: File,
-  type: "avatar" | "gallery" | "sticker",
+  type: "avatar" | "gallery" | "sticker" | "background",
   accessToken: string
-): Promise<string> {
+): Promise<{ url: string; publicId: string }> {
   // Bước A: Lấy chữ ký từ backend
   const sigRes = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/get-upload-signature?type=${type}`,
@@ -53,5 +53,5 @@ export async function uploadToCloudinary(
   if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
 
   const uploadData = await uploadRes.json();
-  return uploadData.secure_url as string;
+  return { url: uploadData.secure_url as string, publicId: uploadData.public_id as string };
 }

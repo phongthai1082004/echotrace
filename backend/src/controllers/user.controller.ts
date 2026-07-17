@@ -30,4 +30,29 @@ export class UserController {
     const updated = await userService.saveAvatarUrl(req.userId!, url);
     res.json(ApiResponse.success(updated));
   }
+
+  async getUserList(req: AuthRequest, res: Response) {
+    const { 
+      status, 
+      customerId, 
+      search, 
+      sort, 
+      order, 
+      limit, 
+      cursor 
+    } = req.query;
+
+    const params = {
+      status: status as string | undefined,
+      customerId: customerId ? Number(customerId) : undefined,
+      search: search as string | undefined,
+      sort: sort as string | undefined,
+      order: (order as string) || 'desc', 
+      limit: limit ? Number(limit) : 8,    
+      cursor: cursor ? Number(cursor) : 1  
+    };
+    
+    const users = await userService.getUserList(params);
+    return res.json({ success: true, data: users });
+  }
 }

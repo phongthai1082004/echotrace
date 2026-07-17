@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
+import { ASSET_CATEGORIES, CATEGORY_LABELS } from "@/lib/asset-category";
+import { Search, X } from "lucide-react";
 
 interface Sticker {
   id: number;
@@ -11,12 +13,14 @@ interface Sticker {
   category: string | null;
 }
 
-function DraggableStickerImg({ url }: { url: string }) {
+const ALL_KEY = "___all___";
+
+function DraggableStickerImg({ url, name }: { url: string; name: string }) {
   const [{ isDragging }, dragRef] = useDrag(() => ({
     type: "STICKER",
-    item: { type: "STICKER", url },
+    item: { type: "STICKER", url, name },
     collect: (m) => ({ isDragging: m.isDragging() }),
-  }), [url]);
+  }), [url, name]);
 
   return (
     <div ref={dragRef as any}
@@ -30,23 +34,59 @@ export function StickersPanel() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>(ALL_KEY);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/stickers`, {
+    const params = new URLSearchParams();
+    params.set("type", "sticker");
+    if (categoryFilter !== ALL_KEY) params.set("category", categoryFilter);
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/stickers?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((r) => r.json()).then((d) => setStickers(d.data || [])).catch(() => {});
-  }, [token]);
+  }, [token, categoryFilter]);
+
+  const filtered = stickers.filter((s) => {
+    const q = search.toLowerCase();
+    return !q || s.name.toLowerCase().includes(q);
+  });
 
   return (
     <div className="p-4">
       <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Stickers</p>
-      {stickers.length === 0 ? (
-        <p className="text-[10px] text-[#999]">No stickers yet</p>
+      <div className="flex items-center gap-1 bg-white rounded border-2 border-[#222] px-2 mb-2">
+        <Search size={11} className="text-[#999] shrink-0" />
+        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search stickers…"
+          className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent" />
+        {search && <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70"><X size={10} /></button>}
+      </div>
+      <div className="flex flex-wrap gap-1 mb-3">
+        <button onClick={() => setCategoryFilter(ALL_KEY)}
+          className={`font-mono text-[7px] font-bold tracking-wider uppercase px-2 py-1 rounded border-2 transition-[background-color,color] ${
+            categoryFilter === ALL_KEY ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+          }`}>
+          All
+        </button>
+        {ASSET_CATEGORIES.map((c) => (
+          <button key={c} onClick={() => setCategoryFilter(c)}
+            className={`font-mono text-[7px] font-bold tracking-wider uppercase px-2 py-1 rounded border-2 transition-[background-color,color] ${
+              categoryFilter === c ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+            }`}>
+            {CATEGORY_LABELS[c]}
+          </button>
+        ))}
+      </div>
+      {filtered.length === 0 ? (
+        <p className="text-[10px] text-[#999]">{search ? "No stickers match your search" : "No stickers yet"}</p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {stickers.map((s) => (
-            <DraggableStickerImg key={s.id} url={s.url} />
+          {filtered.map((s) => (
+            <div key={s.id}>
+              <DraggableStickerImg url={s.url} name={s.name} />
+              {s.name && <p className="font-mono text-[7px] font-bold tracking-wider uppercase text-[#666] text-center mt-1.5 leading-tight">{s.name}</p>}
+            </div>
           ))}
         </div>
       )}

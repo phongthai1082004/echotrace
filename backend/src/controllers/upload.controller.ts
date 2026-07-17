@@ -9,7 +9,7 @@ const cloudinary = new CloudinaryService();
 
 export class UploadController {
   async getSignature(req: AuthRequest, res: Response) {
-    const { type } = req.query as { type: "avatar" | "gallery" | "sticker" };
+    const { type } = req.query as { type: "avatar" | "gallery" | "sticker" | "background" };
     const userId = req.userId!;
 
     const timestamp = Math.round(Date.now() / 1000);
@@ -25,6 +25,9 @@ export class UploadController {
       params.overwrite = 1;
     } else if (type === "sticker") {
       folder = "echotrace/stickers";
+      params.folder = folder;
+    } else if (type === "background") {
+      folder = "echotrace/backgrounds";
       params.folder = folder;
     } else {
       folder = `echotrace/gallery/user_${userId}`;
@@ -64,18 +67,21 @@ export class UploadController {
       orderBy: { id: "desc" },
     });
 
-    res.set("Cache-Control", "public, max-age=300");
     res.json(ApiResponse.success(images));
   }
 
   async deleteImage(req: AuthRequest, res: Response) {
     const userId = parseInt(req.userId!);
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
 
     const image = await prisma.userImage.findFirst({ where: { id, userId } });
     if (!image) throw new AppError("Image not found", 404);
 
     await prisma.userImage.delete({ where: { id } });
+
+    if (image.publicId) {
+      cloudinary.deleteAsset(image.publicId).catch(() => {});
+    }
 
     res.json(ApiResponse.message("Image deleted"));
   }

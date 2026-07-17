@@ -1,73 +1,67 @@
 "use client";
 
 import { useCanvasStore } from "./useCanvasState";
-import { LAYOUTS } from "../types";
-import type { PageState } from "../types";
+import { serializeCanvasState, isCoverPage, splitCanvasByMidpoint } from "../lib/layout-engine";
 
 export function usePageManager() {
-  const canvas = useCanvasStore((s) => s.canvas);
-
   const saveCurrentPage = () => {
-    const c = useCanvasStore.getState().canvas;
-    if (!c) return;
-    const { activePageIndex, setPage } = useCanvasStore.getState();
-    const json = JSON.stringify((c as any).toJSON(["z", "slotIndex", "layer"]));
+    const s = useCanvasStore.getState();
+    const c = s.canvas;
+    if (!c) { console.warn("save: no canvas"); return; }
+    const { activePageIndex, setPage, activeLayout, pages } = s;
+    const n = pages.length;
+    const objCount = c.getObjects().length;
+    console.log(`save pg${activePageIndex} obj:${objCount}`);
     const thumbnail = c.toDataURL({ format: "jpeg", quality: 0.3, multiplier: 0.2 });
-    setPage(activePageIndex, { canvasJson: json, thumbnailUrl: thumbnail });
+    const json = serializeCanvasState(c);
+    const cw = c.getWidth();
+    if (!isCoverPage(activePageIndex, n) && cw > 400) {
+      const mid = cw / 2;
+      const { leftJson, rightJson } = splitCanvasByMidpoint(json, mid);
+      setPage(activePageIndex, { canvasJson: leftJson, thumbnailUrl: thumbnail, layout: activeLayout });
+      setPage(Math.min(activePageIndex + 1, n - 1), { canvasJson: rightJson, layout: activeLayout });
+    } else {
+      setPage(activePageIndex, { canvasJson: json, thumbnailUrl: thumbnail, layout: activeLayout });
+    }
   };
 
-  const switchPage = async (newIndex: number) => {
-    const c = useCanvasStore.getState().canvas;
-    if (!c) return;
+  const switchPage = (newIndex: number) => {
     const { activePageIndex, pages, setActivePageIndex } = useCanvasStore.getState();
-    if (newIndex === activePageIndex) return;
+    if (newIndex === activePageIndex || newIndex >= pages.length || newIndex < 0) return;
+    console.log(`sw pg${activePageIndex}→${newIndex}`);
     saveCurrentPage();
-    const page = pages[newIndex];
-    if (!page) return;
-    c.clear();
-    c.backgroundColor = "#fff";
-    if (page.canvasJson) {
-      await c.loadFromJSON(JSON.parse(page.canvasJson));
-      c.renderAll();
-    }
     setActivePageIndex(newIndex);
+    const targetLayout = useCanvasStore.getState().pages[newIndex]?.layout ?? null;
+    useCanvasStore.setState({ activeLayout: targetLayout });
   };
 
   const addPage = () => {
+    console.log("add");
     saveCurrentPage();
-    const { pages, activePageIndex } = useCanvasStore.getState();
-    const currentLayoutId = pages[activePageIndex]?.layoutId || LAYOUTS[0].id;
-    const newPage: PageState = {
-      index: pages.length,
-      canvasJson: null,
-      thumbnailUrl: null,
-      layoutId: currentLayoutId,
-    };
-    const updated = [...pages, newPage];
-    useCanvasStore.getState().setPages(updated);
-    switchPage(updated.length - 1);
+    const { pages, setPages, setActivePageIndex } = useCanvasStore.getState();
+    const n = pages.length;
+    const baseIdx = n - 1;
+    const p1 = { index: baseIdx, canvasJson: null as string | null, thumbnailUrl: null as string | null, layout: null as any };
+    const p2 = { index: baseIdx + 1, canvasJson: null as string | null, thumbnailUrl: null as string | null, layout: null as any };
+    const updated = [...pages.slice(0, n - 1), p1, p2, pages[n - 1]];
+    const reindexed = updated.map((p, i) => ({ ...p, index: i }));
+    setPages(reindexed);
+    setActivePageIndex(baseIdx);
+    useCanvasStore.setState({ activeLayout: null });
   };
 
-  const deletePage = async (index: number) => {
-    const { pages, activePageIndex, canvas } = useCanvasStore.getState();
-    if (pages.length <= 1) return;
+  const deletePage = (index: number) => {
+    const { pages, activePageIndex, setPages, setActivePageIndex } = useCanvasStore.getState();
+    if (index === 0 || index >= pages.length - 1) return;
+    console.log(`del pg${index}`);
     saveCurrentPage();
     const updated = pages.filter((_, i) => i !== index).map((p, i) => ({ ...p, index: i }));
-    useCanvasStore.getState().setPages(updated);
-    const nextIndex = Math.min(activePageIndex, updated.length - 1);
-    if (nextIndex !== activePageIndex) {
-      useCanvasStore.getState().setActivePageIndex(nextIndex);
-      const page = updated[nextIndex];
-      if (canvas) {
-        canvas.clear();
-        canvas.backgroundColor = "#fff";
-        if (page.canvasJson) {
-          await canvas.loadFromJSON(JSON.parse(page.canvasJson));
-          canvas.renderAll();
-        }
-      }
-    }
+    setPages(updated);
+    const next = Math.min(activePageIndex, updated.length - 1);
+    setActivePageIndex(next);
+    const targetLayout = useCanvasStore.getState().pages[next]?.layout ?? null;
+    useCanvasStore.setState({ activeLayout: targetLayout });
   };
 
-  return { switchPage, addPage, deletePage, saveCurrentPage };
+  return { saveCurrentPage, switchPage, addPage, deletePage };
 }

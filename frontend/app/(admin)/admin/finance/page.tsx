@@ -1,15 +1,18 @@
 "use client";
-import { DollarSign, TrendingUp, Clock, Truck, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, Truck, Wallet, ArrowUpRight, AlertTriangle, Receipt } from "lucide-react";
 import { label, card } from "@/lib/styles";
 import { DualLineChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
 
 const kpis = [
   { label: "Cash Inflow", value: "$48,920", change: "+12.3%", icon: DollarSign, color: "#222" },
+  { label: "Outflow", value: "$30,580", change: "+9.1%", icon: ArrowUpRight, color: "#B54843" },
   { label: "Gross Profit", value: "$18,340", change: "+8.7%", icon: TrendingUp, color: "#222" },
   { label: "Cash on Hand", value: "$32,600", change: "+$4,200", icon: Wallet, color: "#222" },
   { label: "Receivables", value: "$6,280", change: "4 orders", icon: Clock, color: "#D4A017" },
+  { label: "Overdue Receivable", value: "$1,840", change: "2 orders", icon: AlertTriangle, color: "#D4A017" },
   { label: "Payables", value: "$14,210", change: "8 invoices", icon: Truck, color: "#B54843" },
+  { label: "Overdue Payable", value: "$3,650", change: "3 invoices", icon: Receipt, color: "#B54843" },
 ];
 
 const chartData = Array.from({ length: 30 }, (_, i) => ({
@@ -23,7 +26,7 @@ export default function FinancePage() {
     <div>
       <AdminHeader label="Admin — Finance" title="Financial Overview" />
       <div className="px-8 py-8 space-y-8">
-        <div className="grid grid-cols-5 gap-5">
+        <div className="grid grid-cols-4 gap-5">
           {kpis.map(k => {
             const Icon = k.icon;
             return (
