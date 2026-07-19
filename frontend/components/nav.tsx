@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useTranslation } from "react-i18next";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface NavProps {
   user?: { name?: string | null; email?: string | null; image?: string | null } | null;
 }
 
 export function Nav({ user }: NavProps) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dropdown, setDropdown] = useState(false);
@@ -20,10 +23,10 @@ export function Nav({ user }: NavProps) {
   if (pathname === "/auth") return null;
 
   const links = [
-    { href: "/explore", label: "Explore" },
-    { href: "/my-journals", label: "My Journals" },
-    { href: "/studio", label: "Studio" },
-    { href: "/orders", label: "Orders" },
+    { href: "/explore", label: t("nav.explore") },
+    { href: "/my-journals", label: t("nav.myJournals") },
+    { href: "/studio", label: t("nav.studio") },
+    { href: "/orders", label: t("nav.orders") },
   ];
 
   return (
@@ -52,6 +55,7 @@ export function Nav({ user }: NavProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          <LanguageSwitcher />
           {user && (
             <div className="relative"
               onMouseEnter={() => setCartOpen(true)}
@@ -69,7 +73,7 @@ export function Nav({ user }: NavProps) {
                 <div className="absolute right-0 top-full z-50 pt-2">
                   <div className="w-64 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
                     <div className="px-4 py-3 border-b-[3px] border-[#222]">
-                      <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Cart · 1 item</p>
+                      <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.cart", { count: 1 })}</p>
                     </div>
                     <div className="px-4 py-3 flex gap-3 border-b-[3px] border-[#222]">
                       <div className="w-10 h-12 bg-[#e8e6e0] rounded-[6px] shrink-0" />
@@ -81,7 +85,7 @@ export function Nav({ user }: NavProps) {
                     </div>
                     <Link href="/checkout"
                       className="block w-full text-center font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors">
-                      View Cart & Checkout
+                      {t("nav.viewCart")}
                     </Link>
                   </div>
                 </div>
@@ -108,7 +112,7 @@ export function Nav({ user }: NavProps) {
                   </div>
                 )}
                 <span className="text-sm font-bold leading-none">
-                  {user.name || user.email || "User"}
+                  {user.name || user.email || t("nav.user")}
                 </span>
               </button>
 
@@ -119,7 +123,7 @@ export function Nav({ user }: NavProps) {
                       href="/account"
                       className="block w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors border-b-[3px] border-[#222]"
                     >
-                      Account
+                      {t("nav.account")}
                     </Link>
                     <button
                       type="button"
@@ -138,7 +142,7 @@ export function Nav({ user }: NavProps) {
                       }}
                       className="block w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors"
                     >
-                      Sign Out
+                      {t("nav.signOut")}
                     </button>
                   </div>
                 </div>
@@ -149,7 +153,7 @@ export function Nav({ user }: NavProps) {
               href="/auth"
               className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
             >
-              Sign In
+               {t("nav.signIn")}
             </Link>
           )}
         </div>
@@ -176,7 +180,7 @@ export function Nav({ user }: NavProps) {
             onClick={() => setOpen(false)}
             className="block font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
           >
-            Sign In
+            {t("nav.signIn")}
           </Link>
         </div>
       )}

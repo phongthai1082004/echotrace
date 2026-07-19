@@ -1,5 +1,9 @@
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { BaseService } from "../utils/base.service.js";
+import type { BookModel } from "../../generated/prisma/models/Book.js";
+
+const bookBase = new BaseService<BookModel>(prisma.book);
 
 export class BookService {
   async getById(bookId: number) {
@@ -57,6 +61,14 @@ export class BookService {
     }
   }
 
+  async delete(bookId: number, userId: number) {
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book) throw new AppError("Book not found", 404);
+    if (book.userId !== userId) throw new AppError("Forbidden", 403);
+    await prisma.orderItem.deleteMany({ where: { bookId } });
+    await prisma.book.delete({ where: { id: bookId } });
+  }
+
   async updatePages(bookId: number, data: { content: string; title?: string; pages?: number }) {
     const updateData: any = { content: data.content };
     if (data.title !== undefined) updateData.title = data.title;
@@ -65,5 +77,25 @@ export class BookService {
       where: { id: bookId },
       data: updateData,
     });
+  }
+
+  public async softDelete(id: number) {
+    await bookBase.delete(id);
+  }
+
+  public async hardDelete(id: number) {
+    await bookBase.hardDelete(id);
+  }
+
+  public async findAll(filter: any, options?: any) {
+    return await bookBase.findAll(filter, options);
+  }
+
+  public async findById(id: number, extraWhere: Record<string, any> = {}) {
+    return await bookBase.findById(id, extraWhere);
+  }
+
+  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
+    return await bookBase.update(id, data, extraWhere);
   }
 }

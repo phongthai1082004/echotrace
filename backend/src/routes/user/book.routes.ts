@@ -14,6 +14,7 @@ router.use(authMiddleware);
 router.get("/books/:id", asyncHandler((req, res) => bookCtrl.getById(req, res)));
 router.get("/user/my-books", asyncHandler((req, res) => bookCtrl.getMyBooks(req, res)));
 router.post("/books", asyncHandler((req, res) => bookCtrl.create(req, res)));
+router.delete("/books/:id", asyncHandler((req, res) => bookCtrl.remove(req, res)));
 router.patch("/books/:id/pages", asyncHandler((req, res) => bookCtrl.updatePages(req, res)));
 
 export default router;

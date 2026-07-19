@@ -24,7 +24,7 @@ function starPath(w: number, h: number, points: number, inner: number): string {
   return d + " Z";
 }
 
-export const FRAME_SHAPES: Record<string, (w: number, h: number) => string> = {
+const FRAME_SHAPES: Record<string, (w: number, h: number) => string> = {
   Rectangle: (w, h) => `M 0 0 L ${w} 0 L ${w} ${h} L 0 ${h} Z`,
   RoundedRect: (w, h) => {
     const r = Math.min(w, h, 20);
@@ -51,7 +51,7 @@ export const FRAME_SHAPES: Record<string, (w: number, h: number) => string> = {
 export type ShapeName = keyof typeof FRAME_SHAPES;
 export const SHAPE_NAMES = Object.keys(FRAME_SHAPES) as ShapeName[];
 
-export function createFramePath(shapeName: ShapeName, w: number, h: number): fabric.Path {
+function createFramePath(shapeName: ShapeName, w: number, h: number): fabric.Path {
   const pathStr = FRAME_SHAPES[shapeName](w, h);
   return new fabric.Path(pathStr, {
     left: 0, top: 0, originX: "left", originY: "top",

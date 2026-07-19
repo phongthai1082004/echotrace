@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
+
 type BadgeVariant = "collected" | "hold" | "paid" | "unpaid" | "pending" | "printing" | "quality-check" | "shipped" | "default";
 
 const variants: Record<BadgeVariant, { bg: string; text: string; border: string }> = {
@@ -12,17 +16,21 @@ const variants: Record<BadgeVariant, { bg: string; text: string; border: string 
   default: { bg: "#FFF7D6", text: "#222", border: "#222" },
 };
 
-const labels: Record<string, string> = {
-  collected: "Collected", hold: "Hold by Shipper", paid: "Paid", unpaid: "Unpaid",
-  pending: "Pending", printing: "Printing", "quality-check": "Quality Check", shipped: "Shipped",
+const statusKeys: Record<string, string> = {
+  collected: "collected", hold: "holdByShipper", paid: "paid", unpaid: "unpaid",
+  pending: "pending", printing: "printing", "quality-check": "qualityCheck", shipped: "shipped",
 };
 
 export function StatusBadge({ status, label }: { status: BadgeVariant | string; label?: string }) {
+  const { t } = useTranslation();
   const v = variants[status as BadgeVariant] ?? variants.default;
+  const statusKey = statusKeys[status];
+  const defaultLabel = statusKey ? t(`admin.statusLabels.${statusKey}`) : status.charAt(0).toUpperCase() + status.slice(1);
+  
   return (
     <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded border-2 inline-block whitespace-nowrap"
       style={{ background: v.bg, color: v.text, borderColor: v.border }}>
-      {label ?? labels[status] ?? status.charAt(0).toUpperCase() + status.slice(1)}
+      {label ?? defaultLabel}
     </span>
   );
 }

@@ -134,6 +134,8 @@ export function StudioWorkspace() {
             if (destroyedRef.current || epochRef.current !== epoch) return;
             c.backgroundColor = "#fff";
             rehydrateCanvas(mergedJson, c);
+            // Remove old spine line if exists
+            c.getObjects().filter((o: any) => (o as any)._spine).forEach((o) => c.remove(o));
             c.add(new fabric.Line([pageW, 0, pageW, ch], { stroke: "#222", strokeWidth: 1, strokeDashArray: [6, 4], selectable: false, evented: false }).set({ _spine: true } as any));
             c.selection = true;
             applyInteractionLock(c, pageW, isCover, effectiveView);
@@ -165,7 +167,36 @@ export function StudioWorkspace() {
       c.on("object:scaling", (e: any) => { const o = e.target; o.setCoords(); c.requestRenderAll(); if ((o as any).hasControls && (o as any).customProperties?.layer === "photo") addPhotoDimOverlays(c, o as any); if (isFrameObject(o)) { const p = findPhotoInFrame(c, o); if (p) movePhotoWithFrame(o, p); } });
       c.on("object:rotating", syncF);
       c.on("selection:cleared", () => { setTimeout(() => { if (c.getActiveObject()) return; c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls).forEach((p: any) => lockPhotoInFrame(c, p as any)); }, 0); });
-      c.on("selection:created", (e: any) => { const sel = e.selected?.[0]; if (!sel) return; const unlocked = c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls) as fabric.FabricImage[]; if (!unlocked.length) return; const frame = resolveFrameForPhoto(c, unlocked[0]); if (frame && sel === frame) return; unlocked.forEach((p: any) => lockPhotoInFrame(c, p)); });
+      c.on("selection:created", (e: any) => { 
+        const selected = e.selected || []; 
+        if (!selected.length) return; 
+        const unlocked = c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls) as fabric.FabricImage[]; 
+        if (!unlocked.length) return; 
+        // Only lock photos if none of the selected objects are their parent frames
+        unlocked.forEach((photo: any) => {
+          const frame = resolveFrameForPhoto(c, photo);
+          // Don't lock the photo if its frame is part of the current selection
+          if (frame && selected.includes(frame)) return;
+          // Don't lock the photo if it's part of the current selection
+          if (selected.includes(photo)) return;
+          lockPhotoInFrame(c, photo);
+        });
+      });
+      c.on("selection:updated", (e: any) => { 
+        const selected = e.selected || []; 
+        if (!selected.length) return; 
+        const unlocked = c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls) as fabric.FabricImage[]; 
+        if (!unlocked.length) return; 
+        // Only lock photos if none of the selected objects are their parent frames
+        unlocked.forEach((photo: any) => {
+          const frame = resolveFrameForPhoto(c, photo);
+          // Don't lock the photo if its frame is part of the current selection
+          if (frame && selected.includes(frame)) return;
+          // Don't lock the photo if it's part of the current selection
+          if (selected.includes(photo)) return;
+          lockPhotoInFrame(c, photo);
+        });
+      });
       c.on("object:added", (e: any) => { if (e.target) applyStyle(e.target); enforceZLayers(c); useCanvasStore.getState().incrementLayerVersion(); });
       c.on("object:removed", () => { useCanvasStore.getState().incrementLayerVersion(); });
       c.on("text:changed", () => { useCanvasStore.getState().incrementLayerVersion(); });
@@ -173,33 +204,52 @@ export function StudioWorkspace() {
       const onKeyDown = async (e: KeyboardEvent) => {
         if (e.key === "Delete" || e.key === "Backspace") {
           if ((e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "TEXTAREA") return;
-          const sel = c.getActiveObjects(); if (!sel.length) return; useCanvasStore.getState().pushUndo();
+          const sel = c.getActiveObjects();
+          if (!sel.length) return;
+          
+          useCanvasStore.getState().pushUndo();
           sel.forEach((a: any) => {
-            if (isFrameObject(a)) { const p2 = findPhotoInFrame(c, a); if (p2) c.remove(p2); }
-            if (a.customProperties?.layer === "photo") { removePhotoDimOverlays(c); const fr: any = resolveFrameForPhoto(c, a); if (fr) { (fr as any).__savedEvented = undefined; fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any); } }
+            if (isFrameObject(a)) {
+              const frameId = (a as any)._selId;
+              c.getObjects()
+                .filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === frameId)
+                .forEach((photo: any) => c.remove(photo));
+            }
+            if (a.customProperties?.layer === "photo") {
+              removePhotoDimOverlays(c);
+              const fr: any = resolveFrameForPhoto(c, a);
+              if (fr) {
+                (fr as any).__savedEvented = undefined;
+                fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);
+              }
+            }
             c.remove(a);
           });
-          c.discardActiveObject(); c.renderAll(); useCanvasStore.getState().clearRedo();
+          c.discardActiveObject();
+          c.renderAll();
+          useCanvasStore.getState().clearRedo();
         }
-        if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); console.log(`keydown: Ctrl+Z undoStack=${s.undoStack.length}`); if (!s.undoStack.length) return; await applyUndo(c, s.popUndo, s.pushRedo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
+        if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.undoStack.length) return; await applyUndo(c, s.popUndo, s.pushRedo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
           loadedPageRef.current = -1; (c as any)._pageIdx = undefined; loadPage(c); }
-        if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key === "z") || e.key === "y")) { e.preventDefault(); const s = useCanvasStore.getState(); console.log(`keydown: Ctrl+Shift+Z redoStack=${s.redoStack.length}`); if (!s.redoStack.length) return; await applyRedo(c, s.popRedo, s.pushUndo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
+        if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key === "z") || e.key === "y")) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.redoStack.length) return; await applyRedo(c, s.popRedo, s.pushUndo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
           loadedPageRef.current = -1; (c as any)._pageIdx = undefined; loadPage(c); }
         if ((e.ctrlKey || e.metaKey) && e.key === "n") { e.preventDefault(); addNewPage(); }
         if ((e.ctrlKey || e.metaKey) && e.key === "c") { const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(JSON.stringify((a2 as any).toJSON(["z", "layer", "customProperties", "_selId"]))); useCanvasStore.getState().resetPasteCount(); } }
         if ((e.ctrlKey || e.metaKey) && e.key === "v") { e.preventDefault(); const { clipboard, pasteCount, bumpPasteCount } = useCanvasStore.getState(); if (!clipboard) return; const parsed = JSON.parse(clipboard); const savedCp = parsed.customProperties, savedSelId = parsed._selId; useCanvasStore.getState().pushUndo(); fabric.util.enlivenObjects([parsed]).then((arr: any[]) => { const obj = arr[0]; if (!obj) return; obj.set({ customProperties: savedCp || { z: Date.now(), layer: "element" } } as any); if (savedSelId) (obj as any)._selId = savedSelId; const offset = 20 + pasteCount * 20; obj.set({ left: (obj.left || 0) + offset, top: (obj.top || 0) + offset }); (obj as any)._selId = `paste-${Date.now()}`; c.add(obj); c.setActiveObject(obj); c.renderAll(); enforceZLayers(c); bumpPasteCount(); }); }
       };
       window.addEventListener("keydown", onKeyDown);
-      (window as any).__kc = () => window.removeEventListener("keydown", onKeyDown);
       c.backgroundColor = "#fff";
       c.renderAll();
       setCanvas(c);
       loadPage(c);
-    return () => { destroyedRef.current = true; loadedPageRef.current = -1; (window as any).__kc?.(); c.dispose(); fabricRef.current = null; if (useCanvasStore.getState().canvas === c) setCanvas(null); if (epochRef.current === epoch) epochRef.current++; };
+    return () => { destroyedRef.current = true; loadedPageRef.current = -1; window.removeEventListener("keydown", onKeyDown); c.dispose(); fabricRef.current = null; if (useCanvasStore.getState().canvas === c) setCanvas(null); if (epochRef.current === epoch) epochRef.current++; };
   }, [cw, bookMeta.format]);
   useEffect(() => {
     const c = fabricRef.current || useCanvasStore.getState().canvas;
-    if (c) loadPage(c);
+    if (c) {
+      c.discardActiveObject();
+      loadPage(c);
+    }
   }, [activePageIndex, viewMode]);
 
   const isDraggingPhoto = useCanvasStore((s) => s.isDraggingPhoto);

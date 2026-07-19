@@ -1,22 +1,37 @@
-import bcrypt from "bcryptjs";
+import { BaseService } from "../utils/base.service.js";
+import type { UserModel } from "../../generated/prisma/models/User.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
-import { PaginationConfig, QueryProcessor } from "../utils/pagination.js";
-import { UserMapper } from "../dto/user/user.list.js";
+import bcrypt from "bcryptjs";
+
+const userBase = new BaseService<UserModel>(prisma.user);
 
 export class UserService {
-  async getUserList(params: PaginationConfig ) {
-    const queryConfig = new QueryProcessor(params).build();
-    const users = await prisma.user.findMany(queryConfig);
-    return UserMapper.toDTOList(users);
+  public async softDelete(id: number) {
+    await userBase.delete(id);
+  }
+
+  public async hardDelete(id: number) {
+    await userBase.hardDelete(id);
+  }
+
+  public async findAll(filter: any, options?: any) {
+    return await userBase.findAll(filter, options);
+  }
+
+  public async findById(id: number, extraWhere: Record<string, any> = {}) {
+    return await userBase.findById(id, extraWhere);
+  }
+
+  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
+    return await userBase.update(id, data, extraWhere);
   }
 
   async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
-      where: {id: parseInt(userId)},
+      where: { id: parseInt(userId) },
       select: {
-        id: true, email: true, name: true,
-        avatar: true, phone: true, address: true, city: true,
+        id: true, email: true, name: true, avatar: true, phone: true, address: true, city: true,
         role: true, status: true, password: true,
       },
     });
@@ -67,13 +82,5 @@ export class UserService {
     const hashed = await bcrypt.hash(body.newPassword, 10);
     await prisma.user.update({ where: { id: parseInt(userId) }, data: { password: hashed } });
     return { message: "Password updated successfully" };
-  }
-
-  async saveAvatarUrl(userId: string, url: string) {
-    await prisma.user.update({
-      where: { id: parseInt(userId) },
-      data: { avatar: url },
-    });
-    return this.getProfile(userId);
   }
 }

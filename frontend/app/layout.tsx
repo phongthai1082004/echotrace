@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import { ToastProvider } from "@/components/toast";
+import { I18nProvider } from "./i18n-provider";
 
 import "./globals.css";
 
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <ToastProvider>
-            {children}
+            <I18nProvider>
+              {children}
+            </I18nProvider>
           </ToastProvider>
         </Providers>
       </body>

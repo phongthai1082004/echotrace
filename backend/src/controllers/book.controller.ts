@@ -7,7 +7,7 @@ const bookService = new BookService();
 
 export class BookController {
   async getById(req: AuthRequest, res: Response) {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const book = await bookService.getById(id);
     res.json(ApiResponse.success(book));
   }
@@ -25,7 +25,6 @@ export class BookController {
     if (!content) { res.status(400).json({ success: false, message: "Missing content" }); return; }
     const contentStr = typeof content === "string" ? content : JSON.stringify(content);
     try {
-      const contentStr = typeof content === "string" ? content : JSON.stringify(content);
       const book = await bookService.create(userId, { content: contentStr, title });
       res.status(201).json(ApiResponse.success(book));
     } catch (err: any) {
@@ -34,8 +33,15 @@ export class BookController {
     }
   }
 
+  async remove(req: AuthRequest, res: Response) {
+    const id = parseInt(req.params.id as string);
+    const userId = parseInt(req.userId!);
+    await bookService.delete(id, userId);
+    res.json(ApiResponse.message("Book deleted"));
+  }
+
   async updatePages(req: AuthRequest, res: Response) {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const { content, title } = req.body;
     const updateData: any = {};
     if (content) {

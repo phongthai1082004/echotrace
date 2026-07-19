@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+import { SkeletonCardRow } from "@/components/skeleton";
+import { useVisibleCards } from "@/lib/use-container-query";
 
 interface OrderItem {
   id: number;
@@ -65,14 +68,14 @@ const mockOrders: Order[] = [
 ];
 
 const statusMeta: Record<string, { label: string; bg: string; text: string }> = {
-  pending: { label: "Pending", bg: "#FFF7D6", text: "#222" },
-  printing: { label: "Printing", bg: "#FFD93D", text: "#222" },
-  "quality-check": { label: "QC", bg: "#9CB8A8", text: "#222" },
-  shipped: { label: "Shipped", bg: "#5A8F4A", text: "#fff" },
-  delivered: { label: "Delivered", bg: "#5A8F4A", text: "#fff" },
+  pending: { label: "pending", bg: "#FFF7D6", text: "#222" },
+  printing: { label: "printing", bg: "#FFD93D", text: "#222" },
+  "quality-check": { label: "qc", bg: "#9CB8A8", text: "#222" },
+  shipped: { label: "shipped", bg: "#5A8F4A", text: "#fff" },
+  delivered: { label: "delivered", bg: "#5A8F4A", text: "#fff" },
 };
 
-function Timeline({ steps }: { steps: { label: string; date: string; done: boolean }[] }) {
+function Timeline({ steps, t }: { steps: { label: string; date: string; done: boolean }[]; t: any }) {
   return (
     <div className="relative">
       <div className="absolute left-[5px] top-1 bottom-1 w-[3px] bg-[#222]/15 rounded-full" />
@@ -93,18 +96,34 @@ function Timeline({ steps }: { steps: { label: string; date: string; done: boole
 }
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(300, 20);
+
+  useEffect(() => {
+    const start = Date.now();
+    const timer = setTimeout(() => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= 500) setLoading(false);
+      else setTimeout(() => setLoading(false), 500 - elapsed);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen pt-15">
-      <div className="px-8 py-10 border-b-[3px] border-[#222]">
-        <h1 className="text-3xl lg:text-4xl font-bold">Orders</h1>
-        <p className="text-sm mt-1 text-[#666]">Track your journal orders and deliveries.</p>
+      <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6 border-b-[3px] border-[#222]">
+        <h1 className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold">{t("customer.orders.title")}</h1>
+        <p className="text-sm mt-1 text-[#666]">{t("customer.orders.subtitle")}</p>
       </div>
 
-      <div className="px-8 py-10">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]">Order History</p>
-        <div className="overflow-x-auto -mx-8 px-8 pb-8" style={{ scrollbarWidth: "none" }}>
+      <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6">
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]">{t("customer.orders.history")}</p>
+        <div className="overflow-x-auto -mx-8 px-8 pb-8" style={{ scrollbarWidth: "none" }} ref={skeletonRef}>
+          {loading ? (
+            <SkeletonCardRow count={Math.max(visibleCount, 2)} aspect="landscape" />
+          ) : (
           <div className="flex gap-5" style={{ width: "max-content" }}>
             {mockOrders.map((order) => {
               const m = statusMeta[order.status];
@@ -120,13 +139,13 @@ export default function OrdersPage() {
                       ))}
                       {order.items.length === 1 && (
                         <div className="flex items-center justify-center bg-[#e8e6e0]">
-                          <span className="font-mono text-[8px] font-bold text-[#999]">+{order.items.length - 1} more</span>
+                          <span className="font-mono text-[8px] font-bold text-[#999]">{t("customer.orders.more", { count: order.items.length - 1 })}</span>
                         </div>
                       )}
                     </div>
                     <div className="absolute top-3 left-3">
                       <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
-                        style={{ background: m.bg, color: m.text }}>{m.label}</span>
+                        style={{ background: m.bg, color: m.text }}>{t(`customer.orders.${m.label}`)}</span>
                     </div>
                     <div className="absolute bottom-3 right-3">
                       <span className="font-mono text-[9px] font-bold text-white bg-[#222]/70 px-2 py-0.5 rounded-md">
@@ -141,17 +160,18 @@ export default function OrdersPage() {
                     </div>
                     <h3 className="text-base font-bold leading-tight mb-1">{order.items.map(i => i.bookTitle).join(", ")}</h3>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-[9px] font-bold text-[#666]">{order.items.reduce((s, i) => s + i.pages, 0)} pages</span>
+                      <span className="font-mono text-[9px] font-bold text-[#666]">{order.items.reduce((s, i) => s + i.pages, 0)} {t("customer.orders.pages")}</span>
                       <span className="text-[#222]">·</span>
-                      <span className="font-mono text-[9px] font-bold text-[#666]">{order.items.length} item(s)</span>
+                      <span className="font-mono text-[9px] font-bold text-[#666]">{t("customer.orders.itemsCount", { count: order.items.length })}</span>
                       <span className="text-[#222]">·</span>
-                      <span className="font-mono text-[9px] font-bold text-[#666]">{order.paymentMethod === "DEPOSIT" ? "Deposit" : "Full"}</span>
+                      <span className="font-mono text-[9px] font-bold text-[#666]">{order.paymentMethod === "DEPOSIT" ? t("customer.orders.deposit") : t("customer.orders.fullPayment")}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
+          )}
         </div>
       </div>
 
@@ -162,7 +182,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">{selectedOrder.orderCode}</p>
-                <h2 className="text-xl font-bold">Order Details</h2>
+                <h2 className="text-xl font-bold">{t("customer.orders.orderDetails")}</h2>
               </div>
               <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-[#FFF7D6] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-all"><X size={16} /></button>
             </div>
@@ -170,17 +190,17 @@ export default function OrdersPage() {
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Status</p>
+                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.orders.status")}</p>
                   <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
                     style={{ background: statusMeta[selectedOrder.status].bg, color: statusMeta[selectedOrder.status].text }}>
-                    {statusMeta[selectedOrder.status].label}
+                    {t(`customer.orders.${statusMeta[selectedOrder.status].label}`)}
                   </span>
                 </div>
-                <Timeline steps={selectedOrder.timeline} />
+                <Timeline steps={selectedOrder.timeline} t={t} />
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">Items</p>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-4 text-[#666]">{t("customer.orders.items")}</p>
                 <div className="space-y-3">
                   {selectedOrder.items.map((item) => (
                     <div key={item.id} className="flex gap-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
@@ -192,7 +212,7 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999]">{item.style}</span>
                           <span className="text-[#222]">·</span>
-                          <span className="font-mono text-[8px] font-bold text-[#999]">{item.pages} pg</span>
+                          <span className="font-mono text-[8px] font-bold text-[#999]">{item.pages} {t("customer.orders.pg")}</span>
                           <span className="text-[#222]">·</span>
                           <span className="font-mono text-[8px] font-bold text-[#999]">{item.coverType}</span>
                         </div>
@@ -207,51 +227,51 @@ export default function OrdersPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Payment</p>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.orders.payment")}</p>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="font-mono text-[10px] font-bold text-[#666]">Subtotal</span>
+                    <span className="font-mono text-[10px] font-bold text-[#666]">{t("customer.orders.subtotal")}</span>
                     <span className="font-mono text-[10px] font-bold">{selectedOrder.totalAmount.toLocaleString()}₫</span>
                   </div>
                   {selectedOrder.discountAmount > 0 && (
                     <div className="flex justify-between">
-                      <span className="font-mono text-[10px] font-bold text-[#5A8F4A]">Discount</span>
+                      <span className="font-mono text-[10px] font-bold text-[#5A8F4A]">{t("customer.orders.discount")}</span>
                       <span className="font-mono text-[10px] font-bold text-[#5A8F4A]">-{selectedOrder.discountAmount.toLocaleString()}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-2 border-t-[2px] border-[#222]">
-                    <span className="font-mono text-[10px] font-bold">Total</span>
+                    <span className="font-mono text-[10px] font-bold">{t("customer.orders.total")}</span>
                     <span className="font-mono text-[12px] font-bold">{selectedOrder.totalAmount.toLocaleString()}₫</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-mono text-[10px] font-bold text-[#666]">Paid</span>
+                    <span className="font-mono text-[10px] font-bold text-[#666]">{t("customer.orders.paid")}</span>
                     <span className="font-mono text-[10px] font-bold text-[#5A8F4A]">{selectedOrder.paidAmount.toLocaleString()}₫</span>
                   </div>
                   {selectedOrder.paidAmount < selectedOrder.totalAmount && (
                     <div className="flex justify-between">
-                      <span className="font-mono text-[10px] font-bold text-[#B54843]">Remaining</span>
+                      <span className="font-mono text-[10px] font-bold text-[#B54843]">{t("customer.orders.remaining")}</span>
                       <span className="font-mono text-[10px] font-bold text-[#B54843]">{(selectedOrder.totalAmount - selectedOrder.paidAmount).toLocaleString()}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="font-mono text-[10px] font-bold text-[#666]">Method</span>
-                    <span className="font-mono text-[10px] font-bold">{selectedOrder.paymentMethod === "DEPOSIT" ? "Deposit" : "Full Payment"}</span>
+                    <span className="font-mono text-[10px] font-bold text-[#666]">{t("customer.orders.method")}</span>
+                    <span className="font-mono text-[10px] font-bold">{selectedOrder.paymentMethod === "DEPOSIT" ? t("customer.orders.deposit") : t("customer.orders.fullPayment")}</span>
                   </div>
                 </div>
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Delivery</p>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.orders.delivery")}</p>
                 <div className="space-y-2">
-                  {[["Name", selectedOrder.name], ["Phone", selectedOrder.phone], ["Address", selectedOrder.address], ["City", selectedOrder.city]].map(([k, v]) => (
+                  {[["name", selectedOrder.name], ["phone", selectedOrder.phone], ["address", selectedOrder.address], ["city", selectedOrder.city]].map(([k, v]) => (
                     <div key={k} className="flex justify-between">
-                      <span className="font-mono text-[9px] font-bold text-[#999]">{k}</span>
+                      <span className="font-mono text-[9px] font-bold text-[#999]">{t(`customer.orders.${k}`)}</span>
                       <span className="text-sm font-bold text-right">{v}</span>
                     </div>
                   ))}
                   {selectedOrder.note && (
                     <div className="mt-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
-                      <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">Note</p>
+                      <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">{t("customer.orders.note")}</p>
                       <p className="text-sm font-bold">{selectedOrder.note}</p>
                     </div>
                   )}

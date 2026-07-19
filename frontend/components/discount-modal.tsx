@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog } from "@/components/ui/dialog";
 import { X, Check, Tag } from "lucide-react";
 
@@ -13,6 +14,7 @@ export function DiscountModal({
   onClose: () => void;
   subtotal: number;
 }) {
+  const { t } = useTranslation();
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState<{ amount: number; code: string } | null>(null);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
@@ -23,12 +25,12 @@ export function DiscountModal({
     if (c === "WELCOME10") {
       const amount = Math.round(subtotal * 0.1);
       setDiscount({ code: c, amount });
-      setFeedback({ ok: true, message: `10% off — ₫${amount.toLocaleString()}` });
+      setFeedback({ ok: true, message: `10% ${t("discount.off")} — ₫${amount.toLocaleString()}` });
     } else if (c === "FLAT50" || c === "FREESHIP") {
       setDiscount({ code: c, amount: 50000 });
       setFeedback({ ok: true, message: "₫50,000 off" });
     } else {
-      setFeedback({ ok: false, message: "Invalid discount code" });
+      setFeedback({ ok: false, message: t("discount.invalid") });
     }
   };
 
@@ -50,7 +52,7 @@ export function DiscountModal({
         <div className="flex items-center justify-between px-6 py-4 border-b-[3px] border-[#222]">
           <div className="flex items-center gap-2">
             <Tag size={13} className="text-[#666]" />
-            <span className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#666]">Discount Code</span>
+            <span className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#666]">{t("discount.title")}</span>
           </div>
           <button onClick={handleClose} className="p-1 hover:bg-[#e8e6e0] rounded-[6px]"><X size={14} /></button>
         </div>
@@ -71,7 +73,7 @@ export function DiscountModal({
                 onClick={handleRemove}
                 className="w-full font-mono text-[9px] font-bold tracking-widest uppercase py-2 rounded-lg border-2 border-[#222] hover:bg-[#e8e6e0] transition-[background-color]"
               >
-                Remove Code
+                {t("discount.removeCode")}
               </button>
             </div>
           ) : (
@@ -81,7 +83,7 @@ export function DiscountModal({
                   value={code}
                   onChange={(e) => { setCode(e.target.value); setFeedback(null); }}
                   onKeyDown={(e) => e.key === "Enter" && handleApply()}
-                  placeholder="Enter code"
+                  placeholder={t("discount.enterCode")}
                   className="flex-1 bg-white text-[13px] font-bold px-3 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
                 />
                 <button
@@ -89,7 +91,7 @@ export function DiscountModal({
                   disabled={!code.trim()}
                   className="font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5 bg-[#222] text-white rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] disabled:opacity-40"
                 >
-                  Apply
+                  {t("discount.apply")}
                 </button>
               </div>
               {feedback && (
@@ -98,7 +100,7 @@ export function DiscountModal({
                 </p>
               )}
               <div className="mt-4 pt-4 border-t-[3px] border-[#222]">
-                <p className="font-mono text-[8px] font-bold tracking-widest uppercase mb-2 text-[#999]">Try these</p>
+                <p className="font-mono text-[8px] font-bold tracking-widest uppercase mb-2 text-[#999]">{t("discount.tryThese")}</p>
                 <div className="flex flex-wrap gap-2">
                   {["WELCOME10", "FLAT50", "FREESHIP"].map((c) => (
                     <button

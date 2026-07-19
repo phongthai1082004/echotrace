@@ -87,34 +87,32 @@ const INITIAL_STATE: Partial<CanvasStore> = {
 };
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
-  canvas: null,
+  ...(INITIAL_STATE as unknown as CanvasStore),
   setCanvas: (c) => set({ canvas: c }),
-  activeMenu: navItems[0]?.label || "Templates",
   setActiveMenu: (m) => set({ activeMenu: m }),
-  activePageIndex: 0,
   setActivePageIndex: (i) => set({ activePageIndex: i }),
-  pages: [
-    { index: 0, canvasJson: null, thumbnailUrl: null, layout: null },
-    { index: 1, canvasJson: null, thumbnailUrl: null, layout: null },
-  ],
   setPages: (p) => set({ pages: p }),
   setPage: (i, partial) => set((s) => {
     const pages = [...s.pages];
     pages[i] = { ...pages[i], ...partial };
     return { pages };
   }),
-  bookMeta: { id: null, title: "Untitled", themeId: null, format: "A4_PORTRAIT", gsm: 200, paperType: "matte", bindingType: "perfect" },
   setBookMeta: (m) => set((s) => ({ bookMeta: { ...s.bookMeta, ...m } })),
   undoStack: [] as { pageIdx: number; canvasJson: string }[],
   pushUndo: () => {
     const { canvas, undoStack, activePageIndex } = get();
-    if (!canvas) { console.log("pushUndo: no canvas"); return; }
-    if (canvas.getObjects().some((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls === true)) { console.log("pushUndo: photo unlocked, skip"); return; }
+    if (!canvas) return;
+    
+    // Capture current canvas state
     const json = serializeCanvasState(canvas);
     const entry = { pageIdx: activePageIndex, canvasJson: json };
+    
+    // Compare with last undo entry - don't add if identical (debounce)
+    const lastEntry = undoStack[undoStack.length - 1];
+    if (lastEntry?.canvasJson === json && lastEntry?.pageIdx === activePageIndex) return;
+    
     const stack = [...undoStack, entry].slice(-50);
     set({ undoStack: stack });
-    console.log(`pushUndo: pg${activePageIndex} stack=${stack.length}`);
   },
   redoStack: [] as { pageIdx: number; canvasJson: string }[],
   pushRedo: (entry) => set((st) => ({ redoStack: [...st.redoStack, entry].slice(-50) })),
@@ -131,32 +129,21 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return val;
   },
   clearRedo: () => set({ redoStack: [] }),
-  zoomIndex: 3,
   setZoomIndex: (i) => set({ zoomIndex: i }),
-  filterVersion: 0,
   incrementFilterVersion: () => set((s) => ({ filterVersion: s.filterVersion + 1 })),
-  selectionVersion: 0,
   incrementSelectionVersion: () => set((s) => ({ selectionVersion: s.selectionVersion + 1 })),
-  filterSliderValues: { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 },
   setFilterSliderValues: (vals) => set({ filterSliderValues: vals }),
-  activeLayout: null,
   setActiveLayout: (l) => {
     const { activePageIndex, setPage } = get();
     setPage(activePageIndex, { layout: l });
     set({ activeLayout: l });
   },
-  isDraggingPhoto: false,
   setIsDraggingPhoto: (v) => set({ isDraggingPhoto: v }),
-  clipboard: null,
   setClipboard: (s) => set({ clipboard: s }),
-  pasteCount: 0,
   resetPasteCount: () => set({ pasteCount: 0 }),
   bumpPasteCount: () => set((s) => ({ pasteCount: s.pasteCount + 1 })),
-  layerVersion: 0,
   incrementLayerVersion: () => set((s) => ({ layerVersion: s.layerVersion + 1 })),
-  autoPlaced: false,
   setAutoPlaced: (v) => set({ autoPlaced: v }),
-  viewMode: "left",
   setViewMode: (v) => set({ viewMode: v }),
   resetStore: () => set({ ...INITIAL_STATE }),
 }));

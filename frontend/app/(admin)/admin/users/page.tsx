@@ -1,79 +1,105 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { label, card } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
 import { AdminPagination } from "@/components/admin-pagination";
-import type { User, UserStatus } from "@/lib/mock-users";
-
-const colWidths = ["60px", "1fr", "1fr", "140px", "60px", "100px", "100px"];
+import { ResponsiveTable } from "@/components/responsive-table";
+import { apiFetch } from "@/lib/api.fetch";
+import { UserResponse } from "@/models/users/user.list";
+import { User, UserStatus } from "@/models/users/user";
+import { useToast } from "@/components/toast";
+import { SkeletonTable } from "@/components/skeleton";
+const colWidths = ["1.2fr", "1.5fr", "120px", "1fr", "100px", "80px", "100px"];
 const gridCols = colWidths.join(" ");
 
-export default function AdminUsersPage() {
-  const { data: session } = useSession();
-  const token = (session as any)?.accessToken;
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+interface AdminUsersPageProps {
+  initialUsers?: User[];
+  initialNextCursor?: string | null;
+}
+
+export default function AdminUsersPage({ initialUsers = [], initialNextCursor = null }: AdminUsersPageProps) {
+  const {showToast } = useToast();
+  const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserStatus | "all">("all");
-  const [page, setPage] = useState(0);
-  const perPage = 8;
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [cursorStack, setCursorStack] = useState<(string | undefined)[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const token = (session as any)?.accessToken;
 
-  const fetchUsers = async () => {
-    if (!token) { setLoading(false); return; }
-    setLoading(true);
+  const fetchUsers = async (cursor?: string) => {
+    if (!token) {
+      showToast("Token is invalid!", "error");
+      return;
+    };
+    const params = new URLSearchParams();
+    if (filter !== "all") params.set("status", filter);
+    if (search) params.set("search", search);
+    if (cursor) params.set("cursor", cursor);
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data.data?.users || data.users || []);
-      }
-    } catch {}
-    setLoading(false);
+      const data = await apiFetch<UserResponse>(`/api/admin/users?${params.toString()}`, token);
+      console.log(data);
+      setUsers(data.users ?? []);
+      setNextCursor(data.nextCursor);
+    } catch (error) {
+      showToast("Fetch users failed!", "error");
+      console.error("Fetch error:", error);
+    }
   };
 
-  useEffect(() => { fetchUsers(); }, [token]);
-
-  const toggleStatus = async (id: number, current: UserStatus) => {
-    const newStatus = current === "active" ? "banned" : "active";
-    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status: newStatus as UserStatus } : u));
+  useEffect(() => {
     if (!token) return;
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/users/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus }),
-      });
-    } catch {}
+    const start = Date.now();
+    setLoading(true);
+    fetchUsers(undefined).finally(() => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= 500) setLoading(false);
+      else setTimeout(() => setLoading(false), 500 - elapsed);
+    });
+  }, [token]);
+  useEffect(() => {
+    if (!token) return;
+    const timeout = setTimeout(() => {
+      setCursorStack([]);
+      fetchUsers(undefined);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [search, filter, token]);
+
+  const handleNext = () => {
+    if (!nextCursor) return;
+    setCursorStack((prev) => [...prev, nextCursor]); 
+    fetchUsers(nextCursor);
   };
 
-  const filtered = users.filter((u) => {
-    const q = search.toLowerCase();
-    return (!q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || String(u.id).includes(q)) &&
-      (filter === "all" || u.status === filter);
-  });
+  const handlePrevious = () => {
+    setCursorStack((prev) => {
+      const stack = [...prev];
+      stack.pop(); 
+      const prevCursor = stack[stack.length - 1]; 
+      fetchUsers(prevCursor);
+      return stack;
+    });
+  };
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paged = filtered.slice(page * perPage, (page + 1) * perPage);
-
-  if (loading) return (
-    <div className="h-screen flex items-center justify-center">
-      <p className="font-mono text-[10px] font-bold text-[#999]">Loading users…</p>
-    </div>
-  );
+  const toggleStatus = (id: number, current: UserStatus) => {
+    const newStatus = current === "active" ? "banned" : "active";
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: newStatus as UserStatus } : u)));
+  };
 
   return (
     <div className="h-screen flex flex-col">
       <AdminHeader label="Admin — Users" title="Users">
-        <AdminSearch value={search} onChange={(v) => { setSearch(v); setPage(0); }} placeholder="Search name, email, ID…" />
+        <AdminSearch value={search} onChange={setSearch} placeholder="Search name, email, ID…" />
       </AdminHeader>
 
-      <div className="flex-1 flex flex-col px-8 py-6 gap-6 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-6 min-h-0 overflow-hidden">
         <AdminFilterTabs
           tabs={[
             { key: "all", label: "All", count: users.length },
@@ -81,47 +107,65 @@ export default function AdminUsersPage() {
             { key: "banned", label: "Banned", count: users.filter((u) => u.status === "banned").length },
           ]}
           selected={filter}
-          onChange={(k) => { setFilter(k as UserStatus | "all"); setPage(0); }}
+          onChange={(k) => setFilter(k as UserStatus | "all")}
         />
 
         <div className={`${card} flex-1 flex flex-col min-h-0`}>
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-              {["ID", "Name", "Email", "Phone", "Orders", "Joined", "Status"].map((h) => (
-                <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
-              ))}
-            </div>
-            <div className="flex-1 min-h-0 flex flex-col">
-              {paged.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center"><p className="text-lg font-bold">No users found</p></div>
-              ) : (
-                paged.map((user) => (
-                  <div key={user.id}
-                    className="grid flex-1 hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center"
-                    style={{ gridTemplateColumns: gridCols }}>
-                    <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.id}</div>
-                    <div className="px-2 text-sm font-bold whitespace-nowrap">{user.name}</div>
-                    <div className="px-2 text-sm font-bold whitespace-nowrap">{user.email}</div>
-                    <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.phone || "—"}</div>
-                    <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.orders || 0}</div>
-                    <div className="px-2 font-mono text-[10px] font-bold text-[#999] whitespace-nowrap">{user.joinedAt?.split("T")[0] || "—"}</div>
-                    <div className="px-2 whitespace-nowrap">
-                      <button onClick={() => toggleStatus(user.id, user.status)}
-                        className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 cursor-pointer transition-opacity hover:opacity-80 ${
-                          user.status === "active"
-                            ? "bg-[#D4EDDA] text-[#155724] border-[#155724]"
-                            : "bg-[#F8D7DA] text-[#721C24] border-[#721C24]"
-                        }`}>{user.status}</button>
-                    </div>
+          {loading ? (
+            <SkeletonTable rows={8} cols={colWidths} />
+          ) : (<>
+          <ResponsiveTable
+            header={
+              <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
+                {["Name", "Email", "Phone", "Address", "City", "Role", "Status"].map((h) => (
+                  <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
+                ))}
+              </div>
+            }
+            gridCols={gridCols}
+          >
+            {users.length === 0 ? (
+              <div className="flex items-center justify-center py-10"><p className="text-lg font-bold">No users found</p></div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id}
+                  className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
+                  style={{ gridTemplateColumns: gridCols }}>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap">{user.name}</div>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap">{user.email}</div>
+                  <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.phone || "—"}</div>
+                  <div className="px-2 text-sm text-[#666] truncate">{user.address || "—"}</div>
+                  <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.city || "—"}</div>
+                  <div className="px-2 font-mono text-[10px] font-bold whitespace-nowrap">
+                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest ${user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#666]"}`}>
+                      {user.role}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-          <AdminPagination page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPageChange={setPage} />
+                  <div className="px-2 whitespace-nowrap">
+                    <button onClick={() => toggleStatus(user.id, user.status)}
+                      className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 cursor-pointer transition-opacity hover:opacity-80 ${
+                        user.status === "active"
+                          ? "bg-[#D4EDDA] text-[#155724] border-[#155724]"
+                          : user.status === "banned"
+                          ? "bg-[#F8D7DA] text-[#721C24] border-[#721C24]"
+                          : "bg-[#e8e6e0] text-[#999] border-[#ccc]"
+                      }`}>
+                      {user.status || "unknown"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </ResponsiveTable>
+          <AdminPagination
+            hasNext={nextCursor !== null}
+            hasPrevious={cursorStack.length > 0}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+          </>)}
         </div>
       </div>
     </div>
   );
 }
-

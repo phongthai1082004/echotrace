@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { uploadToCloudinary } from "@/lib/upload";
 import { label, card, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
+import { SkeletonGrid } from "@/components/skeleton";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, CATEGORY_COLORS, type AssetCategory } from "@/lib/asset-category";
 
 type AssetType = "sticker" | "background";
@@ -128,7 +129,7 @@ export default function AdminAssetsPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* category sidebar */}
-        <div className="w-48 shrink-0 border-r-2 border-[#222] p-4 overflow-y-auto">
+        <div className="w-48 max-[1600px]:w-40 max-[1280px]:w-36 shrink-0 border-r-2 border-[#222] p-4 max-[1600px]:p-3 overflow-y-auto">
           <p className={`${label} mb-3`}>Categories</p>
           <div className="flex flex-col gap-1">
             <button onClick={() => setCategoryFilter("all")}
@@ -153,7 +154,7 @@ export default function AdminAssetsPage() {
         </div>
 
         {/* main content */}
-        <div className="flex-1 px-8 py-6 overflow-y-auto space-y-6">
+        <div className="flex-1 px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 overflow-y-auto space-y-6">
           {/* search + type filter */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex gap-1">
@@ -177,7 +178,7 @@ export default function AdminAssetsPage() {
 
           {/* grid */}
           {loading ? (
-            <p className="text-sm text-[#999]">Loading...</p>
+            <SkeletonGrid count={12} />
           ) : filtered.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <p className="text-lg font-bold text-[#999]">No assets found</p>

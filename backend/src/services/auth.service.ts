@@ -1,14 +1,37 @@
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
-import { TokenType } from "../../enum/token.type.js"
+import { TokenType } from "../../enum/token.type.js";
+import type { UserModel } from "../../generated/prisma/models/User.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const userBase = new BaseService<UserModel>(prisma.user);
 
 export class AuthService {
+  public async softDelete(id: number) {
+    await userBase.delete(id);
+  }
+
+  public async hardDelete(id: number) {
+    await userBase.hardDelete(id);
+  }
+
+  public async findAll(filter: any, options?: any) {
+    return await userBase.findAll(filter, options);
+  }
+
+  public async findById(id: number, extraWhere: Record<string, any> = {}) {
+    return await userBase.findById(id, extraWhere);
+  }
+
+  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
+    return await userBase.update(id, data, extraWhere);
+  }
+
   async loginWithGoogle(idToken: string) {
     const ticket = await googleClient.verifyIdToken({
       idToken,
@@ -17,7 +40,9 @@ export class AuthService {
     const payload = ticket.getPayload();
     if (!payload?.email) throw new AppError("invalid google token", 401);
 
-    let user = await prisma.user.findUnique({ where: { email: payload.email } });
+    let user = await prisma.user.findFirst({
+      where: { OR: [{ googleId: payload.sub }, { email: payload.email }] },
+    });
     if (!user) {
       user = await prisma.user.create({
         data: {
@@ -25,6 +50,7 @@ export class AuthService {
           name: payload.name || "User",
           googleId: payload.sub,
           avatar: payload.picture,
+          status: "active",
         },
       });
     } else if (user.status === "banned") {
@@ -44,7 +70,9 @@ export class AuthService {
   }
 
   async sendOtp(email: string) {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({
+      where: { email, isDelete: false },
+    });
     if (existing) throw new AppError("Email already registered", 409);
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -77,9 +105,7 @@ export class AuthService {
     await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { email, password: hashed, name: email.split("@")[0] },
-    });
+    const user = await userBase.create({ email, password: hashed, name: email.split("@")[0], status: "active" });
 
     return {
       user: { 
@@ -95,7 +121,9 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email, isDelete: false },
+    });
     if (!user || !user.password) throw new AppError("invalid credentials", 401);
     if (user.status === "banned") throw new AppError("Account has been banned", 403);
 

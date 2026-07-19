@@ -3,6 +3,7 @@ packages:
   - 'backend'
 allowBuilds:
   bcrypt: set this to true or false
+  esbuild: true
 onlyBuiltDependencies:
   - prisma
   - better-sqlite3

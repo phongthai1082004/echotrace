@@ -20,7 +20,7 @@ export default function HomePage() {
             <p className="font-mono text-[10px] font-bold text-white tracking-wider uppercase">20.91° N, 107.18° E — Ha Long Bay, Vietnam</p>
           </div>
         </div>
-        <div className="flex flex-col justify-between p-8 lg:p-12 lg:w-[40%] bg-[#FFF7D6] border-l-[3px] border-[#222]">
+        <div className="flex flex-col justify-between p-8 max-[1600px]:p-6 max-[1440px]:p-5 lg:p-12 lg:w-[40%] bg-[#FFF7D6] border-l-[3px] border-[#222]">
           <div>
             <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-8 text-[#666]">Vol. IV — 2024</p>
             <h1 className="text-5xl lg:text-6xl font-bold leading-[0.95] mb-6">Your<br />Journey,<br />Bound<br />in Print.</h1>
@@ -37,7 +37,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-4 px-8 overflow-hidden border-y-[3px] border-[#222] bg-[#FFF7D6]">
+      <section className="py-4 px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 overflow-hidden border-y-[3px] border-[#222] bg-[#FFF7D6]">
         <div className="flex gap-10 items-center whitespace-nowrap">
           {["Editorial Typography", "Asymmetric Layouts", "GPS Metadata", "Archival Paper", "Hard Shadows", "Premium Binding", "Handcrafted"].map((t) => (
             <span key={t} className="font-mono text-[10px] font-bold tracking-widest uppercase shrink-0 text-[#666]">— {t}</span>
@@ -45,7 +45,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-8 lg:px-16 py-16">
+      <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-16 max-[1600px]:py-12 max-[1440px]:py-10 max-[1280px]:py-8">
         <div className="flex items-end justify-between mb-10 pb-5 border-b-[3px] border-[#222]">
           <h2 className="text-4xl lg:text-5xl font-bold">Field Journals</h2>
           <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#666]">Selected Entries</p>
@@ -67,7 +67,7 @@ export default function HomePage() {
       </section>
 
       <section className="flex flex-col lg:flex-row border-t-[3px] border-[#222]">
-        <div className="p-12 lg:p-16 flex flex-col justify-center lg:w-1/2 border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#222]">
+        <div className="p-12 max-[1600px]:p-10 max-[1440px]:p-8 max-[1280px]:p-6 lg:p-16 flex flex-col justify-center lg:w-1/2 border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#222]">
           <p className="text-xl lg:text-2xl font-bold leading-snug italic mb-6 text-[#444]">&ldquo;Memory is not storage. It is the texture of the paper on which a moment insists on being pressed.&rdquo;</p>
           <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">— Cabinet Memoir Manifesto</p>
         </div>
@@ -76,7 +76,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="px-8 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-t-[3px] border-[#222] bg-[#FFF7D6]">
+      <footer className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-t-[3px] border-[#222] bg-[#FFF7D6]">
         <p className="text-lg font-bold">Cabinet Memoir</p>
         <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">© 2024 — Printed in Hanoi, Vietnam</p>
       </footer>

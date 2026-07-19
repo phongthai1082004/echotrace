@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { X, Search, ArrowUpDown, Check, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { label, labelSm, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminPagination } from "@/components/admin-pagination";
+import { ResponsiveTable } from "@/components/responsive-table";
 import { StatusBadge } from "@/components/status-badge";
 import type { OrderStatus, Order } from "@/lib/mock-dispatch";
 import { dispatchSuppliers, allOrders, unassignedOrders } from "@/lib/mock-dispatch";
@@ -23,11 +25,11 @@ function formatCurrency(n: number) {
 // ── Component ──────────────────────────────────────────────
 
 export default function DispatchPage() {
+  const { t } = useTranslation();
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
-  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
   const [page, setPage] = useState(0);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignSearch, setAssignSearch] = useState("");
@@ -40,8 +42,7 @@ export default function DispatchPage() {
       const q = search.toLowerCase();
       return !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.product.toLowerCase().includes(q);
     })
-    .filter((o) => statusFilter === "all" || o.status === statusFilter)
-    .sort((a, b) => sortBy === "date" ? b.date.localeCompare(a.date) : b.amount - a.amount);
+    .filter((o) => statusFilter === "all" || o.status === statusFilter);
 
   const totalPages = Math.ceil(filteredOrders.length / perPage);
   const paged = filteredOrders.slice(page * perPage, (page + 1) * perPage);
@@ -50,7 +51,6 @@ export default function DispatchPage() {
   const counts = (["all", "pending", "printing", "quality-check", "shipped"] as const).map(
     (s) => ({ key: s, count: s === "all" ? allOrders.length : allOrders.filter((o) => o.status === s).length })
   );
-  const countsObj = Object.fromEntries(counts.map((c) => [c.key, c.count]));
 
   const updateStatus = (id: string, status: OrderStatus) => {
     const o = allOrders.find((o) => o.id === id);
@@ -85,7 +85,7 @@ export default function DispatchPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* ── LEFT PANEL: Suppliers ── */}
-        <div className="w-[280px] shrink-0 border-r-[3px] border-[#222] overflow-y-auto bg-[#FFF7D6]/40 flex flex-col">
+        <div className="w-[200px] shrink-0 border-r-[3px] border-[#222] overflow-y-auto bg-[#FFF7D6]/40 flex flex-col">
           <button onClick={() => { setSelectedSupplierId(null); setPage(0); }}
             className={`w-full text-left px-5 py-3.5 border-b-2 border-[#222]/10 font-bold text-sm transition-colors flex items-center justify-between ${
               selectedSupplierId === null ? "bg-[#FFF7D6]" : "hover:bg-[#FFF7D6]/60 text-[#444]"
@@ -147,7 +147,7 @@ export default function DispatchPage() {
                 </div>
               </div>
               <button onClick={() => { setAssignChecked(new Set()); setAssignSearch(""); setShowAssignModal(true); }}
-                className={neoBtnPrimary}>
+                className="bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-[transform,box-shadow] font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0">
                 Assign Orders
               </button>
             </div>
@@ -174,46 +174,41 @@ export default function DispatchPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <ArrowUpDown size={12} className="text-[#666]" />
-                {(["date", "amount"] as const).map((k) => (
-                  <button key={k} onClick={() => setSortBy(k)}
-                    className={`font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-[background-color,color,border-color] ${
-                      sortBy === k ? "bg-[#222] text-white border-[#222]" : "border-[#222] text-[#666] hover:bg-[#e8e6e0]"
-                    }`}>{k}</button>
-                ))}
-              </div>
             </div>
           </div>
 
           {/* Orders table */}
           <div className="flex-1 mx-6 mb-4 min-h-0 flex flex-col">
             <div className={`${card} flex-1 flex flex-col min-h-0 overflow-hidden`}>
-              <div className="grid shrink-0 border-b-[3px] border-[#222]"
-                style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
-                {["Order ID", "Customer", "Product", "Amount", "Status", "Date"].map((h) => (
-                  <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
-                ))}
-              </div>
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              <ResponsiveTable
+                header={
+                  <div className="grid shrink-0 border-b-[3px] border-[#222]"
+                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
+                    {["Order ID", "Customer", "Product", "Amount", "Status", "Date"].map((h) => (
+                      <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
+                    ))}
+                  </div>
+                }
+                gridCols={"110px 1fr 1fr 100px 120px 100px"}
+              >
                 {paged.length === 0 ? (
-                  <div className="flex items-center justify-center h-full"><p className="font-bold text-[#999]">No orders found</p></div>
+                  <div className="flex items-center justify-center py-10"><p className="font-bold text-[#999]">No orders found</p></div>
                 ) : (
                   paged.map((order) => (
                     <div key={order.id} onClick={() => setSelectedOrder(order)}
-                      className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 cursor-pointer items-center"
+                      className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 cursor-pointer items-center py-3"
                       style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
-                      <div className="px-3 py-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">{order.id}</div>
-                      <div className="px-3 py-3 text-sm font-bold whitespace-nowrap">{order.customer}</div>
-                      <div className="px-3 py-3 text-sm font-bold truncate">{order.product}</div>
-                      <div className="px-3 py-3 font-mono text-[10px] font-bold whitespace-nowrap">{formatCurrency(order.amount)}</div>
-                      <div className="px-3 py-3"><StatusBadge status={order.status} /></div>
-                      <div className="px-3 py-3 font-mono text-[10px] font-bold text-[#999] whitespace-nowrap">{order.date}</div>
+                      <div className="px-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">{order.id}</div>
+                      <div className="px-3 text-sm font-bold whitespace-nowrap">{order.customer}</div>
+                      <div className="px-3 text-sm font-bold truncate">{order.product}</div>
+                      <div className="px-3 font-mono text-[10px] font-bold whitespace-nowrap">{formatCurrency(order.amount)}</div>
+                      <div className="px-3"><StatusBadge status={order.status} /></div>
+                      <div className="px-3 font-mono text-[10px] font-bold text-[#999] whitespace-nowrap">{order.date}</div>
                     </div>
                   ))
                 )}
-              </div>
-              <AdminPagination page={page} totalPages={totalPages} total={filteredOrders.length} perPage={perPage} onPageChange={setPage} />
+              </ResponsiveTable>
+              <AdminPagination hasNext={page < totalPages - 1} hasPrevious={page > 0} onNext={() => setPage(p => p + 1)} onPrevious={() => setPage(p => p - 1)} />
             </div>
           </div>
         </div>

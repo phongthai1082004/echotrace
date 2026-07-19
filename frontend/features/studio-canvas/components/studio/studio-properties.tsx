@@ -18,7 +18,6 @@ const PRESET_COLORS = [
 export function StudioProperties() {
   const canvas = useCanvasStore((s) => s.canvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
-  const pushUndo = useCanvasStore((s) => s.pushUndo);
   const filterVersion = useCanvasStore((s) => s.filterVersion);
   const selectionVersion = useCanvasStore((s) => s.selectionVersion);
   const storeSliderValues = useCanvasStore((s) => s.filterSliderValues);
@@ -63,7 +62,6 @@ export function StudioProperties() {
   const applyFont = (fontFamily: string) => {
     if (!selected || selected.type !== "i-text") return;
     const txt = selected as fabric.IText;
-    pushUndo();
     txt.set({ fontFamily });
     canvas?.renderAll();
   };
@@ -71,7 +69,6 @@ export function StudioProperties() {
   const applyBold = () => {
     if (!selected || selected.type !== "i-text") return;
     const txt = selected as fabric.IText;
-    pushUndo();
     txt.set({ fontWeight: (txt.fontWeight === "bold" ? "normal" : "bold") as any });
     canvas?.renderAll();
   };
@@ -79,7 +76,6 @@ export function StudioProperties() {
   const applyItalic = () => {
     if (!selected || selected.type !== "i-text") return;
     const txt = selected as fabric.IText;
-    pushUndo();
     txt.set({ fontStyle: txt.fontStyle === "italic" ? "normal" : "italic" });
     canvas?.renderAll();
   };
@@ -87,7 +83,6 @@ export function StudioProperties() {
   const applyUnderline = () => {
     if (!selected || selected.type !== "i-text") return;
     const txt = selected as fabric.IText;
-    pushUndo();
     txt.set({ underline: !txt.underline });
     canvas?.renderAll();
   };
@@ -95,7 +90,6 @@ export function StudioProperties() {
   const applyColor = (color: string) => {
     if (!selected || selected.type !== "i-text") return;
     const txt = selected as fabric.IText;
-    pushUndo();
     txt.set({ fill: color });
     canvas?.renderAll();
   };
@@ -144,7 +138,6 @@ export function StudioProperties() {
                   setFilterSliderValues({ ...defaultVals });
                   if (selected && selected.type === "image") {
                     const img = selected as fabric.FabricImage;
-                    pushUndo();
                     img.filters = [];
                     img.applyFilters();
                     canvas?.renderAll();

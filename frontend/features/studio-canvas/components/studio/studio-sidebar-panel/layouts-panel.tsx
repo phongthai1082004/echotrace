@@ -62,6 +62,7 @@ export function LayoutsPanel() {
 
   const handleSelect = (layout: AnyLayout) => {
     if (!canvas) return;
+    
     pushUndo();
     const activePageIndex = useCanvasStore.getState().activePageIndex;
     const pageW = (canvas.getWidth() ?? 840) / 2;
@@ -70,23 +71,24 @@ export function LayoutsPanel() {
       if (!isSingleSide) return true;
       return viewMode === "left" ? (o.left || 0) < pageW : (o.left || 0) >= pageW;
     };
-    // only collect photos from the visible side
+    
     const photos = canvas.getObjects()
       .filter((o: any) => o.customProperties?.layer === "photo" && onSide(o))
       .sort((a: any, b: any) => (a.top || 0) - (b.top || 0) || (a.left || 0) - (b.left || 0));
-    // only remove frames on the visible side
+    
     canvas.getObjects().filter((o: any) => isFrameObject(o) && onSide(o)).forEach((o) => canvas.remove(o));
-    // save layout to the correct page index
+    
     const targetIdx = isSingleSide && viewMode === "right" ? activePageIndex + 1 : activePageIndex;
     useCanvasStore.getState().setPage(targetIdx, { layout });
     useCanvasStore.setState({ activeLayout: layout });
+    
     const offsetX = viewMode === "right" && !spreadMode ? pageW : 0;
     showGuides(canvas, layout, offsetX, (o) => !isSingleSide || onSide(o));
-    // get new layout frames sorted by position
+    
     const frames = canvas.getObjects()
       .filter((o: any) => o.customProperties?.layer === "frame" && o.customProperties?.layoutFrame)
       .sort((a: any, b: any) => (a.top || 0) - (b.top || 0) || (a.left || 0) - (b.left || 0));
-    // place photos into new frames, remove extras
+    
     photos.forEach((photo, i) => {
       if (i < frames.length) {
         const frame = frames[i];
@@ -96,12 +98,14 @@ export function LayoutsPanel() {
         canvas.remove(photo);
       }
     });
+    
     enforceZLayers(canvas);
     canvas.renderAll();
   };
 
   const handleClear = () => {
     if (!canvas) return;
+    
     pushUndo();
     const activePageIndex = useCanvasStore.getState().activePageIndex;
     const pageW = (canvas.getWidth() ?? 840) / 2;
@@ -110,6 +114,7 @@ export function LayoutsPanel() {
       if (!isSingleSide) return true;
       return viewMode === "left" ? (o.left || 0) < pageW : (o.left || 0) >= pageW;
     };
+    
     clearLayoutFrames(canvas, (o) => !isSingleSide || onSide(o));
     const targetIdx = isSingleSide && viewMode === "right" ? activePageIndex + 1 : activePageIndex;
     useCanvasStore.getState().setPage(targetIdx, { layout: null });

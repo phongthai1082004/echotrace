@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -19,6 +19,10 @@ model User {
   status   String?
   role     String  @default("user")
   googleId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   tokens      Token[]
   orders      Order[]
@@ -28,6 +32,7 @@ model User {
 
   @@index([status])
   @@index([role])
+  @@index([isDelete])
 }
 
 model Token {
@@ -38,6 +43,10 @@ model Token {
   tokenType    String   @default("session")
   isRevoked    Boolean  @default(false)
   expiresAt    DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   user         User?    @relation(fields: [userId], references: [id])
 
@@ -55,6 +64,10 @@ model UserImage {
   height   Int?
   size     Int?
   bookId   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   user     User   @relation(fields: [userId], references: [id])
 
@@ -83,6 +96,10 @@ model Order {
   productionBatchId Int?
   product        String?
   coverType      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   user         User              @relation(fields: [userId], references: [id])
   coupon       Coupon?           @relation(fields: [couponId], references: [id])
@@ -106,6 +123,10 @@ model Transaction {
   reference       String?
   status          String
   transactionTime DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   order           Order    @relation(fields: [orderId], references: [id])
 
@@ -119,6 +140,10 @@ model OrderItem {
   bookId   Int
   quantity Int   @default(1)
   price    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   order    Order @relation(fields: [orderId], references: [id])
   book     Book  @relation(fields: [bookId], references: [id])
@@ -141,6 +166,9 @@ model Book {
   status   String  @default("DRAFT")
   content  String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   user       User        @relation(fields: [userId], references: [id])
   theme      Theme?      @relation(fields: [themeId], references: [id])
@@ -159,6 +187,10 @@ model Theme {
   description  String
   category     String?
   thumbnailUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   books        Book[]
   sampleBooks  SampleBook[]
@@ -181,6 +213,10 @@ model SampleBook {
   price       Float   @default(0)
   isActive    Boolean @default(true)
   content     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   theme       Theme? @relation(fields: [themeId], references: [id])
 
@@ -197,6 +233,10 @@ model DecorAsset {
   name     String
   url      String
   publicId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   @@index([type])
 }
@@ -211,6 +251,10 @@ model Supplier {
   overdueDebt Float    @default(0)
   monthDebt   Float    @default(0)
   lastPaymentDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   productionBatches ProductionBatch[]
 }
@@ -224,6 +268,10 @@ model ProductionBatch {
   notes       String?
   assignedAt  DateTime @default(now())
   completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   supplier Supplier @relation(fields: [supplierId], references: [id])
   orders   Order[]
@@ -243,6 +291,10 @@ model Coupon {
   usedCount         Int       @default(0)
   isActive          Boolean   @default(true)
   expiresAt         DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   orders            Order[]
   usage             CouponUsage[]
@@ -256,6 +308,10 @@ model CouponUsage {
   couponId Int
   userId   Int
   usedAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   coupon   Coupon   @relation(fields: [couponId], references: [id])
   user     User     @relation(fields: [userId], references: [id])

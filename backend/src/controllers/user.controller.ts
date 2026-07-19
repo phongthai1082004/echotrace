@@ -3,8 +3,12 @@ import { AuthRequest } from "../middleware/auth.middleware.js";
 import { AppError } from "../middleware/app.error.js";
 import { UserService } from "../services/user.service.js";
 import { ApiResponse } from "../middleware/api.response.js";
+import { BaseService } from "../utils/base.service.js";
+import { prisma } from "../../lib/prisma.js";
+import type { UserModel } from "../../generated/prisma/models/User.js";
 
 const userService = new UserService();
+const userBase = new BaseService<UserModel>(prisma.user);
 
 export class UserController {
   async getProfile(req: AuthRequest, res: Response) {
@@ -23,36 +27,18 @@ export class UserController {
     res.json(ApiResponse.success(result));
   }
 
-  async saveAvatarUrl(req: AuthRequest, res: Response) {
-    const { url } = req.body;
-    if (!url) throw new AppError("No URL provided", 400);
-
-    const updated = await userService.saveAvatarUrl(req.userId!, url);
-    res.json(ApiResponse.success(updated));
-  }
-
   async getUserList(req: AuthRequest, res: Response) {
-    const { 
-      status, 
-      customerId, 
-      search, 
-      sort, 
-      order, 
-      limit, 
-      cursor 
-    } = req.query;
-
+    const { status, customerId, search, order, limit, cursor } = req.query;
     const params = {
       status: status as string | undefined,
       customerId: customerId ? Number(customerId) : undefined,
       search: search as string | undefined,
-      sort: sort as string | undefined,
-      order: (order as string) || 'desc', 
-      limit: limit ? Number(limit) : 8,    
-      cursor: cursor ? Number(cursor) : 1  
+      order: (order as string) || "desc",
+      limit: limit ? Number(limit) : 8,
+      cursor: cursor ? Number(cursor) : undefined,
     };
-    
-    const users = await userService.getUserList(params);
-    return res.json({ success: true, data: users });
+    const options = { searchFields: ["name", "email"], allowedFilterFields: ["status"] };
+    const { items, nextCursor } = await userBase.findAll(params, options);
+    res.json(ApiResponse.success({ users: items, nextCursor }));
   }
 }

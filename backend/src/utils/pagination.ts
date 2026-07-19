@@ -1,31 +1,61 @@
 export interface PaginationConfig {
-    status?: string,          
-    customerId?: number,         
-    search?: string,       
-    sort?: string,      
-    order: string,           
-    limit: number,                
-    cursor: number     
+  status?: string;
+  customerId?: number;
+  search?: string;
+  sort?: string;
+  order: string;
+  limit: number;
+  cursor?: number;
 }
+
+export interface PaginationOptions {
+  searchFields?: string[];
+  allowedSortFields?: string[];
+  allowedFilterFields?: string[];   
+  defaultSort?: string;
+}
+
 export class QueryProcessor {
-  constructor(private query: any) {}
+  constructor(
+    private query: any,
+    private options: PaginationOptions = {}
+  ) {}
 
   build() {
-    const { search, sort, order, limit, cursor, ...filters } = this.query;
+    const { search, sort, order, limit, cursor, ...rest } = this.query;
+    const {
+      searchFields = [],
+      allowedSortFields = ['id'],
+      allowedFilterFields = [],
+      defaultSort = 'id',
+    } = this.options;
+
+    const sortField = sort && allowedSortFields.includes(sort) ? sort : defaultSort;
+
+    const where: any = {};
+
+    for (const key of allowedFilterFields) {
+      const value = rest[key];
+      if (value !== undefined && value !== '') {
+        where[key] = isNaN(Number(value)) ? value : Number(value);
+      }
+    }
+
+    if (search && searchFields.length > 0) {
+      where.OR = searchFields.map((field) => ({
+        [field]: { contains: search, mode: 'insensitive' },
+      }));
+    }
 
     const queryOptions: any = {
-      where: { ...filters },
-      orderBy: { [sort || 'id']: order === 'desc' ? 'desc' : 'asc' },
+      where,
+      orderBy: [{ [sortField]: order === 'desc' ? 'desc' : 'asc' }, { id: 'asc' }],
       take: Number(limit) || 10,
     };
 
-    if (search) {
-      queryOptions.where.name = { contains: search }; 
-    }
-
     if (cursor) {
-      queryOptions.cursor = { id: cursor }; 
-      queryOptions.skip = 1; 
+      queryOptions.cursor = { id: Number(cursor) };
+      queryOptions.skip = 1;
     }
 
     return queryOptions;

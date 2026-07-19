@@ -143,7 +143,7 @@ export function clearLayoutFrames(canvas: fabric.Canvas, predicate?: (o: any) =>
   }).forEach((o) => canvas.remove(o));
 }
 
-export function makeFrame(left: number, top: number, w: number, h: number, customProps: Record<string, any> = {}): fabric.Rect {
+function makeFrame(left: number, top: number, w: number, h: number, customProps: Record<string, any> = {}): fabric.Rect {
   const obj = new fabric.Rect({ width: w, height: h, left, top, originX: "left", originY: "top" });
   obj.set({
     fill: "rgba(0,0,0,0.01)", stroke: "#000", strokeWidth: 2, strokeDashArray: undefined,
@@ -238,32 +238,6 @@ export function findPhotoInFrame(canvas: fabric.Canvas, frame: fabric.FabricObje
     if (o.customProperties?.frameId && o.customProperties.frameId !== frameId) return false;
     return frame.containsPoint(new fabric.Point(o.left || 0, o.top || 0));
   }) as fabric.FabricImage | undefined;
-}
-
-export function syncPhotoToFrame(canvas: fabric.Canvas, frame: fabric.FabricObject) {
-  const photo = findPhotoInFrame(canvas, frame);
-  if (!photo) return;
-  // preserve current photo scale/angle, only update position to follow frame center + clip
-  const fw = (frame.width || 100) * (frame.scaleX || 1);
-  const fh = (frame.height || 100) * (frame.scaleY || 1);
-  const fl = frame.left || 0, ft = frame.top || 0;
-  const shapeName = (frame as any).customProperties?.shapeName;
-  let clip;
-  if (shapeName) {
-    const size = (frame as any).customProperties?.shapeSize || fw;
-    clip = createClipPath(shapeName, size, size);
-    clip.set({ left: fl, top: ft, scaleX: frame.scaleX || 1, scaleY: frame.scaleY || 1, angle: frame.angle || 0 } as any);
-  } else {
-    clip = createRectPath(fw, fh);
-    clip.set({ left: fl, top: ft, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
-  }
-  clip.setCoords();
-  photo.set({
-    left: fl + fw / 2, top: ft + fh / 2,
-    clipPath: clip,
-  } as any);
-  photo.setCoords();
-  photo.dirty = true;
 }
 
 export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.FabricImage) {
@@ -437,42 +411,6 @@ export function removePhotoDimOverlays(canvas: fabric.Canvas) {
   canvas.getObjects().filter((o: any) => o[DIM_OVERLAY_KEY] === true).forEach((o) => canvas.remove(o));
 }
 
-export function relinkAfterLoad(canvas: fabric.Canvas) {
-  canvas.calcOffset();
-  canvas.getObjects().forEach((obj: any) => {
-    obj.setCoords();
-    if (obj.customProperties?.layer === "frame" && !obj._selId) {
-      obj._selId = `frame-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    }
-  });
-  canvas.getObjects().forEach((obj: any) => {
-    if (obj.customProperties?.layer !== "photo") return;
-    const fid = obj.customProperties?.frameId;
-    if (fid) {
-      const frame = canvas.getObjects().find((o: any) =>
-        o.customProperties?.layer === "frame" && o._selId === fid
-      );
-      if (!frame) delete obj.customProperties.frameId;
-    }
-    if (!obj.customProperties?.frameId) {
-      // center origin: obj.left/top are center
-      const frame = canvas.getObjects().find((o: any) => {
-        if (o.customProperties?.layer !== "frame") return false;
-        return o.containsPoint(new fabric.Point(obj.left || 0, obj.top || 0));
-      });
-      if (frame) {
-        (obj as any).customProperties = { ...obj.customProperties, frameId: (frame as any)._selId };
-      }
-    }
-  });
-  // lock any photos left in edit mode after restore
-  canvas.getObjects().forEach((obj: any) => {
-    if (obj.customProperties?.layer === "photo" && (obj as any).hasControls === true) {
-      lockPhotoInFrame(canvas, obj as fabric.FabricImage);
-    }
-  });
-}
-
 export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX = 0, clearPredicate?: (o: any) => boolean) {
   clearLayoutFrames(canvas, clearPredicate);
   layout.slots.forEach((slot) => {
@@ -545,12 +483,10 @@ export async function applyUndo(
   setAutoPlaced: (v: boolean) => void,
   isDraggingPhoto: boolean,
 ) {
-  console.log(`applyUndo: enter, undoStack pop, objects=${canvas.getObjects().length}`);
   pushRedo({ pageIdx: currentPageIdx, canvasJson: serializeCanvasState(canvas) });
   const prev = popUndo();
-  if (!prev) { console.log("applyUndo: popUndo returned undefined"); return; }
+  if (!prev) return;
   const { pageIdx, canvasJson } = prev;
-  console.log(`undo pg${currentPageIdx}→pg${pageIdx}`);
   if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
     const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
     setPage(pageIdx, { canvasJson: leftJson });
@@ -574,12 +510,10 @@ export async function applyRedo(
   setAutoPlaced: (v: boolean) => void,
   isDraggingPhoto: boolean,
 ) {
-  console.log(`applyRedo: enter, redoStack pop, objects=${canvas.getObjects().length}`);
   pushUndo();
   const next = popRedo();
-  if (!next) { console.log("applyRedo: popRedo returned undefined"); return; }
+  if (!next) return;
   const { pageIdx, canvasJson } = next;
-  console.log(`redo pg${currentPageIdx}→pg${pageIdx}`);
   if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
     const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
     setPage(pageIdx, { canvasJson: leftJson });
