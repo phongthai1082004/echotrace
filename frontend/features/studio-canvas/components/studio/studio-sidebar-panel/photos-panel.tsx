@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
@@ -39,6 +40,7 @@ function UploadingPlaceholder() {
 }
 
 export function PhotosPanel() {
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -108,16 +110,16 @@ export function PhotosPanel() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Your Photos</p>
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.studio.yourPhotos")}</p>
         <button onClick={() => fileRef.current?.click()} disabled={uploading}
           className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-all bg-white">
-          {uploading ? "..." : "+ Upload"}
+          {uploading ? "..." : t("customer.studio.upload")}
         </button>
         <input ref={fileRef} type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" />
       </div>
       {error && <p className="font-mono text-[8px] text-[#B54843] mb-2">{error}</p>}
       {userImages.length === 0 && uploadingIds.length === 0 && (
-        <p className="font-mono text-[9px] text-[#999] text-center py-8">No photos yet. Click "+ Upload" to add some.</p>
+        <p className="font-mono text-[9px] text-[#999] text-center py-8">{t("customer.studio.noPhotos")}</p>
       )}
       {(userImages.length > 0 || uploadingIds.length > 0) && (
         <div className="grid grid-cols-2 gap-1.5">

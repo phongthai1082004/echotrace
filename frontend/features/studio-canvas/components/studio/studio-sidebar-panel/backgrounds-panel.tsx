@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
@@ -12,6 +13,7 @@ interface Background {
 }
 
 export function BackgroundsPanel() {
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const canvas = useCanvasStore((s) => s.canvas);
@@ -49,9 +51,9 @@ export function BackgroundsPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Backgrounds</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.background")}</p>
       {backgrounds.length === 0 ? (
-        <p className="text-[10px] text-[#999]">No backgrounds yet</p>
+        <p className="text-[10px] text-[#999]">{t("customer.studio.noBackgrounds")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {backgrounds.map((b) => (

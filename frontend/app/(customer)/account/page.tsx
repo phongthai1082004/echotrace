@@ -1,6 +1,5 @@
 "use client";
 import { useTranslation } from "react-i18next";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { AccountSettings } from "@/components/account-settings";
 
 export default function AccountPage() {
@@ -15,7 +14,6 @@ export default function AccountPage() {
               <h1 className="text-3xl lg:text-4xl font-bold mb-1">{t("customer.account.title")}</h1>
               <p className="text-sm text-[#666]">{t("customer.account.subtitle")}</p>
             </div>
-            <LanguageSwitcher />
           </div>
           <div className="max-w-2xl"><AccountSettings /></div>
         </main>

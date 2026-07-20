@@ -134,7 +134,7 @@ export default function CheckoutPage() {
               </div>
               <div className="px-5 pb-4 space-y-2 pt-3">
                 <div className="flex justify-between">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#666]">Subtotal</span>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#666]">{t("customer.checkout.subtotal")}</span>
                   <span className="font-mono text-[10px] font-bold">₫{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
@@ -155,7 +155,7 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 <div className="flex justify-between pt-2 border-t-[3px] border-[#222]">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest">Total</span>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest">{t("customer.checkout.total")}</span>
                   <span className="text-xl font-bold">₫{total.toLocaleString()}</span>
                 </div>
               </div>

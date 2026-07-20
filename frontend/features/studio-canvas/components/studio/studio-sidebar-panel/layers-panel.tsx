@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { isFrameObject, enforceZLayers } from "../../../lib/layout-engine";
 import * as fabric from "fabric";
@@ -83,13 +84,14 @@ function LayerGroup({ title, items, isFrameGroup, canvas }: { title: string; ite
 }
 
 export function LayersPanel() {
+  const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
 
   if (!canvas) {
     return (
       <div className="p-4">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Layers</p>
-        <p className="font-mono text-[9px] text-[#999]">No canvas</p>
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.layers")}</p>
+        <p className="font-mono text-[9px] text-[#999]">{t("customer.studio.noCanvas")}</p>
       </div>
     );
   }
@@ -106,19 +108,19 @@ export function LayersPanel() {
     const id = selId || `obj-${Math.random().toString(36).slice(2, 8)}`;
 
     if (layer === "background") {
-      background = { id, label: "Background", type: "background", hasPhoto: false, obj };
+      background = { id, label: t("customer.studio.itemBackground"), type: "background", hasPhoto: false, obj };
     } else if (layer === "frame") {
       const hasPhoto = canvas.getObjects().some((o: any) => o.customProperties?.frameId === selId);
-      frames.push({ id, label: "Frame", type: "frame", hasPhoto, obj });
+      frames.push({ id, label: t("customer.studio.itemFrame"), type: "frame", hasPhoto, obj });
     } else if (layer === "photo") {
       return;
     } else if (layer === "element" || (!layer && (cp?.z ?? 0) >= 200)) {
       const isText = obj instanceof fabric.IText || obj instanceof fabric.FabricText;
       if (isText) {
-        const text = (obj as fabric.IText).text || "Text";
+        const text = (obj as fabric.IText).text || t("customer.studio.itemText");
         elements.push({ id, label: text.length > 20 ? text.slice(0, 20) + "…" : text, type: "text", hasPhoto: false, obj });
       } else {
-        const stickerName = cp?.stickerName || "Sticker";
+        const stickerName = cp?.stickerName || t("customer.studio.itemSticker");
         elements.push({ id, label: stickerName.length > 20 ? stickerName.slice(0, 20) + "…" : stickerName, type: "sticker", hasPhoto: false, obj });
       }
     }
@@ -126,10 +128,10 @@ export function LayersPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Layers</p>
-      <LayerGroup title="Background" items={background ? [background] : []} isFrameGroup={false} canvas={canvas} />
-      <LayerGroup title="Frames" items={frames.reverse()} isFrameGroup={true} canvas={canvas} />
-      <LayerGroup title="Elements" items={elements.reverse()} isFrameGroup={false} canvas={canvas} />
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.layers")}</p>
+      <LayerGroup title={t("customer.studio.sectionBackground")} items={background ? [background] : []} isFrameGroup={false} canvas={canvas} />
+      <LayerGroup title={t("customer.studio.sectionFrames")} items={frames.reverse()} isFrameGroup={true} canvas={canvas} />
+      <LayerGroup title={t("customer.studio.sectionElements")} items={elements.reverse()} isFrameGroup={false} canvas={canvas} />
       <div className="mt-4 pt-3 border-t border-[#ddd]">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">

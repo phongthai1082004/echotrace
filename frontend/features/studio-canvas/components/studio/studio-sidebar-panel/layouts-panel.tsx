@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { LAYOUT_LIST, SPREAD_LAYOUT_LIST } from "../../../types/layout";
 import type { LayoutSlot } from "../../../types/layout";
@@ -50,6 +51,7 @@ function LayoutThumbnail({ layout, isSpread }: { layout: AnyLayout; isSpread?: b
 }
 
 export function LayoutsPanel() {
+  const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
   const activeLayout = useCanvasStore((s) => s.activeLayout);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
@@ -124,7 +126,7 @@ export function LayoutsPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Layouts</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.layouts")}</p>
       <div className="flex flex-col gap-3">
         {layouts.map((layout: AnyLayout) => (
           <button
@@ -146,7 +148,7 @@ export function LayoutsPanel() {
           onClick={handleClear}
           className="mt-4 w-full font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1.5 rounded-md border-2 border-[#ccc] hover:border-[#B54843] hover:text-[#B54843] transition-all"
         >
-          Clear Layout
+          {t("customer.studio.clearLayout")}
         </button>
       )}
     </div>

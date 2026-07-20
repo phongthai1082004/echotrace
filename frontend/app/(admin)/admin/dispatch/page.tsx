@@ -11,12 +11,14 @@ import { StatusBadge } from "@/components/status-badge";
 import type { OrderStatus, Order } from "@/lib/mock-dispatch";
 import { dispatchSuppliers, allOrders, unassignedOrders } from "@/lib/mock-dispatch";
 
-const STATUS_META: Record<OrderStatus, { label: string; color: string; text: string }> = {
-  pending:        { label: "Pending",       color: "#FFF7D6", text: "#222" },
-  printing:       { label: "Printing",      color: "#FFD93D", text: "#222" },
-  "quality-check":{ label: "Quality Check", color: "#9CB8A8", text: "#222" },
-  shipped:        { label: "Shipped",       color: "#5A8F4A", text: "#fff" },
-};
+function STATUS_META(t: (k: string) => string): Record<OrderStatus, { label: string; color: string; text: string }> {
+  return {
+    pending:        { label: t("admin.dispatch.filterPending"),       color: "#FFF7D6", text: "#222" },
+    printing:       { label: t("admin.dispatch.filterPrinting"),      color: "#FFD93D", text: "#222" },
+    "quality-check":{ label: t("admin.dispatch.filterQualityCheck"), color: "#9CB8A8", text: "#222" },
+    shipped:        { label: t("admin.dispatch.filterShipped"),       color: "#5A8F4A", text: "#fff" },
+  };
+}
 
 function formatCurrency(n: number) {
   return "$" + n.toLocaleString("en-US");
@@ -48,6 +50,7 @@ export default function DispatchPage() {
   const paged = filteredOrders.slice(page * perPage, (page + 1) * perPage);
   const selectedSupplier = selectedSupplierId ? dispatchSuppliers.find((s) => s.id === selectedSupplierId) : null;
 
+  const statusMeta = STATUS_META(t);
   const counts = (["all", "pending", "printing", "quality-check", "shipped"] as const).map(
     (s) => ({ key: s, count: s === "all" ? allOrders.length : allOrders.filter((o) => o.status === s).length })
   );
@@ -73,13 +76,13 @@ export default function DispatchPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <AdminHeader label="Admin — Dispatch" title="Order Dispatch">
+      <AdminHeader label={t("admin.dispatch.label")} title={t("admin.dispatch.title")}>
         <div className="flex items-center gap-4 text-sm text-[#999]">
-          <span className="text-[#222] font-bold">{allOrders.length} orders</span>
+          <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
           <span className="w-[3px] h-4 bg-[#222] rounded-full" />
-          <span className="text-[#222] font-bold">{dispatchSuppliers.length} suppliers</span>
+          <span className="text-[#222] font-bold">{t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}</span>
           <span className="w-[3px] h-4 bg-[#222] rounded-full" />
-          <span className="text-[#222] font-bold">{unassignedOrders.length} unassigned</span>
+          <span className="text-[#222] font-bold">{t("admin.dispatch.unassigned", { count: unassignedOrders.length })}</span>
         </div>
       </AdminHeader>
 
@@ -90,7 +93,7 @@ export default function DispatchPage() {
             className={`w-full text-left px-5 py-3.5 border-b-2 border-[#222]/10 font-bold text-sm transition-colors flex items-center justify-between ${
               selectedSupplierId === null ? "bg-[#FFF7D6]" : "hover:bg-[#FFF7D6]/60 text-[#444]"
             }`}>
-            <span>All Orders</span>
+            <span>{t("admin.dispatch.allOrders")}</span>
             <span className="font-mono text-[10px] text-[#999]">{allOrders.length}</span>
           </button>
           <div className="flex-1 overflow-y-auto">
@@ -107,7 +110,7 @@ export default function DispatchPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="font-mono text-[9px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-1.5 py-0.5 rounded">
-                      {s.activeOrders} active
+                      {s.activeOrders} {t("admin.dispatch.active")}
                     </span>
                     <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded ${
                       s.overdueDebt > 0 ? "text-[#B54843] bg-[#B54843]/10" : "text-[#22C55E] bg-[#22C55E]/10"
@@ -133,22 +136,22 @@ export default function DispatchPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className={`${card} px-3 py-1.5`}>
-                    <p className={`${label} text-[#999]`}>Debt</p>
+                    <p className={`${label} text-[#999]`}>{t("admin.dispatch.debt")}</p>
                     <p className="text-sm font-bold">{formatCurrency(selectedSupplier.totalDebt)}</p>
                   </div>
                   <div className={`${card} px-3 py-1.5 ${selectedSupplier.overdueDebt > 0 ? "" : "opacity-50"}`}>
-                    <p className={`${label} text-[#999]`}>Overdue</p>
+                    <p className={`${label} text-[#999]`}>{t("admin.dispatch.overdue")}</p>
                     <p className="text-sm font-bold text-[#B54843]">{formatCurrency(selectedSupplier.overdueDebt)}</p>
                   </div>
                   <div className={`${card} px-3 py-1.5`}>
-                    <p className={`${label} text-[#999]`}>MTD</p>
+                    <p className={`${label} text-[#999]`}>{t("admin.dispatch.mtd")}</p>
                     <p className="text-sm font-bold">{formatCurrency(selectedSupplier.monthDebt)}</p>
                   </div>
                 </div>
               </div>
               <button onClick={() => { setAssignChecked(new Set()); setAssignSearch(""); setShowAssignModal(true); }}
                 className="bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-[transform,box-shadow] font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0">
-                Assign Orders
+                {t("admin.dispatch.assignOrders")}
               </button>
             </div>
           )}
@@ -160,7 +163,7 @@ export default function DispatchPage() {
                 <div className="relative flex-1 max-w-xs">
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
                   <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                    placeholder="Search by ID, customer, product…"
+                    placeholder={t("admin.dispatch.searchPlaceholder")}
                     className={`${input} pl-9 py-1.5 text-xs`} />
                 </div>
                 <div className="flex gap-1">
@@ -169,7 +172,7 @@ export default function DispatchPage() {
                       className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-[background-color,color,border-color] ${
                         statusFilter === key ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
                       }`}>
-                      {key === "all" ? "All" : STATUS_META[key as OrderStatus].label} <span className={statusFilter === key ? "text-white/60" : "text-[#999]"}>({count})</span>
+                      {key === "all" ? t("admin.dispatch.filterAll") : t(`admin.dispatch.filter${key.replace(/-./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)} <span className={statusFilter === key ? "text-white/60" : "text-[#999]"}>({count})</span>
                     </button>
                   ))}
                 </div>
@@ -184,7 +187,7 @@ export default function DispatchPage() {
                 header={
                   <div className="grid shrink-0 border-b-[3px] border-[#222]"
                     style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
-                    {["Order ID", "Customer", "Product", "Amount", "Status", "Date"].map((h) => (
+                    {[t("admin.dispatch.orderId"), t("admin.dispatch.customer"), t("admin.dispatch.product"), t("admin.dispatch.amount"), t("admin.dispatch.status"), t("admin.dispatch.date")].map((h) => (
                       <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                     ))}
                   </div>
@@ -192,7 +195,7 @@ export default function DispatchPage() {
                 gridCols={"110px 1fr 1fr 100px 120px 100px"}
               >
                 {paged.length === 0 ? (
-                  <div className="flex items-center justify-center py-10"><p className="font-bold text-[#999]">No orders found</p></div>
+                  <div className="flex items-center justify-center py-10"><p className="font-bold text-[#999]">{t("admin.dispatch.noOrders")}</p></div>
                 ) : (
                   paged.map((order) => (
                     <div key={order.id} onClick={() => setSelectedOrder(order)}
@@ -229,11 +232,11 @@ export default function DispatchPage() {
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-3 text-[#666]`}>Status</p>
+                <p className={`${label} mb-3 text-[#666]`}>{t("admin.dispatch.status")}</p>
                 <div className="flex gap-2 flex-wrap">
-                  {(Object.keys(STATUS_META) as OrderStatus[]).map((s) => {
+                  {(Object.keys(statusMeta) as OrderStatus[]).map((s) => {
                     const active = selectedOrder.status === s;
-                    const m = STATUS_META[s];
+                    const m = statusMeta[s];
                     return (
                       <button key={s} onClick={() => updateStatus(selectedOrder.id, s)}
                         className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none transition-[opacity,border-color] rounded-[6px] px-2.5 py-1.5 border-2 ${
@@ -248,31 +251,31 @@ export default function DispatchPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-4 text-[#666]`}>Customer</p>
+                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.customerInfo")}</p>
                 <div className="space-y-3">
-                  {[["Name", selectedOrder.customer], ["Email", selectedOrder.email], ["Phone", selectedOrder.phone], ["Address", selectedOrder.address]].map(([k, v]) => (
+                  {[[t("admin.dispatch.name"), selectedOrder.customer], [t("admin.dispatch.email"), selectedOrder.email], [t("admin.dispatch.phone"), selectedOrder.phone], [t("admin.dispatch.address"), selectedOrder.address]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="text-sm font-bold">{v || "—"}</p></div>
                   ))}
                 </div>
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-4 text-[#666]`}>Order Details</p>
+                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.orderDetails")}</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {[["Pages", `${selectedOrder.pages}pp`], ["Cover", selectedOrder.cover], ["Amount", formatCurrency(selectedOrder.amount)], ["Date", selectedOrder.date], ["Supplier", dispatchSuppliers.find((s) => s.id === selectedOrder.supplierId)?.name || "—"]].map(([k, v]) => (
+                  {[[t("admin.dispatch.pages"), `${selectedOrder.pages}${t("admin.dispatch.pp")}`], [t("admin.dispatch.cover"), selectedOrder.cover], [t("admin.dispatch.amount"), formatCurrency(selectedOrder.amount)], [t("admin.dispatch.date"), selectedOrder.date], [t("admin.dispatch.supplierDetail"), dispatchSuppliers.find((s) => s.id === selectedOrder.supplierId)?.name || "—"]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold capitalize">{v}</p></div>
                   ))}
                 </div>
                 {selectedOrder.notes && (
                   <div className="mt-4 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
-                    <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">Note</p>
+                    <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">{t("admin.dispatch.note")}</p>
                     <p className="text-sm font-bold">{selectedOrder.notes}</p>
                   </div>
                 )}
               </div>
 
               <div className="px-6 py-5">
-                <p className={`${label} mb-4 text-[#666]`}>Timeline</p>
+                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.timeline")}</p>
                 <div className="relative">
                   <div className="absolute left-[5px] top-2 bottom-2 w-[3px] bg-[#222]/20 rounded-full" />
                   <div className="space-y-4">
@@ -292,10 +295,10 @@ export default function DispatchPage() {
             </div>
 
             <div className="px-6 py-4 flex gap-2 shrink-0 border-t-[3px] border-[#222]">
-              <button className={`${neoBtn} ${labelSm} py-3 px-4 shrink-0`}>Print Label</button>
-              <button className={`${neoBtn} ${labelSm} flex-1 py-3`}>View Journal</button>
+              <button className={`${neoBtn} ${labelSm} py-3 px-4 shrink-0`}>{t("admin.dispatch.printLabel")}</button>
+              <button className={`${neoBtn} ${labelSm} flex-1 py-3`}>{t("admin.dispatch.viewJournal")}</button>
               <button onClick={() => updateStatus(selectedOrder.id, "shipped")}
-                className={`${neoBtnPrimary} flex-1 py-3`}>Mark Shipped</button>
+                className={`${neoBtnPrimary} flex-1 py-3`}>{t("admin.dispatch.markShipped")}</button>
             </div>
           </div>
         </>
@@ -309,8 +312,8 @@ export default function DispatchPage() {
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b-[3px] border-[#222]">
               <div>
-                <p className="font-bold text-sm">Assign Orders</p>
-                <p className={`${label} text-[#999] mt-0.5`}>{assignChecked.size} selected</p>
+                <p className="font-bold text-sm">{t("admin.dispatch.assignOrders")}</p>
+                <p className={`${label} text-[#999] mt-0.5`}>{assignChecked.size} {t("admin.dispatch.selected", { count: assignChecked.size })}</p>
               </div>
               <button onClick={() => setShowAssignModal(false)} className="p-1 hover:opacity-60"><X size={16} /></button>
             </div>
@@ -318,13 +321,13 @@ export default function DispatchPage() {
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
                 <input type="text" value={assignSearch} onChange={(e) => setAssignSearch(e.target.value)}
-                  placeholder="Search by order ID or product..."
+                  placeholder={t("admin.dispatch.assignSearch")}
                   className={`${input} pl-9 py-2 text-xs`} />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-3 space-y-1 min-h-0">
               {assignFiltered.length === 0 ? (
-                <p className="text-center py-8 text-[#999] font-bold">No results</p>
+                <p className="text-center py-8 text-[#999] font-bold">{t("admin.dispatch.noResults")}</p>
               ) : assignFiltered.map((o) => {
                 const isChecked = assignChecked.has(o.id);
                 return (
@@ -351,12 +354,12 @@ export default function DispatchPage() {
             </div>
             <div className="px-6 py-4 border-t-[3px] border-[#222]">
               <button disabled={assignChecked.size === 0}
-                onClick={() => { alert(`Assigned ${assignChecked.size} order(s) to ${selectedSupplier?.name || "supplier"}`); setShowAssignModal(false); }}
+                onClick={() => { alert(t("admin.dispatch.assignSuccess", { count: assignChecked.size, name: selectedSupplier?.name || t("admin.dispatch.supplier") })); setShowAssignModal(false); }}
                 className={`${neoBtnPrimary} w-full flex items-center justify-center gap-2 ${
                   assignChecked.size === 0 ? "opacity-40 pointer-events-none" : ""
                 }`}>
                 <Check size={14} />
-                Confirm Assignment ({assignChecked.size})
+                {t("admin.dispatch.confirmAssignment", { count: assignChecked.size })}
               </button>
             </div>
           </div>

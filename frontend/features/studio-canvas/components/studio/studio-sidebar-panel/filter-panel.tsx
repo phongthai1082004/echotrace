@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import * as fabric from "fabric";
 import exampleImg from "@/assets/images/example.jpg";
@@ -51,6 +52,7 @@ function clearAllPhotos(canvas: fabric.Canvas) {
 }
 
 export function FilterPanel() {
+  const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
   const incrementFilterVersion = useCanvasStore((s) => s.incrementFilterVersion);
@@ -81,15 +83,15 @@ export function FilterPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Smart Filters</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.smartFilters")}</p>
       <button onClick={handleReset}
         className="w-full flex items-center gap-3 px-3 py-2.5 mb-3 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] text-left">
         <div className="w-9 h-9 rounded-[4px] border-2 border-[#222] bg-white flex items-center justify-center shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="2" strokeLinecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </div>
         <div>
-          <p className="font-mono text-[10px] font-bold">Reset All</p>
-          <p className="font-mono text-[7px] tracking-widest uppercase text-[#999]">Clear all photo filters</p>
+          <p className="font-mono text-[10px] font-bold">{t("customer.studio.resetAll")}</p>
+          <p className="font-mono text-[7px] tracking-widest uppercase text-[#999]">{t("customer.studio.clearFilters")}</p>
         </div>
       </button>
       <div className="grid grid-cols-2 gap-2">
@@ -108,18 +110,18 @@ export function FilterPanel() {
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-5 max-w-xs w-full mx-4">
-            <p className="font-mono text-[10px] font-bold mb-1">Apply Smart Filter</p>
+            <p className="font-mono text-[10px] font-bold mb-1">{t("customer.studio.applyFilter")}</p>
             <p className="font-mono text-[8px] leading-relaxed text-[#666] mb-4">
-              &ldquo;{confirm.name}&rdquo; will be applied to <strong>all photos</strong> across all pages. Continue?
+              {t("customer.studio.applyFilterConfirm", { name: confirm.name })}
             </p>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setConfirm(null)}
                 className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
-                Cancel
+                {t("common.cancel")}
               </button>
               <button onClick={() => doApply(confirm)}
                 className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-[#222] text-white">
-                Apply
+                {t("customer.studio.apply")}
               </button>
             </div>
           </div>

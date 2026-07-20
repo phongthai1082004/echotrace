@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FORMATS, FONTS } from "../../types";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
 
-const SLIDER_KEYS = ["Brightness", "Contrast", "Saturation", "Vibrance"] as const;
+const SLIDER_KEYS = ["sliderBrightness", "sliderContrast", "sliderSaturation", "sliderVibrance"] as const;
 const defaultVals = { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 };
 
 const PRESET_COLORS = [
@@ -16,6 +17,7 @@ const PRESET_COLORS = [
 ];
 
 export function StudioProperties() {
+  const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const filterVersion = useCanvasStore((s) => s.filterVersion);
@@ -128,12 +130,12 @@ export function StudioProperties() {
   return (
     <div className="w-56 shrink-0 bg-[#FFF7D6] overflow-y-auto border-l-[3px] border-[#222]">
       <div className="p-4 border-b-[3px] border-[#222]">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Properties</p>
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.properties")}</p>
         {isImage ? (
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Adjust</p>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.studio.adjust")}</p>
                 <button onClick={() => {
                   setFilterSliderValues({ ...defaultVals });
                   if (selected && selected.type === "image") {
@@ -144,13 +146,13 @@ export function StudioProperties() {
                   }
                 }}
                   className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
-                  Reset
+                  {t("customer.studio.reset")}
                 </button>
               </div>
               {SLIDER_KEYS.map((key) => (
                 <div key={key} className="mb-2">
                   <div className="flex justify-between mb-0.5">
-                    <p className="font-mono text-[8px] font-bold text-[#999]">{key}</p>
+                    <p className="font-mono text-[8px] font-bold text-[#999]">{t(`customer.studio.${key}`)}</p>
                     <p className="font-mono text-[8px] font-bold text-[#999]">{(storeSliderValues as any)[key]}</p>
                   </div>
                   <input type="range" min={-100} max={100} value={(storeSliderValues as any)[key]}
@@ -162,10 +164,10 @@ export function StudioProperties() {
             {photoFrame && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">Frame</p>
+                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.studio.itemFrame")}</p>
                   <button onClick={() => { canvas?.setActiveObject(photoFrame); canvas?.renderAll(); }}
                     className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
-                    Select Frame
+                    {t("customer.studio.selectFrame")}
                   </button>
                 </div>
               </div>
@@ -174,7 +176,7 @@ export function StudioProperties() {
         ) : isText ? (
           <div className="space-y-3">
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Font</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.font")}</p>
               <select value={(selected as any)?.fontFamily || ""} onChange={(e) => applyFont(e.target.value)}
                 className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white">
                 {FONTS.map((f) => (
@@ -184,7 +186,7 @@ export function StudioProperties() {
             </div>
             {selected && (
               <div>
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Size</p>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.size")}</p>
                 <input type="number" value={Math.round((selected as any).fontSize || 24)} onChange={(e) => {
                   selected.set({ fontSize: Number(e.target.value) });
                   canvas?.renderAll();
@@ -193,7 +195,7 @@ export function StudioProperties() {
               </div>
             )}
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Style</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.style")}</p>
               <div className="flex gap-1">
                 <button onClick={applyBold}
                   className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] transition-all ${(selected as any)?.fontWeight === "bold" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
@@ -210,7 +212,7 @@ export function StudioProperties() {
               </div>
             </div>
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Color</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.color")}</p>
               <div className="grid grid-cols-5 gap-1 mb-2">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -252,16 +254,16 @@ export function StudioProperties() {
           </div>
         ) : isFrame ? (
           <div>
-            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">Frame</p>
-            <p className="font-mono text-[10px] font-bold text-[#999]">Resize or rotate in canvas</p>
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.itemFrame")}</p>
+            <p className="font-mono text-[10px] font-bold text-[#999]">{t("customer.studio.resizeOrRotate")}</p>
           </div>
         ) : (
-          <p className="font-mono text-[10px] font-bold text-[#999]">Select an element</p>
+          <p className="font-mono text-[10px] font-bold text-[#999]">{t("customer.studio.selectElement")}</p>
         )}
       </div>
       <div className="p-4">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Canvas</p>
-        {[["FORMAT", fmt.label], ["SIZE", `${fmt.width} × ${fmt.height} px`], ["PAGES", String(useCanvasStore.getState().pages.length)]].map(([k, v]) => (
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.canvas")}</p>
+        {[[t("customer.studio.format"), fmt.label], [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`], [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)]].map(([k, v]) => (
           <div key={k} className="mb-2.5"><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold text-[#222]">{v}</p></div>
         ))}
       </div>

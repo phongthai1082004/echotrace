@@ -70,9 +70,18 @@ const mockOrders: Order[] = [
 const statusMeta: Record<string, { label: string; bg: string; text: string }> = {
   pending: { label: "pending", bg: "#FFF7D6", text: "#222" },
   printing: { label: "printing", bg: "#FFD93D", text: "#222" },
-  "quality-check": { label: "qc", bg: "#9CB8A8", text: "#222" },
+  "quality-check": { label: "qualityCheck", bg: "#9CB8A8", text: "#222" },
   shipped: { label: "shipped", bg: "#5A8F4A", text: "#fff" },
   delivered: { label: "delivered", bg: "#5A8F4A", text: "#fff" },
+};
+
+const timelineKeyMap: Record<string, string> = {
+  "Order placed": "customer.orders.timeline.placed",
+  "Payment confirmed": "customer.orders.timeline.paymentConfirmed",
+  "Printing": "customer.orders.timeline.printing",
+  "Quality check": "customer.orders.timeline.qualityCheck",
+  "Shipped": "customer.orders.timeline.shipped",
+  "Delivered": "customer.orders.timeline.delivered",
 };
 
 function Timeline({ steps, t }: { steps: { label: string; date: string; done: boolean }[]; t: any }) {
@@ -85,7 +94,7 @@ function Timeline({ steps, t }: { steps: { label: string; date: string; done: bo
             <div className="shrink-0 w-3 h-3 rounded-full mt-1 relative z-10"
               style={{ background: step.done ? "#222" : "#FFF7D6", border: "3px solid #222" }} />
             <div className={step.done ? "" : "opacity-40"}>
-              <p className="text-sm font-bold">{step.label}</p>
+              <p className="text-sm font-bold">{t(timelineKeyMap[step.label] || step.label)}</p>
               {step.date && <p className="font-mono text-[9px] font-bold text-[#999] mt-0.5">{step.date}</p>}
             </div>
           </div>
@@ -145,7 +154,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="absolute top-3 left-3">
                       <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
-                        style={{ background: m.bg, color: m.text }}>{t(`customer.orders.${m.label}`)}</span>
+                        style={{ background: m.bg, color: m.text }}>{t(`customer.orders.statuses.${m.label}`)}</span>
                     </div>
                     <div className="absolute bottom-3 right-3">
                       <span className="font-mono text-[9px] font-bold text-white bg-[#222]/70 px-2 py-0.5 rounded-md">
@@ -193,7 +202,7 @@ export default function OrdersPage() {
                   <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.orders.status")}</p>
                   <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
                     style={{ background: statusMeta[selectedOrder.status].bg, color: statusMeta[selectedOrder.status].text }}>
-                    {t(`customer.orders.${statusMeta[selectedOrder.status].label}`)}
+                    {t(`customer.orders.statuses.${statusMeta[selectedOrder.status].label}`)}
                   </span>
                 </div>
                 <Timeline steps={selectedOrder.timeline} t={t} />

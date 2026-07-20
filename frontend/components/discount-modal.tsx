@@ -28,7 +28,7 @@ export function DiscountModal({
       setFeedback({ ok: true, message: `10% ${t("discount.off")} — ₫${amount.toLocaleString()}` });
     } else if (c === "FLAT50" || c === "FREESHIP") {
       setDiscount({ code: c, amount: 50000 });
-      setFeedback({ ok: true, message: "₫50,000 off" });
+      setFeedback({ ok: true, message: `₫50,000 ${t("discount.off")}` });
     } else {
       setFeedback({ ok: false, message: t("discount.invalid") });
     }

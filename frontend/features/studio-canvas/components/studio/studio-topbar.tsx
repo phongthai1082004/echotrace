@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Undo2, Redo2, Type, Trash2, Eye } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useToast } from "@/components/toast";
@@ -10,13 +11,15 @@ import { ZOOM_LEVELS, FONTS } from "../../types";
 import { applyUndo, applyRedo } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
-const TEXT_PRESETS = [
-  { label: "Title", fontSize: 36, fontWeight: "bold", fontFamily: FONTS[0].css },
-  { label: "Heading", fontSize: 28, fontWeight: "bold", fontFamily: FONTS[0].css },
-  { label: "Subheading", fontSize: 22, fontWeight: "600", fontFamily: FONTS[3].css },
-  { label: "Body", fontSize: 16, fontWeight: "normal", fontFamily: FONTS[3].css },
-  { label: "Caption", fontSize: 12, fontWeight: "normal", fontFamily: FONTS[3].css },
-];
+function useTextPresets(t: any) {
+  return [
+    { label: t("customer.studio.textPresets.title"), fontSize: 36, fontWeight: "bold", fontFamily: FONTS[0].css },
+    { label: t("customer.studio.textPresets.heading"), fontSize: 28, fontWeight: "bold", fontFamily: FONTS[0].css },
+    { label: t("customer.studio.textPresets.subheading"), fontSize: 22, fontWeight: "600", fontFamily: FONTS[3].css },
+    { label: t("customer.studio.textPresets.body"), fontSize: 16, fontWeight: "normal", fontFamily: FONTS[3].css },
+    { label: t("customer.studio.textPresets.caption"), fontSize: 12, fontWeight: "normal", fontFamily: FONTS[3].css },
+  ];
+}
 
 function ToolBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
@@ -45,6 +48,8 @@ function DelBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string
 }
 
 export function StudioTopbar() {
+  const { t } = useTranslation();
+  const TEXT_PRESETS = useTextPresets(t);
   const canvas = useCanvasStore((s) => s.canvas);
   const undoStack = useCanvasStore((s) => s.undoStack);
   const redoStack = useCanvasStore((s) => s.redoStack);
@@ -115,7 +120,7 @@ export function StudioTopbar() {
     if (!canvas) return;
     pushUndo();
     const id = `text-${Date.now()}`;
-    const text = new fabric.IText(preset ? preset.label : "Double-click to edit", {
+    const text = new fabric.IText(preset ? preset.label : t("customer.studio.doubleClickEdit"), {
       left: 100,
       top: 100,
       fontSize: preset?.fontSize || 24,
@@ -166,8 +171,8 @@ export function StudioTopbar() {
       )}
 
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
-      <ToolBtn icon={<Undo2 size={iconSize} />} label="Undo" onClick={handleUndo} />
-      <ToolBtn icon={<Redo2 size={iconSize} />} label="Redo" onClick={handleRedo} />
+      <ToolBtn icon={<Undo2 size={iconSize} />} label={t("customer.studio.undo")} onClick={handleUndo} />
+      <ToolBtn icon={<Redo2 size={iconSize} />} label={t("customer.studio.redo")} onClick={handleRedo} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <div className="relative group">
         <button onClick={() => handleAddText()} className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">
@@ -190,10 +195,10 @@ export function StudioTopbar() {
         </div>
       </div>
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
-      <DelBtn icon={<Trash2 size={iconSize} />} label="Delete" onClick={handleDelete} />
+      <DelBtn icon={<Trash2 size={iconSize} />} label={t("customer.studio.deleteBtn")} onClick={handleDelete} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
-      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20v2"/><path d="M12 14v-4"/><path d="M12 8V6"/><path d="M9 13l3-3 3 3"/><path d="M9 11l3 3 3-3"/></svg>} label="Flip H" onClick={handleFlipH} />
-      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 22v-4"/><path d="M12 10V6"/><path d="M9 13l3-3 3 3"/><path d="M9 15l3 3 3-3"/></svg>} label="Flip V" onClick={handleFlipV} />
+      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20v2"/><path d="M12 14v-4"/><path d="M12 8V6"/><path d="M9 13l3-3 3 3"/><path d="M9 11l3 3 3-3"/></svg>} label={t("customer.studio.flipH")} onClick={handleFlipH} />
+      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 22v-4"/><path d="M12 10V6"/><path d="M9 13l3-3 3 3"/><path d="M9 15l3 3 3-3"/></svg>} label={t("customer.studio.flipV")} onClick={handleFlipV} />
       <div className="ml-auto flex items-center gap-2">
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           {(["left", "spread", "right"] as const).map((v) => (
@@ -210,18 +215,18 @@ export function StudioTopbar() {
           </button>
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> Preview</button>
+        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> {t("customer.studio.preview")}</button>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-          Auto-Fill
+          {t("customer.studio.autoFill")}
         </button>
-        <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? "Đã lưu thành công" : `Lưu thất bại: ${r.error}`, r.ok ? "success" : "error"); }}
-          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">Save Journal</button>
+        <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error"); }}
+          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">{t("customer.studio.save")} Journal</button>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 17L12 5l6 12"/><path d="M8 13h8"/>
           </svg>
-          Order Print
+          {t("customer.studio.orderPrint")}
         </button>
       </div>
     </div>

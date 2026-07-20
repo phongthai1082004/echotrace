@@ -6,29 +6,29 @@ import { label, card } from "@/lib/styles";
 import { FunnelChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
 
-const kpis = [
-  { key: "totalVisitors", value: "12,840", change: "+5.2%", icon: Users },
-  { key: "conversionRate", value: "3.42%", change: "+0.31pp", icon: Percent },
-];
-
-const funnel = [
-  { step: "Visited Site", count: 12840, pct: 100 },
-  { step: "Opened Designer App", count: 6420, pct: 50 },
-  { step: "Viewed Book Preview", count: 3852, pct: 30 },
-  { step: "Clicked Checkout", count: 1798, pct: 14 },
-  { step: "Successful Payment", count: 439, pct: 3.42 },
-];
-
-const trafficSources = [
-  { channel: "Facebook Ads", visitors: 4120, orders: 158, conv: 3.83, spend: 1200, roas: 4.2 },
-  { channel: "TikTok Bio", visitors: 2840, orders: 92, conv: 3.24, spend: 800, roas: 3.8 },
-  { channel: "Google Search (Organic)", visitors: 3210, orders: 126, conv: 3.93, spend: 0, roas: null },
-  { channel: "Instagram Reels", visitors: 1890, orders: 43, conv: 2.28, spend: 600, roas: 2.5 },
-  { channel: "Email Campaign", visitors: 780, orders: 20, conv: 2.56, spend: 200, roas: 3.1 },
-];
-
 export default function MarketingPage() {
   const { t } = useTranslation();
+
+  const kpis = [
+    { key: "totalVisitors", value: "12,840", change: "+5.2%", icon: Users },
+    { key: "conversionRate", value: "3.42%", change: "+0.31pp", icon: Percent },
+  ];
+
+  const funnel = [
+    { step: t("admin.marketing.funnelVisitedSite"), count: 12840, pct: 100 },
+    { step: t("admin.marketing.funnelOpenedDesigner"), count: 6420, pct: 50 },
+    { step: t("admin.marketing.funnelViewedPreview"), count: 3852, pct: 30 },
+    { step: t("admin.marketing.funnelClickedCheckout"), count: 1798, pct: 14 },
+    { step: t("admin.marketing.funnelSuccessfulPayment"), count: 439, pct: 3.42 },
+  ];
+
+  const trafficSources = [
+    { channel: t("admin.marketing.channelFacebookAds"), visitors: 4120, orders: 158, conv: 3.83, spend: 1200, roas: 4.2 },
+    { channel: t("admin.marketing.channelTikTokBio"), visitors: 2840, orders: 92, conv: 3.24, spend: 800, roas: 3.8 },
+    { channel: t("admin.marketing.channelGoogleOrganic"), visitors: 3210, orders: 126, conv: 3.93, spend: 0, roas: null },
+    { channel: t("admin.marketing.channelInstagramReels"), visitors: 1890, orders: 43, conv: 2.28, spend: 600, roas: 2.5 },
+    { channel: t("admin.marketing.channelEmailCampaign"), visitors: 780, orders: 20, conv: 2.56, spend: 200, roas: 3.1 },
+  ];
 
   return (
     <div>

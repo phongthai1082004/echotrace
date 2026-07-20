@@ -1,10 +1,23 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { useCanvasStore } from '../../../hooks/useCanvasState'
+
+const sidebarLabelKeys: Record<string, string> = {
+  Layouts: "customer.studio.layouts",
+  Photos: "customer.studio.image",
+  Stickers: "customer.studio.sticker",
+  Frames: "customer.studio.sectionFrames",
+  Filter: "customer.studio.smartFilters",
+  Backgrounds: "customer.studio.background",
+  Layers: "customer.studio.layers",
+};
+
 export function SidebarItem({ label, children }: {
   label: string; 
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const activeMenu = useCanvasStore((state) => state.activeMenu);
   const setActiveMenu = useCanvasStore((state) => state.setActiveMenu);
 
@@ -20,10 +33,10 @@ export function SidebarItem({ label, children }: {
       <span className={isActive ? "text-white" : "text-[#222] group-hover:text-[#222]"}>
         {children}
       </span>
-      <span className={`font-mono text-[7.5px] font-bold tracking-widest uppercase leading-none transition-colors ${
+      <span className={`text-[7.5px] font-bold tracking-widest uppercase leading-none transition-colors ${
         isActive ? "text-white" : "text-[#666] group-hover:text-[#222]"
       }`}>
-        {label}
+        {t(sidebarLabelKeys[label] || label)}
       </span>
     </button>
   );

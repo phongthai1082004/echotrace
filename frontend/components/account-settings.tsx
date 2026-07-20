@@ -13,10 +13,10 @@ interface PasswordForm { currentPassword: string; newPassword: string; confirmPa
 
 const initialPassword: PasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
-function validatePhone(p: string): string | null {
+function validatePhone(p: string, t: (k: string) => string): string | null {
   if (!p) return null;
   const cleaned = p.replace(/\s+/g, "");
-  if (!/^(\+84|0)[1-9]\d{8,9}$/.test(cleaned)) return "Invalid phone format (+84 or 0, 10-11 digits)";
+  if (!/^(\+84|0)[1-9]\d{8,9}$/.test(cleaned)) return t("account.invalidPhone");
   return null;
 }
 
@@ -52,7 +52,7 @@ export function AccountSettings() {
     e.preventDefault();
     if (!token || !profile || !hasChanges) return;
     const errs: Record<string, string> = {};
-    const pErr = validatePhone(form.phone);
+    const pErr = validatePhone(form.phone, t);
     if (pErr) errs.phone = pErr;
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
@@ -91,7 +91,7 @@ export function AccountSettings() {
   };
 
   const blur = (field: string) => {
-    if (field === "phone") setFieldErrors(e => ({ ...e, phone: validatePhone(form.phone) ? t("account.invalidPhone") : "" }));
+    if (field === "phone") setFieldErrors(e => ({ ...e, phone: validatePhone(form.phone, t) ? t("account.invalidPhone") : "" }));
   };
 
   const inputClass = (field: string) =>
@@ -127,8 +127,8 @@ export function AccountSettings() {
               )}
             </div>
             <div>
-              <p className="text-sm font-bold">{profile?.email ?? t("common.unknownUser")}</p>
-              <p className="font-mono text-[9px] font-bold tracking-widest mt-0.5 text-[#999]">{profile?.role ?? t("common.member")} · {t("common.active")}</p>
+              <p className="text-sm font-bold">{profile?.email ?? t("account.unknownUser")}</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest mt-0.5 text-[#999]">{profile?.role ?? t("account.member")} · {t("account.active")}</p>
             </div>
           </div>
 
@@ -142,11 +142,11 @@ export function AccountSettings() {
               {profile?.email ? (
                 <div className="flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
                   <span className="text-sm font-bold">{profile.email}</span>
-                  <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">{t("common.connected")}</span>
+                  <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">{t("account.connected")}</span>
                 </div>
               ) : (
                 <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]">
-                  <span className="text-sm text-[#999]">{t("common.notConnected")}</span>
+                  <span className="text-sm text-[#999]">{t("account.notConnected")}</span>
                   <span className="flex items-center gap-2 font-mono text-[8px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#222] text-white rounded-md">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -218,7 +218,7 @@ export function AccountSettings() {
           <button type="submit" disabled={!canSubmitPassword}
             className="mt-5 font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-[background-color,color,border-color,box-shadow,transform]"
             style={{ background: canSubmitPassword ? "#222" : "#999", color: "#fff", borderColor: canSubmitPassword ? "#222" : "#999", boxShadow: canSubmitPassword ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
-            {profile?.hasPassword ? "Update Password" : "Set Password"}
+            {profile?.hasPassword ? t("account.updatePassword") : t("account.setPassword")}
           </button>
         </form>
       )}

@@ -117,7 +117,7 @@ export default function MyJournalsPage() {
                     <div className="absolute top-3 left-3">
                       <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md"
                         style={{ background: statusBg[j.status] || "#999", color: statusText[j.status] || "#222" }}>
-                        {t(`customer.statusLabels.${j.status.toLowerCase()}`) || j.status}
+                        {t(`customer.myJournals.${j.status.toLowerCase()}`) || j.status}
                       </span>
                     </div>
                   </div>

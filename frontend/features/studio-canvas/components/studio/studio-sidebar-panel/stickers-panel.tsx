@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS } from "@/lib/asset-category";
@@ -31,6 +32,7 @@ function DraggableStickerImg({ url, name }: { url: string; name: string }) {
 }
 
 export function StickersPanel() {
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [stickers, setStickers] = useState<Sticker[]>([]);
@@ -54,11 +56,11 @@ export function StickersPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Stickers</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.sticker")}</p>
       <div className="flex items-center gap-1 bg-white rounded border-2 border-[#222] px-2 mb-2">
         <Search size={11} className="text-[#999] shrink-0" />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search stickers…"
+          placeholder={t("customer.studio.searchStickers")}
           className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent" />
         {search && <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70"><X size={10} /></button>}
       </div>
@@ -67,7 +69,7 @@ export function StickersPanel() {
           className={`font-mono text-[7px] font-bold tracking-wider uppercase px-2 py-1 rounded border-2 transition-[background-color,color] ${
             categoryFilter === ALL_KEY ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
           }`}>
-          All
+          {t("customer.studio.all")}
         </button>
         {ASSET_CATEGORIES.map((c) => (
           <button key={c} onClick={() => setCategoryFilter(c)}
@@ -79,7 +81,7 @@ export function StickersPanel() {
         ))}
       </div>
       {filtered.length === 0 ? (
-        <p className="text-[10px] text-[#999]">{search ? "No stickers match your search" : "No stickers yet"}</p>
+        <p className="text-[10px] text-[#999]">{search ? t("customer.studio.noMatch") : t("customer.studio.noStickers")}</p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {filtered.map((s) => (

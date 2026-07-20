@@ -25,7 +25,7 @@ export function StatusBadge({ status, label }: { status: BadgeVariant | string; 
   const { t } = useTranslation();
   const v = variants[status as BadgeVariant] ?? variants.default;
   const statusKey = statusKeys[status];
-  const defaultLabel = statusKey ? t(`admin.statusLabels.${statusKey}`) : status.charAt(0).toUpperCase() + status.slice(1);
+  const defaultLabel = statusKey ? t(`admin.statusBadge.${statusKey}`) : status.charAt(0).toUpperCase() + status.slice(1);
   
   return (
     <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded border-2 inline-block whitespace-nowrap"

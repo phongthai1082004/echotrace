@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { label, card } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
@@ -14,6 +15,7 @@ const colWidths = ["1.2fr", "1.5fr", "120px", "1fr", "100px", "80px", "100px"];
 const gridCols = colWidths.join(" ");
 
 export default function AdminUsersPage() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserStatus | "all">("all");
@@ -26,16 +28,16 @@ export default function AdminUsersPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <AdminHeader label="Admin — Users" title="Users">
-        <AdminSearch value={search} onChange={setSearch} placeholder="Search name, email, ID…" />
+      <AdminHeader label={t("admin.suppliers.label")} title={t("admin.suppliers.title")}>
+        <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.suppliers.searchPlaceholder")} />
       </AdminHeader>
 
       <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-6 min-h-0 overflow-hidden">
         <AdminFilterTabs
           tabs={[
-            { key: "all", label: "All", count: users.length },
-            { key: "active", label: "Active", count: users.filter((u) => u.status === "active").length },
-            { key: "banned", label: "Banned", count: users.filter((u) => u.status === "banned").length },
+            { key: "all", label: t("admin.filterTabs.all"), count: users.length },
+            { key: "active", label: t("admin.filterTabs.active"), count: users.filter((u) => u.status === "active").length },
+            { key: "banned", label: t("admin.filterTabs.banned"), count: users.filter((u) => u.status === "banned").length },
           ]}
           selected={filter}
           onChange={(k) => setFilter(k as UserStatus | "all")}
@@ -48,7 +50,7 @@ export default function AdminUsersPage() {
           <ResponsiveTable
             header={
               <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                {["Name", "Email", "Phone", "Address", "City", "Role", "Status"].map((h) => (
+                {[t("admin.suppliers.name"), t("admin.suppliers.email"), t("admin.suppliers.phone"), t("admin.suppliers.address"), t("admin.suppliers.city"), t("admin.suppliers.role"), t("admin.suppliers.status")].map((h) => (
                   <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                 ))}
               </div>
@@ -56,7 +58,7 @@ export default function AdminUsersPage() {
             gridCols={gridCols}
           >
             {users.length === 0 ? (
-              <div className="flex items-center justify-center py-10"><p className="text-lg font-bold">No suppliers found</p></div>
+              <div className="flex items-center justify-center py-10"><p className="text-lg font-bold">{t("admin.suppliers.noSuppliers")}</p></div>
             ) : (
               users.map((user) => (
                 <div key={user.id}
@@ -81,7 +83,7 @@ export default function AdminUsersPage() {
                           ? "bg-[#F8D7DA] text-[#721C24] border-[#721C24]"
                           : "bg-[#e8e6e0] text-[#999] border-[#ccc]"
                       }`}>
-                      {user.status || "unknown"}
+                      {user.status || t("admin.common.unknown")}
                     </button>
                   </div>
                 </div>

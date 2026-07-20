@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { cloudinaryUrl } from "@/lib/cloudinary";
-import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface NavProps {
   user?: { name?: string | null; email?: string | null; image?: string | null } | null;
@@ -30,11 +29,11 @@ export function Nav({ user }: NavProps) {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 bg-[#F8F2E5] border-b-[3px] border-[#222]">
+    <nav suppressHydrationWarning className="fixed top-0 left-0 right-0 z-40 bg-[#F8F2E5] border-b-[3px] border-[#222]">
       <div className="flex items-center justify-between px-8 h-15">
         <div className="flex items-center gap-10">
-          <Link href="/" className="font-bold text-base tracking-tight shrink-0 leading-none">
-            Cabinet Memoir
+          <Link href="/" suppressHydrationWarning className="font-bold text-base tracking-tight shrink-0 leading-none">
+            {t("brand")}
           </Link>
           <div className="hidden md:flex items-center gap-6">
             {links.map((link) => {
@@ -43,6 +42,7 @@ export function Nav({ user }: NavProps) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  suppressHydrationWarning
                   className={`font-mono text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[6px] transition-[background-color,color] leading-none ${
                     active ? "bg-[#222] text-white" : "text-[#666] hover:bg-[#e8e6e0] hover:text-[#222]"
                   }`}
@@ -55,7 +55,6 @@ export function Nav({ user }: NavProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <LanguageSwitcher />
           {user && (
             <div className="relative"
               onMouseEnter={() => setCartOpen(true)}
@@ -73,17 +72,18 @@ export function Nav({ user }: NavProps) {
                 <div className="absolute right-0 top-full z-50 pt-2">
                   <div className="w-64 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
                     <div className="px-4 py-3 border-b-[3px] border-[#222]">
-                      <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.cart", { count: 1 })}</p>
+                      <p suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.cart", { count: 1 })}</p>
                     </div>
                     <div className="px-4 py-3 flex gap-3 border-b-[3px] border-[#222]">
                       <div className="w-10 h-12 bg-[#e8e6e0] rounded-[6px] shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold leading-tight">Ha Long Bay</p>
-                        <p className="font-mono text-[9px] text-[#999] mt-0.5">Softcover · 24 pg</p>
-                        <p className="font-mono text-[10px] mt-1 font-bold">$49.00</p>
+                        <p suppressHydrationWarning className="text-sm font-bold leading-tight">{t("nav.cartDemo.title")}</p>
+                        <p suppressHydrationWarning className="font-mono text-[9px] text-[#999] mt-0.5">{t("nav.cartDemo.desc")}</p>
+                        <p suppressHydrationWarning className="font-mono text-[10px] mt-1 font-bold">{t("nav.cartDemo.price")}</p>
                       </div>
                     </div>
                     <Link href="/checkout"
+                      suppressHydrationWarning
                       className="block w-full text-center font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors">
                       {t("nav.viewCart")}
                     </Link>
@@ -111,7 +111,7 @@ export function Nav({ user }: NavProps) {
                     </span>
                   </div>
                 )}
-                <span className="text-sm font-bold leading-none">
+                <span suppressHydrationWarning className="text-sm font-bold leading-none">
                   {user.name || user.email || t("nav.user")}
                 </span>
               </button>
@@ -121,12 +121,14 @@ export function Nav({ user }: NavProps) {
                   <div className="w-44 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
                     <Link
                       href="/account"
+                      suppressHydrationWarning
                       className="block w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors border-b-[3px] border-[#222]"
                     >
                       {t("nav.account")}
                     </Link>
                     <button
                       type="button"
+                      suppressHydrationWarning
                       onClick={async () => {
                         const token = (session as any)?.accessToken;
                         if (token) {
@@ -151,6 +153,7 @@ export function Nav({ user }: NavProps) {
           ) : (
             <Link
               href="/auth"
+              suppressHydrationWarning
               className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
             >
                {t("nav.signIn")}
@@ -169,6 +172,7 @@ export function Nav({ user }: NavProps) {
             <Link
               key={link.href}
               href={link.href}
+              suppressHydrationWarning
               onClick={() => setOpen(false)}
               className="block font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
             >
@@ -177,6 +181,7 @@ export function Nav({ user }: NavProps) {
           ))}
           <Link
             href="/auth"
+            suppressHydrationWarning
             onClick={() => setOpen(false)}
             className="block font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
           >

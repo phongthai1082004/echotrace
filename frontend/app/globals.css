@@ -60,8 +60,8 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
-  --font-sans: "Space Grotesk", sans-serif;
-  --font-mono: "DM Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "Inter", sans-serif;
 }
 
 @layer base {
@@ -137,5 +137,81 @@
   }
   .thin-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #aaa;
+  }
+
+  .neo-card {
+    background-color: var(--card);
+    border-radius: 10px;
+    border: 3px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
+  }
+
+  .neo-card-hover {
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-card-hover:hover {
+    translate: 2px 2px;
+    box-shadow: 2px 2px 0 var(--border);
+  }
+
+  .neo-btn {
+    background-color: var(--card);
+    border-radius: 10px;
+    border: 3px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-btn:hover {
+    translate: 2px 2px;
+    box-shadow: 2px 2px 0 var(--border);
+  }
+
+  .neo-btn-primary {
+    background-color: var(--foreground);
+    color: white;
+    border-radius: 10px;
+    border: 3px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-btn-primary:hover {
+    translate: 2px 2px;
+    box-shadow: 2px 2px 0 var(--border);
+  }
+
+  .neo-input {
+    width: 100%;
+    background-color: var(--card);
+    font-size: 0.875rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border: 2px solid var(--border);
+    box-shadow: 2px 2px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-input::placeholder {
+    color: #999;
+  }
+  .neo-input:focus {
+    outline: none;
+    translate: 1px 1px;
+    box-shadow: 1px 1px 0 var(--border);
+  }
+
+  .neo-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .neo-label-sm {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.4;
   }
 }

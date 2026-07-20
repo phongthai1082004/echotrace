@@ -3,10 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "react-i18next";
 import { StudioPage } from "@/features/studio-canvas/components/StudioPage";
 import { useCanvasStore } from "@/features/studio-canvas/hooks/useCanvasState";
 
 export default function StudioRoute() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const { status } = useSession();
   const bookId = searchParams.get("id");
@@ -50,7 +52,7 @@ export default function StudioRoute() {
   }, [bookId, status]);
 
   if (!loaded) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="font-mono text-[10px] font-bold">Loading...</p></div>;
+    return <div className="min-h-screen flex items-center justify-center"><p suppressHydrationWarning className="font-mono text-[10px] font-bold">{t("common.loading")}</p></div>;
   }
 
   return <StudioPage />;

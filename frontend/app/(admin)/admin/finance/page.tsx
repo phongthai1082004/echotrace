@@ -18,7 +18,7 @@ const kpis = [
 ];
 
 const chartData = Array.from({ length: 30 }, (_, i) => ({
-  label: `D${i + 1}`,
+  label: `${i + 1}`,
   series1: Math.round(2800 + Math.sin(i * 1.2) * 1200 + Math.random() * 800 + i * 90),
   series2: Math.round(980 + Math.sin(i * 1.2) * 420 + Math.random() * 280 + i * 32),
 }));

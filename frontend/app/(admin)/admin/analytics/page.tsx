@@ -2,25 +2,35 @@
 
 import { TrendingUp, Package, AlertTriangle, DollarSign, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 import { label, card } from "@/lib/styles";
 import { BarChart, LineChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
 
-const months = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+function useMonths() {
+  if (i18n.language === "vi") {
+    return Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
+  }
+  return Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(new Date(2024, i, 1))
+  );
+}
+
 const yearlyRevenue = [28900000, 31200000, 27500000, 34800000, 41200000, 22100000, 19800000, 31200000, 28700000, 34500000, 41200000, 43800000];
 const yearlyOrders = [11, 13, 10, 14, 17, 9, 8, 13, 12, 14, 17, 19];
-const revenueData = months.map((label, i) => ({ label, value: yearlyRevenue[i] }));
-const ordersData = months.map((label, i) => ({ label, value: yearlyOrders[i] }));
 
 export default function AdminAnalyticsPage() {
   const { t } = useTranslation();
-  const totalRevenue = yearlyRevenue.reduce((s, v) => s + v, 0);
+  const months = useMonths();
+  const revenueData = months.map((label, i) => ({ label, value: yearlyRevenue[i] }));
+  const ordersData = months.map((label, i) => ({ label, value: yearlyOrders[i] }));
+  const totalRev = yearlyRevenue.reduce((s, v) => s + v, 0);
   const totalOrders = yearlyOrders.reduce((s, v) => s + v, 0);
-  const totalProfit = Math.round(totalRevenue * 0.35);
-  const aov = Math.round(totalRevenue / totalOrders);
+  const totalProfit = Math.round(totalRev * 0.35);
+  const aov = Math.round(totalRev / totalOrders);
 
   const kpis = [
-    { label: t("admin.analytics.totalRevenueYtd"), value: `₫${(totalRevenue / 1000000).toFixed(1)}M`, icon: TrendingUp },
+    { label: t("admin.analytics.totalRevenue"), value: `₫${(totalRev / 1000000).toFixed(1)}M`, icon: TrendingUp },
     { label: t("admin.analytics.totalOrders"), value: String(totalOrders), icon: Package },
     { label: t("admin.analytics.avgOrderValue"), value: `₫${(aov / 1000).toFixed(0)}K`, icon: ShoppingCart },
     { label: t("admin.analytics.cancellationRate"), value: "3.2%", icon: AlertTriangle },
