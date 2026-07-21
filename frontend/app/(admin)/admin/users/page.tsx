@@ -104,9 +104,9 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
       <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-6 min-h-0 overflow-hidden">
         <AdminFilterTabs
           tabs={[
-            { key: "all", label: t("admin.filterTabs.all"), count: users.length },
-            { key: "active", label: t("admin.filterTabs.active"), count: users.filter((u) => u.status === "active").length },
-            { key: "banned", label: t("admin.filterTabs.banned"), count: users.filter((u) => u.status === "banned").length },
+            { key: "all", label: t("admin.filterTabs.all") },
+            { key: "active", label: t("admin.filterTabs.active") },
+            { key: "banned", label: t("admin.filterTabs.banned") },
           ]}
           selected={filter}
           onChange={(k) => setFilter(k as UserStatus | "all")}

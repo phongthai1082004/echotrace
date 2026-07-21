@@ -162,8 +162,7 @@ export function FunnelChart({ data }: FunnelChartProps) {
       {data.map((f, i) => {
         const isHovered = hovered === i;
         return (
-          <div key={f.step} className="flex items-center gap-4"
-            onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}>
+          <div key={f.step} className="flex items-center gap-4">
             <div className="w-36 shrink-0 text-left">
               <p className={`font-mono text-[9px] font-bold tracking-widest ${isHovered ? "text-[#222]" : "text-[#666]"}`}>{f.step}</p>
             </div>

@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
-import { CloudinaryService } from "../services/cloudinary.service.js";
+import { CloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
 import { UserImageService } from "../services/user-image.service.js";
 
 const cloudinary = new CloudinaryService();

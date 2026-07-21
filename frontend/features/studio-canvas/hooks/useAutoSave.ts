@@ -17,7 +17,7 @@ export function useAutoSave() {
 
     // serialize current canvas and save to current page before building payload
     const currentJson = serializeCanvasState(c);
-    const currentThumb = c.toDataURL({ format: "jpeg", quality: 0.3, multiplier: 0.2 });
+    const currentThumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
     const updatedPages = [...s.pages];
     if (!isCoverPage(s.activePageIndex, pageCount) && c.getWidth() > 400) {
       const { leftJson, rightJson } = splitCanvasByMidpoint(currentJson, c.getWidth() / 2);

@@ -29,6 +29,9 @@ model User {
   userImages  UserImage[]
   books       Book[]
   couponUsage CouponUsage[]
+  sampleBooks SampleBook[]
+  decorAssets DecorAsset[]
+  cart        Cart?
 
   @@index([status])
   @@index([role])
@@ -79,11 +82,13 @@ model Order {
   id             Int      @id @default(autoincrement())
   orderCode      String?
   userId         Int
+  supplierId     Int?
+  subTotal       Float
   totalAmount    Float
-  depositInput   Float    @default(0)
+  depositAmount  Float    @default(0)
   paidAmount     Float    @default(0)
-  paymentMethod  String   @default("FULL")
-  payosOrderCode Int?     @unique
+  paymentType    String   @default("FULL")
+  paymentStatus  String   @default("UNPAID")
   status         String   @default("PENDING_PAYMENT")
   name           String?
   phone          String?
@@ -93,36 +98,47 @@ model Order {
   couponId       Int?
   discountAmount Float    @default(0)
   timeline       String?
-  productionBatchId Int?
   product        String?
   coverType      String?
+  orderShippingFee    Float?   
+  supplierShippingFee Float?   
+  trackingCode      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  user         User              @relation(fields: [userId], references: [id])
-  coupon       Coupon?           @relation(fields: [couponId], references: [id])
-  productionBatch ProductionBatch? @relation(fields: [productionBatchId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+  coupon       Coupon?       @relation(fields: [couponId], references: [id])
   transactions Transaction[]
   orderItems   OrderItem[]
 
   @@index([userId])
+  @@index([supplierId])
   @@index([couponId])
   @@index([status])
+  @@index([paymentStatus])
   @@index([orderCode])
-  @@index([productionBatchId])
+  @@index([trackingCode])
 }
 
+// gateway: PAYOS | SEPAY | MANUAL | CASH ...
+// type: DEPOSIT | REMAINING_PAYMENT | FULL_PAYMENT
 model Transaction {
-  id              Int      @id @default(autoincrement())
-  orderId         Int
-  payosOrderCode  Int      @unique
-  amount          Float
-  paymentLinkId   String
-  reference       String?
-  status          String
-  transactionTime DateTime
+  id                     Int      @id @default(autoincrement())
+  orderId                Int
+  gateway                String
+  gatewayTransactionCode String   @unique
+  type                   String   @default("FULL_PAYMENT")
+  amount                 Float
+  paymentLinkId          String?
+  bankAccount            String?
+  content                String?
+  reference              String?
+  status                 String
+  transactionTime        DateTime
+  rawPayload             String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
@@ -132,6 +148,8 @@ model Transaction {
 
   @@index([orderId])
   @@index([status])
+  @@index([gateway])
+  @@index([type])
 }
 
 model OrderItem {
@@ -153,56 +171,68 @@ model OrderItem {
 }
 
 model Book {
-  id       Int     @id @default(autoincrement())
-  userId   Int
-  themeId  Int?
-  type     String  @default("TRAVEL")
-  title    String
-  style    String
-  font     String
-  cover    String  @default("softcover")
-  pages    Int     @default(0)
-  coverUrl String?
-  status   String  @default("DRAFT")
-  content  String?
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  type      String  @default("TRAVEL")
+  title     String
+  style     String
+  font      String
+  cover     String  @default("softcover")
+  coverPrice Float  @default(0)
+  paperSize String?
+  paperType String?
+  paperPrice Float  @default(0)
+  pages     Int     @default(0)
+  coverUrl  String?
+  status    String  @default("DRAFT")
+  content   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
   user       User        @relation(fields: [userId], references: [id])
-  theme      Theme?      @relation(fields: [themeId], references: [id])
   orderItems OrderItem[]
+  cartItems  CartItem[]
 
   @@index([userId])
-  @@index([themeId])
   @@index([type])
   @@index([status])
 }
 
-model Theme {
-  id           Int     @id @default(autoincrement())
-  name         String
-  code         String  @unique
-  description  String
-  category     String?
-  thumbnailUrl String
+// Gio hang: moi User co 1 gio hang dang hoat dong.
+// Khi checkout -> convert CartItem thanh Order + OrderItem, roi xoa CartItem.
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
-  books        Book[]
-  sampleBooks  SampleBook[]
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+}
 
-  @@index([category])
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  bookId    Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart Cart @relation(fields: [cartId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([cartId, bookId])
+  @@index([cartId])
+  @@index([bookId])
 }
 
 model SampleBook {
   id          Int     @id @default(autoincrement())
+  createdBy   Int
   name        String
   description String?
-  themeId     Int?
   type        String  @default("TRAVEL")
   category    String?
   style       String
@@ -218,26 +248,30 @@ model SampleBook {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  theme       Theme? @relation(fields: [themeId], references: [id])
+  creator User @relation(fields: [createdBy], references: [id])
 
-  @@index([themeId])
+  @@index([createdBy])
   @@index([type])
   @@index([category])
   @@index([isActive])
 }
 
 model DecorAsset {
-  id       Int    @id @default(autoincrement())
-  type     String
-  category String?
-  name     String
-  url      String
-  publicId String
+  id        Int    @id @default(autoincrement())
+  createdBy Int
+  type      String
+  category  String?
+  name      String
+  url       String
+  publicId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
+  creator User @relation(fields: [createdBy], references: [id])
+
+  @@index([createdBy])
   @@index([type])
 }
 
@@ -251,33 +285,55 @@ model Supplier {
   overdueDebt Float    @default(0)
   monthDebt   Float    @default(0)
   lastPaymentDate DateTime?
+  bankName          String?
+  bankAccountNumber String?
+  bankAccountName   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  productionBatches ProductionBatch[]
+  orders Order[]
+  supplierPapers SupplierPaper[]
+  coverOptions   CoverOption[]
 }
 
-model ProductionBatch {
-  id          Int      @id @default(autoincrement())
-  supplierId  Int
-  code        String   @unique
-  status      String   @default("pending")
-  totalAmount Float    @default(0)
-  notes       String?
-  assignedAt  DateTime @default(now())
-  completedAt DateTime?
+// Danh muc kho giay / loai giay ma supplier co the cung cap, kem gia
+model SupplierPaper {
+  id         Int      @id @default(autoincrement())
+  supplierId Int
+  paperSize  String
+  paperType  String
+  price      Float    @default(0)
+  isActive   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
   supplier Supplier @relation(fields: [supplierId], references: [id])
-  orders   Order[]
 
   @@index([supplierId])
-  @@index([status])
+  @@index([isActive])
+}
+
+// Danh muc loai bia (softcover, hardcover, leather...) ma supplier cung cap, kem gia
+model CoverOption {
+  id         Int     @id @default(autoincrement())
+  supplierId Int
+  name       String
+  price      Float   @default(0)
+  isActive   Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@unique([supplierId, name])
+  @@index([supplierId])
+  @@index([isActive])
 }
 
 model Coupon {

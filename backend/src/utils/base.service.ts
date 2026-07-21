@@ -7,7 +7,7 @@ interface SoftDeletable {
   deletedAt: Date | null;
 }
 
-export interface Delegate<T, WhereInput, WhereUniqueInput, CreateInput, UpdateInput> {
+export interface Delegate<T, WhereInput, WhereUniqueInput, CreateInput = any, UpdateInput = any> {
   findMany(args: {
     where?: WhereInput;
     orderBy?: any;
@@ -18,14 +18,14 @@ export interface Delegate<T, WhereInput, WhereUniqueInput, CreateInput, UpdateIn
 
   findFirst(args: { where: WhereInput }): Promise<T | null>;
 
-  create(args: { data: CreateInput }): Promise<T>;
+  create(args: any): Promise<T>;
 
   updateMany(args: { where: WhereInput; data: UpdateInput }): Promise<{ count: number }>;
 
   deleteMany(args: { where: WhereInput }): Promise<{ count: number }>;
 }
 
-export class BaseService<T extends SoftDeletable, WhereInput extends Record<string, any> = Record<string, any>, WhereUniqueInput extends Record<string, any> = { id: number }, CreateInput = Partial<T>, UpdateInput = Partial<T>> {
+export class BaseService<T extends SoftDeletable, WhereInput extends Record<string, any> = Record<string, any>, WhereUniqueInput extends Record<string, any> = { id: number }, CreateInput = any, UpdateInput = any> {
   public delegate: Delegate<T, WhereInput, WhereUniqueInput, CreateInput, UpdateInput>;
 
   constructor(delegate: Delegate<T, WhereInput, WhereUniqueInput, CreateInput, UpdateInput>) {

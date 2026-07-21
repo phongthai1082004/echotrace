@@ -1,6 +1,7 @@
 import * as fabric from "fabric";
 import type { LayoutConfig } from "../types/layout";
 import type { PageState } from "../types";
+import type { UndoEntry } from "../hooks/useCanvasState";
 import { createClipPath } from "./shapes";
 
 const MM_TO_PX = 4;
@@ -48,6 +49,48 @@ export function serializeCanvasState(canvas: fabric.Canvas): string {
     return JSON.stringify(parsed);
   } finally {
     (canvas as any)._objects = allObjs;
+  }
+}
+
+export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): string {
+  if (isFrameObject(obj)) {
+    const photo = findPhotoInFrame(canvas, obj);
+    if (photo) {
+      const frameJson = (obj as any).toJSON(["z", "layer", "customProperties", "_selId"]);
+      const photoJson = (photo as any).toJSON(["z", "layer", "customProperties", "_selId", "clipPath", "__frameLockScaleX", "__frameLockScaleY", "__photoLockScaleX", "__photoLockScaleY", "__frameOffsetX", "__frameOffsetY"]);
+      return JSON.stringify({ _composite: true, frame: frameJson, photo: photoJson, frameSelId: (obj as any)._selId, photoFrameId: (photo as any).customProperties?.frameId });
+    }
+  }
+  return JSON.stringify((obj as any).toJSON(["z", "layer", "customProperties", "_selId"]));
+}
+
+export function pasteClipboard(canvas: fabric.Canvas, clipboard: string, pasteCount: number, bumpPasteCount: () => void, pushUndo: () => void) {
+  pushUndo();
+  const parsed = JSON.parse(clipboard);
+  if (parsed._composite) {
+    fabric.util.enlivenObjects([parsed.frame]).then((arrF: any[]) => {
+      fabric.util.enlivenObjects([parsed.photo]).then((arrP: any[]) => {
+        const frame = arrF[0]; const photo = arrP[0];
+        if (!frame || !photo) return;
+        const off = 20 + pasteCount * 20;
+        const selId = `frame-${Date.now()}`;
+        frame.set({ left: (frame.left || 0) + off, top: (frame.top || 0) + off, customProperties: { ...frame.customProperties, z: Date.now() } } as any);
+        (frame as any)._selId = selId;
+        photo.set({ left: (photo.left || 0) + off, top: (photo.top || 0) + off, customProperties: { ...photo.customProperties, z: Date.now() - 1, frameId: selId } } as any);
+        (photo as any)._selId = `photo-${Date.now()}`;
+        canvas.add(frame); canvas.add(photo); canvas.setActiveObject(frame); canvas.renderAll(); enforceZLayers(canvas); bumpPasteCount();
+      });
+    });
+  } else {
+    const savedCp = parsed.customProperties, savedSelId = parsed._selId;
+    fabric.util.enlivenObjects([parsed]).then((arr: any[]) => {
+      const obj = arr[0]; if (!obj) return;
+      const off = 20 + pasteCount * 20;
+      obj.set({ left: (obj.left || 0) + off, top: (obj.top || 0) + off, customProperties: savedCp || { z: Date.now(), layer: "element" } } as any);
+      if (savedSelId) (obj as any)._selId = savedSelId;
+      (obj as any)._selId = `paste-${Date.now()}`;
+      canvas.add(obj); canvas.setActiveObject(obj); canvas.renderAll(); enforceZLayers(canvas); bumpPasteCount();
+    });
   }
 }
 
@@ -471,57 +514,95 @@ export function canvasPointer(canvas: fabric.Canvas, clientX: number, clientY: n
   };
 }
 
-// ponytail: shared undo/redo to avoid duplicate logic in topbar + workspace keyboard handler
-export async function applyUndo(
-  canvas: fabric.Canvas,
-  popUndo: () => { pageIdx: number; canvasJson: string } | undefined,
-  pushRedo: (entry: { pageIdx: number; canvasJson: string }) => void,
-  currentPageIdx: number,
-  pageCount: number,
-  setPage: (i: number, p: Partial<PageState>) => void,
-  setActivePageIndex: (i: number) => void,
-  setAutoPlaced: (v: boolean) => void,
-  isDraggingPhoto: boolean,
-) {
-  pushRedo({ pageIdx: currentPageIdx, canvasJson: serializeCanvasState(canvas) });
-  const prev = popUndo();
-  if (!prev) return;
-  const { pageIdx, canvasJson } = prev;
-  if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
-    const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
-    setPage(pageIdx, { canvasJson: leftJson });
-    setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
-  } else {
-    setPage(pageIdx, { canvasJson });
-  }
-  setAutoPlaced(false);
-  setActivePageIndex(pageIdx);
-  if (isDraggingPhoto) addFrameDragOverlays(canvas);
+function cleanupUndo(canvas: fabric.Canvas) {
+  canvas.discardActiveObject();
+  removeDragOverlays(canvas);
+  removePhotoDimOverlays(canvas);
+  canvas.renderAll();
 }
 
-export async function applyRedo(
+export function applyUndo(
   canvas: fabric.Canvas,
-  popRedo: () => { pageIdx: number; canvasJson: string } | undefined,
-  pushUndo: () => void,
-  currentPageIdx: number,
-  pageCount: number,
+  popUndo: () => UndoEntry | undefined,
+  pushRedoForCanvas: (entry: UndoEntry) => void,
+  pushUndoPages: () => void,
+  stateSnapshot: { pages: PageState[]; activePageIndex: number; activeLayout: any; viewMode: "left" | "right" | "spread" },
   setPage: (i: number, p: Partial<PageState>) => void,
+  setPages: (p: PageState[]) => void,
   setActivePageIndex: (i: number) => void,
-  setAutoPlaced: (v: boolean) => void,
-  isDraggingPhoto: boolean,
+  setActiveLayout: (l: any) => void,
+  setViewMode: (v: "left" | "right" | "spread") => void,
+  pageCount: number,
 ) {
-  pushUndo();
+  const prev = popUndo();
+  if (!prev) return;
+
+  // Push redo entry based on type
+  if (prev.type === "canvas") {
+    pushRedoForCanvas({ type: "canvas", pageIdx: stateSnapshot.activePageIndex, canvasJson: serializeCanvasState(canvas) });
+  } else {
+    pushRedoForCanvas({ type: "pages", ...stateSnapshot });
+  }
+
+  cleanupUndo(canvas);
+
+  if (prev.type === "canvas") {
+    const { pageIdx, canvasJson } = prev;
+    if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
+      const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
+      setPage(pageIdx, { canvasJson: leftJson });
+      setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
+    } else {
+      setPage(pageIdx, { canvasJson });
+    }
+    setActivePageIndex(pageIdx);
+  } else {
+    setPages(prev.pages);
+    setActivePageIndex(prev.activePageIndex);
+    if (prev.activeLayout) setActiveLayout(prev.activeLayout);
+    if (prev.viewMode) setViewMode(prev.viewMode);
+  }
+}
+
+export function applyRedo(
+  canvas: fabric.Canvas,
+  popRedo: () => UndoEntry | undefined,
+  pushUndo: () => void,
+  pushUndoPages: () => void,
+  stateSnapshot: { pages: PageState[]; activePageIndex: number; activeLayout: any; viewMode: "left" | "right" | "spread" },
+  setPage: (i: number, p: Partial<PageState>) => void,
+  setPages: (p: PageState[]) => void,
+  setActivePageIndex: (i: number) => void,
+  setActiveLayout: (l: any) => void,
+  setViewMode: (v: "left" | "right" | "spread") => void,
+  pageCount: number,
+) {
   const next = popRedo();
   if (!next) return;
-  const { pageIdx, canvasJson } = next;
-  if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
-    const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
-    setPage(pageIdx, { canvasJson: leftJson });
-    setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
+
+  // Push undo entry based on type
+  if (next.type === "canvas") {
+    pushUndo();
   } else {
-    setPage(pageIdx, { canvasJson });
+    pushUndoPages();
   }
-  setAutoPlaced(false);
-  setActivePageIndex(pageIdx);
-  if (isDraggingPhoto) addFrameDragOverlays(canvas);
+
+  cleanupUndo(canvas);
+
+  if (next.type === "canvas") {
+    const { pageIdx, canvasJson } = next;
+    if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
+      const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
+      setPage(pageIdx, { canvasJson: leftJson });
+      setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
+    } else {
+      setPage(pageIdx, { canvasJson });
+    }
+    setActivePageIndex(pageIdx);
+  } else {
+    setPages(next.pages);
+    setActivePageIndex(next.activePageIndex);
+    if (next.activeLayout) setActiveLayout(next.activeLayout);
+    if (next.viewMode) setViewMode(next.viewMode);
+  }
 }

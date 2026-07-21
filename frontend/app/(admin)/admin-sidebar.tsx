@@ -27,8 +27,8 @@ export function AdminSidebar() {
     <aside className="fixed top-0 left-0 w-56 max-[1600px]:w-45 max-[1280px]:w-16 h-screen bg-[#FFF7D6] border-r-[3px] border-[#222] flex flex-col transition-all duration-200 z-30">
       <div className="p-5 max-[1600px]:p-4 max-[1280px]:p-3 border-b-[3px] border-[#222]">
         <p className="font-bold text-lg max-[1600px]:text-base max-[1280px]:text-xs max-[1280px]:text-center">
-          <span className="max-[1280px]:hidden">{t("brand")}</span>
-          <span className="hidden max-[1280px]:inline">{t("brandShort")}</span>
+          <span className="max-[1280px]:hidden" suppressHydrationWarning>{t("brand")}</span>
+          <span className="hidden max-[1280px]:inline" suppressHydrationWarning>{t("brandShort")}</span>
         </p>
         <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] mt-0.5 max-[1280px]:hidden" suppressHydrationWarning>{t("admin.panel")}</p>
       </div>
@@ -42,7 +42,7 @@ export function AdminSidebar() {
                 active ? "bg-[#222] text-white border-2 border-[#222] shadow-[2px_2px_0_#222]" : "text-[#222] hover:bg-[#e8e6e0] border-2 border-transparent"
               }`}>
               <Icon size={14} className="shrink-0" />
-              <span className="max-[1280px]:hidden">{label}</span>
+              <span className="max-[1280px]:hidden" suppressHydrationWarning>{label}</span>
             </Link>
           );
         })}
@@ -58,14 +58,14 @@ export function AdminSidebar() {
             )}
           </div>
           <div className="min-w-0 max-[1280px]:hidden">
-            <p className="text-sm font-bold truncate">{session?.user?.name || t("admin.fallback.admin")}</p>
-            <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] truncate">{session?.user?.email}</p>
+            <p className="text-sm font-bold truncate" suppressHydrationWarning>{session?.user?.name || t("admin.fallback.admin")}</p>
+            <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] truncate" suppressHydrationWarning>{session?.user?.email}</p>
           </div>
         </div>
         <button onClick={() => signOut({ callbackUrl: "/auth" })}
           className="flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all text-[#B54843] hover:bg-[#B54843]/10 border-2 border-transparent hover:border-[#B54843]">
           <LogOut size={14} />
-          <span className="max-[1280px]:hidden">{t("nav.signOut")}</span>
+          <span className="max-[1280px]:hidden" suppressHydrationWarning>{t("nav.signOut")}</span>
         </button>
       </div>
     </aside>

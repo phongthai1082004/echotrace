@@ -15,7 +15,8 @@ export class AdminController {
     if (!status || !["active", "banned"].includes(status)) {
       throw new AppError("status must be 'active' or 'banned'", 400);
     }
-    const updated = await userBase.update(id, { status });
+    await userBase.update(id, { status });
+    const updated = await userBase.findById(id);
     res.json(ApiResponse.success({
       id: updated.id, name: updated.name, email: updated.email, status: updated.status,
     }));

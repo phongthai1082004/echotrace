@@ -5,7 +5,7 @@ import { AppError } from "../middleware/app.error.js";
 import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AssetCategory } from "../../enum/decor.asset.enum.js";
-import { CloudinaryService } from "../services/cloudinary.service.js";
+import { CloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
 import type { DecorAssetModel } from "../../generated/prisma/models/DecorAsset.js";
 
 const VALID_CATEGORIES = new Set(Object.values(AssetCategory));

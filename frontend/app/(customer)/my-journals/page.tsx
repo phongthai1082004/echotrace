@@ -71,10 +71,10 @@ export default function MyJournalsPage() {
     <div className="min-h-screen pt-15">
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6 flex items-end justify-between border-b-[3px] border-[#222]">
         <div>
-          <h1 className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold">{t("customer.myJournals.title")}</h1>
-          <p className="text-sm mt-1 text-[#666]">{t("customer.myJournals.subtitle")}</p>
+          <h1 className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold" suppressHydrationWarning>{t("customer.myJournals.title")}</h1>
+          <p className="text-sm mt-1 text-[#666]" suppressHydrationWarning>{t("customer.myJournals.subtitle")}</p>
         </div>
-        <Link href="/studio"
+        <Link href="/studio" suppressHydrationWarning
           className="font-mono text-[10px] font-bold tracking-widest uppercase px-5 py-3 bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all shrink-0">
           {t("customer.myJournals.newJournal")}
         </Link>

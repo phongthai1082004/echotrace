@@ -5,7 +5,7 @@ import { card } from "@/lib/styles";
 interface Tab {
   key: string;
   label: string;
-  count: number;
+  count?: number;
 }
 
 interface Props {

@@ -45,8 +45,8 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen pt-15">
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6 border-b-[3px] border-[#222]">
-        <h1 className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold">{t("customer.explore.title")}</h1>
-        <p className="text-sm mt-1 text-[#666]">{t("customer.explore.subtitle")}</p>
+        <h1 className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold" suppressHydrationWarning>{t("customer.explore.title")}</h1>
+        <p className="text-sm mt-1 text-[#666]" suppressHydrationWarning>{t("customer.explore.subtitle")}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4">
@@ -59,14 +59,14 @@ export default function ExplorePage() {
 
         <main className="flex-1 py-8 max-[1600px]:py-6 max-[1440px]:py-5 lg:py-10 lg:pl-10">
           <div className="flex gap-0 mb-6">
-            <button onClick={() => setTab("samples")}
+            <button onClick={() => setTab("samples")} suppressHydrationWarning
               className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
                 tab === "samples" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
               }`}>
               {t("customer.explore.sampleLayouts")}
               {tab === "samples" && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
             </button>
-            <button onClick={() => setTab("community")}
+            <button onClick={() => setTab("community")} suppressHydrationWarning
               className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
                 tab === "community" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
               }`}>
@@ -78,7 +78,7 @@ export default function ExplorePage() {
           {tab === "samples" && (loading ? (
               <SkeletonGrid count={10} aspect="portrait" />
             ) : filteredSamples.length === 0 ? (
-              <p className="text-sm text-[#999]">{t("customer.explore.emptySamples")}</p>
+              <p className="text-sm text-[#999]" suppressHydrationWarning>{t("customer.explore.emptySamples")}</p>
             ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
                 {filteredSamples.map(s => (
@@ -103,7 +103,7 @@ export default function ExplorePage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.style}</span>
                         <span className="text-[#222]">·</span>
-                        <span className="font-mono text-[9px] font-bold text-[#999]">{s.pageCount} {t("customer.explore.pg")}</span>
+                        <span className="font-mono text-[9px] font-bold text-[#999]" suppressHydrationWarning>{s.pageCount} {t("customer.explore.pg")}</span>
                         <span className="flex-1" />
                         <span className="font-mono text-[10px] font-bold">${s.price}</span>
                       </div>
@@ -115,7 +115,7 @@ export default function ExplorePage() {
           )}
 
           {tab === "community" && (
-            <p className="text-sm text-[#999]">{t("customer.explore.emptyCommunity")}</p>
+            <p className="text-sm text-[#999]" suppressHydrationWarning>{t("customer.explore.emptyCommunity")}</p>
           )}
         </main>
       </div>

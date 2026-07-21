@@ -54,7 +54,7 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
           return (
             <button
               key={l.code}
-              onClick={() => i18n.changeLanguage(l.code)}
+              onClick={() => { localStorage.setItem("i18nextLng", l.code); i18n.changeLanguage(l.code); }}
               className={`flex items-center gap-2 w-full text-left font-mono font-bold tracking-wider text-[10px] px-3 py-2.5 rounded-[6px] border-2 transition-[background-color,color,border-color,box-shadow] ${
                 active
                   ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
@@ -91,6 +91,7 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
               <button
                 key={l.code}
                 onClick={() => {
+                  localStorage.setItem("i18nextLng", l.code);
                   i18n.changeLanguage(l.code);
                   setOpen(false);
                 }}

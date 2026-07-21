@@ -37,7 +37,7 @@ export class UserImageService {
 
   public async listByUser(userId: number, bookId?: number) {
     return userImageBase.delegate.findMany({
-      where: { userId, ...(bookId ? { bookId } : {}) },
+      where: { userId, isDelete: false, ...(bookId ? { bookId } : {}) },
       orderBy: { id: "desc" },
     });
   }
@@ -47,7 +47,7 @@ export class UserImageService {
     if (!image) throw new AppError("Image not found", 404);
     await userImageBase.delete(id);
     if (image.publicId) {
-      const { CloudinaryService } = await import("./cloudinary.service.js");
+      const { CloudinaryService } = await import("../infrastructure/cloudinary/cloudinary.service.js");
       const cloudinary = new CloudinaryService();
       await cloudinary.deleteAsset(image.publicId).catch(() => {});
     }

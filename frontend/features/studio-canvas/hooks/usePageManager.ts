@@ -10,7 +10,7 @@ export function usePageManager() {
     if (!c) return;
     const { activePageIndex, setPage, activeLayout, pages } = s;
     const n = pages.length;
-    const thumbnail = c.toDataURL({ format: "jpeg", quality: 0.3, multiplier: 0.2 });
+    const thumbnail = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
     const json = serializeCanvasState(c);
     const cw = c.getWidth();
     if (!isCoverPage(activePageIndex, n) && cw > 400) {
@@ -34,6 +34,7 @@ export function usePageManager() {
 
   const addPage = () => {
     saveCurrentPage();
+    useCanvasStore.getState().pushUndoPages();
     const { pages, setPages, setActivePageIndex } = useCanvasStore.getState();
     const n = pages.length;
     const baseIdx = n - 1;
@@ -50,6 +51,7 @@ export function usePageManager() {
     const { pages, activePageIndex, setPages, setActivePageIndex } = useCanvasStore.getState();
     if (index === 0 || index >= pages.length - 1) return;
     saveCurrentPage();
+    useCanvasStore.getState().pushUndoPages();
     const updated = pages.filter((_, i) => i !== index).map((p, i) => ({ ...p, index: i }));
     setPages(updated);
     const next = Math.min(activePageIndex, updated.length - 1);

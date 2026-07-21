@@ -8,7 +8,7 @@ import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useToast } from "@/components/toast";
 import { ZOOM_LEVELS, FONTS } from "../../types";
-import { applyUndo, applyRedo } from "../../lib/layout-engine";
+import { applyUndo, applyRedo, isFrameObject } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
 function useTextPresets(t: any) {
@@ -87,16 +87,16 @@ export function StudioTopbar() {
 
   const iconSize = 14;
 
-  const handleUndo = async () => {
+  const handleUndo = () => {
     if (!canvas || undoStack.length === 0) return;
     const s = useCanvasStore.getState();
-    await applyUndo(canvas, popUndo, pushRedo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
+    applyUndo(canvas, s.popUndo, s.pushRedo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length);
   };
 
-  const handleRedo = async () => {
+  const handleRedo = () => {
     if (!canvas || redoStack.length === 0) return;
     const s = useCanvasStore.getState();
-    await applyRedo(canvas, popRedo, pushUndo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
+    applyRedo(canvas, s.popRedo, s.pushUndo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length);
   };
 
   const handleDelete = () => {
@@ -142,6 +142,10 @@ export function StudioTopbar() {
       pushUndo();
       active.set("flipX", !active.flipX);
       active.setCoords();
+      if (isFrameObject(active)) {
+        const photo = canvas.getObjects().find((p: any) => p.customProperties?.frameId === (active as any)._selId);
+        if (photo) { photo.set("flipX", !(photo as any).flipX); photo.setCoords(); }
+      }
       canvas.renderAll();
       clearRedo();
     }
@@ -154,6 +158,10 @@ export function StudioTopbar() {
       pushUndo();
       active.set("flipY", !active.flipY);
       active.setCoords();
+      if (isFrameObject(active)) {
+        const photo = canvas.getObjects().find((p: any) => p.customProperties?.frameId === (active as any)._selId);
+        if (photo) { photo.set("flipY", !(photo as any).flipY); photo.setCoords(); }
+      }
       canvas.renderAll();
       clearRedo();
     }
@@ -223,9 +231,6 @@ export function StudioTopbar() {
         <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error"); }}
           className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">{t("customer.studio.save")} Journal</button>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 17L12 5l6 12"/><path d="M8 13h8"/>
-          </svg>
           {t("customer.studio.orderPrint")}
         </button>
       </div>

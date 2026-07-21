@@ -20,5 +20,11 @@
     "glob": "^11.0.0",
     "react-popper>react": "^19.0.0",
     "react-popper>react-dom": "^19.0.0"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["react", "react-dom"],
+      "allowAny": ["react", "react-dom"]
+    }
   }
 }

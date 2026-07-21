@@ -25,8 +25,4 @@ export const navItems: { label: string; icon: React.ReactNode }[] = [
     label: "Backgrounds",
     icon: <><rect x="3" y="3" width="18" height="18" rx="2" /><rect x="7" y="7" width="10" height="10" rx="1" /></>
   },
-  {
-    label: "Layers",
-    icon: <><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></>
-  },
 ];

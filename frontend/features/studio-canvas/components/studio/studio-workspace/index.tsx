@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
 import { useDrop } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { useElementControls } from "../../../hooks/useElementControls";
 import { usePageManager } from "../../../hooks/usePageManager";
 import { FORMATS, ZOOM_LEVELS } from "../../../types";
-import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, rehydrateCanvas, isCoverPage, canvasPointer, applyInteractionLock } from "../../../lib/layout-engine";
+import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, rehydrateCanvas, isCoverPage, canvasPointer, applyInteractionLock, serializeSel, pasteClipboard } from "../../../lib/layout-engine";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
+import { ContextMenu } from "../context-menu";
 
 export function StudioWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,11 +19,15 @@ export function StudioWorkspace() {
   const epochRef = useRef(0);
   const destroyedRef = useRef(false);
   const loadedPageRef = useRef<number>(-1);
+  const loadedUndoVerRef = useRef<number>(-1);
   const setCanvas = useCanvasStore((s) => s.setCanvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
   const viewMode = useCanvasStore((s) => s.viewMode);
+  const undoVersion = useCanvasStore((s) => s.undoVersion);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; objects: fabric.FabricObject[] } | null>(null);
+  const thumbnailVersion = useCanvasStore((s) => s.layerVersion);
 
   useElementControls();
   const { addPage: addNewPage } = usePageManager();
@@ -90,7 +95,7 @@ export function StudioWorkspace() {
     const rightIdx = Math.min(idx + 1, n - 1);
 
     const prev = (c as any)._pageIdx;
-    if (loadedPageRef.current === idx && prev === idx) {
+    if (loadedPageRef.current === idx && prev === idx && loadedUndoVerRef.current === undoVersion) {
       applyInteractionLock(c, pageW, isCover, effectiveView, true);
       if (!isCover) c.renderAll();
       return;
@@ -99,6 +104,7 @@ export function StudioWorkspace() {
     const epoch = ++epochRef.current;
     (c as any)._pageIdx = idx;
     loadedPageRef.current = idx;
+    loadedUndoVerRef.current = undoVersion;
     c.clear();
     c.backgroundColor = "#fff";
     if (isCover) {
@@ -151,7 +157,7 @@ export function StudioWorkspace() {
     if (!canvasRef.current) return;
     destroyedRef.current = false;
     const epoch = ++epochRef.current;
-    const c = new fabric.Canvas(canvasRef.current, { width: cw, height: ch, preserveObjectStacking: true, selection: true });
+    const c = new fabric.Canvas(canvasRef.current, { width: cw, height: ch, preserveObjectStacking: true, selection: true, fireRightClick: true, stopContextMenu: true });
     fabricRef.current = c;
       (fabric.FabricObject.prototype as any).snapAngle = 15;
       (fabric.FabricObject.prototype as any).snapThreshold = 6;
@@ -161,7 +167,11 @@ export function StudioWorkspace() {
         if ((o as any).customProperties?.layer === "frame") o.set({ stroke: "#000", strokeWidth: 2, strokeDashArray: undefined } as any);
       }
       c.getObjects().forEach(applyStyle);
-      c.on("object:modified", () => { const a = c.getActiveObject(); if (a) a.setCoords(); enforceZLayers(c); useCanvasStore.getState().incrementLayerVersion(); });
+      let dragUndoPushed = false;
+      c.on("object:moving", () => { if (!dragUndoPushed) { dragUndoPushed = true; useCanvasStore.getState().pushUndo(); } });
+      c.on("object:scaling", () => { if (!dragUndoPushed) { dragUndoPushed = true; useCanvasStore.getState().pushUndo(); } });
+      c.on("object:rotating", () => { if (!dragUndoPushed) { dragUndoPushed = true; useCanvasStore.getState().pushUndo(); } });
+      c.on("object:modified", () => { const a = c.getActiveObject(); if (a) a.setCoords(); enforceZLayers(c); dragUndoPushed = false; });
       const syncF = (e: any) => { const o = e.target; o.setCoords(); if (!isFrameObject(o)) return; const p = findPhotoInFrame(c, o); if (p) movePhotoWithFrame(o, p); };
       c.on("object:moving", syncF);
       c.on("object:scaling", (e: any) => { const o = e.target; o.setCoords(); c.requestRenderAll(); if ((o as any).hasControls && (o as any).customProperties?.layer === "photo") addPhotoDimOverlays(c, o as any); if (isFrameObject(o)) { const p = findPhotoInFrame(c, o); if (p) movePhotoWithFrame(o, p); } });
@@ -172,12 +182,9 @@ export function StudioWorkspace() {
         if (!selected.length) return; 
         const unlocked = c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls) as fabric.FabricImage[]; 
         if (!unlocked.length) return; 
-        // Only lock photos if none of the selected objects are their parent frames
         unlocked.forEach((photo: any) => {
           const frame = resolveFrameForPhoto(c, photo);
-          // Don't lock the photo if its frame is part of the current selection
           if (frame && selected.includes(frame)) return;
-          // Don't lock the photo if it's part of the current selection
           if (selected.includes(photo)) return;
           lockPhotoInFrame(c, photo);
         });
@@ -187,21 +194,27 @@ export function StudioWorkspace() {
         if (!selected.length) return; 
         const unlocked = c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && (o as any).hasControls) as fabric.FabricImage[]; 
         if (!unlocked.length) return; 
-        // Only lock photos if none of the selected objects are their parent frames
         unlocked.forEach((photo: any) => {
           const frame = resolveFrameForPhoto(c, photo);
-          // Don't lock the photo if its frame is part of the current selection
           if (frame && selected.includes(frame)) return;
-          // Don't lock the photo if it's part of the current selection
           if (selected.includes(photo)) return;
           lockPhotoInFrame(c, photo);
         });
       });
       c.on("object:added", (e: any) => { if (e.target) applyStyle(e.target); enforceZLayers(c); useCanvasStore.getState().incrementLayerVersion(); });
       c.on("object:removed", () => { useCanvasStore.getState().incrementLayerVersion(); });
-      c.on("text:changed", () => { useCanvasStore.getState().incrementLayerVersion(); });
+      c.on("text:changed", () => useCanvasStore.getState().incrementLayerVersion());
       c.on("mouse:dblclick", () => { const a = c.getActiveObject(); if (!a || !isFrameObject(a)) return; const fid = (a as any)._selId; let p: any = c.getObjects().find((o: any) => o.customProperties?.frameId === fid); if (!p) { p = c.getObjects().find((o: any) => o.customProperties?.layer === "photo" && a.containsPoint(new fabric.Point(o.left || 0, o.top || 0))); } if (p) { unlockPhotoInFrame(c, p as any); c.setActiveObject(p as any); c.renderAll(); } });
-      const onKeyDown = async (e: KeyboardEvent) => {
+      const onContextMenu = (e: MouseEvent) => { e.preventDefault(); };
+      canvasRef.current!.addEventListener("contextmenu", onContextMenu);
+      c.on("mouse:down", (ev: any) => {
+        const native = ev.e as MouseEvent;
+        if (native.button === 2) {
+          const sel = c.getActiveObjects();
+          if (sel.length) { setCtxMenu({ x: native.clientX, y: native.clientY, objects: sel }); }
+        } else { setCtxMenu(null); }
+      });
+      const onKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Delete" || e.key === "Backspace") {
           if ((e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "TEXTAREA") return;
           const sel = c.getActiveObjects();
@@ -229,20 +242,19 @@ export function StudioWorkspace() {
           c.renderAll();
           useCanvasStore.getState().clearRedo();
         }
-        if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.undoStack.length) return; await applyUndo(c, s.popUndo, s.pushRedo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
-          loadedPageRef.current = -1; (c as any)._pageIdx = undefined; loadPage(c); }
-        if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key === "z") || e.key === "y")) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.redoStack.length) return; await applyRedo(c, s.popRedo, s.pushUndo, s.activePageIndex, s.pages.length, s.setPage, s.setActivePageIndex, s.setAutoPlaced, s.isDraggingPhoto);
-          loadedPageRef.current = -1; (c as any)._pageIdx = undefined; loadPage(c); }
+        if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.undoStack.length) return; applyUndo(c, s.popUndo, s.pushRedo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length); }
+        if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key === "z") || e.key === "y")) { e.preventDefault(); const s = useCanvasStore.getState(); if (!s.redoStack.length) return; applyRedo(c, s.popRedo, s.pushUndo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length); }
         if ((e.ctrlKey || e.metaKey) && e.key === "n") { e.preventDefault(); addNewPage(); }
-        if ((e.ctrlKey || e.metaKey) && e.key === "c") { const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(JSON.stringify((a2 as any).toJSON(["z", "layer", "customProperties", "_selId"]))); useCanvasStore.getState().resetPasteCount(); } }
-        if ((e.ctrlKey || e.metaKey) && e.key === "v") { e.preventDefault(); const { clipboard, pasteCount, bumpPasteCount } = useCanvasStore.getState(); if (!clipboard) return; const parsed = JSON.parse(clipboard); const savedCp = parsed.customProperties, savedSelId = parsed._selId; useCanvasStore.getState().pushUndo(); fabric.util.enlivenObjects([parsed]).then((arr: any[]) => { const obj = arr[0]; if (!obj) return; obj.set({ customProperties: savedCp || { z: Date.now(), layer: "element" } } as any); if (savedSelId) (obj as any)._selId = savedSelId; const offset = 20 + pasteCount * 20; obj.set({ left: (obj.left || 0) + offset, top: (obj.top || 0) + offset }); (obj as any)._selId = `paste-${Date.now()}`; c.add(obj); c.setActiveObject(obj); c.renderAll(); enforceZLayers(c); bumpPasteCount(); }); }
+        if ((e.ctrlKey || e.metaKey) && e.key === "c" && !e.shiftKey) { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); } }
+        if ((e.ctrlKey || e.metaKey) && e.key === "x") { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); useCanvasStore.getState().pushUndo(); if (isFrameObject(a2)) { const fid = (a2 as any)._selId; c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === fid).forEach((p) => c.remove(p)); } c.remove(a2); c.discardActiveObject(); c.renderAll(); } }
+        if ((e.ctrlKey || e.metaKey) && e.key === "v") { e.preventDefault(); const { clipboard, pasteCount, bumpPasteCount } = useCanvasStore.getState(); if (!clipboard) return; pasteClipboard(c, clipboard, pasteCount, bumpPasteCount, () => useCanvasStore.getState().pushUndo()); }
       };
       window.addEventListener("keydown", onKeyDown);
       c.backgroundColor = "#fff";
       c.renderAll();
       setCanvas(c);
       loadPage(c);
-    return () => { destroyedRef.current = true; loadedPageRef.current = -1; window.removeEventListener("keydown", onKeyDown); c.dispose(); fabricRef.current = null; if (useCanvasStore.getState().canvas === c) setCanvas(null); if (epochRef.current === epoch) epochRef.current++; };
+    return () => { destroyedRef.current = true; loadedPageRef.current = -1; window.removeEventListener("keydown", onKeyDown); canvasRef.current?.removeEventListener("contextmenu", onContextMenu); c.dispose(); fabricRef.current = null; if (useCanvasStore.getState().canvas === c) setCanvas(null); if (epochRef.current === epoch) epochRef.current++; };
   }, [cw, bookMeta.format]);
   useEffect(() => {
     const c = fabricRef.current || useCanvasStore.getState().canvas;
@@ -250,7 +262,7 @@ export function StudioWorkspace() {
       c.discardActiveObject();
       loadPage(c);
     }
-  }, [activePageIndex, viewMode]);
+  }, [activePageIndex, viewMode, undoVersion]);
 
   const isDraggingPhoto = useCanvasStore((s) => s.isDraggingPhoto);
   useEffect(() => {
@@ -287,6 +299,21 @@ export function StudioWorkspace() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [bookMeta.format]);
 
+  // ponytail: debounced thumbnail sync from canvas to pages store on every mutation
+  const thumbTimerRef = useRef<any>(null);
+  useEffect(() => {
+    const c = fabricRef.current;
+    if (!c) return;
+    clearTimeout(thumbTimerRef.current);
+    thumbTimerRef.current = setTimeout(() => {
+      const s = useCanvasStore.getState();
+      const idx = s.activePageIndex;
+      if (idx < 0 || idx >= s.pages.length) return;
+      const thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
+      s.setPage(idx, { thumbnailUrl: thumb });
+    }, 400);
+  }, [thumbnailVersion, activePageIndex]);
+
   const zoom = ZOOM_LEVELS[zoomIndex];
 
   return (
@@ -303,6 +330,7 @@ export function StudioWorkspace() {
       </div>
       <FiltersBar />
       <PagesSlider />
+      {ctxMenu && <ContextMenu x={ctxMenu.x} y={ctxMenu.y} objects={ctxMenu.objects} onClose={() => setCtxMenu(null)} />}
     </div>
   );
 }

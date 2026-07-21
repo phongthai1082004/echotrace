@@ -17,6 +17,18 @@ type BookMeta = {
   bindingType: "perfect" | "layflat";
 };
 
+export type UndoEntry = {
+  type: "canvas";
+  pageIdx: number;
+  canvasJson: string;
+} | {
+  type: "pages";
+  pages: PageState[];
+  activePageIndex: number;
+  activeLayout: LayoutConfig | null;
+  viewMode: "left" | "right" | "spread";
+};
+
 interface CanvasStore {
   canvas: fabric.Canvas | null;
   setCanvas: (c: fabric.Canvas | null) => void;
@@ -29,12 +41,14 @@ interface CanvasStore {
   setPage: (i: number, p: Partial<PageState>) => void;
   bookMeta: BookMeta;
   setBookMeta: (m: Partial<BookMeta>) => void;
-  undoStack: { pageIdx: number; canvasJson: string }[];
+  undoStack: UndoEntry[];
   pushUndo: () => void;
-  redoStack: { pageIdx: number; canvasJson: string }[];
-  pushRedo: (entry: { pageIdx: number; canvasJson: string }) => void;
-  popRedo: () => { pageIdx: number; canvasJson: string } | undefined;
-  popUndo: () => { pageIdx: number; canvasJson: string } | undefined;
+  pushUndoPages: () => void;
+  undoVersion: number;
+  redoStack: UndoEntry[];
+  pushRedo: (entry: UndoEntry) => void;
+  popRedo: () => UndoEntry | undefined;
+  popUndo: () => UndoEntry | undefined;
   clearRedo: () => void;
   zoomIndex: number;
   setZoomIndex: (i: number) => void;
@@ -72,6 +86,7 @@ const INITIAL_STATE: Partial<CanvasStore> = {
   ],
   bookMeta: { id: null, title: "Untitled", themeId: null, format: "A4_PORTRAIT", gsm: 200, paperType: "matte", bindingType: "perfect" },
   undoStack: [],
+  undoVersion: 0,
   redoStack: [],
   zoomIndex: 3,
   filterVersion: 0,
@@ -98,34 +113,35 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return { pages };
   }),
   setBookMeta: (m) => set((s) => ({ bookMeta: { ...s.bookMeta, ...m } })),
-  undoStack: [] as { pageIdx: number; canvasJson: string }[],
+  undoStack: [] as UndoEntry[],
   pushUndo: () => {
     const { canvas, undoStack, activePageIndex } = get();
     if (!canvas) return;
-    
-    // Capture current canvas state
     const json = serializeCanvasState(canvas);
-    const entry = { pageIdx: activePageIndex, canvasJson: json };
-    
-    // Compare with last undo entry - don't add if identical (debounce)
+    const entry: UndoEntry = { type: "canvas", pageIdx: activePageIndex, canvasJson: json };
     const lastEntry = undoStack[undoStack.length - 1];
-    if (lastEntry?.canvasJson === json && lastEntry?.pageIdx === activePageIndex) return;
-    
+    if (lastEntry?.type === "canvas" && lastEntry.canvasJson === json && lastEntry.pageIdx === activePageIndex) return;
     const stack = [...undoStack, entry].slice(-50);
     set({ undoStack: stack });
   },
-  redoStack: [] as { pageIdx: number; canvasJson: string }[],
+  pushUndoPages: () => {
+    const { pages, activePageIndex, activeLayout, viewMode, undoStack } = get();
+    const entry: UndoEntry = { type: "pages", pages: JSON.parse(JSON.stringify(pages)), activePageIndex, activeLayout, viewMode };
+    const stack = [...undoStack, entry].slice(-50);
+    set({ undoStack: stack });
+  },
+  redoStack: [] as UndoEntry[],
   pushRedo: (entry) => set((st) => ({ redoStack: [...st.redoStack, entry].slice(-50) })),
   popRedo: () => {
     const stack = [...get().redoStack];
     const val = stack.pop();
-    set({ redoStack: stack });
+    set({ redoStack: stack, undoVersion: get().undoVersion + 1 });
     return val;
   },
   popUndo: () => {
     const stack = [...get().undoStack];
     const val = stack.pop();
-    set({ undoStack: stack });
+    set({ undoStack: stack, undoVersion: get().undoVersion + 1 });
     return val;
   },
   clearRedo: () => set({ redoStack: [] }),

@@ -6,7 +6,6 @@ import { StickersPanel } from "./stickers-panel";
 import { FilterPanel } from "./filter-panel";
 import { BackgroundsPanel } from "./backgrounds-panel";
 import { LayoutsPanel } from "./layouts-panel";
-import { LayersPanel } from "./layers-panel";
 import { FramesPanel } from "./frames-panel";
 
 export function StudioSidebarPanel() {
@@ -19,7 +18,6 @@ export function StudioSidebarPanel() {
     Frames: <FramesPanel />,
     Filter: <FilterPanel />,
     Backgrounds: <BackgroundsPanel />,
-    Layers: <LayersPanel />,
   };
 
   return (
