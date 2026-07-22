@@ -44,27 +44,115 @@
   },
   "home": {
     "hero": {
-      "headline": "Your stories, bound beautifully",
-      "subhead": "Transform memories into handcrafted travel journals. Premium materials, editorial layouts, made to last.",
-      "ctaPrimary": "Start Designing",
-      "ctaSecondary": "Browse Templates"
+      "vol": "Vol. IV — 2024",
+      "headline": "Your\nJourney,\nBound\nin Print.",
+      "subhead": "Design bespoke travel journals with editorial-grade layouts. Every photograph placed with intent.",
+      "ctaPrimary": "Start Your First Journal Free",
+      "ctaSecondary": "See Sample Layouts",
+      "socialProof": "Join <bold>{{count}}</bold> travelers"
     },
-    "features": {
-      "title": "Why Cabinet Memoir?",
-      "items": [
-        {
-          "title": "Editorial Layouts",
-          "desc": "Professional typography and grid systems — not templates."
+    "fieldJournals": {
+      "sub": "Inspiration",
+      "title": "Field Journals"
+    },
+    "marquee": {
+      "editorialTypography": "Editorial Typography",
+      "asymmetricLayouts": "Asymmetric Layouts",
+      "gpsMetadata": "GPS Metadata",
+      "archivalPaper": "Archival Paper",
+      "hardShadows": "Hard Shadows",
+      "premiumBinding": "Premium Binding",
+      "handcrafted": "Handcrafted"
+    },
+    "howItWorks": {
+      "sub": "Process",
+      "title": "How It Works",
+      "step1Title": "Upload Your Photos",
+      "step1Desc": "Import from any device. GPS coordinates are extracted automatically so your journal knows where each shot was taken.",
+      "step2Title": "Design in Studio",
+      "step2Desc": "Drag photos into editorial layouts, apply filters, set typography, and preview every spread in real time.",
+      "step3Title": "Order & Receive",
+      "step3Desc": "Printed on archival matte paper, bound by hand in Hanoi, and shipped to your door within a week.",
+      "cta": "Explore All Templates →"
+    },
+    "why": {
+      "sub": "Why Us",
+      "title": "Everything You Need",
+      "feature1Title": "Editorial-Grade Layouts",
+      "feature1Desc": "Every template is designed by publication designers. Asymmetric grids, pull quotes, full-bleed spreads — no clip art.",
+      "feature2Title": "Archival Paper & Binding",
+      "feature2Desc": "200–250 gsm matte stock with layflat binding. Your journal lies open on a table without cracking the spine.",
+      "feature3Title": "GPS-Powered Metadata",
+      "feature3Desc": "Upload a photo with location data and we plot it on every page. Your journal becomes a map of where you\u2019ve been.",
+      "feature4Title": "Handcrafted in Hanoi",
+      "feature4Desc": "Each book is printed, trimmed, and bound by hand in our Hanoi workshop. Quality that industrial print shops can\u2019t match.",
+      "cta": "Build Your First Page Free"
+    },
+    "pricing": {
+      "sub": "Pricing",
+      "title": "Choose Your Binding",
+      "desc": "Every journal includes free shipping, archival paper, and access to all Studio features.",
+      "mostPopular": "Most Popular",
+      "labels": {
+        "pages": "Pages",
+        "paper": "Paper",
+        "binding": "Binding",
+        "cover": "Cover"
+      },
+      "plans": {
+        "softcover": {
+          "name": "Softcover",
+          "pages": "24–48",
+          "paper": "Matte 200gsm",
+          "binding": "Perfect bound",
+          "cover": "Soft, 300gsm"
         },
-        {
-          "title": "Premium Materials",
-          "desc": "Archival paper, cloth covers, foil stamping — heirloom quality."
+        "hardcover": {
+          "name": "Hardcover",
+          "pages": "24–80",
+          "paper": "Matte 200gsm",
+          "binding": "Layflat",
+          "cover": "Hard, 350gsm"
         },
-        {
-          "title": "Total Control",
-          "desc": "Drag, drop, resize, recolor. Every pixel obeys you."
+        "leather": {
+          "name": "Leather-bound",
+          "pages": "24–120",
+          "paper": "Premium Matte 250gsm",
+          "binding": "Smyth-sewn layflat",
+          "cover": "Genuine leather, foil-stamped"
         }
-      ]
+      },
+      "choose": "Choose"
+    },
+    "quote": {
+      "text": "Memory is not storage. It is the texture of the paper on which a moment insists on being pressed.",
+      "author": "— Cabinet Memoir Manifesto",
+      "alt": "Field documentation"
+    },
+    "cta": {
+      "sub": "Ready?",
+      "title": "Preserve Your Journey for Generations",
+      "desc": "Every photograph holds a story. Give yours the permanence it deserves — designed by you, printed by hand in Hanoi.",
+      "ctaPrimary": "Start Your Journal Free",
+      "ctaSecondary": "Browse Samples",
+      "noCard": "No credit card required. Start designing in seconds."
+    },
+    "footer": {
+      "desc": "Bespoke travel journals, printed and bound by hand in Hanoi, Vietnam.",
+      "product": "Product",
+      "studio": "Studio",
+      "pricing": "Pricing",
+      "samples": "Samples",
+      "shipping": "Shipping",
+      "company": "Company",
+      "about": "About",
+      "blog": "Blog",
+      "careers": "Careers",
+      "contact": "Contact",
+      "copyright": "© {{year}} Cabinet Memoir",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "returns": "Returns"
     }
   },
   "auth": {

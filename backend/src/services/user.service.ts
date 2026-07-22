@@ -2,6 +2,7 @@ import { BaseService } from "../utils/base.service.js";
 import type { UserModel } from "../../generated/prisma/models/User.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import bcrypt from "bcryptjs";
 
 const userBase = new BaseService<UserModel>(prisma.user);
@@ -35,7 +36,7 @@ export class UserService {
         role: true, status: true, password: true,
       },
     });
-    if (!user) throw new AppError("User not found!", 404);
+    if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
     const { password, ...safe } = user;
     return { ...safe, hasPassword: !!password };
   }
@@ -44,11 +45,11 @@ export class UserService {
     if (data.phone) {
       const cleaned = data.phone.replace(/\s+/g, "");
       if (!/^(\+84|0)[1-9]\d{8,9}$/.test(cleaned)) {
-        throw new AppError("Invalid phone format", 400);
+        throw new AppError(ErrorCode.USER_INVALID_PHONE, 400);
       }
       const dupPhone = await prisma.user.findFirst({ where: { phone: cleaned } });
       if (dupPhone && dupPhone.id !== parseInt(userId)) {
-        throw new AppError("Phone number already in use", 409);
+        throw new AppError(ErrorCode.USER_PHONE_EXISTS, 409);
       }
       data.phone = cleaned;
     }
@@ -61,7 +62,7 @@ export class UserService {
       return this.getProfile(userId);
     } catch (error: any) {
       if (error && error.code === "P2025") {
-        throw new AppError("User not found for update!", 404);
+        throw new AppError(ErrorCode.USER_NOT_FOUND_UPDATE, 404);
       }
       throw error;
     }
@@ -69,15 +70,15 @@ export class UserService {
 
   async changePassword(userId: string, body: { currentPassword?: string; newPassword: string }) {
     const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
-    if (!user) throw new AppError("User not found", 404);
+    if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
 
     if (user.password) {
-      if (!body.currentPassword) throw new AppError("Current password is required", 400);
+      if (!body.currentPassword) throw new AppError(ErrorCode.USER_CURRENT_PASSWORD_REQUIRED, 400);
       const valid = await bcrypt.compare(body.currentPassword, user.password);
-      if (!valid) throw new AppError("Current password is incorrect", 400);
+      if (!valid) throw new AppError(ErrorCode.USER_CURRENT_PASSWORD_WRONG, 400);
     }
 
-    if (body.newPassword.length < 6) throw new AppError("New password must be at least 6 characters", 400);
+    if (body.newPassword.length < 6) throw new AppError(ErrorCode.USER_NEW_PASSWORD_MIN_LENGTH, 400);
 
     const hashed = await bcrypt.hash(body.newPassword, 10);
     await prisma.user.update({ where: { id: parseInt(userId) }, data: { password: hashed } });

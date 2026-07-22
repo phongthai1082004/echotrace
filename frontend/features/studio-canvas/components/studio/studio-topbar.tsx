@@ -8,7 +8,7 @@ import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useToast } from "@/components/toast";
 import { ZOOM_LEVELS, FONTS } from "../../types";
-import { applyUndo, applyRedo, isFrameObject } from "../../lib/layout-engine";
+import { applyUndo, applyRedo, isFrameObject, serializeCanvasState, enforceZLayers, placePhotoInFrame, applyFrameClip } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
 function useTextPresets(t: any) {
@@ -167,6 +167,103 @@ export function StudioTopbar() {
     }
   };
 
+  const handleAutoFill = async () => {
+    const s = useCanvasStore.getState();
+    const c = s.canvas;
+    if (!c || !token) { showToast("No canvas or auth", "error"); return; }
+    // 1. Save all pages state for undo
+    s.pushUndoPages();
+
+    // 2. Fetch user gallery images
+    let galleryPhotos: { id: number; url: string }[];
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/uploads/images`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-cache",
+      });
+      if (!res.ok) { showToast("Failed to fetch gallery", "error"); return; }
+      const d = await res.json();
+      galleryPhotos = d.data || [];
+    } catch { showToast("Failed to fetch gallery", "error"); return; }
+
+    // 3. Scan all pages for used photo URLs + empty frames
+    const usedUrls = new Set<string>();
+    const pageEmptyFrames: { pageIdx: number; frameIdx: number; frameSelId: string }[] = [];
+
+    for (let i = 0; i < s.pages.length; i++) {
+      const pgJson = s.pages[i].canvasJson;
+      if (!pgJson) continue;
+      let objects: any[];
+      try { objects = JSON.parse(pgJson).objects || []; } catch { continue; }
+
+      objects.forEach((obj: any) => {
+        if (obj.customProperties?.layer === "photo" && obj.src) usedUrls.add(obj.src);
+      });
+
+      objects.forEach((obj: any, idx: number) => {
+        if (obj.customProperties?.layer === "frame") {
+          const hasPhoto = objects.some(
+            (o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === obj._selId
+          );
+          if (!hasPhoto) pageEmptyFrames.push({ pageIdx: i, frameIdx: idx, frameSelId: obj._selId });
+        }
+      });
+    }
+
+    // 4. Filter unused photos
+    const unused = galleryPhotos.filter((p) => !usedUrls.has(p.url));
+    if (unused.length === 0) { showToast("No unused photos available", "info"); return; }
+    if (pageEmptyFrames.length === 0) { showToast("No empty frames found", "info"); return; }
+
+    // 5. Process pages using an offscreen fabric canvas
+    const offEl = document.createElement("canvas");
+    offEl.width = 2000; offEl.height = 2000;
+    const tc = new fabric.Canvas(offEl);
+    const updatedPages = [...s.pages];
+    let photoIdx = 0;
+
+    for (const task of pageEmptyFrames) {
+      if (photoIdx >= unused.length) break;
+      const pgStr = updatedPages[task.pageIdx].canvasJson;
+      if (!pgStr) continue;
+      let parsed: any;
+      try { parsed = JSON.parse(pgStr); } catch { continue; }
+
+      await tc.loadFromJSON(parsed).then(() => { tc.renderAll(); });
+      // rehydrate custom properties (fabric drops them on loadFromJSON)
+      const pgObjs = parsed.objects || [];
+      tc.getObjects().forEach((live: any, i: number) => {
+        if (pgObjs[i]) {
+          if (pgObjs[i].customProperties) live.customProperties = pgObjs[i].customProperties;
+          if (pgObjs[i]._selId) live._selId = pgObjs[i]._selId;
+        }
+      });
+
+      // Find the frame on the temp canvas by _selId
+      const frame = tc.getObjects().find((o: any) => o._selId === task.frameSelId);
+      if (!frame) { tc.clear(); continue; }
+
+      try {
+        const img = await fabric.FabricImage.fromURL(unused[photoIdx].url, { crossOrigin: "anonymous" });
+        placePhotoInFrame(frame, img);
+        applyFrameClip(frame, img);
+        tc.add(img);
+        tc.renderAll();
+        enforceZLayers(tc);
+        const newJson = serializeCanvasState(tc);
+        updatedPages[task.pageIdx] = { ...updatedPages[task.pageIdx], canvasJson: newJson };
+        photoIdx++;
+      } catch { /* skip this photo on error */ }
+      tc.clear();
+    }
+
+    // 6. Update store and reload current page
+    s.setPages(updatedPages);
+    if (c) { c.clear(); c.backgroundColor = "#fff"; }
+    showToast(`Auto-filled ${photoIdx} photo(s)`, "success");
+    // Bump undoVersion to trigger workspace page reload
+    useCanvasStore.setState({ undoVersion: useCanvasStore.getState().undoVersion + 1 });
+  };
+
   return (
     <div className="h-12 flex items-center px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222]">
       {editingTitle ? (
@@ -224,7 +321,7 @@ export function StudioTopbar() {
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
         <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> {t("customer.studio.preview")}</button>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+        <button onClick={handleAutoFill} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           {t("customer.studio.autoFill")}
         </button>

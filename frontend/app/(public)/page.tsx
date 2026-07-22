@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+import { useTranslation, Trans } from "react-i18next";
 
 const ITEM_W = 260;
 
@@ -22,14 +23,15 @@ const originLogs = [
 ];
 
 const plans = [
-  { name: "Softcover", price: "$29", pages: "24–48", paper: "Matte 200gsm", binding: "Perfect bound", cover: "Soft, 300gsm", popular: false },
-  { name: "Hardcover", price: "$49", pages: "24–80", paper: "Matte 200gsm", binding: "Layflat", cover: "Hard, 350gsm", popular: true },
-  { name: "Leather-bound", price: "$89", pages: "24–120", paper: "Premium Matte 250gsm", binding: "Smyth-sewn layflat", cover: "Genuine leather, foil-stamped", popular: false },
+  { nameKey: "home.pricing.plans.softcover.name", price: "$29", pagesKey: "home.pricing.plans.softcover.pages", paperKey: "home.pricing.plans.softcover.paper", bindingKey: "home.pricing.plans.softcover.binding", coverKey: "home.pricing.plans.softcover.cover", popular: false },
+  { nameKey: "home.pricing.plans.hardcover.name", price: "$49", pagesKey: "home.pricing.plans.hardcover.pages", paperKey: "home.pricing.plans.hardcover.paper", bindingKey: "home.pricing.plans.hardcover.binding", coverKey: "home.pricing.plans.hardcover.cover", popular: true },
+  { nameKey: "home.pricing.plans.leather.name", price: "$89", pagesKey: "home.pricing.plans.leather.pages", paperKey: "home.pricing.plans.leather.paper", bindingKey: "home.pricing.plans.leather.binding", coverKey: "home.pricing.plans.leather.cover", popular: false },
 ];
 
 const allLogs = [...originLogs, ...originLogs.map((l, i) => ({ ...l, id: `${l.id}-${i}` }))];
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const slide = (dir: "left" | "right") => {
@@ -56,15 +58,17 @@ export default function HomePage() {
         </div>
         <div className="flex flex-col justify-between p-8 max-[1600px]:p-6 max-[1440px]:p-5 lg:p-12 lg:w-[40%] bg-[#FFF7D6] border-l-[3px] border-[#222]">
           <div>
-            <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-8 text-[#666]">Vol. IV — 2024</p>
-            <h1 className="text-5xl lg:text-6xl font-bold leading-[0.95] mb-6">Your<br />Journey,<br />Bound<br />in Print.</h1>
-            <p className="text-sm leading-relaxed max-w-xs text-[#666] mb-8">Design bespoke travel journals with editorial-grade layouts. Every photograph placed with intent.</p>
+            <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-8 text-[#666]">{t("home.hero.vol")}</p>
+            <h1 className="text-5xl lg:text-6xl font-bold leading-[0.95] mb-6 whitespace-pre-line">
+              {t("home.hero.headline")?.replace(/\\n/g, '\n')}
+            </h1>
+            <p className="text-sm leading-relaxed max-w-xs text-[#666] mb-8">{t("home.hero.subhead")}</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/studio" className="bg-[#222] text-white font-bold text-[11px] tracking-widest uppercase py-4 px-6 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all text-center">
-                Start Your First Journal Free →
+                {t("home.hero.ctaPrimary")} →
               </Link>
               <Link href="/explore" className="bg-transparent text-[#222] font-bold text-[11px] tracking-widest uppercase py-4 px-6 rounded-[10px] border-[3px] border-[#222] hover:bg-white/50 transition-all text-center">
-                See Sample Layouts
+                {t("home.hero.ctaSecondary")}
               </Link>
             </div>
             <div className="flex items-center gap-2 mt-6">
@@ -73,7 +77,7 @@ export default function HomePage() {
                   <img key={i} src={u} alt="" className="w-8 h-8 rounded-full border-[2px] border-[#222]" loading="lazy" />
                 ))}
               </div>
-              <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">Join <span className="text-[#222]">10,000+</span> travelers</p>
+              <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]"><Trans i18nKey="home.hero.socialProof" values={{ count: "10,000+" }} components={{ bold: <span className="text-[#222]" /> }} /></p>
             </div>
           </div>
         </div>
@@ -83,8 +87,8 @@ export default function HomePage() {
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-16 max-[1600px]:py-12 max-[1440px]:py-10 max-[1280px]:py-8 overflow-hidden">
         <div className="flex items-end justify-between mb-10 pb-5 border-b-[3px] border-[#222]">
           <div>
-            <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-1 text-[#666]">Inspiration</p>
-            <h2 className="text-4xl lg:text-5xl font-bold">Field Journals</h2>
+            <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-1 text-[#666]">{t("home.fieldJournals.sub")}</p>
+            <h2 className="text-4xl lg:text-5xl font-bold">{t("home.fieldJournals.title")}</h2>
           </div>
         </div>
         <div className="relative">
@@ -114,8 +118,8 @@ export default function HomePage() {
       {/* ─── Feature Marquee ─── */}
       <section className="py-4 px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 overflow-hidden border-y-[3px] border-[#222] bg-[#FFF7D6]">
         <div className="flex gap-10 items-center whitespace-nowrap">
-          {["Editorial Typography", "Asymmetric Layouts", "GPS Metadata", "Archival Paper", "Hard Shadows", "Premium Binding", "Handcrafted"].map((t) => (
-            <span key={t} className="font-mono text-[10px] font-bold tracking-widest uppercase shrink-0 text-[#666]">— {t}</span>
+          {["home.marquee.editorialTypography", "home.marquee.asymmetricLayouts", "home.marquee.gpsMetadata", "home.marquee.archivalPaper", "home.marquee.hardShadows", "home.marquee.premiumBinding", "home.marquee.handcrafted"].map((k) => (
+            <span key={k} className="font-mono text-[10px] font-bold tracking-widest uppercase shrink-0 text-[#666]">— {t(k)}</span>
           ))}
         </div>
       </section>
@@ -123,13 +127,13 @@ export default function HomePage() {
       {/* ─── How It Works ─── */}
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 bg-[#FFF7D6] border-b-[3px] border-[#222]">
         <div className="max-w-4xl mx-auto">
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">Process</p>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-14">How It Works</h2>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("home.howItWorks.sub")}</p>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-14">{t("home.howItWorks.title")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: "01", title: "Upload Your Photos", desc: "Import from any device. GPS coordinates are extracted automatically so your journal knows where each shot was taken." },
-              { step: "02", title: "Design in Studio", desc: "Drag photos into editorial layouts, apply filters, set typography, and preview every spread in real time." },
-              { step: "03", title: "Order & Receive", desc: "Printed on archival matte paper, bound by hand in Hanoi, and shipped to your door within a week." },
+              { step: "01", title: t("home.howItWorks.step1Title"), desc: t("home.howItWorks.step1Desc") },
+              { step: "02", title: t("home.howItWorks.step2Title"), desc: t("home.howItWorks.step2Desc") },
+              { step: "03", title: t("home.howItWorks.step3Title"), desc: t("home.howItWorks.step3Desc") },
             ].map((s) => (
               <div key={s.step} className="bg-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-6">
                 <p className="font-mono text-3xl font-bold text-[#222] mb-4">{s.step}</p>
@@ -140,7 +144,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-10">
             <Link href="/explore" className="inline-flex bg-transparent text-[#222] font-bold text-[10px] tracking-widest uppercase py-3.5 px-6 rounded-[8px] border-[3px] border-[#222] hover:bg-white transition-all">
-              Explore All Templates →
+              {t("home.howItWorks.cta")}
             </Link>
           </div>
         </div>
@@ -149,14 +153,14 @@ export default function HomePage() {
       {/* ─── Why Cabinet Memoir ─── */}
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 border-b-[3px] border-[#222]">
         <div className="max-w-5xl mx-auto">
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">Why Us</p>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-14">Everything You Need</h2>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("home.why.sub")}</p>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-14">{t("home.why.title")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {[
-              { title: "Editorial-Grade Layouts", desc: "Every template is designed by publication designers. Asymmetric grids, pull quotes, full-bleed spreads — no clip art." },
-              { title: "Archival Paper & Binding", desc: "200–250 gsm matte stock with layflat binding. Your journal lies open on a table without cracking the spine." },
-              { title: "GPS-Powered Metadata", desc: "Upload a photo with location data and we plot it on every page. Your journal becomes a map of where you've been." },
-              { title: "Handcrafted in Hanoi", desc: "Each book is printed, trimmed, and bound by hand in our Hanoi workshop. Quality that industrial print shops can't match." },
+              { title: t("home.why.feature1Title"), desc: t("home.why.feature1Desc") },
+              { title: t("home.why.feature2Title"), desc: t("home.why.feature2Desc") },
+              { title: t("home.why.feature3Title"), desc: t("home.why.feature3Desc") },
+              { title: t("home.why.feature4Title"), desc: t("home.why.feature4Desc") },
             ].map((f) => (
               <div key={f.title} className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
                 <h3 className="text-lg font-bold mb-2">{f.title}</h3>
@@ -166,7 +170,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-10">
             <Link href="/studio" className="inline-flex bg-[#222] text-white font-bold text-[10px] tracking-widest uppercase py-3.5 px-6 rounded-[8px] border-[3px] border-[#222] shadow-[3px_3px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0_#222] transition-all">
-              Build Your First Page Free →
+              {t("home.why.cta")} →
             </Link>
           </div>
         </div>
@@ -175,17 +179,17 @@ export default function HomePage() {
       {/* ─── Pricing ─── */}
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 border-b-[3px] border-[#222]">
         <div className="max-w-5xl mx-auto">
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">Pricing</p>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-4">Choose Your Binding</h2>
-          <p className="text-sm text-[#666] mb-14 max-w-lg">Every journal includes free shipping, archival paper, and access to all Studio features.</p>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("home.pricing.sub")}</p>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-4">{t("home.pricing.title")}</h2>
+          <p className="text-sm text-[#666] mb-14 max-w-lg">{t("home.pricing.desc")}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {plans.map((p) => (
-              <div key={p.name} className={`relative bg-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-6 flex flex-col ${p.popular ? 'ring-[3px] ring-[#222]' : ''}`}>
-                {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 font-mono text-[8px] font-bold tracking-widest uppercase bg-[#222] text-white px-3 py-1 rounded-md">Most Popular</span>}
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] mb-1">{p.name}</p>
+              <div key={p.nameKey} className={`relative bg-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-6 flex flex-col ${p.popular ? 'ring-[3px] ring-[#222]' : ''}`}>
+                {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 font-mono text-[8px] font-bold tracking-widest uppercase bg-[#222] text-white px-3 py-1 rounded-md">{t("home.pricing.mostPopular")}</span>}
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] mb-1">{t(p.nameKey)}</p>
                 <p className="text-4xl font-bold mb-4">{p.price}</p>
                 <ul className="space-y-2 mb-6 flex-1">
-                  {[{ label: "Pages", val: p.pages }, { label: "Paper", val: p.paper }, { label: "Binding", val: p.binding }, { label: "Cover", val: p.cover }].map((spec) => (
+                  {[{ label: t("home.pricing.labels.pages"), val: t(p.pagesKey) }, { label: t("home.pricing.labels.paper"), val: t(p.paperKey) }, { label: t("home.pricing.labels.binding"), val: t(p.bindingKey) }, { label: t("home.pricing.labels.cover"), val: t(p.coverKey) }].map((spec) => (
                     <li key={spec.label} className="flex items-center justify-between text-sm">
                       <span className="text-[#999]">{spec.label}</span>
                       <span className="font-medium text-right">{spec.val}</span>
@@ -193,7 +197,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link href="/checkout" className={`w-full font-bold text-[10px] tracking-widest uppercase py-3 text-center rounded-[8px] border-[2px] border-[#222] shadow-[3px_3px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0_#222] transition-all block ${p.popular ? 'bg-[#222] text-white' : 'bg-white text-[#222]'}`}>
-                  Choose {p.name} →
+                  {t("home.pricing.choose")} {t(p.nameKey)} →
                 </Link>
               </div>
             ))}
@@ -204,29 +208,29 @@ export default function HomePage() {
       {/* ─── Quote ─── */}
       <section className="flex flex-col lg:flex-row border-b-[3px] border-[#222]">
         <div className="p-12 max-[1600px]:p-10 max-[1440px]:p-8 max-[1280px]:p-6 lg:p-16 flex flex-col justify-center lg:w-1/2 border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#222] bg-[#FFF7D6]">
-          <p className="text-xl lg:text-2xl font-bold leading-snug italic mb-6 text-[#444]">&ldquo;Memory is not storage. It is the texture of the paper on which a moment insists on being pressed.&rdquo;</p>
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">— Cabinet Memoir Manifesto</p>
+          <p className="text-xl lg:text-2xl font-bold leading-snug italic mb-6 text-[#444]">&ldquo;{t("home.quote.text")}&rdquo;</p>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">{t("home.quote.author")}</p>
         </div>
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-1/2 min-h-[300px] lg:min-h-[400px]">
-          <img src="https://images.unsplash.com/photo-1762810629910-5ad48ad9b181?w=900&h=700&fit=crop&auto=format" alt="Field documentation" className="w-full h-full object-cover absolute inset-0" />
+          <img src="https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=2500&q=80" alt={t("home.quote.alt")} className="w-full h-full object-cover absolute inset-0" />
         </div>
       </section>
 
       {/* ─── Final CTA ─── */}
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 bg-[#222]">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#999]">Ready?</p>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-white">Preserve Your Journey<br />for Generations</h2>
-          <p className="text-sm text-[#999] mb-10 max-w-md mx-auto">Every photograph holds a story. Give yours the permanence it deserves — designed by you, printed by hand in Hanoi.</p>
+          <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#999]">{t("home.cta.sub")}</p>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-white">{t("home.cta.title")}</h2>
+          <p className="text-sm text-[#999] mb-10 max-w-md mx-auto">{t("home.cta.desc")}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/studio" className="bg-[#FFF7D6] text-[#222] font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-[#FFF7D6] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
-              Start Your Journal Free →
+              {t("home.cta.ctaPrimary")} →
             </Link>
             <Link href="/explore" className="bg-transparent text-white font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-white hover:bg-white/10 transition-all">
-              Browse Samples
+              {t("home.cta.ctaSecondary")}
             </Link>
           </div>
-          <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666] mt-6">No credit card required. Start designing in seconds.</p>
+          <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666] mt-6">{t("home.cta.noCard")}</p>
         </div>
       </section>
 
@@ -235,21 +239,21 @@ export default function HomePage() {
         <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-12 max-[1600px]:py-10 max-[1440px]:py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 md:col-span-1">
-              <p className="text-lg font-bold mb-3 text-white">Cabinet Memoir</p>
-              <p className="text-xs text-[#999] leading-relaxed">Bespoke travel journals, printed and bound by hand in Hanoi, Vietnam.</p>
+              <p className="text-lg font-bold mb-3 text-white">{t("brand")}</p>
+              <p className="text-xs text-[#999] leading-relaxed">{t("home.footer.desc")}</p>
             </div>
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">Product</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.product")}</p>
               <ul className="space-y-2">
-                {["Studio", "Pricing", "Samples", "Shipping"].map((l) => (
+                {[t("home.footer.studio"), t("home.footer.pricing"), t("home.footer.samples"), t("home.footer.shipping")].map((l) => (
                   <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
                 ))}
               </ul>
             </div>
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">Company</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.company")}</p>
               <ul className="space-y-2">
-                {["About", "Blog", "Careers", "Contact"].map((l) => (
+                {[t("home.footer.about"), t("home.footer.blog"), t("home.footer.careers"), t("home.footer.contact")].map((l) => (
                   <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
                 ))}
               </ul>
@@ -257,9 +261,9 @@ export default function HomePage() {
           </div>
         </div>
         <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-5 border-t-[3px] border-[#444] flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-          <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">© 2024 Cabinet Memoir</p>
+          <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">{t("home.footer.copyright", { year: "2024" })}</p>
           <div className="flex gap-4">
-            {["Privacy", "Terms", "Returns"].map((l) => (
+            {[t("home.footer.privacy"), t("home.footer.terms"), t("home.footer.returns")].map((l) => (
               <Link key={l} href="/" className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666] hover:text-white transition-colors">{l}</Link>
             ))}
           </div>

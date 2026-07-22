@@ -1,6 +1,7 @@
 import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import type { UserImageModel } from "../../generated/prisma/models/UserImage.js";
 
 const userImageBase = new BaseService<UserImageModel>(prisma.userImage);
@@ -44,7 +45,7 @@ export class UserImageService {
 
   public async delete(id: number, userId: number) {
     const image = await this.getById(id, userId);
-    if (!image) throw new AppError("Image not found", 404);
+    if (!image) throw new AppError(ErrorCode.IMAGE_NOT_FOUND, 404);
     await userImageBase.delete(id);
     if (image.publicId) {
       const { CloudinaryService } = await import("../infrastructure/cloudinary/cloudinary.service.js");

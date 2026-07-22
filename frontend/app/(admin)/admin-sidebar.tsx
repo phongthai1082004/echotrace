@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { cloudinaryUrl } from "@/lib/cloudinary";
@@ -10,7 +11,13 @@ import { BarChart3, DollarSign, TrendingUp, Package, Truck, Users, Sticker, User
 export function AdminSidebar() {
   const { t } = useTranslation();
   const path = usePathname();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const wasAuth = useRef(false);
+  useEffect(() => {
+    if (status === "authenticated") wasAuth.current = true;
+    if (status === "unauthenticated" && wasAuth.current) router.push("/");
+  }, [status, router]);
 
   const nav = [
     { href: "/admin/analytics", label: t("admin.sidebar.overview"), icon: BarChart3 },
@@ -62,7 +69,7 @@ export function AdminSidebar() {
             <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] truncate" suppressHydrationWarning>{session?.user?.email}</p>
           </div>
         </div>
-        <button onClick={() => signOut({ callbackUrl: "/auth" })}
+        <button onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all text-[#B54843] hover:bg-[#B54843]/10 border-2 border-transparent hover:border-[#B54843]">
           <LogOut size={14} />
           <span className="max-[1280px]:hidden" suppressHydrationWarning>{t("nav.signOut")}</span>

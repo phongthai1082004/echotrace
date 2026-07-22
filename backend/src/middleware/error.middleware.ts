@@ -8,18 +8,21 @@ export const errorMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-    let statusCode = 500;
-    let message = "Internal Error!";
-    let details = error.message;
+  let statusCode = 500;
+  let errorCode = "INTERNAL";
+  let details: any = null;
 
-    if (error instanceof AppError) {
-        statusCode = error.statusCode
-        message = error.message,
-        details = "Requirement Error!"
-    }
+  if (error instanceof AppError) {
+    statusCode = error.statusCode;
+    errorCode = error.errorCode;
+    details = error.details;
+  }
 
-  console.error(`[Error] ${req.method} ${req.url} - Status: ${statusCode} - Message: ${error.message}`);
+  const t = (req as any).i18n?.t;
+  const message = t ? t(`errors.${errorCode}`, { defaultValue: errorCode }) : errorCode;
+
+  console.error(`[Error] ${req.method} ${req.url} — ${errorCode} — ${statusCode}`);
 
   const response = ApiResponse.error(message, statusCode, details);
   return res.status(statusCode).json(response);
-}
+};

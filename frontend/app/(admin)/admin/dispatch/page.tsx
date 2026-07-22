@@ -5,6 +5,7 @@ import { X, Search, ArrowUpDown, Check, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { label, labelSm, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
+import { AdminSearch } from "@/components/admin-search";
 import { AdminPagination } from "@/components/admin-pagination";
 import { ResponsiveTable } from "@/components/responsive-table";
 import { StatusBadge } from "@/components/status-badge";
@@ -77,13 +78,7 @@ export default function DispatchPage() {
   return (
     <div className="h-screen flex flex-col">
       <AdminHeader label={t("admin.dispatch.label")} title={t("admin.dispatch.title")}>
-        <div className="flex items-center gap-4 text-sm text-[#999]">
-          <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
-          <span className="w-[3px] h-4 bg-[#222] rounded-full" />
-          <span className="text-[#222] font-bold">{t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}</span>
-          <span className="w-[3px] h-4 bg-[#222] rounded-full" />
-          <span className="text-[#222] font-bold">{t("admin.dispatch.unassigned", { count: unassignedOrders.length })}</span>
-        </div>
+        <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.dispatch.searchPlaceholder")} />
       </AdminHeader>
 
       <div className="flex-1 flex overflow-hidden">
@@ -160,11 +155,12 @@ export default function DispatchPage() {
           <div className={`${card} mx-6 mt-4 mb-3 p-3 shrink-0`}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="relative flex-1 max-w-xs">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
-                  <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                    placeholder={t("admin.dispatch.searchPlaceholder")}
-                    className={`${input} pl-9 py-1.5 text-xs`} />
+                <div className="flex items-center gap-3 text-xs shrink-0">
+                  <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
+                  <span className="w-[2px] h-3 bg-[#222] rounded-full" />
+                  <span className="text-[#222] font-bold">{t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}</span>
+                  <span className="w-[2px] h-3 bg-[#222] rounded-full" />
+                  <span className="text-[#222] font-bold">{t("admin.dispatch.unassigned", { count: unassignedOrders.length })}</span>
                 </div>
                 <div className="flex gap-1">
                   {counts.map(({ key, count }) => (

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
 import { TokenType } from "../../enum/token.type.js";
 import type { UserModel } from "../../generated/prisma/models/User.js";
@@ -38,7 +39,7 @@ export class AuthService {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    if (!payload?.email) throw new AppError("invalid google token", 401);
+    if (!payload?.email) throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
 
     let user = await prisma.user.findFirst({
       where: { OR: [{ googleId: payload.sub }, { email: payload.email }] },
@@ -54,7 +55,7 @@ export class AuthService {
         },
       });
     } else if (user.status === "banned") {
-      throw new AppError("Account has been banned", 403);
+      throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
     }
     return {
       user: { 
@@ -73,7 +74,7 @@ export class AuthService {
     const existing = await prisma.user.findFirst({
       where: { email, isDelete: false },
     });
-    if (existing) throw new AppError("Email already registered", 409);
+    if (existing) throw new AppError(ErrorCode.AUTH_EMAIL_EXISTS, 409);
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const hashed = await bcrypt.hash(otp, 10);
@@ -96,11 +97,11 @@ export class AuthService {
     const record = await prisma.token.findFirst({
       where: { email, tokenType: TokenType.OTP, isRevoked: false },
     });
-    if (!record) throw new AppError("No OTP requested for this email", 400);
-    if (Date.now() > record.expiresAt.getTime()) throw new AppError("OTP expired", 400);
+    if (!record) throw new AppError(ErrorCode.AUTH_OTP_NOT_REQUESTED, 400);
+    if (Date.now() > record.expiresAt.getTime()) throw new AppError(ErrorCode.AUTH_OTP_EXPIRED, 400);
 
     const valid = await bcrypt.compare(otp, record.refreshToken);
-    if (!valid) throw new AppError("Invalid OTP", 400);
+    if (!valid) throw new AppError(ErrorCode.AUTH_INVALID_OTP, 400);
 
     await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
 
@@ -124,11 +125,11 @@ export class AuthService {
     const user = await prisma.user.findFirst({
       where: { email, isDelete: false },
     });
-    if (!user || !user.password) throw new AppError("invalid credentials", 401);
-    if (user.status === "banned") throw new AppError("Account has been banned", 403);
+    if (!user || !user.password) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);
+    if (user.status === "banned") throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new AppError("invalid credentials", 401);
+    if (!valid) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);
 
     return {
       user: { 
@@ -155,13 +156,13 @@ export class AuthService {
     try {
       payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { userId: string };
     } catch {
-      throw new AppError("invalid or expired refresh token", 401);
+      throw new AppError(ErrorCode.AUTH_INVALID_REFRESH_TOKEN, 401);
     }
 
     const existing = await prisma.token.findFirst({
       where: { refreshToken: token, isRevoked: false, tokenType: TokenType.SESSION },
     });
-    if (!existing) throw new AppError("refresh token revoked", 401);
+    if (!existing) throw new AppError(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED, 401);
 
     return { accessToken: this.generateAccessToken(payload.userId) };
   }
@@ -171,7 +172,6 @@ export class AuthService {
   }
 
   private async generateRefreshToken(userId: string) {
-    // Xoá token cũ trước khi tạo mới
     await prisma.token.deleteMany({ where: { userId: parseInt(userId), tokenType: TokenType.SESSION } });
 
     const rt = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "30d" });

@@ -2,6 +2,8 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { BookService } from "../services/book.service.js";
 import { ApiResponse } from "../middleware/api.response.js";
+import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 
 const bookService = new BookService();
 
@@ -20,16 +22,17 @@ export class BookController {
 
   async create(req: AuthRequest, res: Response) {
     const userId = parseInt(req.userId!);
-    if (isNaN(userId)) { res.status(401).json({ success: false, message: "Invalid user ID from token" }); return; }
+    if (isNaN(userId)) throw new AppError(ErrorCode.AUTH_NOT_AUTHENTICATED, 401);
     const { title, content } = req.body;
-    if (!content) { res.status(400).json({ success: false, message: "Missing content" }); return; }
+    if (!content) throw new AppError(ErrorCode.BOOK_MISSING_CONTENT, 400);
     const contentStr = typeof content === "string" ? content : JSON.stringify(content);
     try {
       const book = await bookService.create(userId, { content: contentStr, title });
       res.status(201).json(ApiResponse.success(book));
     } catch (err: any) {
+      if (err instanceof AppError) throw err;
       console.error("[book.create] error:", err?.message || err);
-      res.status(500).json({ success: false, message: err?.message || "Internal error" });
+      throw new AppError(ErrorCode.BOOK_CREATE_FAILED, 500);
     }
   }
 
@@ -56,8 +59,9 @@ export class BookController {
       await bookService.updatePages(id, updateData);
       res.json(ApiResponse.success({ id }));
     } catch (err: any) {
+      if (err instanceof AppError) throw err;
       console.error("[book.updatePages] error:", err?.message || err);
-      res.status(500).json({ success: false, message: err?.message || "Internal error" });
+      throw new AppError(ErrorCode.BOOK_CREATE_FAILED, 500);
     }
   }
 }

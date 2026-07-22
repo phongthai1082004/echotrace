@@ -23,7 +23,7 @@ export function AdminFilterTabs({ tabs, selected, onChange }: Props) {
             className={`font-mono text-[8px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-[background-color,color,border-color] ${
               selected === t.key ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
             }`}>
-            {t.label} <span className={selected === t.key ? "text-white/60" : "text-[#999]"}>({t.count})</span>
+            {t.label}
           </button>
         ))}
       </div>

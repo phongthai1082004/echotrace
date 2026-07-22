@@ -44,27 +44,115 @@
   },
   "home": {
     "hero": {
-      "headline": "Tus historias, encuadernadas con belleza",
-      "subhead": "Convierte recuerdos en diarios de viaje artesanales. Materiales premium, maquetación editorial, hechos para durar.",
-      "ctaPrimary": "Empezar a diseñar",
-      "ctaSecondary": "Ver plantillas"
+      "vol": "Vol. IV — 2024",
+      "headline": "Tu\nViaje,\nEncuadernado\nen Papel.",
+      "subhead": "Diseña diarios de viaje personalizados con diseños de calidad editorial. Cada fotografía colocada con intención.",
+      "ctaPrimary": "Comienza Tu Diario Gratis",
+      "ctaSecondary": "Ver Ejemplos de Diseños",
+      "socialProof": "Únete a <bold>{{count}}</bold> viajeros"
     },
-    "features": {
-      "title": "¿Por qué Cabinet Memoir?",
-      "items": [
-        {
-          "title": "Maquetación editorial",
-          "desc": "Tipografía profesional y sistemas de cuadrícula — no plantillas."
+    "fieldJournals": {
+      "sub": "Inspiración",
+      "title": "Diarios de Campo"
+    },
+    "marquee": {
+      "editorialTypography": "Tipografía Editorial",
+      "asymmetricLayouts": "Diseños Asimétricos",
+      "gpsMetadata": "Metadatos GPS",
+      "archivalPaper": "Papel de Archivo",
+      "hardShadows": "Sombras Fuertes",
+      "premiumBinding": "Encuadernación Premium",
+      "handcrafted": "Artesanal"
+    },
+    "howItWorks": {
+      "sub": "Proceso",
+      "title": "Cómo Funciona",
+      "step1Title": "Sube Tus Fotos",
+      "step1Desc": "Importa desde cualquier dispositivo. Las coordenadas GPS se extraen automáticamente para que tu diario sepa dónde se tomó cada toma.",
+      "step2Title": "Diseña en Studio",
+      "step2Desc": "Arrastra fotos a diseños editoriales, aplica filtros, configura tipografía y previsualiza cada página en tiempo real.",
+      "step3Title": "Pide y Recibe",
+      "step3Desc": "Impreso en papel mate de archivo, encuadernado a mano en Hanói y enviado a tu puerta en una semana.",
+      "cta": "Explorar Todas las Plantillas →"
+    },
+    "why": {
+      "sub": "Por Qué Nosotros",
+      "title": "Todo Lo Que Necesitas",
+      "feature1Title": "Diseños de Calidad Editorial",
+      "feature1Desc": "Cada plantilla está diseñada por diseñadores de publicaciones. Cuadrículas asimétricas, citas destacadas, páginas a sangre — sin clip art.",
+      "feature2Title": "Papel y Encuadernación de Archivo",
+      "feature2Desc": "Papel mate de 200–250 gsm con encuadernación layflat. Tu diario se abre plano sobre una mesa sin agrietar el lomo.",
+      "feature3Title": "Metadatos Impulsados por GPS",
+      "feature3Desc": "Sube una foto con datos de ubicación y la trazamos en cada página. Tu diario se convierte en un mapa de dónde has estado.",
+      "feature4Title": "Artesanal en Hanói",
+      "feature4Desc": "Cada libro se imprime, recorta y encuaderna a mano en nuestro taller de Hanói. Calidad que las imprentas industriales no pueden igualar.",
+      "cta": "Crea Tu Primera Página Gratis"
+    },
+    "pricing": {
+      "sub": "Precios",
+      "title": "Elige Tu Encuadernación",
+      "desc": "Cada diario incluye envío gratuito, papel de archivo y acceso a todas las funciones de Studio.",
+      "mostPopular": "Más Popular",
+      "labels": {
+        "pages": "Páginas",
+        "paper": "Papel",
+        "binding": "Encuadernación",
+        "cover": "Cubierta"
+      },
+      "plans": {
+        "softcover": {
+          "name": "Tapa Blanda",
+          "pages": "24–48",
+          "paper": "Mate 200gsm",
+          "binding": "Encuadernación perfecta",
+          "cover": "Blanda, 300gsm"
         },
-        {
-          "title": "Materiales premium",
-          "desc": "Papel de archivo, tapas de tela, estampado en foil — calidad heredada."
+        "hardcover": {
+          "name": "Tapa Dura",
+          "pages": "24–80",
+          "paper": "Mate 200gsm",
+          "binding": "Layflat",
+          "cover": "Dura, 350gsm"
         },
-        {
-          "title": "Control total",
-          "desc": "Arrastra, suelta, redimensiona, recolorea. Cada píxel te obedece."
+        "leather": {
+          "name": "Piel",
+          "pages": "24–120",
+          "paper": "Mate Premium 250gsm",
+          "binding": "Cosido Smyth layflat",
+          "cover": "Piel genuina, estampado en foil"
         }
-      ]
+      },
+      "choose": "Elegir"
+    },
+    "quote": {
+      "text": "La memoria no es almacenamiento. Es la textura del papel sobre el que un momento insiste en ser presionado.",
+      "author": "— Manifiesto de Cabinet Memoir",
+      "alt": "Documentación de campo"
+    },
+    "cta": {
+      "sub": "¿Listo?",
+      "title": "Preserva Tu Viaje para las Generaciones",
+      "desc": "Cada fotografía guarda una historia. Dale la permanencia que merece — diseñado por ti, impreso a mano en Hanói.",
+      "ctaPrimary": "Comienza Tu Diario Gratis",
+      "ctaSecondary": "Ver Muestras",
+      "noCard": "No se requiere tarjeta de crédito. Empieza a diseñar en segundos."
+    },
+    "footer": {
+      "desc": "Diarios de viaje a medida, impresos y encuadernados a mano en Hanói, Vietnam.",
+      "product": "Producto",
+      "studio": "Studio",
+      "pricing": "Precios",
+      "samples": "Muestras",
+      "shipping": "Envío",
+      "company": "Empresa",
+      "about": "Acerca de",
+      "blog": "Blog",
+      "careers": "Carreras",
+      "contact": "Contacto",
+      "copyright": "© {{year}} Cabinet Memoir",
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "returns": "Devoluciones"
     }
   },
   "auth": {

@@ -1,5 +1,6 @@
 import { QueryProcessor, PaginationConfig, PaginationOptions } from "./pagination.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 
 interface SoftDeletable {
   id: number;
@@ -48,7 +49,7 @@ export class BaseService<T extends SoftDeletable, WhereInput extends Record<stri
 
     const item = await this.delegate.findFirst({ where: where });
     if (!item) {
-      throw new AppError("Not found", 404);
+      throw new AppError(ErrorCode.NOT_FOUND, 404);
     }
     return item;
   }
@@ -62,7 +63,7 @@ export class BaseService<T extends SoftDeletable, WhereInput extends Record<stri
 
     const result = await this.delegate.updateMany({ where: where, data: data });
     if (result.count === 0) {
-      throw new AppError("Not found", 404);
+      throw new AppError(ErrorCode.NOT_FOUND, 404);
     }
   }
 
@@ -72,7 +73,7 @@ export class BaseService<T extends SoftDeletable, WhereInput extends Record<stri
 
     const result = await this.delegate.updateMany({ where: where, data: updateData });
     if (result.count === 0) {
-      throw new AppError("Not found", 404);
+      throw new AppError(ErrorCode.NOT_FOUND, 404);
     }
   }
 
@@ -81,7 +82,7 @@ export class BaseService<T extends SoftDeletable, WhereInput extends Record<stri
 
     const result = await this.delegate.deleteMany({ where: where });
     if (result.count === 0) {
-      throw new AppError("Not found", 404);
+      throw new AppError(ErrorCode.NOT_FOUND, 404);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import { BaseService } from "../utils/base.service.js";
 import type { BookModel } from "../../generated/prisma/models/Book.js";
 
@@ -8,7 +9,7 @@ const bookBase = new BaseService<BookModel>(prisma.book);
 export class BookService {
   async getById(bookId: number) {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
-    if (!book) throw new AppError("Book not found", 404);
+    if (!book) throw new AppError(ErrorCode.BOOK_NOT_FOUND, 404);
     return book;
   }
 
@@ -57,14 +58,14 @@ export class BookService {
       console.error("code:", e?.code);
       console.error("meta:", JSON.stringify(e?.meta));
       if (e?.stack) console.error("stack:", e.stack.split("\n").slice(0, 8).join("\n"));
-      throw new Error(`Book create failed: ${e?.code || "UNKNOWN"} — ${(e?.message || "").slice(0, 300)}`);
+      throw new AppError(ErrorCode.BOOK_CREATE_FAILED, 500);
     }
   }
 
   async delete(bookId: number, userId: number) {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
-    if (!book) throw new AppError("Book not found", 404);
-    if (book.userId !== userId) throw new AppError("Forbidden", 403);
+    if (!book) throw new AppError(ErrorCode.BOOK_NOT_FOUND, 404);
+    if (book.userId !== userId) throw new AppError(ErrorCode.BOOK_FORBIDDEN, 403);
     await prisma.orderItem.deleteMany({ where: { bookId } });
     await prisma.book.delete({ where: { id: bookId } });
   }

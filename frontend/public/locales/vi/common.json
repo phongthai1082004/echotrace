@@ -44,27 +44,115 @@
   },
   "home": {
     "hero": {
-      "headline": "Câu chuyện của bạn, được gắn kết đẹp đẽ",
-      "subhead": "Biến ký ức thành sổ tay du lịch thủ công. Chất liệu cao cấp, bố cục biên tập, bền bỉ theo thời gian.",
-      "ctaPrimary": "Bắt đầu thiết kế",
-      "ctaSecondary": "Duyệt mẫu"
+      "vol": "Tập IV — 2024",
+      "headline": "Hành Trình\nCủa Bạn,\nĐóng Thành\nSách.",
+      "subhead": "Thiết kế tạp chí du ký đẳng cấp biên tập. Mọi bức ảnh được đặt với chủ đích.",
+      "ctaPrimary": "Bắt Đầu Tạo Nhật Ký Miễn Phí",
+      "ctaSecondary": "Xem Mẫu Bố Cục",
+      "socialProof": "Cùng <bold>{{count}}</bold> người yêu du ký"
     },
-    "features": {
-      "title": "Tại sao chọn Cabinet Memoir?",
-      "items": [
-        {
-          "title": "Bố cục biên tập",
-          "desc": "Đánh chữ chuyên nghiệp và hệ thống lưới — không phải mẫu sẵn."
+    "fieldJournals": {
+      "sub": "Cảm Hứng",
+      "title": "Nhật Ký Thực Địa"
+    },
+    "marquee": {
+      "editorialTypography": "Typography Biên Tập",
+      "asymmetricLayouts": "Bố Cục Bất Đối Xứng",
+      "gpsMetadata": "Metadata GPS",
+      "archivalPaper": "Giấy Lưu Trữ",
+      "hardShadows": "Bóng Cứng",
+      "premiumBinding": "Đóng Sách Cao Cấp",
+      "handcrafted": "Thủ Công"
+    },
+    "howItWorks": {
+      "sub": "Quy Trình",
+      "title": "Cách Hoạt Động",
+      "step1Title": "Tải Ảnh Lên",
+      "step1Desc": "Nhập từ bất kỳ thiết bị nào. Tọa độ GPS được trích xuất tự động để nhật ký biết mỗi bức ảnh được chụp ở đâu.",
+      "step2Title": "Thiết Kế Trong Studio",
+      "step2Desc": "Kéo ảnh vào bố cục biên tập, áp dụng bộ lọc, đặt typography, và xem trước từng trang trong thời gian thực.",
+      "step3Title": "Đặt Hàng & Nhận",
+      "step3Desc": "In trên giấy mờ lưu trữ, đóng bằng tay tại Hà Nội, và giao đến tận nhà trong vòng một tuần.",
+      "cta": "Xem Tất Cả Mẫu →"
+    },
+    "why": {
+      "sub": "Tại Sao Là Chúng Tôi",
+      "title": "Mọi Thứ Bạn Cần",
+      "feature1Title": "Bố Cục Đẳng Cấp Biên Tập",
+      "feature1Desc": "Mọi mẫu đều được thiết kế bởi nhà thiết kế xuất bản. Lưới bất đối xứng, trích dẫn, trải rộng toàn trang — không clip art.",
+      "feature2Title": "Giấy & Đóng Sách Lưu Trữ",
+      "feature2Desc": "Giấy mờ 200–250 gsm với đóng sách layflat. Nhật ký của bạn mở phẳng trên bàn mà không nứt gáy.",
+      "feature3Title": "Metadata Hỗ Trợ GPS",
+      "feature3Desc": "Tải ảnh lên với dữ liệu vị trí và chúng tôi vẽ nó lên mọi trang. Nhật ký của bạn trở thành bản đồ nơi bạn đã đến.",
+      "feature4Title": "Thủ Công Tại Hà Nội",
+      "feature4Desc": "Mỗi cuốn sách được in, cắt và đóng bằng tay tại xưởng Hà Nội. Chất lượng mà nhà in công nghiệp không thể sánh kịp.",
+      "cta": "Tạo Trang Đầu Miễn Phí"
+    },
+    "pricing": {
+      "sub": "Bảng Giá",
+      "title": "Chọn Kiểu Đóng Sách",
+      "desc": "Mọi nhật ký đều bao gồm miễn phí vận chuyển, giấy lưu trữ và quyền truy cập tất cả tính năng Studio.",
+      "mostPopular": "Phổ Biến Nhất",
+      "labels": {
+        "pages": "Số Trang",
+        "paper": "Giấy",
+        "binding": "Đóng Sách",
+        "cover": "Bìa"
+      },
+      "plans": {
+        "softcover": {
+          "name": "Bìa Mềm",
+          "pages": "24–48",
+          "paper": "Mờ 200gsm",
+          "binding": "Keo nhiệt",
+          "cover": "Mềm, 300gsm"
         },
-        {
-          "title": "Chất liệu cao cấp",
-          "desc": "Giấy lưu trữ, bìa vải, dập bóng — chất lượng truyền kiếp."
+        "hardcover": {
+          "name": "Bìa Cứng",
+          "pages": "24–80",
+          "paper": "Mờ 200gsm",
+          "binding": "Layflat",
+          "cover": "Cứng, 350gsm"
         },
-        {
-          "title": "Kiểm soát hoàn toàn",
-          "desc": "Kéo, thả, thay đổi kích thước, đổi màu. Mỗi pixel đều phục vụ bạn."
+        "leather": {
+          "name": "Bìa Da",
+          "pages": "24–120",
+          "paper": "Mờ Cao Cấp 250gsm",
+          "binding": "Chỉ Smyth layflat",
+          "cover": "Da thật, dập foil"
         }
-      ]
+      },
+      "choose": "Chọn"
+    },
+    "quote": {
+      "text": "Ký ức không phải là bộ nhớ. Đó là kết cấu của tờ giấy mà một khoảnh khắc nhất quyết được ép lên.",
+      "author": "— Tuyên Ngôn Cabinet Memoir",
+      "alt": "Tài liệu thực địa"
+    },
+    "cta": {
+      "sub": "Sẵn Sàng?",
+      "title": "Lưu Giữ Hành Trình Của Bạn Qua Nhiều Thế Hệ",
+      "desc": "Mọi bức ảnh đều chứa một câu chuyện. Hãy trao cho nó sự vĩnh cửu xứng đáng — do bạn thiết kế, in bằng tay tại Hà Nội.",
+      "ctaPrimary": "Bắt Đầu Nhật Ký Miễn Phí",
+      "ctaSecondary": "Xem Mẫu",
+      "noCard": "Không yêu cầu thẻ tín dụng. Bắt đầu thiết kế trong vài giây."
+    },
+    "footer": {
+      "desc": "Tạp chí du ký đặt làm riêng, in và đóng bằng tay tại Hà Nội, Việt Nam.",
+      "product": "Sản Phẩm",
+      "studio": "Studio",
+      "pricing": "Bảng Giá",
+      "samples": "Mẫu",
+      "shipping": "Vận Chuyển",
+      "company": "Công Ty",
+      "about": "Giới Thiệu",
+      "blog": "Blog",
+      "careers": "Tuyển Dụng",
+      "contact": "Liên Hệ",
+      "copyright": "© {{year}} Cabinet Memoir",
+      "privacy": "Riêng Tư",
+      "terms": "Điều Khoản",
+      "returns": "Đổi Trả"
     }
   },
   "auth": {

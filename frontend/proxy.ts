@@ -1,32 +1,24 @@
-import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicPaths = ["/", "/auth"];
-const customerPaths = ["/explore", "/my-journals", "/studio", "/orders", "/checkout", "/account"];
+const SUPPORTED_LANGS = ["en", "vi", "es"];
+const DEFAULT_LANG = "en";
 
-export async function proxy(req: NextRequest) {
-  const path = req.nextUrl.pathname;
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  const role = (token as any)?.role;
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const firstSegment = pathname.split("/")[1];
 
-  const isPublic = publicPaths.some((p) => path === p || path.startsWith(p + "/"));
-  const isCustomer = customerPaths.some((p) => path === p || path.startsWith(p + "/"));
-  const isAdmin = path.startsWith("/admin");
-
-  if (!token) {
-    if (isPublic) return NextResponse.next();
-    return NextResponse.redirect(new URL("/auth", req.url));
+  if (SUPPORTED_LANGS.includes(firstSegment)) {
+    const response = NextResponse.rewrite(new URL(pathname.replace(`/${firstSegment}`, "") || "/", request.url));
+    response.cookies.set("i18nextLng", firstSegment, { path: "/" });
+    return response;
   }
 
-  if (isAdmin && role !== "admin") return NextResponse.redirect(new URL("/explore", req.url));
-  if (isCustomer && role === "admin") return NextResponse.redirect(new URL("/admin/analytics", req.url));
-  if (isPublic && role === "admin") return NextResponse.redirect(new URL("/admin/analytics", req.url));
-  if (isPublic && role !== "admin") return NextResponse.redirect(new URL("/explore", req.url));
-
-  return NextResponse.next();
+  const cookie = request.cookies.get("i18nextLng")?.value;
+  const lang = SUPPORTED_LANGS.includes(cookie || "") ? cookie! : DEFAULT_LANG;
+  return NextResponse.redirect(new URL(`/${lang}${pathname}`, request.url));
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)"],
 };

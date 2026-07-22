@@ -1,25 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+
+function FlagUk() {
+  return (
+    <svg viewBox="0 0 60 30" className="w-4 h-3 rounded-sm shrink-0">
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0 0l60 30m0-30L0 30" stroke="#FFF" strokeWidth="6"/>
+      <path d="M0 0l60 30m0-30L0 30" stroke="#C8102E" strokeWidth="3"/>
+      <path d="M30 0v30M0 15h60" stroke="#FFF" strokeWidth="10"/>
+      <path d="M30 0v30M0 15h60" stroke="#C8102E" strokeWidth="4"/>
+    </svg>
+  );
+}
+function FlagVn() {
+  return (
+    <svg viewBox="0 0 30 20" className="w-4 h-3 rounded-sm shrink-0">
+      <rect width="30" height="20" fill="#DA251D"/>
+      <polygon points="15,2 17.5,8 24,8 19,12 20.5,18 15,14 9.5,18 11,12 6,8 12.5,8" fill="#FFFF00"/>
+    </svg>
+  );
+}
+function FlagEs() {
+  return (
+    <svg viewBox="0 0 30 20" className="w-4 h-3 rounded-sm shrink-0">
+      <rect width="30" height="20" fill="#C60B1E"/>
+      <rect y="4" width="30" height="12" fill="#FFC400"/>
+      <rect y="4" width="30" height="1.5" fill="#C60B1E"/>
+      <rect y="14.5" width="30" height="1.5" fill="#C60B1E"/>
+    </svg>
+  );
+}
 
 interface NavProps {
   user?: { name?: string | null; email?: string | null; image?: string | null } | null;
 }
 
 export function Nav({ user }: NavProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const { data: session } = useSession();
+  const [langOpen, setLangOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const wasAuth = useRef(false);
+  useEffect(() => {
+    if (status === "authenticated") wasAuth.current = true;
+    if (status === "unauthenticated" && wasAuth.current) router.push("/");
+  }, [status, router]);
 
   if (pathname === "/auth") return null;
+
+  const langs = [
+    { code: "en", label: "EN", Flag: FlagUk },
+    { code: "vi", label: "VI", Flag: FlagVn },
+    { code: "es", label: "ES", Flag: FlagEs },
+  ];
+  const currentLang = langs.find((l) => i18n.language.startsWith(l.code)) || langs[0];
 
   const links = [
     { href: "/explore", label: t("nav.explore") },
@@ -55,6 +99,29 @@ export function Nav({ user }: NavProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          <div className="relative" onMouseEnter={() => setLangOpen(true)} onMouseLeave={() => setLangOpen(false)}>
+            <button type="button" className="flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#222]"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </button>
+            {langOpen && (
+              <div className="absolute right-0 top-full z-50 pt-2">
+                <div className="min-w-[100px] bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+                  {langs.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => { router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`); setLangOpen(false); }}
+                      className={`flex items-center gap-2 w-full text-left px-3 py-2.5 font-mono text-[10px] font-bold tracking-wider transition-colors ${
+                        i18n.language.startsWith(l.code) ? "bg-[#222] text-white" : "hover:bg-[#e8e6e0]"
+                      }`}
+                    >
+                      <l.Flag />
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           {user && (
             <div className="relative"
               onMouseEnter={() => setCartOpen(true)}
@@ -122,8 +189,9 @@ export function Nav({ user }: NavProps) {
                     <Link
                       href="/account"
                       suppressHydrationWarning
-                      className="block w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors border-b-[3px] border-[#222]"
+                      className="flex items-center gap-2.5 w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors border-b-[3px] border-[#222]"
                     >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       {t("nav.account")}
                     </Link>
                     <button
@@ -140,10 +208,11 @@ export function Nav({ user }: NavProps) {
                             },
                           }).catch(() => {});
                         }
-                        signOut({ callbackUrl: "/auth" });
+                        signOut({ callbackUrl: "/" });
                       }}
-                      className="block w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors"
+                      className="flex items-center gap-2.5 w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors"
                     >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                       {t("nav.signOut")}
                     </button>
                   </div>

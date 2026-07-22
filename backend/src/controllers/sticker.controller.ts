@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AssetCategory } from "../../enum/decor.asset.enum.js";
@@ -29,9 +30,9 @@ export class StickerController {
 
   async create(req: AuthRequest, res: Response) {
     const { url, publicId, name, category, type } = req.body;
-    if (!url) throw new AppError("url is required", 400);
+    if (!url) throw new AppError(ErrorCode.UPLOAD_URL_REQUIRED, 400);
     if (category && !VALID_CATEGORIES.has(category)) {
-      throw new AppError(`Invalid category. Valid: ${Object.values(AssetCategory).join(", ")}`, 400);
+      throw new AppError(ErrorCode.UPLOAD_CATEGORY_INVALID, 400, { validCategories: Object.values(AssetCategory) });
     }
     const assetType = type === "background" ? "background" : "sticker";
     const sticker = await base.create({

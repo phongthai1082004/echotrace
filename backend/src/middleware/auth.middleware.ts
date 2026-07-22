@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "./app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -11,7 +12,7 @@ export interface AuthRequest extends Request {
 export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const header = req.headers.authorization;
-    if (!header?.startsWith("Bearer ")) throw new AppError("missing authorization token", 401);
+    if (!header?.startsWith("Bearer ")) throw new AppError(ErrorCode.AUTH_MISSING_TOKEN, 401);
 
     const token = header.slice(7);
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as { userId: string };
@@ -20,20 +21,20 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
       where: { id: parseInt(payload.userId) },
       select: { status: true, role: true },
     });
-    if (!user || user.status === "banned") throw new AppError("Account has been banned", 403);
+    if (!user || user.status === "banned") throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
     req.userId = payload.userId;
     req.userRole = user?.role;
     next();
   } catch (error) {
     if (error instanceof AppError) return next(error);
-    next(new AppError("invalid or expired token", 401));
+    next(new AppError(ErrorCode.AUTH_TOKEN_EXPIRED, 401));
   }
 };
 
 export const adminMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
   await authMiddleware(req, res, () => {
-    if (req.userRole !== "admin") return next(new AppError("Admin access required", 403));
+    if (req.userRole !== "admin") return next(new AppError(ErrorCode.ADMIN_ACCESS_REQUIRED, 403));
     next();
   });
 };

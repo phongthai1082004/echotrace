@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
+import { ErrorCode } from "../errors/error-codes.js";
 import { CloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
 import { UserImageService } from "../services/user-image.service.js";
 
@@ -44,7 +45,7 @@ export class UploadController {
   async saveImage(req: AuthRequest, res: Response) {
     const userId = parseInt(req.userId!);
     const { url, publicId, width, height, size } = req.body;
-    if (!url) throw new AppError("url is required", 400);
+    if (!url) throw new AppError(ErrorCode.UPLOAD_URL_REQUIRED, 400);
 
     const image = await userImageService.create({ userId, url, publicId, width, height, size });
 
