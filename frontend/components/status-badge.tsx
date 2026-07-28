@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 
-type BadgeVariant = "collected" | "hold" | "paid" | "unpaid" | "pending" | "printing" | "quality-check" | "shipped" | "default";
+type BadgeVariant = "collected" | "hold" | "paid" | "unpaid" | "pending" | "printing" | "quality-check" | "shipped" | "active" | "banned" | "default";
 
 const variants: Record<BadgeVariant, { bg: string; text: string; border: string }> = {
   collected: { bg: "#E6F4E6", text: "#2D6A2D", border: "#2D6A2D" },
@@ -13,6 +13,8 @@ const variants: Record<BadgeVariant, { bg: string; text: string; border: string 
   printing: { bg: "#FFD93D", text: "#222", border: "#222" },
   "quality-check": { bg: "#e8e6e0", text: "#222", border: "#222" },
   shipped: { bg: "#5A8F4A", text: "#fff", border: "#5A8F4A" },
+  active: { bg: "#D4EDDA", text: "#155724", border: "#222" },
+  banned: { bg: "#F8D7DA", text: "#721C24", border: "#222" },
   default: { bg: "#FFF7D6", text: "#222", border: "#222" },
 };
 
@@ -28,8 +30,8 @@ export function StatusBadge({ status, label }: { status: BadgeVariant | string; 
   const defaultLabel = statusKey ? t(`admin.statusBadge.${statusKey}`) : status.charAt(0).toUpperCase() + status.slice(1);
   
   return (
-    <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded border-2 inline-block whitespace-nowrap"
-      style={{ background: v.bg, color: v.text, borderColor: v.border }}>
+    <span className="font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222]"
+      style={{ background: v.bg, color: v.text, borderColor: "#222" }}>
       {label ?? defaultLabel}
     </span>
   );

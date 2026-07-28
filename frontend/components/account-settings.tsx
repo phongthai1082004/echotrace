@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 import { apiFetch } from "@/lib/api.fetch";
 import { Profile } from "@/models/profile";
 import { useToast } from "@/components/toast";
@@ -121,7 +122,7 @@ export function AccountSettings() {
           <div className="flex items-center gap-6 mb-8">
             <div className="relative w-16 h-16 rounded-xl bg-[#FFF7D6] border-[3px] border-[#222] shadow-[3px_3px_0_#222] overflow-hidden shrink-0 flex items-center justify-center">
               {profile?.avatar ? (
-                <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" loading="lazy" />
+                <Image src={profile.avatar} alt="avatar" width={64} height={64} className="object-cover" />
               ) : (
                 <span className="text-lg font-bold text-[#999]">{profile?.email?.charAt(0).toUpperCase() || "?"}</span>
               )}

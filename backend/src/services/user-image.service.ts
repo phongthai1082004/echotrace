@@ -1,52 +1,46 @@
+import { injectable, inject } from "tsyringe";
 import { BaseService } from "../utils/base.service.js";
-import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
 import { ErrorCode } from "../errors/error-codes.js";
-import type { UserImageModel } from "../../generated/prisma/models/UserImage.js";
+import { ImageDTO, SaveImageDTO, ImageMapper } from "../dto/upload/upload.dto.js";
 
-const userImageBase = new BaseService<UserImageModel>(prisma.userImage);
+export abstract class IUserImageService {
+  abstract getById(id: number, userId: number): Promise<ImageDTO>;
+  abstract create(data: SaveImageDTO & { userId: number }): Promise<ImageDTO>;
+  abstract listByUser(userId: number, bookId?: number): Promise<ImageDTO[]>;
+  abstract delete(id: number, userId: number): Promise<void>;
+}
 
-export class UserImageService {
-  public async softDelete(id: number) {
-    await userImageBase.delete(id);
-  }
-
-  public async hardDelete(id: number) {
-    await userImageBase.hardDelete(id);
-  }
-
-  public async findAll(filter: any, options?: any) {
-    return await userImageBase.findAll(filter, options);
-  }
-
-  public async findById(id: number, extraWhere: Record<string, any> = {}) {
-    return await userImageBase.findById(id, extraWhere);
-  }
-
-  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-    return await userImageBase.update(id, data, extraWhere);
+@injectable()
+export class UserImageService extends IUserImageService {
+  constructor(
+    @inject("UserImageBaseService") private readonly userImageBase: BaseService<any>,
+  ) {
+    super();
   }
 
   public async getById(id: number, userId: number) {
-    const image = await userImageBase.findById(id, { userId });
-    return image;
+    const image = await this.userImageBase.findById(id, { userId });
+    return ImageMapper.toDTO(image);
   }
 
-  public async create(data: { userId: number; url: string; publicId?: string; width?: number; height?: number; size?: number }) {
-    return userImageBase.create(data);
+  public async create(data: SaveImageDTO & { userId: number }) {
+    const image = await this.userImageBase.create(data);
+    return ImageMapper.toDTO(image);
   }
 
   public async listByUser(userId: number, bookId?: number) {
-    return userImageBase.delegate.findMany({
+    const images = await this.userImageBase.delegate.findMany({
       where: { userId, isDelete: false, ...(bookId ? { bookId } : {}) },
       orderBy: { id: "desc" },
     });
+    return ImageMapper.toDTOList(images);
   }
 
   public async delete(id: number, userId: number) {
     const image = await this.getById(id, userId);
     if (!image) throw new AppError(ErrorCode.IMAGE_NOT_FOUND, 404);
-    await userImageBase.delete(id);
+    await this.userImageBase.delete(id);
     if (image.publicId) {
       const { CloudinaryService } = await import("../infrastructure/cloudinary/cloudinary.service.js");
       const cloudinary = new CloudinaryService();

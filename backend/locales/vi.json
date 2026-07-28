@@ -36,7 +36,8 @@
     "VALIDATION_FAILED": "Dữ liệu đầu vào không hợp lệ",
     "NOT_FOUND": "Không tìm thấy tài nguyên",
     "INTERNAL": "Lỗi máy chủ nội bộ",
-    "BOOK_MISSING_CONTENT": "Thiếu nội dung"
+    "BOOK_MISSING_CONTENT": "Thiếu nội dung",
+    "TOO_MANY_REQUEST": "Yêu cầu quá tải, vui lòng thử lại sau"
   },
   "validation": {
     "isEmail": "{{property}} phải là email hợp lệ",

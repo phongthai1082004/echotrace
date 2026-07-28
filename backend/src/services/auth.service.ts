@@ -1,38 +1,27 @@
+import { injectable } from "tsyringe";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
 import { ErrorCode } from "../errors/error-codes.js";
 import { sendOtpEmail } from "../../lib/mailer.js";
 import { TokenType } from "../../enum/token.type.js";
-import type { UserModel } from "../../generated/prisma/models/User.js";
+import { AuthResponseDTO, AuthMapper } from "../dto/auth/auth.dto.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const userBase = new BaseService<UserModel>(prisma.user);
 
-export class AuthService {
-  public async softDelete(id: number) {
-    await userBase.delete(id);
-  }
+export abstract class IAuthService {
+  abstract loginWithGoogle(idToken: string): Promise<AuthResponseDTO>;
+  abstract sendOtp(email: string): Promise<void>;
+  abstract verifyOtpAndRegister(email: string, otp: string, password: string): Promise<AuthResponseDTO>;
+  abstract login(email: string, password: string): Promise<AuthResponseDTO>;
+  abstract logout(userId: string): Promise<void>;
+  abstract refresh(token: string): Promise<{ accessToken: string }>;
+}
 
-  public async hardDelete(id: number) {
-    await userBase.hardDelete(id);
-  }
-
-  public async findAll(filter: any, options?: any) {
-    return await userBase.findAll(filter, options);
-  }
-
-  public async findById(id: number, extraWhere: Record<string, any> = {}) {
-    return await userBase.findById(id, extraWhere);
-  }
-
-  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-    return await userBase.update(id, data, extraWhere);
-  }
-
+@injectable()
+export class AuthService extends IAuthService {
   async loginWithGoogle(idToken: string) {
     const ticket = await googleClient.verifyIdToken({
       idToken,
@@ -57,17 +46,7 @@ export class AuthService {
     } else if (user.status === "banned") {
       throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
     }
-    return {
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        avatar: user.avatar,
-        role: user.role
-      },
-      accessToken: this.generateAccessToken(String(user.id)),
-      refreshToken: await this.generateRefreshToken(String(user.id)),
-    };
+    return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id)), await this.generateRefreshToken(String(user.id)));
   }
 
   async sendOtp(email: string) {
@@ -106,19 +85,9 @@ export class AuthService {
     await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await userBase.create({ email, password: hashed, name: email.split("@")[0], status: "active" });
+    const user = await prisma.user.create({ data: { email, password: hashed, name: email.split("@")[0], status: "active" } });
 
-    return {
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        avatar: user.avatar,
-        role: user.role
-      },
-      accessToken: this.generateAccessToken(String(user.id)),
-      refreshToken: await this.generateRefreshToken(String(user.id)),
-    };
+    return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id)), await this.generateRefreshToken(String(user.id)));
   }
 
   async login(email: string, password: string) {
@@ -131,17 +100,7 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);
 
-    return {
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        avatar: user.avatar,
-        role: user.role
-      },
-      accessToken: this.generateAccessToken(String(user.id)),
-      refreshToken: await this.generateRefreshToken(String(user.id)),
-    };
+    return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id)), await this.generateRefreshToken(String(user.id)));
   }
 
   async logout(userId: string) {
@@ -168,7 +127,7 @@ export class AuthService {
   }
 
   private generateAccessToken(userId: string) {
-    return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "7d" });
+    return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "1h" });
   }
 
   private async generateRefreshToken(userId: string) {

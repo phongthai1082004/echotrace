@@ -47,7 +47,6 @@ export default function MyJournalsPage() {
 
   useEffect(() => {
     if (!accessToken) return;
-    const start = Date.now();
     setLoading(true);
     setFetchError(null);
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/my-books`, {
@@ -60,11 +59,7 @@ export default function MyJournalsPage() {
     }).catch((err) => {
       console.warn("[my-journals] fetch failed:", err);
       setFetchError(String(err));
-    }).finally(() => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= 500) setLoading(false);
-      else setTimeout(() => setLoading(false), 500 - elapsed);
-    });
+    }).finally(() => setLoading(false));
   }, [accessToken]);
 
   return (
@@ -81,12 +76,12 @@ export default function MyJournalsPage() {
       </div>
 
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]">{t("customer.myJournals.history")}</p>
-        {fetchError && <p className="text-[10px] text-red-500 mb-3">{t("customer.myJournals.error", { message: fetchError })}</p>}
+        <p suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]">{t("customer.myJournals.history")}</p>
+        {fetchError && <p suppressHydrationWarning className="text-[10px] text-red-500 mb-3">{t("customer.myJournals.error", { message: fetchError })}</p>}
         {journals.length === 0 && !fetchError ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-xl font-bold mb-2">{t("customer.myJournals.emptyTitle")}</p>
-            <p className="text-sm mb-6 text-[#999]">{t("customer.myJournals.emptyDesc")}</p>
+            <p suppressHydrationWarning className="text-xl font-bold mb-2">{t("customer.myJournals.emptyTitle")}</p>
+            <p suppressHydrationWarning className="text-sm mb-6 text-[#999]">{t("customer.myJournals.emptyDesc")}</p>
             <Link href="/studio"
               className="font-mono text-[10px] font-bold tracking-widest uppercase px-6 py-3 bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
               {t("customer.myJournals.openStudio")}
@@ -104,10 +99,10 @@ export default function MyJournalsPage() {
                   <Link href={`/studio?id=${j.id}`} className="block">
                   <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
                     {j.coverUrl ? (
-                      <img src={cloudinaryUrl(j.coverUrl)} alt={j.title} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={j.coverUrl.startsWith("data:") ? j.coverUrl : cloudinaryUrl(j.coverUrl)} alt={j.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{t("customer.myJournals.noCover")}</span>
+                        <span suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{t("customer.myJournals.noCover")}</span>
                       </div>
                     )}
                     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(j); }}
@@ -126,7 +121,7 @@ export default function MyJournalsPage() {
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{j.style}</span>
                       <span className="text-[#222]">·</span>
-                      <span className="font-mono text-[9px] font-bold text-[#999]">{j.pages} {t("customer.myJournals.pg")}</span>
+                      <span suppressHydrationWarning className="font-mono text-[9px] font-bold text-[#999]">{j.pages} {t("customer.myJournals.pg")}</span>
                     </div>
                     <p className="font-mono text-[9px] font-bold text-[#999]">{j.createdAt?.slice(0, 10)}</p>
                   </div>
@@ -141,8 +136,8 @@ export default function MyJournalsPage() {
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center" onClick={() => !deleting && setDeleteTarget(null)}>
           <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] w-80 p-5" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-lg mb-1">{t("customer.myJournals.deleteTitle")}</p>
-            <p className="text-sm text-[#666] mb-5">
+            <p suppressHydrationWarning className="font-bold text-lg mb-1">{t("customer.myJournals.deleteTitle")}</p>
+            <p suppressHydrationWarning className="text-sm text-[#666] mb-5">
               {t("customer.myJournals.deleteConfirm", { title: deleteTarget.title })}
             </p>
             <div className="flex gap-3">

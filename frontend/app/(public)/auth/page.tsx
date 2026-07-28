@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 
@@ -106,7 +107,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <div className="hidden lg:block lg:w-[55%] relative bg-[#e8e6e0] overflow-hidden min-h-screen">
-        <img src="https://images.unsplash.com/photo-1765660996991-31f345c40247?w=1200&h=1600&fit=crop&auto=format" alt="" className="w-full h-full object-cover absolute inset-0" />
+        <Image src="https://images.unsplash.com/photo-1765660996991-31f345c40247?w=1200&h=1600&fit=crop&auto=format" alt="" fill sizes="50vw" className="object-cover" />
         <div className="absolute top-10 left-10"><p className="text-white text-2xl font-bold tracking-tight">Cabinet Memoir</p></div>
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-white/20">
           <p className="font-mono text-[10px] font-bold text-white/70 tracking-wider uppercase">31.06° N, 7.92° W — Toubkal, Morocco</p>

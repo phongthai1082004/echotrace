@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
-import { label, card } from "@/lib/styles";
+import { label, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
@@ -14,8 +14,13 @@ import { UserResponse } from "@/models/users/user.list";
 import { User, UserStatus } from "@/models/users/user";
 import { useToast } from "@/components/toast";
 import { SkeletonTable } from "@/components/skeleton";
-const colWidths = ["1.2fr", "1.5fr", "120px", "1fr", "100px", "80px", "100px"];
+import { Eye, X, Save } from "lucide-react";
+import { StatusBadge } from "@/components/status-badge";
+import { timeSince } from "@/lib/duration";
+
+const colWidths = ["1fr", "1.5fr", "0.5fr", "1fr", "70px", "80px", "90px", "50px"];
 const gridCols = colWidths.join(" ");
+const STATUS: UserStatus[] = ["active", "banned"];
 
 interface AdminUsersPageProps {
   initialUsers?: User[];
@@ -24,7 +29,7 @@ interface AdminUsersPageProps {
 
 export default function AdminUsersPage({ initialUsers = [], initialNextCursor = null }: AdminUsersPageProps) {
   const { t } = useTranslation();
-  const {showToast } = useToast();
+  const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserStatus | "all">("all");
@@ -33,38 +38,31 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
+  const [selected, setSelected] = useState<User | null>(null);
+  const [statusForm, setStatusForm] = useState<UserStatus>("active");
 
   const fetchUsers = async (cursor?: string) => {
     if (!token) {
       showToast(t("admin.users.tokenInvalid"), "error");
       return;
-    };
+    }
     const params = new URLSearchParams();
     if (filter !== "all") params.set("status", filter);
     if (search) params.set("search", search);
     if (cursor) params.set("cursor", cursor);
-
     try {
       const data = await apiFetch<UserResponse>(`/api/admin/users?${params.toString()}`, token);
-      console.log(data);
       setUsers(data.users ?? []);
       setNextCursor(data.nextCursor);
-    } catch (error) {
-      showToast(t("admin.users.fetchFailed"), "error");
-      console.error("Fetch error:", error);
-    }
+    } catch { showToast(t("admin.users.fetchFailed"), "error"); }
   };
 
   useEffect(() => {
     if (!token) return;
-    const start = Date.now();
     setLoading(true);
-    fetchUsers(undefined).finally(() => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= 500) setLoading(false);
-      else setTimeout(() => setLoading(false), 500 - elapsed);
-    });
+    fetchUsers(undefined).finally(() => setLoading(false));
   }, [token]);
+
   useEffect(() => {
     if (!token) return;
     const timeout = setTimeout(() => {
@@ -76,23 +74,36 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
 
   const handleNext = () => {
     if (!nextCursor) return;
-    setCursorStack((prev) => [...prev, nextCursor]); 
+    setCursorStack((prev) => [...prev, nextCursor]);
     fetchUsers(nextCursor);
   };
 
   const handlePrevious = () => {
     setCursorStack((prev) => {
       const stack = [...prev];
-      stack.pop(); 
-      const prevCursor = stack[stack.length - 1]; 
+      stack.pop();
+      const prevCursor = stack[stack.length - 1];
       fetchUsers(prevCursor);
       return stack;
     });
   };
 
-  const toggleStatus = (id: number, current: UserStatus) => {
-    const newStatus = current === "active" ? "banned" : "active";
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: newStatus as UserStatus } : u)));
+  const openDetail = (u: User) => {
+    setSelected(u);
+    setStatusForm(u.status);
+  };
+
+  const handleSaveStatus = async () => {
+    if (!selected) return;
+    try {
+      await apiFetch(`/api/admin/users/${selected.id}/status`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ status: statusForm }),
+      });
+      setUsers((prev) => prev.map((u) => u.id === selected.id ? { ...u, status: statusForm } : u));
+      setSelected((prev) => prev ? { ...prev, status: statusForm } : null);
+      showToast(t("admin.users.statusUpdated"), "success");
+    } catch { showToast(t("admin.users.statusUpdateFailed"), "error"); }
   };
 
   return (
@@ -119,7 +130,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
           <ResponsiveTable
             header={
               <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                {[t("admin.users.name"), t("admin.users.email"), t("admin.users.phone"), t("admin.users.address"), t("admin.users.city"), t("admin.users.role"), t("admin.users.status")].map((h) => (
+                {[t("admin.users.name"), t("admin.users.email"), t("admin.users.phone"), t("admin.users.city"), t("admin.users.joined"), t("admin.users.role"), t("admin.users.status"), t("common.action")].map((h) => (
                   <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                 ))}
               </div>
@@ -133,26 +144,23 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
                 <div key={user.id}
                   className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
                   style={{ gridTemplateColumns: gridCols }}>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap">{user.name}</div>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap">{user.email}</div>
-                  <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.phone || "—"}</div>
-                  <div className="px-2 text-sm text-[#666] truncate">{user.address || "—"}</div>
-                  <div className="px-2 font-mono text-[10px] font-bold text-[#666] whitespace-nowrap">{user.city || "—"}</div>
-                  <div className="px-2 font-mono text-[10px] font-bold whitespace-nowrap">
-                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest ${user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#666]"}`}>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.phone || "—"}</div>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.city || "—"}</div>
+                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.createdAt ? timeSince(user.createdAt) : "—"}</div>
+                  <div className="px-2 whitespace-nowrap">
+                    <span className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222] ${
+                      user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"
+                    }`} style={{ borderColor: "#222" }}>
                       {user.role}
                     </span>
                   </div>
-                  <div className="px-2 whitespace-nowrap">
-                    <button onClick={() => toggleStatus(user.id, user.status)}
-                      className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 cursor-pointer transition-opacity hover:opacity-80 ${
-                        user.status === "active"
-                          ? "bg-[#D4EDDA] text-[#155724] border-[#155724]"
-                          : user.status === "banned"
-                          ? "bg-[#F8D7DA] text-[#721C24] border-[#721C24]"
-                          : "bg-[#e8e6e0] text-[#999] border-[#ccc]"
-                      }`}>
-                      {user.status || t("admin.common.unknown")}
+                  <div className="px-2 whitespace-nowrap"><StatusBadge status={user.status} /></div>
+                  <div className="px-2">
+                    <button onClick={() => openDetail(user)}
+                      className={`${neoBtn} p-1.5`}>
+                      <Eye size={14} />
                     </button>
                   </div>
                 </div>
@@ -168,6 +176,80 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
           </>)}
         </div>
       </div>
+
+      {/* ── DETAIL SIDEBAR ── */}
+      {selected && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelected(null)} />
+          <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 420 }}>
+            <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
+              <div>
+                <p className={`${label} mb-1 text-[#666]`}>{t("admin.users.label")}</p>
+                <h2 className="text-xl font-bold truncate max-w-[300px]">{selected.name}</h2>
+              </div>
+              <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"><X size={16} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto scrollbar-none">
+              {/* Status */}
+              <div className="px-6 py-5 border-b-[3px] border-[#222]">
+                <h3 className="text-sm text-[#666] mb-3">{t("admin.users.status")}</h3>
+                <div className="flex gap-2">
+                  {STATUS.map((s) => {
+                    const active = statusForm === s;
+                    const meta = s === "active" ? { bg: "#D4EDDA", text: "#155724" } : { bg: "#F8D7DA", text: "#721C24" };
+                    return (
+                      <button key={s} onClick={() => {
+                        if (selected.role === "admin") { showToast(t("admin.users.cantBanAdmin"), "error"); return; }
+                        setStatusForm(s);
+                      }}
+                        className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none rounded-[6px] px-2.5 py-1.5 border-2 transition-[opacity,border-color] ${
+                          active ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100" : "border-transparent opacity-40 hover:opacity-70"
+                        }`}
+                        style={{ background: meta.bg, color: meta.text }}>
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* General info */}
+              <div className="px-6 py-5 space-y-4">
+                <h3 className="text-sm text-[#666] mb-3">{t("admin.users.general")}</h3>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`${card} px-3 py-1.5`}>
+                    <p className={`${label} text-[#999]`}>{t("admin.users.joined")}</p>
+                    <p className="text-sm font-bold">{selected.createdAt ? timeSince(selected.createdAt) : "—"}</p>
+                  </div>
+                </div>
+                {[
+                  [t("admin.users.name"), selected.name],
+                  [t("admin.users.email"), selected.email],
+                  [t("admin.users.phone"), selected.phone],
+                  [t("admin.users.address"), selected.address],
+                  [t("admin.users.city"), selected.city],
+                  [t("admin.users.role"), selected.role],
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p>
+                    <p className="text-sm font-bold">{v || "—"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
+              <button onClick={handleSaveStatus}
+                className={`${neoBtnPrimary} w-full flex items-center justify-center gap-2 py-3 ${
+                  selected.role === "admin" ? "opacity-40 pointer-events-none" : ""
+                }`}>
+                <Save size={16} /> {t("common.save")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

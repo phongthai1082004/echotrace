@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from 'zustand';
-import * as fabric from 'fabric';
+import type { Canvas as FabricCanvas } from 'fabric';
 import { navItems } from '../types/menu'
 import type { PageState, FormatKey } from "../types";
 import type { LayoutConfig } from "../types/layout";
@@ -30,8 +30,8 @@ export type UndoEntry = {
 };
 
 interface CanvasStore {
-  canvas: fabric.Canvas | null;
-  setCanvas: (c: fabric.Canvas | null) => void;
+  canvas: FabricCanvas | null;
+  setCanvas: (c: FabricCanvas | null) => void;
   activeMenu: string;
   setActiveMenu: (m: string) => void;
   activePageIndex: number;

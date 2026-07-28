@@ -17,6 +17,7 @@ export interface CreateBookDTO {
 export interface UpdatePagesDTO {
   content?: string;
   title?: string;
+  pages?: number;
 }
 
 export class BookMapper {

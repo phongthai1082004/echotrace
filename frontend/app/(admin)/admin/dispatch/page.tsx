@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, ArrowUpDown, Check, ChevronRight } from "lucide-react";
+import { X, Search, ArrowUpDown, Check, ChevronRight, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { label, labelSm, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
@@ -154,24 +154,22 @@ export default function DispatchPage() {
           {/* Filters bar */}
           <div className={`${card} mx-6 mt-4 mb-3 p-3 shrink-0`}>
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="flex items-center gap-3 text-xs shrink-0">
-                  <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
-                  <span className="w-[2px] h-3 bg-[#222] rounded-full" />
-                  <span className="text-[#222] font-bold">{t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}</span>
-                  <span className="w-[2px] h-3 bg-[#222] rounded-full" />
-                  <span className="text-[#222] font-bold">{t("admin.dispatch.unassigned", { count: unassignedOrders.length })}</span>
-                </div>
-                <div className="flex gap-1">
-                  {counts.map(({ key, count }) => (
-                    <button key={key} onClick={() => { setStatusFilter(key as OrderStatus | "all"); setPage(0); }}
-                      className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-[background-color,color,border-color] ${
-                        statusFilter === key ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
-                      }`}>
-                      {key === "all" ? t("admin.dispatch.filterAll") : t(`admin.dispatch.filter${key.replace(/-./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)} <span className={statusFilter === key ? "text-white/60" : "text-[#999]"}>({count})</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="flex gap-1 flex-wrap">
+                {counts.map(({ key, count }) => (
+                  <button key={key} onClick={() => { setStatusFilter(key as OrderStatus | "all"); setPage(0); }}
+                    className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-[background-color,color,border-color] ${
+                      statusFilter === key ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
+                    }`}>
+                    {key === "all" ? t("admin.dispatch.filterAll") : t(`admin.dispatch.filter${key.replace(/-./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)} <span className={statusFilter === key ? "text-white/60" : "text-[#999]"}>({count})</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3 text-xs shrink-0">
+                <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
+                <span className="w-[2px] h-3 bg-[#222] rounded-full" />
+                <span className="text-[#222] font-bold">{t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}</span>
+                <span className="w-[2px] h-3 bg-[#222] rounded-full" />
+                <span className="text-[#222] font-bold">{t("admin.dispatch.unassigned", { count: unassignedOrders.length })}</span>
               </div>
             </div>
           </div>
@@ -182,27 +180,32 @@ export default function DispatchPage() {
               <ResponsiveTable
                 header={
                   <div className="grid shrink-0 border-b-[3px] border-[#222]"
-                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
-                    {[t("admin.dispatch.orderId"), t("admin.dispatch.customer"), t("admin.dispatch.product"), t("admin.dispatch.amount"), t("admin.dispatch.status"), t("admin.dispatch.date")].map((h) => (
+                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px 50px" }}>
+                    {[t("admin.dispatch.orderId"), t("admin.dispatch.customer"), t("admin.dispatch.product"), t("admin.dispatch.amount"), t("admin.dispatch.status"), t("admin.dispatch.date"), t("common.action")].map((h) => (
                       <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                     ))}
                   </div>
                 }
-                gridCols={"110px 1fr 1fr 100px 120px 100px"}
+                gridCols={"110px 1fr 1fr 100px 120px 100px 50px"}
               >
                 {paged.length === 0 ? (
                   <div className="flex items-center justify-center py-10"><p className="font-bold text-[#999]">{t("admin.dispatch.noOrders")}</p></div>
                 ) : (
                   paged.map((order) => (
-                    <div key={order.id} onClick={() => setSelectedOrder(order)}
-                      className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 cursor-pointer items-center py-3"
-                      style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px" }}>
+                    <div key={order.id}
+                      className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 items-center py-3"
+                      style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 150px 50px" }}>
                       <div className="px-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">{order.id}</div>
-                      <div className="px-3 text-sm font-bold whitespace-nowrap">{order.customer}</div>
-                      <div className="px-3 text-sm font-bold truncate">{order.product}</div>
+                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.customer}</div>
+                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.product}</div>
                       <div className="px-3 font-mono text-[10px] font-bold whitespace-nowrap">{formatCurrency(order.amount)}</div>
                       <div className="px-3"><StatusBadge status={order.status} /></div>
-                      <div className="px-3 font-mono text-[10px] font-bold text-[#999] whitespace-nowrap">{order.date}</div>
+                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.date}</div>
+                      <div className="px-2">
+                        <button onClick={() => setSelectedOrder(order)} className={`${neoBtn} p-1.5`}>
+                          <Eye size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -228,7 +231,7 @@ export default function DispatchPage() {
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-3 text-[#666]`}>{t("admin.dispatch.status")}</p>
+                <h3 className="text-sm text-[#666] mb-3">{t("admin.dispatch.status")}</h3>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.keys(statusMeta) as OrderStatus[]).map((s) => {
                     const active = selectedOrder.status === s;
@@ -247,7 +250,7 @@ export default function DispatchPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.customerInfo")}</p>
+                <h3 className="text-sm text-[#666] mb-4">{t("admin.dispatch.customerInfo")}</h3>
                 <div className="space-y-3">
                   {[[t("admin.dispatch.name"), selectedOrder.customer], [t("admin.dispatch.email"), selectedOrder.email], [t("admin.dispatch.phone"), selectedOrder.phone], [t("admin.dispatch.address"), selectedOrder.address]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="text-sm font-bold">{v || "—"}</p></div>
@@ -256,7 +259,7 @@ export default function DispatchPage() {
               </div>
 
               <div className="px-6 py-5 border-b-[3px] border-[#222]">
-                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.orderDetails")}</p>
+                <h3 className="text-sm text-[#666] mb-4">{t("admin.dispatch.orderDetails")}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[[t("admin.dispatch.pages"), `${selectedOrder.pages}${t("admin.dispatch.pp")}`], [t("admin.dispatch.cover"), selectedOrder.cover], [t("admin.dispatch.amount"), formatCurrency(selectedOrder.amount)], [t("admin.dispatch.date"), selectedOrder.date], [t("admin.dispatch.supplierDetail"), dispatchSuppliers.find((s) => s.id === selectedOrder.supplierId)?.name || "—"]].map(([k, v]) => (
                     <div key={k}><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold capitalize">{v}</p></div>
@@ -271,7 +274,7 @@ export default function DispatchPage() {
               </div>
 
               <div className="px-6 py-5">
-                <p className={`${label} mb-4 text-[#666]`}>{t("admin.dispatch.timeline")}</p>
+                <h3 className="text-sm text-[#666] mb-4">{t("admin.dispatch.timeline")}</h3>
                 <div className="relative">
                   <div className="absolute left-[5px] top-2 bottom-2 w-[3px] bg-[#222]/20 rounded-full" />
                   <div className="space-y-4">

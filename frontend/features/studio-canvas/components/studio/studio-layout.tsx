@@ -1,8 +1,13 @@
 "use client";
 
-export function StudioLayout({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode;
+  noPadding?: boolean;
+};
+
+export function StudioLayout({ children, noPadding }: Props) {
   return (
-    <div className="h-screen flex flex-col pt-15">
+    <div className={`h-screen flex flex-col ${noPadding ? "" : "pt-15"}`}>
       {children}
     </div>
   );

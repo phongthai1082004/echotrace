@@ -1,10 +1,15 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { AdminSidebar } from "./admin-sidebar";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const path = usePathname();
+  const isStudio = path.startsWith("/admin/studio");
   return (
     <div className="min-h-screen">
-      <AdminSidebar />
-      <main className="ml-56 max-[1600px]:ml-45 max-[1280px]:ml-16 min-h-screen transition-all duration-200">{children}</main>
+      {!isStudio && <AdminSidebar />}
+      <main className={isStudio ? "" : "ml-56 max-[1600px]:ml-45 max-[1280px]:ml-16 min-h-screen transition-all duration-200"}>{children}</main>
     </div>
   );
 }

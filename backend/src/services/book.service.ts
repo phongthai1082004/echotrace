@@ -1,16 +1,23 @@
+import { injectable } from "tsyringe";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
 import { ErrorCode } from "../errors/error-codes.js";
-import { BaseService } from "../utils/base.service.js";
-import type { BookModel } from "../../generated/prisma/models/Book.js";
+import { BookDTO, CreateBookDTO, UpdatePagesDTO, BookMapper } from "../dto/book/book.dto.js";
 
-const bookBase = new BaseService<BookModel>(prisma.book);
+export abstract class IBookService {
+  abstract getById(bookId: number): Promise<BookDTO>;
+  abstract getMyBooks(userId: number): Promise<BookDTO[]>;
+  abstract create(userId: number, data: CreateBookDTO): Promise<BookDTO>;
+  abstract delete(bookId: number, userId: number): Promise<void>;
+  abstract updatePages(bookId: number, data: UpdatePagesDTO): Promise<void>;
+}
 
-export class BookService {
+@injectable()
+export class BookService extends IBookService {
   async getById(bookId: number) {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book) throw new AppError(ErrorCode.BOOK_NOT_FOUND, 404);
-    return book;
+    return BookMapper.toDTO(book);
   }
 
   async getMyBooks(userId: number) {
@@ -18,25 +25,10 @@ export class BookService {
       where: { userId },
       orderBy: { id: "desc" },
     });
-    return books.map((b) => {
-      let content: any = {};
-      try { content = JSON.parse(b.content || "{}"); } catch {}
-      const pages = content.pages || [];
-      const thumb = pages[0]?.thumbnailUrl || b.coverUrl || null;
-      return {
-        id: b.id,
-        title: b.title,
-        pages: content.pageCount || b.pages || 0,
-        style: b.style,
-        cover: b.cover,
-        status: b.status,
-        coverUrl: thumb,
-        createdAt: b.createdAt?.toISOString() || "",
-      };
-    });
+    return BookMapper.toDTOList(books);
   }
 
-  async create(userId: number, data: { content: string | null; title?: string }) {
+  async create(userId: number, data: CreateBookDTO) {
     try {
       const book = await prisma.book.create({
         data: {
@@ -51,7 +43,7 @@ export class BookService {
           content: data.content ?? null,
         },
       });
-      return book;
+      return BookMapper.toDTO(book);
     } catch (e: any) {
       console.error("=== FULL BOOK CREATE ERROR ===");
       console.error("message:", e?.message);
@@ -70,7 +62,7 @@ export class BookService {
     await prisma.book.delete({ where: { id: bookId } });
   }
 
-  async updatePages(bookId: number, data: { content: string; title?: string; pages?: number }) {
+  async updatePages(bookId: number, data: UpdatePagesDTO) {
     const updateData: any = { content: data.content };
     if (data.title !== undefined) updateData.title = data.title;
     if (data.pages !== undefined) updateData.pages = data.pages;
@@ -78,25 +70,5 @@ export class BookService {
       where: { id: bookId },
       data: updateData,
     });
-  }
-
-  public async softDelete(id: number) {
-    await bookBase.delete(id);
-  }
-
-  public async hardDelete(id: number) {
-    await bookBase.hardDelete(id);
-  }
-
-  public async findAll(filter: any, options?: any) {
-    return await bookBase.findAll(filter, options);
-  }
-
-  public async findById(id: number, extraWhere: Record<string, any> = {}) {
-    return await bookBase.findById(id, extraWhere);
-  }
-
-  public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-    return await bookBase.update(id, data, extraWhere);
   }
 }

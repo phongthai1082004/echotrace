@@ -36,7 +36,8 @@
     "VALIDATION_FAILED": "Validation failed",
     "NOT_FOUND": "Resource not found",
     "INTERNAL": "Internal server error",
-    "BOOK_MISSING_CONTENT": "Missing content"
+    "BOOK_MISSING_CONTENT": "Missing content",
+    "TOO_MANY_REQUEST": "Too many requests, please try again later"
   },
   "validation": {
     "isEmail": "{{property}} must be a valid email",

@@ -17,9 +17,11 @@
     "viewCart": "Xem giỏ & Thanh toán",
     "cartDemo": {
       "title": "Vịnh Hạ Long",
-      "desc": "Bìa mềm · 24 tr",
-      "price": "$49.00"
-    }
+      "desc": "Bìa mềm · 24 trang",
+      "price": "1.200.000₫"
+    },
+    "notifications": "Thông báo",
+    "noNotifications": "Chưa có thông báo"
   },
   "common": {
     "loading": "Đang tải...",
@@ -40,7 +42,8 @@
     "member": "Thành viên",
     "active": "Hoạt động",
     "connected": "Đã liên kết",
-    "notConnected": "Chưa liên kết"
+    "notConnected": "Chưa liên kết",
+    "loginRequired": "Bạn phải đăng nhập để truy cập"
   },
   "home": {
     "hero": {
@@ -431,6 +434,7 @@
   },
   "admin": {
     "panel": "Bảng điều khiển Admin",
+    "comingSoon": "Tính năng chưa được phát triển",
     "analytics": {
       "label": "Admin · Phân tích",
       "title": "Tổng quan Doanh thu",
@@ -553,6 +557,8 @@
       "assetType": "Loại",
       "category": "Danh mục",
       "image": "Hình ảnh *",
+      "chooseFile": "Chọn tệp",
+      "noFile": "Chưa chọn tệp",
       "namePlaceholder": "ví dụ: Lá nhiệt đới",
       "noCategory": "Không có danh mục",
       "upload": "Tải lên",
@@ -578,12 +584,31 @@
       "searchPlaceholder": "Tìm theo tên, email, ID…",
       "name": "Tên",
       "email": "Email",
-      "phone": "Điện thoại",
-      "address": "Địa chỉ",
-      "city": "Thành phố",
-      "role": "Vai trò",
+      "contact": "Liên hệ",
+      "totalDebt": "Tổng nợ",
+      "overdueDebt": "Nợ quá hạn",
+      "monthDebt": "Tháng này",
       "status": "Trạng thái",
-      "noSuppliers": "Không có nhà cung cấp"
+      "noSuppliers": "Không có nhà cung cấp",
+      "fetchFailed": "Lấy danh sách nhà cung cấp thất bại!",
+      "ban": "Vô hiệu hóa nhà cung cấp",
+      "unban": "Kích hoạt nhà cung cấp",
+      "confirmBan": "Bạn có chắc muốn vô hiệu hóa nhà cung cấp này?",
+      "confirmUnban": "Bạn có chắc muốn kích hoạt nhà cung cấp này?",
+      "statusUpdated": "Cập nhật trạng thái nhà cung cấp thành công",
+      "statusUpdateFailed": "Cập nhật trạng thái nhà cung cấp thất bại",
+      "detailLabel": "Admin · Chi tiết nhà cung cấp",
+      "detailTitle": "Chi tiết nhà cung cấp",
+      "general": "Thông tin chung",
+      "debt": "Thông tin nợ",
+      "bank": "Thông tin ngân hàng",
+      "bankName": "Tên ngân hàng",
+      "bankAccountNumber": "Số tài khoản",
+      "bankAccountName": "Chủ tài khoản",
+      "saveSuccess": "Cập nhật nhà cung cấp thành công",
+      "saveFailed": "Cập nhật nhà cung cấp thất bại",
+      "back": "Quay lại",
+      "partnerSince": "Đã hợp tác"
     },
     "users": {
       "label": "Admin · Người dùng",
@@ -596,9 +621,18 @@
       "city": "Thành phố",
       "role": "Vai trò",
       "status": "Trạng thái",
+      "general": "Thông tin chung",
+      "joined": "Tham gia",
       "noUsers": "Không có người dùng",
       "tokenInvalid": "Token không hợp lệ!",
-      "fetchFailed": "Lấy danh sách người dùng thất bại!"
+      "fetchFailed": "Lấy danh sách người dùng thất bại!",
+      "ban": "Khóa người dùng",
+      "unban": "Mở khóa người dùng",
+      "confirmBan": "Bạn có chắc muốn khóa người dùng này?",
+      "confirmUnban": "Bạn có chắc muốn mở khóa người dùng này?",
+      "cantBanAdmin": "Không thể đổi trạng thái tài khoản admin",
+      "statusUpdated": "Cập nhật trạng thái người dùng thành công",
+      "statusUpdateFailed": "Cập nhật trạng thái người dùng thất bại"
     },
     "adminAccount": {
       "label": "Admin · Tài khoản",
@@ -616,7 +650,9 @@
       "suppliers": "Nhà cung cấp",
       "users": "Người dùng",
       "assets": "Tài sản",
-      "account": "Tài khoản"
+      "account": "Tài khoản",
+      "studio": "Studio",
+      "notifications": "Thông báo"
     },
     "pagination": {
       "previous": "Trước",

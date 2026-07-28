@@ -193,7 +193,6 @@ model Book {
 
   user       User        @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
-  cartItems  CartItem[]
 
   @@index([userId])
   @@index([type])
@@ -201,31 +200,15 @@ model Book {
 }
 
 // Gio hang: moi User co 1 gio hang dang hoat dong.
-// Khi checkout -> convert CartItem thanh Order + OrderItem, roi xoa CartItem.
+// items: JSON string array of { bookId, quantity, price }, e.g. '[{"bookId":1,"quantity":1,"price":250000}]'
 model Cart {
   id        Int      @id @default(autoincrement())
   userId    Int      @unique
+  items     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user  User       @relation(fields: [userId], references: [id])
-  items CartItem[]
-}
-
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  cartId    Int
-  bookId    Int
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cart Cart @relation(fields: [cartId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
-
-  @@unique([cartId, bookId])
-  @@index([cartId])
-  @@index([bookId])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model SampleBook {

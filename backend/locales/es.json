@@ -36,7 +36,8 @@
     "VALIDATION_FAILED": "Validación fallida",
     "NOT_FOUND": "Recurso no encontrado",
     "INTERNAL": "Error interno del servidor",
-    "BOOK_MISSING_CONTENT": "Falta contenido"
+    "BOOK_MISSING_CONTENT": "Falta contenido",
+    "TOO_MANY_REQUEST": "Demasiadas solicitudes, por favor inténtalo de nuevo más tarde"
   },
   "validation": {
     "isEmail": "{{property}} debe ser un correo válido",

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 import { cloudinaryUrl } from "@/lib/cloudinary";
 
 function FlagUk() {
@@ -49,6 +50,7 @@ export function Nav({ user }: NavProps) {
   const [dropdown, setDropdown] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { data: session, status } = useSession();
   const wasAuth = useRef(false);
   useEffect(() => {
@@ -56,7 +58,7 @@ export function Nav({ user }: NavProps) {
     if (status === "unauthenticated" && wasAuth.current) router.push("/");
   }, [status, router]);
 
-  if (pathname === "/auth") return null;
+  if (pathname === "/auth" || pathname.match(/^\/(en|vi|es)\/auth$/)) return null;
 
   const langs = [
     { code: "en", label: "EN", Flag: FlagUk },
@@ -109,7 +111,7 @@ export function Nav({ user }: NavProps) {
                   {langs.map((l) => (
                     <button
                       key={l.code}
-                      onClick={() => { router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`); setLangOpen(false); }}
+                      onClick={() => { i18n.changeLanguage(l.code); router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`); setLangOpen(false); }}
                       className={`flex items-center gap-2 w-full text-left px-3 py-2.5 font-mono text-[10px] font-bold tracking-wider transition-colors ${
                         i18n.language.startsWith(l.code) ? "bg-[#222] text-white" : "hover:bg-[#e8e6e0]"
                       }`}
@@ -122,6 +124,31 @@ export function Nav({ user }: NavProps) {
               </div>
             )}
           </div>
+          {user && (
+            <div className="relative"
+              onMouseEnter={() => setNotifOpen(true)}
+              onMouseLeave={() => setNotifOpen(false)}>
+              <button type="button"
+                className="flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#222]">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-full z-50 pt-2">
+                  <div className="w-72 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+                    <div className="px-4 py-3 border-b-[3px] border-[#222]">
+                      <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.notifications")}</p>
+                    </div>
+                    <div className="px-4 py-8 text-center">
+                      <p className="text-sm font-bold text-[#999]">{t("nav.noNotifications")}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {user && (
             <div className="relative"
               onMouseEnter={() => setCartOpen(true)}
@@ -170,7 +197,7 @@ export function Nav({ user }: NavProps) {
                 className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
               >
                 {user.image ? (
-                  <img src={cloudinaryUrl(user.image)} alt="" className="w-7 h-7 rounded-full object-cover" loading="lazy" />
+                  <Image src={cloudinaryUrl(user.image)} alt="" width={28} height={28} className="rounded-full object-cover" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-[#222] flex items-center justify-center shrink-0 overflow-hidden">
                     <span className="font-mono text-[10px] font-bold text-white leading-none">

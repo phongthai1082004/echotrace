@@ -47,7 +47,7 @@ export function NeoSelect({ options, value, onChange, placeholder = "Select…",
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-y-auto" style={{ maxHeight: "12.5rem" }}>
           {options.map((opt) => (
             <button key={opt.value} type="button"
               onClick={() => { onChange(opt.value); setOpen(false); }}

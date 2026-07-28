@@ -1,4 +1,6 @@
+import "reflect-metadata";
 import "dotenv/config";
+import "./di/container.js";
 import "../cloudinary.config.js";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
@@ -31,7 +33,7 @@ i18next
   });
 
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use(handle(i18next));
 

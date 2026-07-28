@@ -12,7 +12,7 @@ function mmToPx(mm: number): number {
 
 const OVERLAY_KEY = "_dragOverlay";
 const DIM_OVERLAY_KEY = "_dimOverlay";
-const SERIALIZE_KEYS = ["z", "layer", "customProperties", "_selId"];
+const SERIALIZE_KEYS = ["z", "layer", "customProperties", "_selId", "selectable", "evented", "hasControls", "hasBorders"];
 
 export function isFrameObject(obj: fabric.FabricObject): boolean {
   return (obj as any).customProperties?.layer === "frame";
@@ -32,24 +32,17 @@ export function nextFrameZ(canvas: fabric.Canvas): number {
 }
 
 export function serializeCanvasState(canvas: fabric.Canvas): string {
-  const allObjs = canvas.getObjects();
-  const nonOverlays = allObjs.filter((o: any) => !o[OVERLAY_KEY] && !o[DIM_OVERLAY_KEY] && !o._spine);
-  (canvas as any)._objects = nonOverlays;
-  try {
-    // fabric v6 toJSON drops custom properties; we inject them from the live instance
-    const json = JSON.stringify((canvas as any).toJSON(SERIALIZE_KEYS));
-    const parsed = JSON.parse(json);
-    parsed.objects.forEach((o: any, i: number) => {
-      const live = nonOverlays[i];
-      if (live) {
-        o.customProperties = (live as any).customProperties;
-        o._selId = (live as any)._selId;
-      }
-    });
-    return JSON.stringify(parsed);
-  } finally {
-    (canvas as any)._objects = allObjs;
-  }
+  const liveObjs = canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport);
+  const json = JSON.stringify((canvas as any).toJSON(SERIALIZE_KEYS));
+  const parsed = JSON.parse(json);
+  parsed.objects.forEach((o: any, i: number) => {
+    const live = liveObjs[i];
+    if (live) {
+      o.customProperties = (live as any).customProperties;
+      o._selId = (live as any)._selId;
+    }
+  });
+  return JSON.stringify(parsed);
 }
 
 export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): string {
@@ -122,6 +115,7 @@ function makeOverlayRect(left: number, top: number, w: number, h: number, angle:
     fill: "rgba(200, 200, 200, 0.45)",
     stroke: "#aaa", strokeWidth: 1, strokeDashArray: [5, 4],
     selectable: false, evented: false, hasControls: false, hasBorders: false,
+    excludeFromExport: true,
     angle,
   });
   (r as any)[OVERLAY_KEY] = true;
@@ -135,6 +129,7 @@ function makeOverlayPlus(cx: number, cy: number): fabric.FabricText {
     fontSize: 26, fontFamily: "Inter, sans-serif", fill: "#888",
     originX: "center", originY: "center",
     selectable: false, evented: false, hasControls: false, hasBorders: false,
+    excludeFromExport: true,
   });
   (t as any)[OVERLAY_KEY] = true;
   (t as any).customProperties = { z: 998, layer: "overlay" };
@@ -147,6 +142,7 @@ function makeOverlayLabel(cx: number, cy: number): fabric.FabricText {
     fontSize: 9, fontFamily: "JetBrains Mono, monospace", fill: "#999",
     originX: "center", originY: "center",
     selectable: false, evented: false, hasControls: false, hasBorders: false,
+    excludeFromExport: true,
   });
   (t as any)[OVERLAY_KEY] = true;
   (t as any).customProperties = { z: 998, layer: "overlay" };
@@ -227,6 +223,8 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
 }
 
 export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
+  const canvas = (frame as any).canvas;
+  if (canvas && findPhotoInFrame(canvas, frame)) return false;
   const frameZ = (frame as any).customProperties?.z ?? 50;
   fitPhotoToFrame(frame, img);
   // save baseline scales so movePhotoWithFrame doesn't double-count
@@ -244,6 +242,7 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
     customProperties: { z: frameZ - 1, layer: "photo", frameId: (frame as any)._selId },
   } as any);
   (img as any)._selId = `photo-frame-${Date.now()}`;
+  return true;
 }
 
 export function applyFrameClip(frame: fabric.FabricObject, img: fabric.FabricImage) {
@@ -442,7 +441,7 @@ export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricO
   const pathData = `M 0 0 L ${cw} 0 L ${cw} ${ch} L 0 ${ch} Z M ${corners.map((c) => `${c.x} ${c.y}`).join(" L ")} Z`;
   const overlay = new fabric.Path(pathData, {
     fill: "rgba(128,128,128,0.55)", fillRule: "evenodd",
-    selectable: false, evented: false,
+    selectable: false, evented: false, excludeFromExport: true,
   } as any);
   (overlay as any)[DIM_OVERLAY_KEY] = true;
   (overlay as any).customProperties = { z: 999, layer: "dimOverlay" };
@@ -469,20 +468,32 @@ export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX 
 }
 
 // Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
+// ponytail: use Fabric v7's built-in reviver instead of post-processing
+export function reviveObject(o: any, object: any, _err: any) {
+  if (!object) return;
+  if (o.customProperties) (object as any).customProperties = o.customProperties;
+  if (o._selId) (object as any)._selId = o._selId;
+  if (o.customProperties?.layer === "photo") {
+    object.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+  }
+}
+
 export function rehydrateCanvas(jsonStr: string, canvas: fabric.Canvas) {
   const parsed = JSON.parse(jsonStr);
   parsed.objects.forEach((objData: any, i: number) => {
     const live = canvas.getObjects()[i];
-    if (!live) return;
-    if (objData.customProperties) (live as any).customProperties = objData.customProperties;
-    if (objData._selId) (live as any)._selId = objData._selId;
+    reviveObject(objData, live, undefined);
   });
 }
 
 export function applyInteractionLock(canvas: fabric.Canvas, pageW: number, isCover: boolean, viewMode: "left" | "right" | "spread", enableAll = false) {
   if (isCover || viewMode === "spread") return;
   if (enableAll) {
-    canvas.getObjects().forEach((o: any) => o.set({ selectable: true, evented: true, hasControls: true, hasBorders: true } as any));
+    canvas.getObjects().forEach((o: any) => {
+      // ponytail: skip locked photos so they don't become selectable during view-mode switch
+      if ((o as any).customProperties?.layer === "photo" && !(o as any).hasControls) return;
+      o.set({ selectable: true, evented: true, hasControls: true, hasBorders: true } as any);
+    });
   }
   if (viewMode === "left") {
     canvas.getObjects().forEach((o: any) => { if ((o.left || 0) >= pageW) o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any); });

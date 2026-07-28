@@ -1,7 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Righteous&family=Permanent+Marker&family=Abril+Fatface&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Raleway:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap');
-
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -60,8 +57,8 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
-  --font-sans: "Inter", sans-serif;
-  --font-mono: "Inter", sans-serif;
+  --font-sans: var(--font-jetbrains-mono);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @layer base {
@@ -86,6 +83,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-space-grotesk), sans-serif;
     font-weight: 700;
     line-height: 1.3;
   }
@@ -112,6 +110,15 @@
     animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -120,23 +127,26 @@
     }
   }
 
-  .thin-scrollbar {
+  * {
     scrollbar-width: thin;
-    scrollbar-color: #ccc transparent;
+    scrollbar-color: rgba(34,34,34,0.25) transparent;
   }
-  .thin-scrollbar::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  .thin-scrollbar::-webkit-scrollbar-track {
+  *::-webkit-scrollbar-track {
     background: transparent;
   }
-  .thin-scrollbar::-webkit-scrollbar-thumb {
-    background: #ccc;
+  *::-webkit-scrollbar-thumb {
+    background: rgba(34,34,34,0.25);
     border-radius: 3px;
   }
-  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #aaa;
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(34,34,34,0.45);
+  }
+  .thin-scrollbar {
+    /* kept for legacy usage, global * styles above apply */
   }
 
   .neo-card {
@@ -200,17 +210,19 @@
   }
 
   .neo-label {
-    font-size: 9px;
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     line-height: 1.4;
   }
 
   .neo-label-sm {
-    font-size: 10px;
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     line-height: 1.4;
   }

@@ -1,16 +1,20 @@
+import { injectable, inject } from "tsyringe";
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
 import { ErrorCode } from "../errors/error-codes.js";
-import { CloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
-import { UserImageService } from "../services/user-image.service.js";
+import { ICloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
+import { IUserImageService } from "../services/user-image.service.js";
 
-const cloudinary = new CloudinaryService();
-const userImageService = new UserImageService();
-
+@injectable()
 export class UploadController {
-  async getSignature(req: AuthRequest, res: Response) {
+  constructor(
+    @inject("ICloudinaryService") private readonly cloudinary: ICloudinaryService,
+    @inject("IUserImageService") private readonly userImageService: IUserImageService,
+  ) {}
+
+  getSignature = async (req: AuthRequest, res: Response) => {
     const { type } = req.query as { type: "gallery" | "sticker" | "background" };
     const userId = req.userId!;
 
@@ -30,7 +34,7 @@ export class UploadController {
       params.folder = folder;
     }
 
-    const signature = cloudinary.getSignature(params);
+    const signature = this.cloudinary.getSignature(params);
 
     res.json(ApiResponse.success({
       signature,
@@ -40,31 +44,31 @@ export class UploadController {
       api_key: process.env.CLOUDINARY_API_KEY,
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     }));
-  }
+  };
 
-  async saveImage(req: AuthRequest, res: Response) {
+  saveImage = async (req: AuthRequest, res: Response) => {
     const userId = parseInt(req.userId!);
     const { url, publicId, width, height, size } = req.body;
     if (!url) throw new AppError(ErrorCode.UPLOAD_URL_REQUIRED, 400);
 
-    const image = await userImageService.create({ userId, url, publicId, width, height, size });
+    const image = await this.userImageService.create({ userId, url, publicId, width, height, size });
 
     res.status(201).json(ApiResponse.success(image));
-  }
+  };
 
-  async listImages(req: AuthRequest, res: Response) {
+  listImages = async (req: AuthRequest, res: Response) => {
     const userId = parseInt(req.userId!);
     const bookId = req.query.bookId ? parseInt(req.query.bookId as string) : undefined;
 
-    const images = await userImageService.listByUser(userId, bookId);
+    const images = await this.userImageService.listByUser(userId, bookId);
 
     res.json(ApiResponse.success(images));
-  }
+  };
 
-  async deleteImage(req: AuthRequest, res: Response) {
+  deleteImage = async (req: AuthRequest, res: Response) => {
     const userId = parseInt(req.userId!);
     const id = parseInt(String(req.params.id));
-    await userImageService.delete(id, userId);
+    await this.userImageService.delete(id, userId);
     res.json(ApiResponse.message("Image deleted"));
-  }
+  };
 }

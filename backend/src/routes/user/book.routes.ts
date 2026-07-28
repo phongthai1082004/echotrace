@@ -1,9 +1,10 @@
+import { container } from "tsyringe";
 import { Router, Request, Response, NextFunction } from "express";
 import { BookController } from "../../controllers/book.controller.js";
 import { authMiddleware, AuthRequest } from "../../middleware/auth.middleware.js";
 
 const router = Router();
-const bookCtrl = new BookController();
+const bookCtrl = container.resolve(BookController);
 
 const asyncHandler =
   (fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>) =>

@@ -1,31 +1,39 @@
+import { injectable, inject } from "tsyringe";
 import { BaseService } from "../utils/base.service.js";
-import type { UserModel } from "../../generated/prisma/models/User.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
 import { ErrorCode } from "../errors/error-codes.js";
 import bcrypt from "bcryptjs";
+import { UserListDTO, UserMapper } from "../dto/user/user.list.js";
+import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from "../dto/user/profile.dto.js";
 
-const userBase = new BaseService<UserModel>(prisma.user);
+export abstract class IUserService {
+  abstract findAll(filter: any, options?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
+  abstract findById(id: number, extraWhere?: Record<string, any>): Promise<any>;
+  abstract update(id: number, data: any, extraWhere?: Record<string, any>): Promise<void>;
+  abstract getProfile(userId: string): Promise<ProfileDTO>;
+  abstract updateProfile(userId: string, data: UpdateProfileDTO): Promise<ProfileDTO>;
+  abstract changePassword(userId: string, body: ChangePasswordDTO): Promise<{ message: string }>;
+}
 
-export class UserService {
-  public async softDelete(id: number) {
-    await userBase.delete(id);
-  }
-
-  public async hardDelete(id: number) {
-    await userBase.hardDelete(id);
+@injectable()
+export class UserService extends IUserService {
+  constructor(
+    @inject("UserBaseService") private readonly userBase: BaseService<any>,
+  ) {
+    super();
   }
 
   public async findAll(filter: any, options?: any) {
-    return await userBase.findAll(filter, options);
+    return await this.userBase.findAll(filter, options);
   }
 
   public async findById(id: number, extraWhere: Record<string, any> = {}) {
-    return await userBase.findById(id, extraWhere);
+    return await this.userBase.findById(id, extraWhere);
   }
 
   public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-    return await userBase.update(id, data, extraWhere);
+    return await this.userBase.update(id, data, extraWhere);
   }
 
   async getProfile(userId: string) {
@@ -38,10 +46,10 @@ export class UserService {
     });
     if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
     const { password, ...safe } = user;
-    return { ...safe, hasPassword: !!password };
+    return ProfileMapper.toDTO({ ...safe, hasPassword: !!password });
   }
 
-  async updateProfile(userId: string, data: { name: string; phone?: string; address: string; city: string }) {
+  async updateProfile(userId: string, data: UpdateProfileDTO) {
     if (data.phone) {
       const cleaned = data.phone.replace(/\s+/g, "");
       if (!/^(\+84|0)[1-9]\d{8,9}$/.test(cleaned)) {
@@ -68,7 +76,7 @@ export class UserService {
     }
   }
 
-  async changePassword(userId: string, body: { currentPassword?: string; newPassword: string }) {
+  async changePassword(userId: string, body: ChangePasswordDTO) {
     const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
     if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
 

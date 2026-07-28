@@ -16,10 +16,12 @@
     "cart_other": "Carrito · {{count}} art.",
     "viewCart": "Ver carrito y pagar",
     "cartDemo": {
-      "title": "Ha Long Bay",
+      "title": "Bahía de Ha Long",
       "desc": "Tapa blanda · 24 pág",
       "price": "$49.00"
-    }
+    },
+    "notifications": "Notificaciones",
+    "noNotifications": "Sin notificaciones aún"
   },
   "common": {
     "loading": "Cargando...",
@@ -39,8 +41,9 @@
     "unknownUser": "Usuario desconocido",
     "member": "Miembro",
     "active": "Activo",
-    "connected": "Vinculado",
-    "notConnected": "No vinculado"
+    "connected": "Conectado",
+    "notConnected": "No conectado",
+    "loginRequired": "Debe iniciar sesión para acceder"
   },
   "home": {
     "hero": {
@@ -431,6 +434,7 @@
   },
   "admin": {
     "panel": "Panel de Administración",
+    "comingSoon": "Esta función aún no está desarrollada",
     "analytics": {
       "label": "Admin · Analítica",
       "title": "Visión general de Ingresos",
@@ -553,6 +557,8 @@
       "assetType": "Tipo",
       "category": "Categoría",
       "image": "Imagen *",
+      "chooseFile": "Elegir archivo",
+      "noFile": "Ningún archivo seleccionado",
       "namePlaceholder": "ej. Hoja tropical",
       "noCategory": "Sin categoría",
       "upload": "Subir",
@@ -578,12 +584,31 @@
       "searchPlaceholder": "Buscar por nombre, correo, ID…",
       "name": "Nombre",
       "email": "Correo",
-      "phone": "Teléfono",
-      "address": "Dirección",
-      "city": "Ciudad",
-      "role": "Rol",
+      "contact": "Contacto",
+      "totalDebt": "Deuda total",
+      "overdueDebt": "Deuda vencida",
+      "monthDebt": "Este mes",
       "status": "Estado",
-      "noSuppliers": "Sin proveedores"
+      "noSuppliers": "Sin proveedores",
+      "fetchFailed": "¡Error al obtener lista de proveedores!",
+      "ban": "Desactivar proveedor",
+      "unban": "Activar proveedor",
+      "confirmBan": "¿Estás seguro de desactivar este proveedor?",
+      "confirmUnban": "¿Estás seguro de activar este proveedor?",
+      "statusUpdated": "Estado del proveedor actualizado correctamente",
+      "statusUpdateFailed": "Error al actualizar el estado del proveedor",
+      "detailLabel": "Admin · Detalle del proveedor",
+      "detailTitle": "Detalle del proveedor",
+      "general": "Información general",
+      "debt": "Información de deuda",
+      "bank": "Información bancaria",
+      "bankName": "Nombre del banco",
+      "bankAccountNumber": "Número de cuenta",
+      "bankAccountName": "Titular de la cuenta",
+      "saveSuccess": "Proveedor actualizado correctamente",
+      "saveFailed": "Error al actualizar el proveedor",
+      "back": "Volver",
+      "partnerSince": "Colaborando desde"
     },
     "users": {
       "label": "Admin · Usuarios",
@@ -596,9 +621,18 @@
       "city": "Ciudad",
       "role": "Rol",
       "status": "Estado",
+      "general": "Información general",
+      "joined": "Registrado",
       "noUsers": "Sin usuarios",
       "tokenInvalid": "¡Token inválido!",
-      "fetchFailed": "¡Error al obtener lista de usuarios!"
+      "fetchFailed": "¡Error al obtener lista de usuarios!",
+      "ban": "Suspender usuario",
+      "unban": "Reactivar usuario",
+      "confirmBan": "¿Estás seguro de suspender a este usuario?",
+      "confirmUnban": "¿Estás seguro de reactivar a este usuario?",
+      "cantBanAdmin": "No se puede cambiar el estado de cuentas admin",
+      "statusUpdated": "Estado de usuario actualizado correctamente",
+      "statusUpdateFailed": "Error al actualizar el estado del usuario"
     },
     "adminAccount": {
       "label": "Admin · Cuenta",
@@ -616,7 +650,9 @@
       "suppliers": "Proveedores",
       "users": "Usuarios",
       "assets": "Activos",
-      "account": "Cuenta"
+      "account": "Cuenta",
+      "studio": "Estudio",
+      "notifications": "Notificaciones"
     },
     "pagination": {
       "previous": "Anterior",

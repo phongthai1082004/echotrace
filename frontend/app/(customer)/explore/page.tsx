@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { SidebarNav } from "@/components/sidebar-nav";
+import Image from "next/image";
 import { cloudinaryUrl } from "@/lib/cloudinary";
 import { SkeletonGrid } from "@/components/skeleton";
 
@@ -31,13 +32,8 @@ export default function ExplorePage() {
 
   useEffect(() => {
     if (!accessToken) return;
-    const start = Date.now();
     setLoading(true);
-    api("/api/explore/samples").then(r => r.json()).then(d => setSamples(d.data || [])).catch(() => {}).finally(() => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= 500) setLoading(false);
-      else setTimeout(() => setLoading(false), 500 - elapsed);
-    });
+    api("/api/explore/samples").then(r => r.json()).then(d => setSamples(d.data || [])).catch(() => {}).finally(() => setLoading(false));
   }, [accessToken]);
 
   const filteredSamples = samples.filter(s => !selectedCategory || s.category === selectedCategory);
@@ -85,7 +81,7 @@ export default function ExplorePage() {
                   <div key={s.id} className="group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
                     <div className="aspect-[3/4] bg-[#e8e6e0] overflow-hidden relative">
                       {s.coverUrl ? (
-                        <img src={cloudinaryUrl(s.coverUrl)} alt={s.name} className="w-full h-full object-cover" loading="lazy" />
+                        <Image src={cloudinaryUrl(s.coverUrl)} alt={s.name} fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.name}</span>

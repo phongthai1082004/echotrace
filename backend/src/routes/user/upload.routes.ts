@@ -1,9 +1,10 @@
+import { container } from "tsyringe";
 import { Router, Request, Response, NextFunction } from "express";
 import { UploadController } from "../../controllers/upload.controller.js";
 import { authMiddleware, AuthRequest } from "../../middleware/auth.middleware.js";
 
 const router = Router();
-const uploadCtrl = new UploadController();
+const uploadCtrl = container.resolve(UploadController);
 
 const asyncHandler =
   (fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>) =>

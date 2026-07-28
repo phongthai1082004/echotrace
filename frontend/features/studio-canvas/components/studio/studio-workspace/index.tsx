@@ -7,7 +7,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { useElementControls } from "../../../hooks/useElementControls";
 import { usePageManager } from "../../../hooks/usePageManager";
 import { FORMATS, ZOOM_LEVELS } from "../../../types";
-import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, rehydrateCanvas, isCoverPage, canvasPointer, applyInteractionLock, serializeSel, pasteClipboard } from "../../../lib/layout-engine";
+import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, reviveObject, isCoverPage, canvasPointer, applyInteractionLock, serializeSel, pasteClipboard } from "../../../lib/layout-engine";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
@@ -59,7 +59,7 @@ export function StudioWorkspace() {
               const frameCenter = (frame.left || 0) + ((frame.width || 0) * (frame.scaleX || 1)) / 2;
               if ((effView === "left" && frameCenter >= halfW) || (effView === "right" && frameCenter < halfW)) return;
             }
-            placePhotoInFrame(frame, img); c.add(img); c.setActiveObject(img); c.renderAll(); enforceZLayers(c); return;
+            if (placePhotoInFrame(frame, img)) { c.add(img); c.setActiveObject(frame); c.renderAll(); enforceZLayers(c); return; }
           }
           const s = Math.min(300 / (img.width || 1), 300 / (img.height || 1));
           img.set({ left: p.x - 75, top: p.y - 75, scaleX: s, scaleY: s, customProperties: { z: Date.now(), layer: "element" } } as any);
@@ -112,10 +112,9 @@ export function StudioWorkspace() {
       const coverJson = pg?.canvasJson;
       if (coverJson) {
         try {
-          void c.loadFromJSON(JSON.parse(coverJson)).then(() => {
+          void c.loadFromJSON(JSON.parse(coverJson), reviveObject).then(() => {
             if (destroyedRef.current || epochRef.current !== epoch) return;
             c.backgroundColor = "#fff";
-            rehydrateCanvas(coverJson, c);
             c.renderAll();
           }).catch(() => { if (!destroyedRef.current) c.renderAll(); });
         } catch { if (!destroyedRef.current) c.renderAll(); }
@@ -133,16 +132,14 @@ export function StudioWorkspace() {
         const rj = JSON.parse(rightPg.canvasJson);
         rj.objects?.forEach((o: any) => { o.left = (o.left || 0) + pageW; merged.objects.push(o); });
       }
-      const mergedJson = JSON.stringify(merged);
       if (!destroyedRef.current) {
         try {
-          void c.loadFromJSON(merged).then(() => {
+          void c.loadFromJSON(merged, reviveObject).then(() => {
             if (destroyedRef.current || epochRef.current !== epoch) return;
             c.backgroundColor = "#fff";
-            rehydrateCanvas(mergedJson, c);
             // Remove old spine line if exists
             c.getObjects().filter((o: any) => (o as any)._spine).forEach((o) => c.remove(o));
-            c.add(new fabric.Line([pageW, 0, pageW, ch], { stroke: "#222", strokeWidth: 1, strokeDashArray: [6, 4], selectable: false, evented: false }).set({ _spine: true } as any));
+            c.add(new fabric.Line([pageW, 0, pageW, ch], { stroke: "#222", strokeWidth: 1, strokeDashArray: [6, 4], selectable: false, evented: false, excludeFromExport: true }).set({ _spine: true } as any));
             c.selection = true;
             applyInteractionLock(c, pageW, isCover, effectiveView);
             c.renderAll();
@@ -157,7 +154,7 @@ export function StudioWorkspace() {
     if (!canvasRef.current) return;
     destroyedRef.current = false;
     const epoch = ++epochRef.current;
-    const c = new fabric.Canvas(canvasRef.current, { width: cw, height: ch, preserveObjectStacking: true, selection: true, fireRightClick: true, stopContextMenu: true });
+    const c = new fabric.Canvas(canvasRef.current, { width: cw, height: ch, preserveObjectStacking: true, selection: true, fireRightClick: true, stopContextMenu: true, autoRender: true });
     fabricRef.current = c;
       (fabric.FabricObject.prototype as any).snapAngle = 15;
       (fabric.FabricObject.prototype as any).snapThreshold = 6;
@@ -309,8 +306,9 @@ export function StudioWorkspace() {
       const s = useCanvasStore.getState();
       const idx = s.activePageIndex;
       if (idx < 0 || idx >= s.pages.length) return;
-      const thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
-      s.setPage(idx, { thumbnailUrl: thumb });
+      let thumb: string | null = null;
+      try { thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 }); } catch {} // ponytail: skip if tainted
+      if (thumb) s.setPage(idx, { thumbnailUrl: thumb });
     }, 400);
   }, [thumbnailVersion, activePageIndex]);
 

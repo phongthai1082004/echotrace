@@ -10,7 +10,8 @@ export function usePageManager() {
     if (!c) return;
     const { activePageIndex, setPage, activeLayout, pages } = s;
     const n = pages.length;
-    const thumbnail = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
+    let thumbnail: string | null = null;
+    try { thumbnail = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 }); } catch {} // ponytail: skip if tainted
     const json = serializeCanvasState(c);
     const cw = c.getWidth();
     if (!isCoverPage(activePageIndex, n) && cw > 400) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import Image from "next/image";
 import { cloudinaryUrl } from "@/lib/cloudinary";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
@@ -111,13 +112,7 @@ export default function OrdersPage() {
   const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(300, 20);
 
   useEffect(() => {
-    const start = Date.now();
-    const timer = setTimeout(() => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= 500) setLoading(false);
-      else setTimeout(() => setLoading(false), 500 - elapsed);
-    }, 200);
-    return () => clearTimeout(timer);
+    setLoading(false);
   }, []);
 
   return (
@@ -143,7 +138,7 @@ export default function OrdersPage() {
                     <div className="grid grid-cols-2 h-full">
                       {order.items.slice(0, 2).map((item) => (
                         <div key={item.id} className="relative overflow-hidden">
-                          <img src={cloudinaryUrl(item.coverUrl)} alt={item.bookTitle} className="w-full h-full object-cover" loading="lazy" />
+                          <Image src={cloudinaryUrl(item.coverUrl)} alt={item.bookTitle} fill sizes="80px" className="object-cover" />
                         </div>
                       ))}
                       {order.items.length === 1 && (
@@ -214,7 +209,7 @@ export default function OrdersPage() {
                   {selectedOrder.items.map((item) => (
                     <div key={item.id} className="flex gap-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
                       <div className="w-14 h-18 rounded-md overflow-hidden bg-[#e8e6e0] shrink-0">
-                        <img src={item.coverUrl} alt={item.bookTitle} className="w-full h-full object-cover" />
+                        <Image src={item.coverUrl} alt={item.bookTitle} width={56} height={72} className="object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold mb-1">{item.bookTitle}</p>

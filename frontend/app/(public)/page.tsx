@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cloudinaryUrl } from "@/lib/cloudinary";
 import { useTranslation, Trans } from "react-i18next";
 
@@ -51,7 +52,7 @@ export default function HomePage() {
       {/* ─── Hero ─── */}
       <section className="pt-15 min-h-screen flex flex-col lg:flex-row border-b-[3px] border-[#222]">
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-[60%] min-h-[50vh] lg:min-h-[calc(100vh-60px)]">
-          <img src="https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=1400&h=1000&fit=crop&auto=format" alt="Ha Long Bay" className="w-full h-full object-cover object-center absolute inset-0" loading="lazy" />
+          <Image src="https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=1400&h=1000&fit=crop&auto=format" alt="Ha Long Bay" fill sizes="100vw" className="object-cover object-center" />
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-[#222]">
             <p className="font-mono text-[10px] font-bold text-white tracking-wider uppercase">20.91° N, 107.18° E — Ha Long Bay, Vietnam</p>
           </div>
@@ -74,10 +75,10 @@ export default function HomePage() {
             <div className="flex items-center gap-2 mt-6">
               <div className="flex -space-x-2">
                 {["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&h=48&fit=crop", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&h=48&fit=crop", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&h=48&fit=crop"].map((u, i) => (
-                  <img key={i} src={u} alt="" className="w-8 h-8 rounded-full border-[2px] border-[#222]" loading="lazy" />
+                  <Image key={i} src={u} alt="" width={32} height={32} className="rounded-full border-[2px] border-[#222]" />
                 ))}
               </div>
-              <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]"><Trans i18nKey="home.hero.socialProof" values={{ count: "10,000+" }} components={{ bold: <span className="text-[#222]" /> }} /></p>
+              <p suppressHydrationWarning className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]"><Trans i18nKey="home.hero.socialProof" values={{ count: "10,000+" }} components={{ bold: <span className="text-[#222]" /> }} /></p>
             </div>
           </div>
         </div>
@@ -101,8 +102,8 @@ export default function HomePage() {
           <div ref={scrollRef} className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: "none" }}>
           {allLogs.map((log) => (
             <Link key={log.id} href="/explore" className="snap-start shrink-0 w-[220px] bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
-              <div className="overflow-hidden aspect-[3/4]">
-                <img src={cloudinaryUrl(log.image)} alt={log.title} className="w-full h-full object-cover" loading="lazy" />
+              <div className="relative overflow-hidden aspect-[3/4]">
+                <Image src={cloudinaryUrl(log.image)} alt={log.title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
               </div>
               <div className="p-4 border-t-[3px] border-[#222]">
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] mb-2">{log.coords}</p>
@@ -212,7 +213,7 @@ export default function HomePage() {
           <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">{t("home.quote.author")}</p>
         </div>
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-1/2 min-h-[300px] lg:min-h-[400px]">
-          <img src="https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=2500&q=80" alt={t("home.quote.alt")} className="w-full h-full object-cover absolute inset-0" />
+          <Image src="https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=2500&q=80" alt={t("home.quote.alt")} fill sizes="100vw" className="object-cover" />
         </div>
       </section>
 

@@ -5,18 +5,22 @@ const SUPPORTED_LANGS = ["en", "vi", "es"];
 const DEFAULT_LANG = "en";
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const firstSegment = pathname.split("/")[1];
 
   if (SUPPORTED_LANGS.includes(firstSegment)) {
-    const response = NextResponse.rewrite(new URL(pathname.replace(`/${firstSegment}`, "") || "/", request.url));
+    const url = new URL(pathname.replace(`/${firstSegment}`, "") || "/", request.url);
+    url.search = search;
+    const response = NextResponse.rewrite(url);
     response.cookies.set("i18nextLng", firstSegment, { path: "/" });
     return response;
   }
 
   const cookie = request.cookies.get("i18nextLng")?.value;
   const lang = SUPPORTED_LANGS.includes(cookie || "") ? cookie! : DEFAULT_LANG;
-  return NextResponse.redirect(new URL(`/${lang}${pathname}`, request.url));
+  const url = new URL(`/${lang}${pathname}`, request.url);
+  url.search = search;
+  return NextResponse.redirect(url);
 }
 
 export const config = {

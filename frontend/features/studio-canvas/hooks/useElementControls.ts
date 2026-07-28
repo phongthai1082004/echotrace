@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import * as fabric from "fabric";
 import { useCanvasStore } from "./useCanvasState";
 
 export function useElementControls() {
@@ -13,25 +12,9 @@ export function useElementControls() {
     if (!canvas) return;
     const onSelect = () => incrementSelectionVersion();
     const onClear = () => incrementSelectionVersion();
+    // ponytail: Fabric v7 handles Ctrl+click multi-select natively
     const onMouseDown = (e: any) => {
       if (e.target) pushUndo();
-      if ((e.e?.ctrlKey || e.e?.metaKey) && e.target) {
-        const prevObjs = canvas.getActiveObjects();
-        if (prevObjs.length === 0) return;
-        const clicked = e.target;
-        setTimeout(() => {
-          const inPrev = prevObjs.includes(clicked);
-          if (inPrev) {
-            const remaining = prevObjs.filter((o: any) => o !== clicked);
-            if (remaining.length === 0) canvas.discardActiveObject();
-            else if (remaining.length === 1) canvas.setActiveObject(remaining[0]);
-            else canvas.setActiveObject(new fabric.ActiveSelection(remaining, { canvas }));
-          } else {
-            canvas.setActiveObject(new fabric.ActiveSelection([...prevObjs, clicked], { canvas }));
-          }
-          canvas.requestRenderAll();
-        }, 0);
-      }
     };
     canvas.on("selection:created", onSelect);
     canvas.on("selection:updated", onSelect);

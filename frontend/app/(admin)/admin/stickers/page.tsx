@@ -128,7 +128,7 @@ export default function AdminAssetsPage() {
   return (
     <div className="h-screen flex flex-col">
       <AdminHeader label={t("admin.stickers.label")} title={t("admin.stickers.title")}>
-        <button onClick={handleStartUpload}
+        <button suppressHydrationWarning onClick={handleStartUpload}
           className="bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-[transform,box-shadow] font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0">
           {t("admin.stickers.uploadBtn")}
         </button>
@@ -242,8 +242,16 @@ export default function AdminAssetsPage() {
               </div>
               <div>
                 <p className={`${label} mb-1`}>{t("admin.stickers.image")}</p>
-                <input ref={inputRef} type="file" accept="image/*" onChange={handleFilePick}
-                  className="text-sm" />
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => inputRef.current?.click()}
+                    className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 rounded-[8px] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6] shrink-0">
+                    {t("admin.stickers.chooseFile")}
+                  </button>
+                  <span className="text-sm font-bold truncate text-[#666] min-w-0">
+                    {fileRef.current?.name || t("admin.stickers.noFile")}
+                  </span>
+                  <input ref={inputRef} type="file" accept="image/*" onChange={handleFilePick} className="hidden" />
+                </div>
               </div>
               <button onClick={handleUpload} disabled={uploading || !name.trim() || !fileRef.current}
                 className="bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-[transform,box-shadow] font-mono text-[9px] font-bold tracking-widest uppercase w-full py-3 mt-2 disabled:opacity-40 disabled:pointer-events-none">

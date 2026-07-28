@@ -19,7 +19,9 @@
       "title": "Ha Long Bay",
       "desc": "Softcover · 24 pg",
       "price": "$49.00"
-    }
+    },
+    "notifications": "Notifications",
+    "noNotifications": "No notifications yet"
   },
   "common": {
     "loading": "Loading...",
@@ -35,12 +37,14 @@
     "success": "Success",
     "retry": "Retry",
     "viewAll": "View All",
+    "action": "Action",
     "dash": "—",
     "unknownUser": "Unknown User",
     "member": "Member",
     "active": "Active",
     "connected": "Connected",
-    "notConnected": "Not connected"
+    "notConnected": "Not connected",
+    "loginRequired": "You must log in to access this"
   },
   "home": {
     "hero": {
@@ -431,6 +435,7 @@
   },
   "admin": {
     "panel": "Admin Panel",
+    "comingSoon": "This feature is not yet developed",
     "analytics": {
       "label": "Admin · Analytics",
       "title": "Revenue Overview",
@@ -544,12 +549,31 @@
       "searchPlaceholder": "Search name, email, ID…",
       "name": "Name",
       "email": "Email",
-      "phone": "Phone",
-      "address": "Address",
-      "city": "City",
-      "role": "Role",
+      "contact": "Contact",
+      "totalDebt": "Total Debt",
+      "overdueDebt": "Overdue Debt",
+      "monthDebt": "This Month",
       "status": "Status",
-      "noSuppliers": "No suppliers found"
+      "noSuppliers": "No suppliers found",
+      "fetchFailed": "Fetch suppliers failed!",
+      "ban": "Deactivate Supplier",
+      "unban": "Activate Supplier",
+      "confirmBan": "Are you sure you want to deactivate this supplier?",
+      "confirmUnban": "Are you sure you want to activate this supplier?",
+      "statusUpdated": "Supplier status updated successfully",
+      "statusUpdateFailed": "Failed to update supplier status",
+      "detailLabel": "Admin · Supplier Detail",
+      "detailTitle": "Supplier Detail",
+      "general": "General Information",
+      "debt": "Debt Information",
+      "bank": "Bank Information",
+      "bankName": "Bank Name",
+      "bankAccountNumber": "Account Number",
+      "bankAccountName": "Account Holder",
+      "saveSuccess": "Supplier updated successfully",
+      "saveFailed": "Failed to update supplier",
+      "back": "Back to list",
+      "partnerSince": "Partner since"
     },
     "users": {
       "label": "Admin · Users",
@@ -562,9 +586,18 @@
       "city": "City",
       "role": "Role",
       "status": "Status",
+      "general": "General Information",
+      "joined": "Joined",
       "noUsers": "No users found",
       "tokenInvalid": "Token is invalid!",
-      "fetchFailed": "Fetch users failed!"
+      "fetchFailed": "Fetch users failed!",
+      "ban": "Ban User",
+      "unban": "Unban User",
+      "confirmBan": "Are you sure you want to ban this user?",
+      "confirmUnban": "Are you sure you want to unban this user?",
+      "cantBanAdmin": "Cannot change status of admin accounts",
+      "statusUpdated": "User status updated successfully",
+      "statusUpdateFailed": "Failed to update user status"
     },
     "stickers": {
       "label": "Admin · Assets",
@@ -581,6 +614,8 @@
       "assetType": "Type",
       "category": "Category",
       "image": "Image *",
+      "chooseFile": "Choose File",
+      "noFile": "No file selected",
       "namePlaceholder": "e.g. Tropical Leaf",
       "noCategory": "No category",
       "upload": "Upload",
@@ -616,7 +651,9 @@
       "suppliers": "Suppliers",
       "users": "Users",
       "assets": "Assets",
-      "account": "Account"
+      "account": "Account",
+      "studio": "Studio",
+      "notifications": "Notifications"
     },
     "pagination": {
       "previous": "Previous",

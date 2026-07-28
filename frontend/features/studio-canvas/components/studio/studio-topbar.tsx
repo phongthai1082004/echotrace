@@ -47,7 +47,11 @@ function DelBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string
   );
 }
 
-export function StudioTopbar() {
+type Props = {
+  hideOrder?: boolean;
+};
+
+export function StudioTopbar({ hideOrder }: Props = {}) {
   const { t } = useTranslation();
   const TEXT_PRESETS = useTextPresets(t);
   const canvas = useCanvasStore((s) => s.canvas);
@@ -168,10 +172,12 @@ export function StudioTopbar() {
   };
 
   const handleAutoFill = async () => {
-    const s = useCanvasStore.getState();
-    const c = s.canvas;
+    const c = useCanvasStore.getState().canvas;
     if (!c || !token) { showToast("No canvas or auth", "error"); return; }
-    // 1. Save all pages state for undo
+    // Save current page's live state into store
+    useCanvasStore.getState().setPage(useCanvasStore.getState().activePageIndex, { canvasJson: serializeCanvasState(c) });
+    // Re-read state (setPage creates new object ref) and save for undo
+    const s = useCanvasStore.getState();
     s.pushUndoPages();
 
     // 2. Fetch user gallery images
@@ -256,12 +262,9 @@ export function StudioTopbar() {
       tc.clear();
     }
 
-    // 6. Update store and reload current page
+    // 6. Update store — no canvas reload, no state change
     s.setPages(updatedPages);
-    if (c) { c.clear(); c.backgroundColor = "#fff"; }
     showToast(`Auto-filled ${photoIdx} photo(s)`, "success");
-    // Bump undoVersion to trigger workspace page reload
-    useCanvasStore.setState({ undoVersion: useCanvasStore.getState().undoVersion + 1 });
   };
 
   return (
@@ -327,9 +330,11 @@ export function StudioTopbar() {
         </button>
         <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error"); }}
           className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">{t("customer.studio.save")} Journal</button>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
-          {t("customer.studio.orderPrint")}
-        </button>
+        {!hideOrder && (
+          <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+            {t("customer.studio.orderPrint")}
+          </button>
+        )}
       </div>
     </div>
   );
