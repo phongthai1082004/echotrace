@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import Image from "next/image";
-import { cloudinaryUrl } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@echotrace/shared";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
 
@@ -182,7 +182,7 @@ export default function OrdersPage() {
       {selectedOrder && (
         <>
           <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelectedOrder(null)} />
-          <div className="fixed top-15 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-t-[3px] border-l-[3px] border-[#222]" style={{ width: 420 }}>
+          <div className="fixed top-15 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-t-[3px] border-l-[3px] border-[#222] w-full sm:w-[420px]">
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-1 text-[#666]">{selectedOrder.orderCode}</p>

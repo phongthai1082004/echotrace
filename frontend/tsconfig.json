@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@hooks/*": ["./hooks/*"],
+      "@hooks": ["./hooks/index.ts"]
     }
   },
   "include": [

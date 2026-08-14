@@ -1,8 +1,8 @@
 import { injectable } from "tsyringe";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
-import { BookDTO, CreateBookDTO, UpdatePagesDTO, BookMapper } from "../dto/book/book.dto.js";
+import { ErrorCode } from "@echotrace/shared";
+import { BookDTO, CreateBookDTO, UpdatePagesDTO, BookMapper } from "@echotrace/shared";
 
 export abstract class IBookService {
   abstract getById(bookId: number): Promise<BookDTO>;
@@ -38,8 +38,8 @@ export class BookService extends IBookService {
           style: "PHOTOBOOK",
           font: "Inter",
           cover: "softcover",
-          pages: 0,
-          status: "DRAFT",
+          paperHeight: data.paperHeight ?? null,
+          paperWidth: data.paperWidth ?? null,
           content: data.content ?? null,
         },
       });
@@ -58,14 +58,14 @@ export class BookService extends IBookService {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book) throw new AppError(ErrorCode.BOOK_NOT_FOUND, 404);
     if (book.userId !== userId) throw new AppError(ErrorCode.BOOK_FORBIDDEN, 403);
-    await prisma.orderItem.deleteMany({ where: { bookId } });
     await prisma.book.delete({ where: { id: bookId } });
   }
 
   async updatePages(bookId: number, data: UpdatePagesDTO) {
     const updateData: any = { content: data.content };
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.pages !== undefined) updateData.pages = data.pages;
+    if (data.paperHeight !== undefined) updateData.paperHeight = data.paperHeight;
+    if (data.paperWidth !== undefined) updateData.paperWidth = data.paperWidth;
     await prisma.book.update({
       where: { id: bookId },
       data: updateData,

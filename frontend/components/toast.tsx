@@ -60,7 +60,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 style={{ background: s.border, color: "#fff" }}>
                 {s.icon}
               </span>
-              <p className="text-sm font-bold">{t.message}</p>
+              <p className="text-sm font-bold whitespace-pre-wrap break-words max-w-[320px]">{t.message}</p>
               <button onClick={() => dismiss(t.id)} className="ml-2 opacity-40 hover:opacity-70 font-bold">✕</button>
             </div>
           );

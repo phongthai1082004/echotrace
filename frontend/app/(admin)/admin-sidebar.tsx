@@ -6,8 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
-import { cloudinaryUrl } from "@/lib/cloudinary";
-import { BarChart3, DollarSign, TrendingUp, Package, Truck, Users, Sticker, UserCircle, Bell, PenTool, LogOut, X, BellDot } from "lucide-react";
+import { cloudinaryUrl } from "@echotrace/shared";
+import { BarChart3, DollarSign, TrendingUp, Package, Truck, Users, Sticker, UserCircle, Bell, BookOpen, LogOut, X, BellDot } from "lucide-react";
 
 export function AdminSidebar() {
   const { t } = useTranslation();
@@ -30,7 +30,8 @@ export function AdminSidebar() {
     { href: "/admin/suppliers", label: t("admin.sidebar.suppliers"), icon: Truck },
     { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
     { href: "/admin/stickers", label: t("admin.sidebar.assets"), icon: Sticker },
-    { href: "/admin/studio", label: t("admin.sidebar.studio"), icon: PenTool },
+    { href: "/admin/coupons", label: t("admin.sidebar.coupons"), icon: TrendingUp },
+    { href: "/admin/sample-books", label: t("admin.sidebar.sampleBooks"), icon: BookOpen },
     { href: "/admin/account", label: t("admin.sidebar.account"), icon: UserCircle },
     { href: "#", label: t("admin.sidebar.notifications"), icon: Bell, notify: true },
   ];
@@ -83,7 +84,7 @@ export function AdminSidebar() {
           </div>
         </div>
         <button onClick={() => signOut({ callbackUrl: "/" })}
-          className="flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all text-[#B54843] hover:bg-[#B54843]/10 border-2 border-transparent hover:border-[#B54843]">
+          className="flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all text-[#B54843] bg-[#FFF7D6] hover:bg-[#B54843] hover:text-white border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]">
           <LogOut size={14} />
           <span className="max-[1280px]:hidden" suppressHydrationWarning>{t("nav.signOut")}</span>
         </button>

@@ -22,6 +22,7 @@ export const errorMiddleware = (
   const message = t ? t(`errors.${errorCode}`, { defaultValue: errorCode }) : errorCode;
 
   console.error(`[Error] ${req.method} ${req.url} — ${errorCode} — ${statusCode}`);
+  console.error(error.stack || error.message || error);
 
   const response = ApiResponse.error(message, statusCode, details);
   return res.status(statusCode).json(response);

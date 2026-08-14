@@ -1,9 +1,29 @@
+export interface L10NText {
+  vi: string;
+  en: string;
+  es: string;
+}
+
+export interface PaperSize {
+  code: string;
+  width: number;
+  height: number;
+}
+
+export interface SupplierOption {
+  code: string;
+  name: L10NText;
+  description: L10NText;
+  width?: number | null;
+  height?: number | null;
+}
+
 export interface Supplier {
   id: number;
   name: string;
   contact: string;
   email: string;
-  status: string;
+  banned: boolean;
   totalDebt: number;
   overdueDebt: number;
   monthDebt: number;
@@ -11,6 +31,9 @@ export interface Supplier {
   bankName: string | null;
   bankAccountNumber: string | null;
   bankAccountName: string | null;
+  paperSizeOptions: SupplierOption[];
+  paperOptions: SupplierOption[];
+  coverOptions: SupplierOption[];
   createdAt: string;
   updatedAt: string;
 }

@@ -8,7 +8,7 @@ export interface User {
   phone: string | null;
   address: string | null;
   city: string | null;
-  status: UserStatus;
+  isDelete: boolean;
   role: string;
   createdAt: string;
 }

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import { apiFetch } from "@/lib/api.fetch";
+import { useToast } from "@/components/toast";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 
 function validateEmail(e: string): string | null {
@@ -12,6 +14,7 @@ function validateEmail(e: string): string | null {
 }
 
 export default function AuthPage() {
+  const { showToast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,64 +28,75 @@ export default function AuthPage() {
 
   const handleSendOtp = async () => {
     const eErr = validateEmail(email);
-    if (eErr) { setError(eErr); return; }
-    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (eErr) { setError(eErr); showToast(eErr, "error"); return; }
+    if (password !== confirmPassword) { 
+      const msg = "Passwords do not match";
+      setError(msg); 
+      showToast(msg, "error"); 
+      return; 
+    }
+    if (password.length < 6) { 
+      const msg = "Password must be at least 6 characters";
+      setError(msg); 
+      showToast(msg, "error"); 
+      return; 
+    }
 
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      await apiFetch("/api/auth/send-otp", "", { method: "POST", body: JSON.stringify({ email }) });
       setShowOtp(true);
-    } catch (err: any) { setError(err.message); }
+      showToast("OTP sent to your email", "success");
+    } catch (err: any) { 
+      const msg = err.message || "Failed to send OTP";
+      setError(msg); 
+      showToast(msg, "error"); 
+    }
     setLoading(false);
   };
 
   const handleVerifyOtp = async () => {
-    if (otpValue.length !== 6) { setError("Enter the 6-digit OTP"); return; }
+    if (otpValue.length !== 6) { 
+      const msg = "Enter the 6-digit OTP";
+      setError(msg); 
+      showToast(msg, "error"); 
+      return; 
+    }
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: otpValue, password }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      const data = await apiFetch<any>("/api/auth/verify-otp", "", { method: "POST", body: JSON.stringify({ email, otp: otpValue, password }) });
 
-      const verifyData = await res.json();
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      window.location.href = verifyData.data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
-    } catch (err: any) { setError(err.message); }
+      window.location.href = data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
+    } catch (err: any) { 
+      const msg = err.message || "Verification failed";
+      setError(msg); 
+      showToast(msg, "error"); 
+    }
     setLoading(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const eErr = validateEmail(email);
-    if (eErr) { setError(eErr); return; }
+    if (eErr) { setError(eErr); showToast(eErr, "error"); return; }
 
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Invalid credentials"); }
-      const data = await res.json();
+      const data = await apiFetch<any>("/api/auth/login", "", { method: "POST", body: JSON.stringify({ email, password }) });
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error(result.error);
-      window.location.href = data.data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
-    } catch (err: any) { setError(err.message); }
+      window.location.href = data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
+    } catch (err: any) { 
+      const msg = err.message || "Account not found or invalid password";
+      setError(msg); 
+      showToast(msg, "error"); 
+    }
     setLoading(false);
   };
 
@@ -117,16 +131,13 @@ export default function AuthPage() {
       <div className="flex flex-col px-8 lg:px-14 py-12 lg:w-[45%] bg-[#F8F2E5]">
         <p className="lg:hidden text-2xl font-bold mb-10">Cabinet Memoir</p>
 
-        <div className="flex gap-0 mb-8">
+        <div className="flex gap-2 mb-8">
           {(["Sign In", "Create Account"] as const).map((label, i) => {
             const active = isSignUp === (i === 1);
             return (
               <button key={label} type="button" onClick={() => { setIsSignUp(i === 1); setError(""); setShowOtp(false); setOtp(["", "", "", "", "", ""]); }}
-                className={`${labelSm} pb-3 pr-8 transition-all relative ${
-                  active ? "text-[#222]" : "text-[#999] hover:text-[#666]"
-                }`}>
+                className={`${active ? neoBtnPrimary : neoBtn} ${labelSm} px-5 py-2`}>
                 {label}
-                {active && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
               </button>
             );
           })}

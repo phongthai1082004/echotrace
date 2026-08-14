@@ -6,7 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
-import { cloudinaryUrl } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@echotrace/shared";
+import { apiFetch } from "@/lib/api.fetch";
+
+function itemThumb(item: any): string | null {
+  return item.thumbnailUrl ?? item.coverUrl ?? null;
+}
 
 function FlagUk() {
   return (
@@ -49,6 +54,8 @@ export function Nav({ user }: NavProps) {
   const [open, setOpen] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartCount, setCartCount] = useState(0);
   const [langOpen, setLangOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { data: session, status } = useSession();
@@ -57,6 +64,8 @@ export function Nav({ user }: NavProps) {
     if (status === "authenticated") wasAuth.current = true;
     if (status === "unauthenticated" && wasAuth.current) router.push("/");
   }, [status, router]);
+
+  const token = (session as any)?.accessToken;
 
   if (pathname === "/auth" || pathname.match(/^\/(en|vi|es)\/auth$/)) return null;
 
@@ -70,17 +79,17 @@ export function Nav({ user }: NavProps) {
   const links = [
     { href: "/explore", label: t("nav.explore") },
     { href: "/my-journals", label: t("nav.myJournals") },
-    { href: "/studio", label: t("nav.studio") },
     { href: "/orders", label: t("nav.orders") },
   ];
 
   return (
     <nav suppressHydrationWarning className="fixed top-0 left-0 right-0 z-40 bg-[#F8F2E5] border-b-[3px] border-[#222]">
-      <div className="flex items-center justify-between px-8 h-15">
+      <div className="flex items-center justify-between px-4 sm:px-8 h-15">
         <div className="flex items-center gap-10">
           <Link href="/" suppressHydrationWarning className="font-bold text-base tracking-tight shrink-0 leading-none">
             {t("brand")}
           </Link>
+          {token && (
           <div className="hidden md:flex items-center gap-6">
             {links.map((link) => {
               const active = pathname.startsWith(link.href);
@@ -98,6 +107,7 @@ export function Nav({ user }: NavProps) {
               );
             })}
           </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
@@ -151,7 +161,18 @@ export function Nav({ user }: NavProps) {
           )}
           {user && (
             <div className="relative"
-              onMouseEnter={() => setCartOpen(true)}
+              onMouseEnter={() => {
+                setCartOpen(true);
+                if (token) {
+                  apiFetch<any>("/api/cart", token)
+                    .then((d) => {
+                      const items: any[] = d?.parsedItems ?? [];
+                      setCartItems(items);
+                      setCartCount(items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0));
+                    })
+                    .catch(() => {});
+                }
+              }}
               onMouseLeave={() => setCartOpen(false)}>
               <button type="button" className="relative flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#222]">
@@ -159,26 +180,42 @@ export function Nav({ user }: NavProps) {
                   <line x1="3" y1="6" x2="21" y2="6"/>
                   <path d="M16 10a4 4 0 0 1-8 0"/>
                 </svg>
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#222] text-white font-mono text-[7px] font-bold flex items-center justify-center leading-none">1</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#222] text-white font-mono text-[7px] font-bold flex items-center justify-center leading-none">{cartCount > 9 ? "9+" : cartCount}</span>
+                )}
               </button>
 
               {cartOpen && (
                 <div className="absolute right-0 top-full z-50 pt-2">
-                  <div className="w-64 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
-                    <div className="px-4 py-3 border-b-[3px] border-[#222]">
-                      <p suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.cart", { count: 1 })}</p>
+                  <div className="w-72 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+                    <div className="px-4 py-3">
+                      <p suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("nav.cart", { count: cartCount })}</p>
                     </div>
-                    <div className="px-4 py-3 flex gap-3 border-b-[3px] border-[#222]">
-                      <div className="w-10 h-12 bg-[#e8e6e0] rounded-[6px] shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p suppressHydrationWarning className="text-sm font-bold leading-tight">{t("nav.cartDemo.title")}</p>
-                        <p suppressHydrationWarning className="font-mono text-[9px] text-[#999] mt-0.5">{t("nav.cartDemo.desc")}</p>
-                        <p suppressHydrationWarning className="font-mono text-[10px] mt-1 font-bold">{t("nav.cartDemo.price")}</p>
-                      </div>
+                    <div className="border-t-[3px] border-[#222]">
+                      {cartItems.length === 0 ? (
+                        <div className="px-4 py-8 text-center">
+                          <p suppressHydrationWarning className="font-mono text-[10px] text-[#999]">{t("nav.cartEmpty")}</p>
+                        </div>
+                      ) : (
+                        <div className="max-h-[280px] overflow-y-auto">
+                          {cartItems.slice(0, 5).map((item, i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-t-[3px] border-[#222]">
+                              <div className="w-10 h-12 bg-[#e8e6e0] rounded-[8px] border-2 border-[#222] shrink-0 overflow-hidden">
+                                {itemThumb(item) && <img src={itemThumb(item)!} alt="" className="w-full h-full object-cover" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p suppressHydrationWarning className="text-sm font-bold leading-tight truncate">{item.title}</p>
+                                <p suppressHydrationWarning className="font-mono text-[9px] text-[#999] mt-0.5">{item.cover === "softcover" ? "Softcover" : item.cover} · {item.pages} pg</p>
+                              </div>
+                              <p suppressHydrationWarning className="font-mono text-[10px] font-bold shrink-0">x{item.quantity || 1}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Link href="/checkout"
                       suppressHydrationWarning
-                      className="block w-full text-center font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors">
+                      className="block w-full text-center border-t-[3px] border-[#222] font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-3 hover:bg-[#222] hover:text-white transition-colors">
                       {t("nav.viewCart")}
                     </Link>
                   </div>
@@ -225,15 +262,8 @@ export function Nav({ user }: NavProps) {
                       type="button"
                       suppressHydrationWarning
                       onClick={async () => {
-                        const token = (session as any)?.accessToken;
                         if (token) {
-                          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`, {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                          }).catch(() => {});
+                          await apiFetch("/api/auth/logout", token, { method: "POST" }).catch(() => {});
                         }
                         signOut({ callbackUrl: "/" });
                       }}
@@ -264,7 +294,7 @@ export function Nav({ user }: NavProps) {
 
       {open && (
         <div className="border-t-[3px] border-[#222] bg-[#FFF7D6]">
-          {links.map((link) => (
+          {token && links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -275,6 +305,7 @@ export function Nav({ user }: NavProps) {
               {link.label}
             </Link>
           ))}
+          {!token && (
           <Link
             href="/auth"
             suppressHydrationWarning
@@ -283,6 +314,7 @@ export function Nav({ user }: NavProps) {
           >
             {t("nav.signIn")}
           </Link>
+          )}
         </div>
       )}
     </nav>

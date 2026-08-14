@@ -1,38 +1,35 @@
+import { apiFetch } from "@/lib/api.fetch";
 import type { StudioAPI } from "./studio-api";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
-
-export const customerAPI: StudioAPI = {
-  async save(token, bookId, payload) {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+export function makeBookSave(base: string, updateSuffix: string, titleField: "title" | "name") {
+  return async (token: string, bookId: number | null, payload: Record<string, unknown>) => {
     try {
-      if (bookId) {
-        const res = await fetch(`${BACKEND}/api/books/${bookId}/pages`, {
-          method: "PATCH", headers,
-          body: JSON.stringify({ content: payload, title: payload.title }),
-        });
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          return { ok: false, error: `${res.status} ${text.slice(0, 200)}`, id: bookId };
-        }
-        return { ok: true, id: bookId };
-      }
-      const res = await fetch(`${BACKEND}/api/books`, {
-        method: "POST", headers,
-        body: JSON.stringify({ content: payload, title: payload.title }),
-      });
+      const { [titleField]: title, paperHeight, paperWidth, ...content } = payload;
+      const body: Record<string, unknown> = { content, [titleField]: title };
+      if (paperHeight !== undefined && paperHeight !== null) body.paperHeight = paperHeight;
+      if (paperWidth !== undefined && paperWidth !== null) body.paperWidth = paperWidth;
+      const res = await apiFetch<Response>(
+        bookId ? `${base}/${bookId}${updateSuffix}` : base,
+        token,
+        { method: bookId ? "PATCH" : "POST", body: JSON.stringify(body), raw: true },
+      );
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        return { ok: false, error: `${res.status} ${text.slice(0, 200)}` };
+        return { ok: false, error: `${res.status} ${text.slice(0, 200)}`, id: bookId ?? undefined };
       }
-      const json = await res.json();
-      return { ok: true, id: json?.data?.id };
+      if (!bookId) {
+        const json = await res.json();
+        return { ok: true, id: json?.data?.id };
+      }
+      return { ok: true, id: bookId };
     } catch (err) {
       return { ok: false, error: String(err), id: bookId ?? undefined };
     }
-  },
+  };
+}
 
+export const customerAPI: StudioAPI = {
+  save: makeBookSave("/api/books", "/pages", "title"),
   async load(bookId) {
     const res = await fetch(`/api/books/${bookId}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

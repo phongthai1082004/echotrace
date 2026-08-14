@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
-import { ASSET_CATEGORIES, CATEGORY_LABELS } from "@/lib/asset-category";
+import { ASSET_CATEGORIES, CATEGORY_LABELS } from "@echotrace/shared";
 import { Search, X } from "lucide-react";
+import { apiFetch } from "@/lib/api.fetch";
 
 interface Sticker {
   id: number;
@@ -44,9 +45,7 @@ export function StickersPanel() {
     const params = new URLSearchParams();
     params.set("type", "sticker");
     if (categoryFilter !== ALL_KEY) params.set("category", categoryFilter);
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/stickers?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.json()).then((d) => setStickers(d.data || [])).catch(() => {});
+    apiFetch<any[]>("/api/admin/stickers?" + params.toString(), token).then((d) => setStickers(d || [])).catch(() => {});
   }, [token, categoryFilter]);
 
   const filtered = stickers.filter((s) => {

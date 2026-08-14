@@ -6,13 +6,15 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { SidebarNav } from "@/components/sidebar-nav";
 import Image from "next/image";
-import { cloudinaryUrl } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@echotrace/shared";
 import { SkeletonGrid } from "@/components/skeleton";
+import { apiFetch } from "@/lib/api.fetch";
+import { neoBtn, neoBtnPrimary } from "@/lib/styles";
 
 interface SampleBook {
   id: number; name: string; description: string | null; category: string | null;
   style: string; font: string; cover: string; pageCount: number; coverUrl: string | null;
-  price: number; theme: { name: string; code: string } | null;
+  theme: { name: string; code: string } | null;
 }
 
 const ALL_CATEGORIES = ["NATURE", "URBAN", "CLASSIC", "MINIMAL", "ADVENTURE", "CULTURAL", "CUSTOM"] as const;
@@ -27,13 +29,10 @@ export default function ExplorePage() {
   const [tab, setTab] = useState<"samples" | "community">("samples");
   const [loading, setLoading] = useState(true);
 
-  const api = (path: string) =>
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-
   useEffect(() => {
     if (!accessToken) return;
     setLoading(true);
-    api("/api/explore/samples").then(r => r.json()).then(d => setSamples(d.data || [])).catch(() => {}).finally(() => setLoading(false));
+    apiFetch<any[]>("/api/explore/samples", accessToken).then(d => setSamples(d || [])).catch(() => {}).finally(() => setLoading(false));
   }, [accessToken]);
 
   const filteredSamples = samples.filter(s => !selectedCategory || s.category === selectedCategory);
@@ -54,20 +53,14 @@ export default function ExplorePage() {
         />
 
         <main className="flex-1 py-8 max-[1600px]:py-6 max-[1440px]:py-5 lg:py-10 lg:pl-10">
-          <div className="flex gap-0 mb-6">
+          <div className="flex gap-2 mb-6">
             <button onClick={() => setTab("samples")} suppressHydrationWarning
-              className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
-                tab === "samples" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
-              }`}>
+              className={`${tab === "samples" ? neoBtnPrimary : neoBtn} font-mono text-[10px] font-bold tracking-widest uppercase px-5 py-2`}>
               {t("customer.explore.sampleLayouts")}
-              {tab === "samples" && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
             </button>
             <button onClick={() => setTab("community")} suppressHydrationWarning
-              className={`font-mono text-[10px] font-bold tracking-widest uppercase pb-3 pr-8 transition-all relative ${
-                tab === "community" ? "text-[#222]" : "text-[#999] hover:text-[#666]"
-              }`}>
+              className={`${tab === "community" ? neoBtnPrimary : neoBtn} font-mono text-[10px] font-bold tracking-widest uppercase px-5 py-2`}>
               {t("customer.explore.communityBooks")}
-              {tab === "community" && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#222] rounded-full" />}
             </button>
           </div>
 
@@ -100,8 +93,6 @@ export default function ExplorePage() {
                         <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{s.style}</span>
                         <span className="text-[#222]">·</span>
                         <span className="font-mono text-[9px] font-bold text-[#999]" suppressHydrationWarning>{s.pageCount} {t("customer.explore.pg")}</span>
-                        <span className="flex-1" />
-                        <span className="font-mono text-[10px] font-bold">${s.price}</span>
                       </div>
                     </div>
                   </div>

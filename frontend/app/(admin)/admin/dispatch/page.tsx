@@ -145,7 +145,7 @@ export default function DispatchPage() {
                 </div>
               </div>
               <button onClick={() => { setAssignChecked(new Set()); setAssignSearch(""); setShowAssignModal(true); }}
-                className="bg-[#222] text-white rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-[transform,box-shadow] font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0">
+                className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}>
                 {t("admin.dispatch.assignOrders")}
               </button>
             </div>
@@ -154,12 +154,10 @@ export default function DispatchPage() {
           {/* Filters bar */}
           <div className={`${card} mx-6 mt-4 mb-3 p-3 shrink-0`}>
             <div className="flex items-center justify-between gap-4">
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 {counts.map(({ key, count }) => (
                   <button key={key} onClick={() => { setStatusFilter(key as OrderStatus | "all"); setPage(0); }}
-                    className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 transition-[background-color,color,border-color] ${
-                      statusFilter === key ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
-                    }`}>
+                    className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 ${statusFilter === key ? neoBtnPrimary : neoBtn}`}>
                     {key === "all" ? t("admin.dispatch.filterAll") : t(`admin.dispatch.filter${key.replace(/-./g, (m) => m[1].toUpperCase()).replace(/^./, (m) => m.toUpperCase())}`)} <span className={statusFilter === key ? "text-white/60" : "text-[#999]"}>({count})</span>
                   </button>
                 ))}
@@ -180,13 +178,13 @@ export default function DispatchPage() {
               <ResponsiveTable
                 header={
                   <div className="grid shrink-0 border-b-[3px] border-[#222]"
-                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px 50px" }}>
+                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px 80px" }}>
                     {[t("admin.dispatch.orderId"), t("admin.dispatch.customer"), t("admin.dispatch.product"), t("admin.dispatch.amount"), t("admin.dispatch.status"), t("admin.dispatch.date"), t("common.action")].map((h) => (
                       <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                     ))}
                   </div>
                 }
-                gridCols={"110px 1fr 1fr 100px 120px 100px 50px"}
+                gridCols={"110px 1fr 1fr 100px 120px 150px 80px"}
               >
                 {paged.length === 0 ? (
                   <div className="flex items-center justify-center py-10"><p className="font-bold text-[#999]">{t("admin.dispatch.noOrders")}</p></div>
@@ -194,7 +192,7 @@ export default function DispatchPage() {
                   paged.map((order) => (
                     <div key={order.id}
                       className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 150px 50px" }}>
+                      style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 150px 80px" }}>
                       <div className="px-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">{order.id}</div>
                       <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.customer}</div>
                       <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.product}</div>
@@ -293,7 +291,7 @@ export default function DispatchPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 flex gap-2 shrink-0 border-t-[3px] border-[#222]">
+            <div className="px-6 py-4 flex gap-3 shrink-0 border-t-[3px] border-[#222]">
               <button className={`${neoBtn} ${labelSm} py-3 px-4 shrink-0`}>{t("admin.dispatch.printLabel")}</button>
               <button className={`${neoBtn} ${labelSm} flex-1 py-3`}>{t("admin.dispatch.viewJournal")}</button>
               <button onClick={() => updateStatus(selectedOrder.id, "shipped")}

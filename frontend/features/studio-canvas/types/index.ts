@@ -1,18 +1,84 @@
 import type { LayoutConfig } from "./layout";
 
-export type FormatKey = 'A4_PORTRAIT' | 'SQUARE' | 'LANDSCAPE';
+export type PaperSizeCategory = "square" | "landscape" | "portrait";
 
-export const FORMATS: Record<FormatKey, { width: number; height: number; label: string }> = {
-  A4_PORTRAIT: { width: 840, height: 1188, label: 'A4' },
-  SQUARE:      { width: 840, height: 840,  label: '□' },
-  LANDSCAPE:   { width: 1188, height: 840, label: '⊞' },
+export type FormatKey =
+  | "SQUARE_15" | "SQUARE_20" | "SQUARE_30"
+  | "LANDSCAPE_A4" | "LANDSCAPE_20x30"
+  | "PORTRAIT_A5" | "PORTRAIT_A4";
+
+// Paper formats at 4 px/mm (1 cm = 40 px). width/height = single-page canvas size.
+export interface PaperFormat {
+  width: number;
+  height: number;
+  cm: string;
+  category: PaperSizeCategory;
+  name: { vi: string; en: string; es: string };
+  description: { vi: string; en: string; es: string };
+}
+
+export const FORMATS: Record<FormatKey, PaperFormat> = {
+  SQUARE_15: { width: 600, height: 600, cm: "15×15", category: "square",
+    name: { vi: "Vuông 15×15", en: "Square 15×15", es: "Cuadrado 15×15" },
+    description: { vi: "Khổ mini bỏ túi, làm quà tặng nhanh, photobook mini cho các dịp kỷ niệm nhỏ.", en: "Pocket mini size, quick gift photobook for small celebrations.", es: "Tamaño mini de bolsillo, fotolibro de regalo para celebraciones." } },
+  SQUARE_20: { width: 800, height: 800, cm: "20×20", category: "square",
+    name: { vi: "Vuông 20×20", en: "Square 20×20", es: "Cuadrado 20×20" },
+    description: { vi: "Khổ quốc dân cho photobook cá nhân, lifestyle, du lịch và baby book. Cân đối, cầm vừa tay.", en: "Most popular for personal, lifestyle, travel and baby photobooks. Balanced, fits in hand.", es: "El más popular para fotolibros personales, lifestyle, viajes y bebés. Equilibrado y cómodo." } },
+  SQUARE_30: { width: 1200, height: 1200, cm: "30×30", category: "square",
+    name: { vi: "Vuông 30×30", en: "Square 30×30", es: "Cuadrado 30×30" },
+    description: { vi: "Khổ lớn cao cấp, sang trọng, cho album cưới hoặc bộ sưu tập nghệ thuật.", en: "Premium large size, luxurious, for wedding albums or art collections.", es: "Tamaño grande premium, lujoso, para álbumes de boda o colecciones de arte." } },
+  LANDSCAPE_A4: { width: 1188, height: 840, cm: "21×29.7", category: "landscape",
+    name: { vi: "A4 Ngang", en: "A4 Landscape", es: "A4 Horizontal" },
+    description: { vi: "Khi mở phẳng cho toàn cảnh rộng 42×29.7 cm, hợp ảnh phong cảnh, tập thể hoặc phong cách tạp chí.", en: "Flat spread opens to a 42×29.7 cm panorama, great for scenery, groups or magazine style.", es: "Al abrir ofrece un panorama de 42×29.7 cm, ideal para paisajes, grupos o estilo revista." } },
+  LANDSCAPE_20x30: { width: 1200, height: 800, cm: "20×30", category: "landscape",
+    name: { vi: "20×30 Ngang", en: "20×30 Landscape", es: "20×30 Horizontal" },
+    description: { vi: "Khổ ngang truyền thống của ảnh cưới Việt Nam, không gian trình bày rộng rãi, hoành tráng.", en: "Traditional Vietnamese wedding-photo landscape size, spacious and impressive.", es: "Tamaño horizontal tradicional para fotos de boda vietnamitas, espacioso e impresionante." } },
+  PORTRAIT_A5: { width: 600, height: 840, cm: "15×21", category: "portrait",
+    name: { vi: "A5 Dọc", en: "A5 Portrait", es: "A5 Vertical" },
+    description: { vi: "Khổ dọc nhỏ gọn, nhẹ nhàng, như một cuốn sổ tay lưu niệm.", en: "Compact, light portrait size, like a keepsake notebook.", es: "Tamaño vertical compacto y ligero, como una libreta de recuerdos." } },
+  PORTRAIT_A4: { width: 840, height: 1188, cm: "21×29.7", category: "portrait",
+    name: { vi: "A4 Dọc", en: "A4 Portrait", es: "A4 Vertical" },
+    description: { vi: "Chuẩn tạp chí/documentary photobook, hợp với sách ảnh kể chuyện nhiều chữ, châm ngôn, tự sự.", en: "Magazine/documentary photobook standard, great for storytelling books with text and captions.", es: "Estándar de revista/fotolibro documental, ideal para libros narrativos con texto." } },
 };
+
+export const CATEGORY_ORDER: PaperSizeCategory[] = ["square", "landscape", "portrait"];
+
+// Resolve a book format from supplier-derived sizes (code + width/height in px).
+// Falls back to FORMATS by key, else PORTRAIT_A4.
+export function resolveFormat(meta: { format: string; width?: number | null; height?: number | null }): PaperFormat {
+  const f = FORMATS[meta.format as FormatKey];
+  if (f) return f;
+  return {
+    width: meta.width ?? FORMATS.PORTRAIT_A4.width,
+    height: meta.height ?? FORMATS.PORTRAIT_A4.height,
+    cm: meta.width ? `${meta.width / 40}×${meta.height ? meta.height / 40 : ""}` : FORMATS.PORTRAIT_A4.cm,
+    category: "portrait",
+    name: { vi: meta.format, en: meta.format, es: meta.format },
+    description: { vi: "", en: "", es: "" },
+  };
+}
+
+export function paperSizeLabel(code: string, lang: "vi" | "en" | "es" = "en"): string {
+  const fmt = FORMATS[code as FormatKey];
+  if (!fmt) return code;
+  return `${fmt.cm} cm · ${fmt.name[lang] ?? fmt.name.en}`;
+}
+
+// ponytail: legacy A4_PORTRAIT/SQUARE/LANDSCAPE from before the real-size catalog.
+const OLD_FORMAT_MAP: Record<string, FormatKey> = { A4_PORTRAIT: "PORTRAIT_A4", SQUARE: "SQUARE_20", LANDSCAPE: "LANDSCAPE_A4" };
+
+export function normalizeFormat(code?: string | null): FormatKey {
+  if (code && FORMATS[code as FormatKey]) return code as FormatKey;
+  if (code && OLD_FORMAT_MAP[code]) return OLD_FORMAT_MAP[code];
+  return "PORTRAIT_A4";
+}
 
 export type PageState = {
   index: number;
   canvasJson: string | null;
   thumbnailUrl: string | null;
   layout: LayoutConfig | null;
+  spreadLayout: LayoutConfig | null;
 };
 
 export const FONTS: { name: string; css: string; preview: string }[] = [

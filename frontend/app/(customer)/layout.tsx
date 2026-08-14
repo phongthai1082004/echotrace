@@ -4,7 +4,9 @@ import { Nav } from "@/components/nav";
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession();
-  if (!session) redirect("/");
+  if (!session) redirect("/en");
+  const role = (session.user as { role?: string } | undefined)?.role;
+  if (role === "admin") redirect("/admin/analytics");
 
   return (
     <>

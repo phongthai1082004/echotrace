@@ -37,7 +37,10 @@
     "NOT_FOUND": "Recurso no encontrado",
     "INTERNAL": "Error interno del servidor",
     "BOOK_MISSING_CONTENT": "Falta contenido",
-    "TOO_MANY_REQUEST": "Demasiadas solicitudes, por favor inténtalo de nuevo más tarde"
+    "TOO_MANY_REQUEST": "Demasiadas solicitudes, por favor inténtalo de nuevo más tarde",
+    "COUPON_CODE_EXISTS": "El código de cupón ya existe",
+     "CART_NOT_FOUND": "Carrito no encontrado",
+     "MISSING_BOOK_OPTIONS_ES": "Opciones de libro faltantes"
   },
   "validation": {
     "isEmail": "{{property}} debe ser un correo válido",

@@ -16,11 +16,12 @@ type Props = {
   api: StudioAPI;
   hideOrder?: boolean;
   noPadding?: boolean;
+  backHref?: string;
 };
 
 const CANVAS_FONTS_URL = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Great+Vibes&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Righteous&family=Permanent+Marker&family=Abril+Fatface&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Raleway:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap";
 
-export function StudioPage({ api, hideOrder, noPadding }: Props) {
+export function StudioPage({ api, hideOrder, noPadding, backHref }: Props) {
   useEffect(() => {
     const fn = (e: MouseEvent) => e.preventDefault(); document.addEventListener("contextmenu", fn); return () => document.removeEventListener("contextmenu", fn);
     // Load canvas fonts only when studio mounts
@@ -35,7 +36,7 @@ export function StudioPage({ api, hideOrder, noPadding }: Props) {
         <StudioLayout noPadding={noPadding}>
           <StudioTopbar hideOrder={hideOrder} />
           <div className="flex flex-1 overflow-hidden">
-            <StudioSidebar />
+            <StudioSidebar backHref={backHref} />
             <StudioSidebarPanel />
             <StudioWorkspace />
             <StudioProperties />

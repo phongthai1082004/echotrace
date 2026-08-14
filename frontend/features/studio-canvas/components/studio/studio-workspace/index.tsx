@@ -6,8 +6,8 @@ import { useDrop } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { useElementControls } from "../../../hooks/useElementControls";
 import { usePageManager } from "../../../hooks/usePageManager";
-import { FORMATS, ZOOM_LEVELS } from "../../../types";
-import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, reviveObject, isCoverPage, canvasPointer, applyInteractionLock, serializeSel, pasteClipboard } from "../../../lib/layout-engine";
+import { FORMATS, ZOOM_LEVELS, resolveFormat } from "../../../types";
+import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, reviveObject, isCoverPage, canvasPointer, applyInteractionLock, syncViewVisibility, serializeSel, pasteClipboard, groupSelectedObjects, ungroupSelectedObjects } from "../../../lib/layout-engine";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
@@ -20,6 +20,7 @@ export function StudioWorkspace() {
   const destroyedRef = useRef(false);
   const loadedPageRef = useRef<number>(-1);
   const loadedUndoVerRef = useRef<number>(-1);
+  const loadedViewRef = useRef<string>("");
   const setCanvas = useCanvasStore((s) => s.setCanvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
@@ -61,24 +62,47 @@ export function StudioWorkspace() {
             }
             if (placePhotoInFrame(frame, img)) { c.add(img); c.setActiveObject(frame); c.renderAll(); enforceZLayers(c); return; }
           }
-          const s = Math.min(300 / (img.width || 1), 300 / (img.height || 1));
-          img.set({ left: p.x - 75, top: p.y - 75, scaleX: s, scaleY: s, customProperties: { z: Date.now(), layer: "element" } } as any);
+          // Calculate proper scale to fit image in 300x300 area while maintaining aspect ratio
+          const maxSize = 300;
+          const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
+          // Position image at drop point with center origin (left/top are already at center)
+          // No additional offset needed since we're using originX/originY center
+          img.set({ 
+            left: p.x, 
+            top: p.y, 
+            originX: "center",
+            originY: "center",
+            scaleX: s, 
+            scaleY: s, 
+            customProperties: { z: Date.now(), layer: "element" } 
+          } as any);
           (img as any)._selId = `photo-${Date.now()}`; c.add(img); c.setActiveObject(img); c.renderAll(); enforceZLayers(c);
         });
       } else if (item.type === "STICKER" && item.url) {
         useCanvasStore.getState().pushUndo();
         fabric.FabricImage.fromURL(item.url, { crossOrigin: "anonymous" }).then((img) => {
-          const s = Math.min(150 / (img.width || 1), 150 / (img.height || 1));
-          img.set({ left: p.x - 37.5, top: p.y - 37.5, scaleX: s, scaleY: s, customProperties: { z: Date.now(), layer: "element", stickerName: item.name || "Sticker" } } as any);
+          // Calculate proper scale to fit sticker in 150x150 area while maintaining aspect ratio
+          const maxSize = 150;
+          const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
+          // Position sticker at drop point with center origin
+          img.set({ 
+            left: p.x, 
+            top: p.y, 
+            originX: "center",
+            originY: "center",
+            scaleX: s, 
+            scaleY: s, 
+            customProperties: { z: Date.now(), layer: "element", stickerName: item.name || "Sticker" } 
+          } as any);
           (img as any)._selId = `sticker-${Date.now()}`; c.add(img); c.setActiveObject(img); c.renderAll(); enforceZLayers(c);
         });
       }
     },
   }), []);
 
-  const fmt = FORMATS[bookMeta.format];
+  const fmt = resolveFormat(bookMeta);
   const pageW = fmt.width;
-  const ch = pageW * (297 / 210);
+  const ch = fmt.height;
 
   useEffect(() => {
     const s = useCanvasStore.getState();
@@ -95,9 +119,9 @@ export function StudioWorkspace() {
     const rightIdx = Math.min(idx + 1, n - 1);
 
     const prev = (c as any)._pageIdx;
-    if (loadedPageRef.current === idx && prev === idx && loadedUndoVerRef.current === undoVersion) {
+    if (loadedPageRef.current === idx && prev === idx && loadedUndoVerRef.current === undoVersion && loadedViewRef.current === effectiveView) {
       applyInteractionLock(c, pageW, isCover, effectiveView, true);
-      if (!isCover) c.renderAll();
+      if (!isCover) { syncViewVisibility(c, effectiveView === "spread" ? "spread" : "single"); c.renderAll(); }
       return;
     }
 
@@ -105,6 +129,7 @@ export function StudioWorkspace() {
     (c as any)._pageIdx = idx;
     loadedPageRef.current = idx;
     loadedUndoVerRef.current = undoVersion;
+    loadedViewRef.current = effectiveView;
     c.clear();
     c.backgroundColor = "#fff";
     if (isCover) {
@@ -142,6 +167,7 @@ export function StudioWorkspace() {
             c.add(new fabric.Line([pageW, 0, pageW, ch], { stroke: "#222", strokeWidth: 1, strokeDashArray: [6, 4], selectable: false, evented: false, excludeFromExport: true }).set({ _spine: true } as any));
             c.selection = true;
             applyInteractionLock(c, pageW, isCover, effectiveView);
+            syncViewVisibility(c, effectiveView === "spread" ? "spread" : "single");
             c.renderAll();
           }).catch(() => { if (!destroyedRef.current) c.renderAll(); });
         } catch { if (!destroyedRef.current) c.renderAll(); }
@@ -245,6 +271,8 @@ export function StudioWorkspace() {
         if ((e.ctrlKey || e.metaKey) && e.key === "c" && !e.shiftKey) { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); } }
         if ((e.ctrlKey || e.metaKey) && e.key === "x") { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); useCanvasStore.getState().pushUndo(); if (isFrameObject(a2)) { const fid = (a2 as any)._selId; c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === fid).forEach((p) => c.remove(p)); } c.remove(a2); c.discardActiveObject(); c.renderAll(); } }
         if ((e.ctrlKey || e.metaKey) && e.key === "v") { e.preventDefault(); const { clipboard, pasteCount, bumpPasteCount } = useCanvasStore.getState(); if (!clipboard) return; pasteClipboard(c, clipboard, pasteCount, bumpPasteCount, () => useCanvasStore.getState().pushUndo()); }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); s.pushUndo(); groupSelectedObjects(c); s.incrementLayerVersion(); }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "g") { e.preventDefault(); const s = useCanvasStore.getState(); s.pushUndo(); ungroupSelectedObjects(c); s.incrementLayerVersion(); }
       };
       window.addEventListener("keydown", onKeyDown);
       c.backgroundColor = "#fff";

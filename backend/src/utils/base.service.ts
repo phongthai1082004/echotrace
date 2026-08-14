@@ -1,6 +1,6 @@
-import { QueryProcessor, PaginationConfig, PaginationOptions } from "./pagination.js";
+import { QueryProcessor, PaginationConfig, PaginationOptions } from "@echotrace/shared";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 
 interface SoftDeletable {
   id: number;

@@ -3,8 +3,10 @@
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { cloudinaryUrl } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@echotrace/shared";
+import { neoBtn } from "@/lib/styles";
 import { useTranslation, Trans } from "react-i18next";
+import { useSession } from "next-auth/react";
 
 const ITEM_W = 260;
 
@@ -24,15 +26,16 @@ const originLogs = [
 ];
 
 const plans = [
-  { nameKey: "home.pricing.plans.softcover.name", price: "$29", pagesKey: "home.pricing.plans.softcover.pages", paperKey: "home.pricing.plans.softcover.paper", bindingKey: "home.pricing.plans.softcover.binding", coverKey: "home.pricing.plans.softcover.cover", popular: false },
-  { nameKey: "home.pricing.plans.hardcover.name", price: "$49", pagesKey: "home.pricing.plans.hardcover.pages", paperKey: "home.pricing.plans.hardcover.paper", bindingKey: "home.pricing.plans.hardcover.binding", coverKey: "home.pricing.plans.hardcover.cover", popular: true },
-  { nameKey: "home.pricing.plans.leather.name", price: "$89", pagesKey: "home.pricing.plans.leather.pages", paperKey: "home.pricing.plans.leather.paper", bindingKey: "home.pricing.plans.leather.binding", coverKey: "home.pricing.plans.leather.cover", popular: false },
+  { nameKey: "home.pricing.plans.softcover.name", price: "$29", pagesKey: "home.pricing.plans.softcover.pages", paperKey: "home.pricing.plans.softcover.paper", coverKey: "home.pricing.plans.softcover.cover", popular: false },
+  { nameKey: "home.pricing.plans.hardcover.name", price: "$49", pagesKey: "home.pricing.plans.hardcover.pages", paperKey: "home.pricing.plans.hardcover.paper", coverKey: "home.pricing.plans.hardcover.cover", popular: true },
+  { nameKey: "home.pricing.plans.leather.name", price: "$89", pagesKey: "home.pricing.plans.leather.pages", paperKey: "home.pricing.plans.leather.paper", coverKey: "home.pricing.plans.leather.cover", popular: false },
 ];
 
 const allLogs = [...originLogs, ...originLogs.map((l, i) => ({ ...l, id: `${l.id}-${i}` }))];
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { data: session } = useSession();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const slide = (dir: "left" | "right") => {
@@ -49,7 +52,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* ─── Hero ─── */}
       <section className="pt-15 min-h-screen flex flex-col lg:flex-row border-b-[3px] border-[#222]">
         <div className="relative overflow-hidden bg-[#e8e6e0] lg:w-[60%] min-h-[50vh] lg:min-h-[calc(100vh-60px)]">
           <Image src="https://images.unsplash.com/photo-1775830150436-1cbe3d5ad3c6?w=1400&h=1000&fit=crop&auto=format" alt="Ha Long Bay" fill sizes="100vw" className="object-cover object-center" />
@@ -68,9 +70,6 @@ export default function HomePage() {
               <Link href="/studio" className="bg-[#222] text-white font-bold text-[11px] tracking-widest uppercase py-4 px-6 rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all text-center">
                 {t("home.hero.ctaPrimary")} →
               </Link>
-              <Link href="/explore" className="bg-transparent text-[#222] font-bold text-[11px] tracking-widest uppercase py-4 px-6 rounded-[10px] border-[3px] border-[#222] hover:bg-white/50 transition-all text-center">
-                {t("home.hero.ctaSecondary")}
-              </Link>
             </div>
             <div className="flex items-center gap-2 mt-6">
               <div className="flex -space-x-2">
@@ -83,8 +82,37 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      {/* ─── Feature Marquee ─── */}
+      <section className="py-4 overflow-hidden border-b-[3px] border-[#222] bg-[#FFF7D6]">
+        <div className="flex w-max animate-marquee items-center whitespace-nowrap pointer-events-none">
+          {[
+            ...[
+              "home.marquee.editorialTypography",
+              "home.marquee.asymmetricLayouts",
+              "home.marquee.gpsMetadata",
+              "home.marquee.archivalPaper",
+              "home.marquee.hardShadows",
+              "home.marquee.premiumBinding",
+              "home.marquee.handcrafted"
+            ],
+            ...[
+              "home.marquee.editorialTypography",
+              "home.marquee.asymmetricLayouts",
+              "home.marquee.gpsMetadata",
+              "home.marquee.archivalPaper",
+              "home.marquee.hardShadows",
+              "home.marquee.premiumBinding",
+              "home.marquee.handcrafted"
+            ]
+          ].map((k, i) => (
+            <span key={i} className="font-mono text-[10px] font-bold tracking-widest uppercase shrink-0 text-[#666] px-10">
+              — {t(k)}
+            </span>
+          ))}
+        </div>
+      </section>
       {/* ─── Field Journals (slider) ─── */}
+      {session?.user && (
       <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-16 max-[1600px]:py-12 max-[1440px]:py-10 max-[1280px]:py-8 overflow-hidden">
         <div className="flex items-end justify-between mb-10 pb-5 border-b-[3px] border-[#222]">
           <div>
@@ -93,10 +121,10 @@ export default function HomePage() {
           </div>
         </div>
         <div className="relative">
-          <button onClick={() => slide("left")} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-[#FFF7D6] text-[#222] flex items-center justify-center border-[3px] border-[#222] shadow-[3px_3px_0_#222] hover:bg-white transition-all">
+          <button onClick={() => slide("left")} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-[#FFF7D6] text-[#222] flex items-center justify-center border-[3px] border-[#222] shadow-[3px_3px_0_#222] hover:bg-white transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <button onClick={() => slide("right")} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 w-10 h-10 rounded-full bg-[#FFF7D6] text-[#222] flex items-center justify-center border-[3px] border-[#222] shadow-[3px_3px_0_#222] hover:bg-white transition-all">
+          <button onClick={() => slide("right")} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-[#FFF7D6] text-[#222] flex items-center justify-center border-[3px] border-[#222] shadow-[3px_3px_0_#222] hover:bg-white transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
           </button>
           <div ref={scrollRef} className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: "none" }}>
@@ -115,18 +143,10 @@ export default function HomePage() {
         </div>
         </div>
       </section>
-
-      {/* ─── Feature Marquee ─── */}
-      <section className="py-4 px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 overflow-hidden border-y-[3px] border-[#222] bg-[#FFF7D6]">
-        <div className="flex gap-10 items-center whitespace-nowrap">
-          {["home.marquee.editorialTypography", "home.marquee.asymmetricLayouts", "home.marquee.gpsMetadata", "home.marquee.archivalPaper", "home.marquee.hardShadows", "home.marquee.premiumBinding", "home.marquee.handcrafted"].map((k) => (
-            <span key={k} className="font-mono text-[10px] font-bold tracking-widest uppercase shrink-0 text-[#666]">— {t(k)}</span>
-          ))}
-        </div>
-      </section>
+      )}
 
       {/* ─── How It Works ─── */}
-      <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 bg-[#FFF7D6] border-b-[3px] border-[#222]">
+      <section className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-20 max-[1600px]:py-16 max-[1440px]:py-14 max-[1280px]:py-12 bg-[#FFF7D6] border-y-[3px] border-[#222]">
         <div className="max-w-4xl mx-auto">
           <p className="font-mono text-[10px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("home.howItWorks.sub")}</p>
           <h2 className="text-4xl lg:text-5xl font-bold mb-14">{t("home.howItWorks.title")}</h2>
@@ -144,7 +164,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Link href="/explore" className="inline-flex bg-transparent text-[#222] font-bold text-[10px] tracking-widest uppercase py-3.5 px-6 rounded-[8px] border-[3px] border-[#222] hover:bg-white transition-all">
+            <Link href="/explore" className={`inline-flex ${neoBtn} font-bold text-[10px] tracking-widest uppercase py-3.5 px-6`}>
               {t("home.howItWorks.cta")}
             </Link>
           </div>
@@ -190,7 +210,7 @@ export default function HomePage() {
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] mb-1">{t(p.nameKey)}</p>
                 <p className="text-4xl font-bold mb-4">{p.price}</p>
                 <ul className="space-y-2 mb-6 flex-1">
-                  {[{ label: t("home.pricing.labels.pages"), val: t(p.pagesKey) }, { label: t("home.pricing.labels.paper"), val: t(p.paperKey) }, { label: t("home.pricing.labels.binding"), val: t(p.bindingKey) }, { label: t("home.pricing.labels.cover"), val: t(p.coverKey) }].map((spec) => (
+                  {[{ label: t("home.pricing.labels.pages"), val: t(p.pagesKey) }, { label: t("home.pricing.labels.paper"), val: t(p.paperKey) }, { label: t("home.pricing.labels.cover"), val: t(p.coverKey) }].map((spec) => (
                     <li key={spec.label} className="flex items-center justify-between text-sm">
                       <span className="text-[#999]">{spec.label}</span>
                       <span className="font-medium text-right">{spec.val}</span>
@@ -224,10 +244,10 @@ export default function HomePage() {
           <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-white">{t("home.cta.title")}</h2>
           <p className="text-sm text-[#999] mb-10 max-w-md mx-auto">{t("home.cta.desc")}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/studio" className="bg-[#FFF7D6] text-[#222] font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-[#FFF7D6] shadow-[4px_4px_0_#222] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all">
+            <Link href="/studio" className="bg-[#FFF7D6] text-[#222] font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-white hover:bg-[#222] hover:text-[#FFF7D6] transition-colors">
               {t("home.cta.ctaPrimary")} →
             </Link>
-            <Link href="/explore" className="bg-transparent text-white font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-white hover:bg-white/10 transition-all">
+            <Link href="/explore" className="bg-transparent text-white font-bold text-[11px] tracking-widest uppercase py-4 px-8 rounded-[10px] border-[3px] border-white hover:bg-white hover:text-[#222] transition-colors">
               {t("home.cta.ctaSecondary")}
             </Link>
           </div>
@@ -238,30 +258,32 @@ export default function HomePage() {
       {/* ─── Footer ─── */}
       <footer className="bg-[#222] border-t-[3px] border-[#444]">
         <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-12 max-[1600px]:py-10 max-[1440px]:py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="col-span-2 md:col-span-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 justify-items-center text-center md:text-left">
+            <div className="max-w-xs">
               <p className="text-lg font-bold mb-3 text-white">{t("brand")}</p>
               <p className="text-xs text-[#999] leading-relaxed">{t("home.footer.desc")}</p>
             </div>
-            <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.product")}</p>
-              <ul className="space-y-2">
-                {[t("home.footer.studio"), t("home.footer.pricing"), t("home.footer.samples"), t("home.footer.shipping")].map((l) => (
-                  <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.company")}</p>
-              <ul className="space-y-2">
-                {[t("home.footer.about"), t("home.footer.blog"), t("home.footer.careers"), t("home.footer.contact")].map((l) => (
-                  <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
-                ))}
-              </ul>
+            <div className="flex flex-col sm:flex-row gap-10 sm:gap-20">
+              <div>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.product")}</p>
+                <ul className="space-y-2">
+                  {[t("home.footer.studio"), t("home.footer.pricing"), t("home.footer.samples"), t("home.footer.shipping")].map((l) => (
+                    <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#777]">{t("home.footer.company")}</p>
+                <ul className="space-y-2">
+                  {[t("home.footer.about"), t("home.footer.blog"), t("home.footer.careers"), t("home.footer.contact")].map((l) => (
+                    <li key={l}><Link href="/" className="text-sm text-[#BBB] font-medium hover:text-white transition-colors">{l}</Link></li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-        <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-5 border-t-[3px] border-[#444] flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+        <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-5 border-t-[3px] border-[#444] flex flex-col md:flex-row items-center justify-center gap-2 text-center">
           <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">{t("home.footer.copyright", { year: "2024" })}</p>
           <div className="flex gap-4">
             {[t("home.footer.privacy"), t("home.footer.terms"), t("home.footer.returns")].map((l) => (

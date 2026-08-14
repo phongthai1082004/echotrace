@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 import { sendOtpEmail } from "../../lib/mailer.js";
-import { TokenType } from "../../enum/token.type.js";
-import { AuthResponseDTO, AuthMapper } from "../dto/auth/auth.dto.js";
+import { TokenType } from "@echotrace/shared";
+import { AuthResponseDTO, AuthMapper } from "@echotrace/shared";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -40,10 +40,9 @@ export class AuthService extends IAuthService {
           name: payload.name || "User",
           googleId: payload.sub,
           avatar: payload.picture,
-          status: "active",
         },
       });
-    } else if (user.status === "banned") {
+    } else if (user.isDelete) {
       throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
     }
     return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id)), await this.generateRefreshToken(String(user.id)));
@@ -85,7 +84,7 @@ export class AuthService extends IAuthService {
     await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { email, password: hashed, name: email.split("@")[0], status: "active" } });
+    const user = await prisma.user.create({ data: { email, password: hashed, name: email.split("@")[0] } });
 
     return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id)), await this.generateRefreshToken(String(user.id)));
   }
@@ -95,7 +94,7 @@ export class AuthService extends IAuthService {
       where: { email, isDelete: false },
     });
     if (!user || !user.password) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);
-    if (user.status === "banned") throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
+    if (user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);

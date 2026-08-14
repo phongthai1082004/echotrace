@@ -6,8 +6,12 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
+import { usePageManager } from "../../hooks/usePageManager";
+import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
-import { ZOOM_LEVELS, FONTS } from "../../types";
+import { apiFetch } from "@/lib/api.fetch";
+import { ZOOM_LEVELS, FONTS, resolveFormat } from "../../types";
+import { BookPreview } from "../book-preview";
 import { applyUndo, applyRedo, isFrameObject, serializeCanvasState, enforceZLayers, placePhotoInFrame, applyFrameClip } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
@@ -67,14 +71,15 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
   const setZoomIndex = useCanvasStore((s) => s.setZoomIndex);
   const viewMode = useCanvasStore((s) => s.viewMode);
-  const setViewMode = useCanvasStore((s) => s.setViewMode);
   const { saveFull } = useAutoSave();
+  const { saveCurrentPage } = usePageManager();
   const { showToast } = useToast();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (editingTitle && titleRef.current) {
@@ -183,12 +188,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
     // 2. Fetch user gallery images
     let galleryPhotos: { id: number; url: string }[];
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/uploads/images`, {
-        headers: { Authorization: `Bearer ${token}` }, cache: "no-cache",
-      });
-      if (!res.ok) { showToast("Failed to fetch gallery", "error"); return; }
-      const d = await res.json();
-      galleryPhotos = d.data || [];
+      galleryPhotos = await apiFetch<any[]>("/api/uploads/images", token, { cache: "no-cache" }) || [];
     } catch { showToast("Failed to fetch gallery", "error"); return; }
 
     // 3. Scan all pages for used photo URLs + empty frames
@@ -262,8 +262,9 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
       tc.clear();
     }
 
-    // 6. Update store — no canvas reload, no state change
+    // 6. Update store and force canvas reload
     s.setPages(updatedPages);
+    s.incrementUndoVersion();
     showToast(`Auto-filled ${photoIdx} photo(s)`, "success");
   };
 
@@ -310,7 +311,16 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
       <div className="ml-auto flex items-center gap-2">
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           {(["left", "spread", "right"] as const).map((v) => (
-            <button key={v} onClick={() => setViewMode(v)}
+            <button key={v} onClick={() => {
+              const s = useCanvasStore.getState();
+              saveCurrentPage();
+              s.setViewMode(v);
+              const spread = v === "spread" && !isCoverPage(s.activePageIndex, s.pages.length);
+              const target = spread
+                ? s.pages[s.activePageIndex]?.spreadLayout ?? null
+                : s.pages[s.activePageIndex]?.layout ?? null;
+              useCanvasStore.setState({ activeLayout: target });
+            }}
               disabled={useCanvasStore.getState().pages.length <= 2 || useCanvasStore.getState().activePageIndex === 0 || useCanvasStore.getState().activePageIndex === useCanvasStore.getState().pages.length - 1}
               className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${viewMode === v ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${v === "right" ? "" : "border-r-2 border-[#222]"} disabled:opacity-30 disabled:cursor-not-allowed`}>{v === "left" ? "L" : v === "right" ? "R" : "2P"}</button>
           ))}
@@ -323,19 +333,103 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
           </button>
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
-        <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> {t("customer.studio.preview")}</button>
+        <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> {t("customer.studio.preview")}</button>
         <button onClick={handleAutoFill} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           {t("customer.studio.autoFill")}
         </button>
-        <button onClick={async () => { const r = await saveFull(token); showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error"); }}
+        <button onClick={async () => {
+            if (editingTitle) commitTitle();
+            const r = await saveFull(token);
+            if (r.ok && r.id && token) {
+              try {
+                const cartData = await apiFetch<any>("/api/cart", token).catch(() => null);
+                if (cartData) {
+                  const existingItems: any[] = Array.isArray(cartData.items) ? cartData.items : [];
+                  const idx = existingItems.findIndex((i: any) => i.bookId === r.id);
+                  if (idx >= 0) {
+                    const s = useCanvasStore.getState();
+                    const meta = s.bookMeta;
+                    existingItems[idx] = {
+                      ...existingItems[idx],
+                      title: meta.title,
+                      content: JSON.stringify({ pages: s.pages.map((p: any) => ({ thumbnailUrl: p.thumbnailUrl })) }),
+                      pages: s.pages.length,
+                      paperSize: meta.format,
+                      paper: meta.paper,
+                    };
+await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items: existingItems }) });
+                  }
+                }
+              } catch {}
+            }
+            showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error");
+          }}
           className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">{t("customer.studio.save")} Journal</button>
         {!hideOrder && (
-          <button className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+          <button onClick={async () => {
+              try {
+                if (editingTitle) commitTitle();
+                if (!token) { showToast("Not authenticated", "error"); return; }
+                const c = useCanvasStore.getState().canvas;
+                if (!c) { showToast("No canvas", "error"); return; }
+                const activeIdx = useCanvasStore.getState().activePageIndex;
+                useCanvasStore.getState().setPage(activeIdx, { canvasJson: serializeCanvasState(c) });
+                let thumb: string | null = null;
+                try { thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 }); } catch {}
+                if (thumb) useCanvasStore.getState().setPage(activeIdx, { thumbnailUrl: thumb });
+                const s = useCanvasStore.getState();
+                const meta = s.bookMeta;
+                const totalPages = s.pages.length;
+                const coverUrl = null;
+
+                const item = {
+                  bookId: meta.id,
+                  title: meta.title,
+                  content: JSON.stringify({ pages: s.pages.map((p) => ({ thumbnailUrl: p.thumbnailUrl })) }),
+                  style: "PHOTOBOOK",
+                  font: "Inter",
+                  cover: "softcover",
+                  coverPrice: 0,
+                  paperSize: meta.format,
+                  paper: meta.paper || "matte",
+                  paperPrice: 0,
+                  pages: totalPages,
+                  coverUrl,
+                  pdfUrl: null,
+                  price: 0,
+                  quantity: 1,
+                };
+
+                let existingItems: any[];
+                try {
+                  const cartData = await apiFetch<any>("/api/cart", token);
+                  existingItems = Array.isArray(cartData?.items) ? cartData.items : [];
+                } catch { showToast("Failed to fetch cart", "error"); return; }
+                const idx = existingItems.findIndex((i: any) => i.bookId === meta.id);
+                if (idx >= 0) { item.quantity = (existingItems[idx].quantity || 1) + 1; existingItems[idx] = { ...existingItems[idx], ...item, _id: existingItems[idx]._id, id: existingItems[idx].id }; }
+                else { existingItems.push(item); }
+
+                try {
+                  await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items: JSON.stringify(existingItems) }) });
+                  showToast(t("customer.studio.addedToCart") || "Added to cart", "success");
+                } catch { showToast("Failed to add to cart", "error"); }
+              } catch (e) { console.error("[addToCart]", e); showToast("Failed to add to cart", "error"); }
+            }}
+            className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
             {t("customer.studio.orderPrint")}
           </button>
         )}
       </div>
+      {previewOpen && (
+        <BookPreview
+          open
+          onClose={() => setPreviewOpen(false)}
+          pages={useCanvasStore.getState().pages.map((p: any) => ({ thumbnailUrl: p.thumbnailUrl }))}
+          title={bookMeta.title}
+          ratio={resolveFormat(bookMeta).height / resolveFormat(bookMeta).width}
+        />
+      )}
     </div>
   );
 }

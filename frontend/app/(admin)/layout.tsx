@@ -1,15 +1,12 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { AdminLayoutClient } from "./admin-layout-client";
 
-import { usePathname } from "next/navigation";
-import { AdminSidebar } from "./admin-sidebar";
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession();
+  if (!session) redirect("/en");
+  const role = (session.user as { role?: string } | undefined)?.role;
+  if (role !== "admin") redirect("/explore");
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const path = usePathname();
-  const isStudio = path.startsWith("/admin/studio");
-  return (
-    <div className="min-h-screen">
-      {!isStudio && <AdminSidebar />}
-      <main className={isStudio ? "" : "ml-56 max-[1600px]:ml-45 max-[1280px]:ml-16 min-h-screen transition-all duration-200"}>{children}</main>
-    </div>
-  );
+  return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }

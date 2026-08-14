@@ -10,6 +10,36 @@ function mmToPx(mm: number): number {
   return mm * MM_TO_PX;
 }
 
+// Layouts are authored in mm on a fixed A4-portrait design canvas (210×297 mm = 840×1188 px).
+// Map design coords onto the actual paper size: scale the content box, shrink margins on small sizes.
+const DESIGN_W = 840, DESIGN_H = 1188, DESIGN_MARGIN_PX = 60;
+
+function layoutMargin(pageW: number, pageH: number): number {
+  const targetMin = Math.min(pageW, pageH);
+  const mm = Math.max(8, 15 * Math.min(1, targetMin / DESIGN_W));
+  return mm * MM_TO_PX;
+}
+
+export function layoutSlotTransform(
+  slot: { left: number; top: number; width: number; height: number },
+  opts: { pageWidth: number; pageHeight: number; kind?: "single" | "spread"; offsetX?: number },
+): { left: number; top: number; width: number; height: number } {
+  const { pageWidth: pw, pageHeight: ch, kind, offsetX = 0 } = opts;
+  const spread = kind === "spread";
+  const designW = spread ? DESIGN_W * 2 : DESIGN_W;
+  // pw is one page's width; a spread spans two pages
+  const targetW = spread ? pw * 2 : pw;
+  const margin = layoutMargin(pw, ch);
+  const sx = (targetW - margin * 2) / (designW - DESIGN_MARGIN_PX * 2);
+  const sy = (ch - margin * 2) / (DESIGN_H - DESIGN_MARGIN_PX * 2);
+  return {
+    left: margin + (mmToPx(slot.left) - DESIGN_MARGIN_PX) * sx + offsetX,
+    top: margin + (mmToPx(slot.top) - DESIGN_MARGIN_PX) * sy,
+    width: mmToPx(slot.width) * sx,
+    height: mmToPx(slot.height) * sy,
+  };
+}
+
 const OVERLAY_KEY = "_dragOverlay";
 const DIM_OVERLAY_KEY = "_dimOverlay";
 const SERIALIZE_KEYS = ["z", "layer", "customProperties", "_selId", "selectable", "evented", "hasControls", "hasBorders"];
@@ -22,6 +52,35 @@ export function enforceZLayers(canvas: fabric.Canvas) {
   const objs = canvas.getObjects().slice();
   objs.sort((a: any, b: any) => (a.customProperties?.z ?? 0) - (b.customProperties?.z ?? 0));
   objs.forEach((obj, i) => canvas.moveObjectTo(obj, i));
+}
+
+export function groupSelectedObjects(canvas: fabric.Canvas): fabric.Group | null {
+  const sel = canvas.getActiveObject();
+  if (!sel) return null;
+  const t = (sel as any).type;
+  if (t !== "activeselection" && t !== "activeSelection") return null;
+  const objects = (sel as any).removeAll() as fabric.FabricObject[];
+  if (!objects.length) return null;
+  const group = new fabric.Group(objects);
+  const maxZ = objects.reduce((m: number, o: any) => Math.max(m, o.customProperties?.z ?? 0), 0);
+  (group as any).customProperties = { z: maxZ + 10, layer: "element" };
+  canvas.add(group);
+  canvas.setActiveObject(group);
+  canvas.requestRenderAll();
+  enforceZLayers(canvas);
+  return group;
+}
+
+export function ungroupSelectedObjects(canvas: fabric.Canvas): fabric.FabricObject[] | null {
+  const group = canvas.getActiveObject() as any;
+  if (!group || group.type !== "group") return null;
+  canvas.remove(group);
+  const objects = group.removeAll() as fabric.FabricObject[];
+  const sel = new (fabric.ActiveSelection as any)(objects, { canvas: canvas as any });
+  canvas.setActiveObject(sel);
+  canvas.requestRenderAll();
+  enforceZLayers(canvas);
+  return objects;
 }
 
 export function nextFrameZ(canvas: fabric.Canvas): number {
@@ -90,11 +149,13 @@ export function pasteClipboard(canvas: fabric.Canvas, clipboard: string, pasteCo
 export function hitTestFrame(canvas: fabric.Canvas, x: number, y: number): fabric.FabricObject | undefined {
   const frame = canvas.getObjects().find((o: any) => {
     if (!isFrameObject(o)) return false;
+    if ((o as any).visible === false) return false;
     return (o as fabric.FabricObject).containsPoint(new fabric.Point(x, y));
   });
   if (frame) return frame;
   const result = canvas.getObjects().find((o: any) => {
     if (!isFrameObject(o)) return false;
+    if ((o as any).visible === false) return false;
     const l = (o as any).left || 0;
     const t = (o as any).top || 0;
     const r = l + ((o as any).width || 0) * ((o as any).scaleX || 1);
@@ -175,9 +236,17 @@ export function addFrameDragOverlays(canvas: fabric.Canvas) {
   canvas.renderAll();
 }
 
-export function clearLayoutFrames(canvas: fabric.Canvas, predicate?: (o: any) => boolean) {
+// kind: "spread" | "single" — which view the layout frame belongs to. Legacy frames (undefined) match both.
+function kindMatches(o: any, kind?: string) {
+  if (!kind) return true;
+  const k = o.customProperties?.layoutKind;
+  return k == null || k === kind;
+}
+
+export function clearLayoutFrames(canvas: fabric.Canvas, predicate?: (o: any) => boolean, kind?: string) {
   canvas.getObjects().filter((o: any) => {
     if (!o.customProperties?.layoutFrame) return false;
+    if (!kindMatches(o, kind)) return false;
     return predicate ? predicate(o) : true;
   }).forEach((o) => canvas.remove(o));
 }
@@ -239,7 +308,7 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
     lockMovementX: true, lockMovementY: true,
     lockScalingX: true, lockScalingY: true, lockRotation: true,
     selectable: false, evented: false,
-    customProperties: { z: frameZ - 1, layer: "photo", frameId: (frame as any)._selId },
+    customProperties: { z: frameZ - 1, layer: "photo", frameId: (frame as any)._selId, layoutKind: (frame as any).customProperties?.layoutKind ?? null },
   } as any);
   (img as any)._selId = `photo-frame-${Date.now()}`;
   return true;
@@ -453,18 +522,27 @@ export function removePhotoDimOverlays(canvas: fabric.Canvas) {
   canvas.getObjects().filter((o: any) => o[DIM_OVERLAY_KEY] === true).forEach((o) => canvas.remove(o));
 }
 
-export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX = 0, clearPredicate?: (o: any) => boolean) {
-  clearLayoutFrames(canvas, clearPredicate);
+export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX = 0, clearPredicate?: (o: any) => boolean, kind?: "single" | "spread", pageWidth?: number) {
+  clearLayoutFrames(canvas, clearPredicate, kind);
+  const cw = canvas.width || DESIGN_W;
+  const ch = canvas.height || DESIGN_H;
+  const spread = kind === "spread";
+  const pw = pageWidth || (spread ? cw / 2 : cw);
   layout.slots.forEach((slot) => {
-    const left = mmToPx(slot.left) + offsetX, top = mmToPx(slot.top);
-    const w = mmToPx(slot.width), h = mmToPx(slot.height);
-    if (slot.role === "background") return;
-    const frame = makeFrame(left, top, w, h, { layoutFrame: true });
+    const r = layoutSlotTransform(slot, { pageWidth: pw, pageHeight: ch, kind, offsetX });
+    const frame = makeFrame(r.left, r.top, r.width, r.height, { layoutFrame: true, ...(kind ? { layoutKind: kind } : {}) });
     (frame as any)._selId = `layout-frame-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     (frame as any).customProperties.z = nextFrameZ(canvas);
     canvas.add(frame);
   });
   canvas.renderAll();
+}
+
+// Content is always visible in every view; L/R/2P only changes editing focus.
+// The non-interactive side is greyed by an overlay + locked by applyInteractionLock.
+// ponytail: removed the layoutKind visibility gating — it made elements "disappear" on view switch.
+export function syncViewVisibility(canvas: fabric.Canvas, _viewKind: "spread" | "single") {
+  canvas.requestRenderAll();
 }
 
 // Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
@@ -491,6 +569,7 @@ export function applyInteractionLock(canvas: fabric.Canvas, pageW: number, isCov
   if (enableAll) {
     canvas.getObjects().forEach((o: any) => {
       // ponytail: skip locked photos so they don't become selectable during view-mode switch
+      if ((o as any)._spine || (o as any).excludeFromExport) return;
       if ((o as any).customProperties?.layer === "photo" && !(o as any).hasControls) return;
       o.set({ selectable: true, evented: true, hasControls: true, hasBorders: true } as any);
     });

@@ -21,7 +21,8 @@
       "price": "$49.00"
     },
     "notifications": "Notificaciones",
-    "noNotifications": "Sin notificaciones aún"
+    "noNotifications": "Sin notificaciones aún",
+    "cartEmpty": "Tu carrito está vacío"
   },
   "common": {
     "loading": "Cargando...",
@@ -36,7 +37,8 @@
     "error": "Error",
     "success": "Éxito",
     "retry": "Reintentar",
-    "viewAll": "Ver todo",
+      "viewAll": "Ver todo",
+      "action": "Acción",
     "dash": "—",
     "unknownUser": "Usuario desconocido",
     "member": "Miembro",
@@ -242,7 +244,9 @@
       "cancel": "Cancelar",
       "error": "Error al cargar diarios",
       "noCover": "Sin portada",
-      "pg": "pág"
+      "pg": "pág",
+      "chooseSize": "Elegir tamaño de papel",
+      "noSize": "No hay tamaños disponibles"
     },
     "studio": {
       "title": "Estudio de Diseño",
@@ -261,7 +265,6 @@
       "image": "Imagen",
       "shape": "Forma",
       "sticker": "Sticker",
-      "background": "Fondo",
       "font": "Fuente",
       "color": "Color",
       "alignment": "Alineación",
@@ -299,7 +302,6 @@
       "applyFilter": "Aplicar filtro inteligente",
       "applyFilterConfirm": "\"{{name}}\" se aplicará a todas las fotos en todas las páginas. ¿Continuar?",
       "apply": "Aplicar",
-      "noBackgrounds": "Sin fondos todavía",
       "clearLayout": "Limpiar diseño",
       "noCanvas": "Sin lienzo",
       "searchStickers": "Buscar stickers…",
@@ -307,10 +309,8 @@
       "noMatch": "No hay stickers que coincidan",
       "noStickers": "Sin stickers todavía",
       "layouts": "Diseños",
-      "sectionBackground": "Fondo",
       "sectionFrames": "Marcos",
       "sectionElements": "Elementos",
-      "itemBackground": "Fondo",
       "itemFrame": "Marco",
       "itemText": "Texto",
       "itemSticker": "Sticker",
@@ -322,7 +322,8 @@
       "saveFailed": "Error al guardar",
       "yourPhotos": "Tus fotos",
       "upload": "+ Subir",
-      "noPhotos": "Sin fotos aún. Haz clic en \"+ Subir\" para añadir."
+      "noPhotos": "Sin fotos aún. Haz clic en \"+ Subir\" para añadir.",
+      "addedToCart": "¡Añadido al carrito!"
     },
     "orders": {
       "title": "Mis Pedidos",
@@ -412,7 +413,19 @@
       "scanInstruction": "Escanea el código QR para pagar",
       "thankYou": "¡Gracias {{name}}! Tu pedido ha sido realizado.",
       "haveDiscount": "¿Tienes un código de descuento?",
-      "changeCode": "Cambiar código"
+      "changeCode": "Cambiar código",
+      "orderList": "Lista de pedidos",
+      "cartItemHint": "Haz clic en un libro para personalizar cubierta, papel y tamaño",
+      "noSupplier": "No hay proveedor para esta combinación",
+      "minQuantity": "La cantidad mínima es 1",
+      "continueDelivery": "Continuar al envío",
+      "paymentMethod": "Método de pago",
+      "paymentFull": "Pago completo",
+      "paymentHalf": "Pagar 50% (COD 50% al recibir)",
+      "paymentHalfNote": "Productos personalizados no son retornables",
+      "editOptions": "Personalizar libro",
+      "cancel": "Cancelar",
+      "save": "Guardar"
     },
     "account": {
       "title": "Configuración de Cuenta",
@@ -430,6 +443,12 @@
       "confirmNewPassword": "Confirmar Nueva Contraseña",
       "update": "Actualizar",
       "saved": "Guardado correctamente"
+    },
+    "preview": {
+      "page": "Página",
+      "of": "de",
+      "go": "Ir",
+      "threeD": "3D"
     }
   },
   "admin": {
@@ -445,7 +464,21 @@
       "totalProfit": "Beneficio total",
       "monthlyRevenue": "Ingresos mensuales (VND)",
       "monthlyOrders": "Pedidos mensuales",
-      "revenueOverview": "Visión general de Ingresos"
+      "revenueOverview": "Visión general de Ingresos",
+      "months": [
+        "Ene",
+        "Feb",
+        "Mar",
+        "Abr",
+        "May",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic"
+      ]
     },
     "finance": {
       "label": "Admin · Finanzas",
@@ -549,7 +582,6 @@
       "categories": "Categorías",
       "all": "Todos",
       "sticker": "Sticker",
-      "background": "Fondo",
       "searchPlaceholder": "Buscar activos…",
       "noAssets": "Sin activos",
       "uploadModal": "Subir activo",
@@ -608,7 +640,19 @@
       "saveSuccess": "Proveedor actualizado correctamente",
       "saveFailed": "Error al actualizar el proveedor",
       "back": "Volver",
-      "partnerSince": "Colaborando desde"
+      "partnerSince": "Colaborando desde",
+      "createBtn": "+ Nuevo proveedor",
+      "createTitle": "Crear proveedor",
+      "createSuccess": "¡Proveedor creado!",
+      "createFailed": "Error al crear proveedor",
+      "accountNotFound": "Cuenta no encontrada",
+      "generalInfo": "Información general",
+      "optionTitle": "Opción",
+      "paperSizeOptions": "Opciones de tamaño de papel",
+      "paperOptions": "Opciones de papel",
+      "coverOptions": "Opciones de portada",
+      "addOption": "Añadir",
+      "optionDuplicate": "El código ya existe"
     },
     "users": {
       "label": "Admin · Usuarios",
@@ -652,7 +696,9 @@
       "assets": "Activos",
       "account": "Cuenta",
       "studio": "Estudio",
-      "notifications": "Notificaciones"
+      "notifications": "Notificaciones",
+      "coupons": "Cupones",
+      "sampleBooks": "Plantilla"
     },
     "pagination": {
       "previous": "Anterior",
@@ -679,6 +725,59 @@
       "unknown": "desconocido",
       "admin": "Admin",
       "noData": "Sin datos"
+    },
+    "coupons": {
+      "label": "Admin · Cupones",
+      "title": "Gestión de cupones",
+      "createBtn": "+ Nuevo cupón",
+      "createTitle": "Crear cupón",
+      "code": "Código *",
+      "scope": {
+        "label": "Ámbito",
+        "order": "Pedido",
+        "item": "Por libro"
+      },
+      "type": "Tipo",
+      "value": "Valor",
+      "maxDiscount": "Descuento máximo",
+      "minOrder": "Pedido mínimo",
+      "maxUsage": "Usos máximos",
+      "expiresAt": "Vence",
+      "create": "Crear",
+      "creating": "Creando...",
+      "created": "¡Cupón creado!",
+      "createFailed": "Error al crear cupón",
+      "deleted": "Cupón eliminado",
+      "deleteFailed": "Error al eliminar cupón",
+      "empty": "Sin cupones aún",
+      "used": "Usados",
+      "searchPlaceholder": "Buscar código...",
+      "fetchFailed": "Error al cargar cupones",
+      "status": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "detailLabel": "Admin · Detalle del cupón",
+      "save": "Guardar",
+      "saving": "Guardando..."
+    },
+    "sampleBooks": {
+      "label": "Plantilla",
+      "title": "Plantilla",
+      "subtitle": "Diseños listos para publicar",
+      "addNew": "Añadir",
+      "name": "Nombre",
+      "type": "Tipo",
+      "style": "Estilo",
+      "pages": "Páginas",
+      "status": "Estado",
+      "noItems": "Sin plantillas",
+      "fetchFailed": "Error al cargar plantillas",
+      "deleteTitle": "Eliminar plantilla",
+      "deleteConfirm": "¿Seguro que quieres eliminar la plantilla {title}?",
+      "delete": "Eliminar",
+      "deleting": "Eliminando...",
+      "deleteSuccess": "Plantilla eliminada",
+      "deleteFailed": "Error al eliminar"
     }
   },
   "account": {
@@ -724,5 +823,12 @@
     "invalid": "Código inválido o expirado",
     "removeCode": "Eliminar código",
     "tryThese": "Prueba estos códigos"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Perdido en tránsito",
+    "desc": "Esta página se ha salido del mapa. Las coordenadas no coinciden con ningún diario de nuestro archivo.",
+    "back": "Volver al inicio",
+    "explore": "Explorar diarios"
   }
 }

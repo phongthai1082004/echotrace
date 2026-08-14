@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
-import { FORMATS, FONTS } from "../../types";
+import { FONTS, resolveFormat } from "../../types";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
 
 const SLIDER_KEYS = ["sliderBrightness", "sliderContrast", "sliderSaturation", "sliderVibrance"] as const;
 const defaultVals = { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 };
+const SLIDER_FILTER: Record<(typeof SLIDER_KEYS)[number], keyof typeof defaultVals> = {
+  sliderBrightness: "Brightness",
+  sliderContrast: "Contrast",
+  sliderSaturation: "Saturation",
+  sliderVibrance: "Vibrance",
+};
 
 const PRESET_COLORS = [
   "#000000", "#FFFFFF", "#FF0000", "#FF6B00", "#FFD600",
@@ -39,7 +45,9 @@ export function StudioProperties() {
   const selected = canvas?.getActiveObject();
 
   const updateSlider = (key: string, val: number) => {
-    const newVals = { ...storeSliderValues, [key]: val };
+    const prop = SLIDER_FILTER[key as (typeof SLIDER_KEYS)[number]];
+    if (!prop) return;
+    const newVals = { ...storeSliderValues, [prop]: val };
     setFilterSliderValues(newVals);
     if (!selected || selected.type !== "image") return;
     const img = selected as fabric.FabricImage;
@@ -50,7 +58,7 @@ export function StudioProperties() {
       Saturation: new fabric.filters.Saturation({ saturation: val / 100 }),
       Vibrance: new fabric.filters.Vibrance({ vibrance: val / 100 }),
     };
-    const filter = filterMap[key];
+    const filter = filterMap[prop];
     if (filter) {
       const idx = filters.findIndex((f: any) => f.type === filter.type);
       if (idx >= 0) filters[idx] = filter;
@@ -125,7 +133,7 @@ export function StudioProperties() {
     setHexInput(currentColor.replace("#", ""));
   }, [currentColor, selectionVersion]);
 
-  const fmt = FORMATS[bookMeta.format];
+  const fmt = resolveFormat(bookMeta);
 
   return (
     <div className="w-56 shrink-0 bg-[#FFF7D6] overflow-y-auto border-l-[3px] border-[#222]">
@@ -153,9 +161,9 @@ export function StudioProperties() {
                 <div key={key} className="mb-2">
                   <div className="flex justify-between mb-0.5">
                     <p className="font-mono text-[8px] font-bold text-[#999]">{t(`customer.studio.${key}`)}</p>
-                    <p className="font-mono text-[8px] font-bold text-[#999]">{(storeSliderValues as any)[key]}</p>
+                    <p className="font-mono text-[8px] font-bold text-[#999]">{storeSliderValues[SLIDER_FILTER[key]]}</p>
                   </div>
-                  <input type="range" min={-100} max={100} value={(storeSliderValues as any)[key]}
+                  <input type="range" min={-100} max={100} value={storeSliderValues[SLIDER_FILTER[key]]}
                     onChange={(e) => updateSlider(key, Number(e.target.value))}
                     className="w-full h-1.5 bg-[#e8e6e0] rounded-full border-[1.5px] border-[#222] appearance-none cursor-pointer accent-[#222]" />
                 </div>
@@ -263,7 +271,7 @@ export function StudioProperties() {
       </div>
       <div className="p-4">
         <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.canvas")}</p>
-        {[[t("customer.studio.format"), fmt.label], [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`], [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)]].map(([k, v]) => (
+        {[[t("customer.studio.format"), `${fmt.cm} cm`], [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`], [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)]].map(([k, v]) => (
           <div key={k} className="mb-2.5"><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold text-[#222]">{v}</p></div>
         ))}
       </div>

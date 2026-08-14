@@ -1,26 +1,22 @@
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { UserRole } from "../enum/user.enum";
+import { UserRole } from "@echotrace/shared";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 async function refreshAccessToken(token: any) {
-  try {
-    const res = await fetch(`${BACKEND}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken: token.refreshToken }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Refresh failed");
-    return {
-      ...token,
-      accessToken: data.data.accessToken,
-      accessTokenExpires: Date.now() + 55 * 60 * 1000,
-    };
-  } catch {
-    return { ...token, accessTokenExpires: 0 };
-  }
+  const res = await fetch(`${BACKEND}/api/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: token.refreshToken }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.message || "Refresh failed");
+  return {
+    ...token,
+    accessToken: data.data.accessToken,
+    accessTokenExpires: Date.now() + 55 * 60 * 1000,
+  };
 }
 
 export const authOptions = {
@@ -92,8 +88,8 @@ export const authOptions = {
         if (user.image) token.picture = user.image;
         return token;
       }
-      if (Date.now() > token.accessTokenExpires) {
-        return refreshAccessToken(token);
+      if (!token.accessTokenExpires || Date.now() > token.accessTokenExpires) {
+        try { return await refreshAccessToken(token); } catch { return null; }
       }
       if (trigger === "update" && session?.image) token.picture = session.image;
       return token;

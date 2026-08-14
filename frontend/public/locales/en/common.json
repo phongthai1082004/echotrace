@@ -21,7 +21,8 @@
       "price": "$49.00"
     },
     "notifications": "Notifications",
-    "noNotifications": "No notifications yet"
+    "noNotifications": "No notifications yet",
+    "cartEmpty": "Your cart is empty"
   },
   "common": {
     "loading": "Loading...",
@@ -87,9 +88,9 @@
       "feature2Title": "Archival Paper & Binding",
       "feature2Desc": "200–250 gsm matte stock with layflat binding. Your journal lies open on a table without cracking the spine.",
       "feature3Title": "GPS-Powered Metadata",
-      "feature3Desc": "Upload a photo with location data and we plot it on every page. Your journal becomes a map of where you\u2019ve been.",
+      "feature3Desc": "Upload a photo with location data and we plot it on every page. Your journal becomes a map of where you’ve been.",
       "feature4Title": "Handcrafted in Hanoi",
-      "feature4Desc": "Each book is printed, trimmed, and bound by hand in our Hanoi workshop. Quality that industrial print shops can\u2019t match.",
+      "feature4Desc": "Each book is printed, trimmed, and bound by hand in our Hanoi workshop. Quality that industrial print shops can’t match.",
       "cta": "Build Your First Page Free"
     },
     "pricing": {
@@ -243,7 +244,9 @@
       "cancel": "Cancel",
       "error": "Failed to load journals",
       "noCover": "No cover",
-      "pg": "pg"
+      "pg": "pg",
+      "chooseSize": "Choose paper size",
+      "noSize": "No sizes available"
     },
     "studio": {
       "title": "Design Studio",
@@ -262,7 +265,6 @@
       "image": "Image",
       "shape": "Shape",
       "sticker": "Sticker",
-      "background": "Background",
       "font": "Font",
       "color": "Color",
       "alignment": "Alignment",
@@ -300,7 +302,6 @@
       "applyFilter": "Apply Smart Filter",
       "applyFilterConfirm": "\"{{name}}\" will be applied to all photos across all pages. Continue?",
       "apply": "Apply",
-      "noBackgrounds": "No backgrounds yet",
       "clearLayout": "Clear Layout",
       "noCanvas": "No canvas",
       "searchStickers": "Search stickers…",
@@ -308,10 +309,8 @@
       "noMatch": "No stickers match your search",
       "noStickers": "No stickers yet",
       "layouts": "Layouts",
-      "sectionBackground": "Background",
       "sectionFrames": "Frames",
       "sectionElements": "Elements",
-      "itemBackground": "Background",
       "itemFrame": "Frame",
       "itemText": "Text",
       "itemSticker": "Sticker",
@@ -323,7 +322,8 @@
       "saveFailed": "Save failed",
       "yourPhotos": "Your Photos",
       "upload": "+ Upload",
-      "noPhotos": "No photos yet. Click \"+ Upload\" to add some."
+      "noPhotos": "No photos yet. Click \"+ Upload\" to add some.",
+      "addedToCart": "Added to cart!"
     },
     "orders": {
       "title": "My Orders",
@@ -413,7 +413,19 @@
       "scanInstruction": "Scan the QR code to pay",
       "thankYou": "Thank you, {{name}}! Your order has been placed.",
       "haveDiscount": "Have a discount code?",
-      "changeCode": "Change code"
+      "changeCode": "Change code",
+      "orderList": "Order List",
+      "cartItemHint": "Click on a book to customize cover, paper & size",
+      "noSupplier": "No supplier available for this combination",
+      "minQuantity": "Minimum quantity is 1",
+      "continueDelivery": "Continue to Delivery",
+      "paymentMethod": "Payment Method",
+      "paymentFull": "Pay in Full",
+      "paymentHalf": "Pay 50% (COD 50% on delivery)",
+      "paymentHalfNote": "Personalized products are non-returnable",
+      "editOptions": "Customize Book",
+      "cancel": "Cancel",
+      "save": "Save"
     },
     "account": {
       "title": "Account Settings",
@@ -431,6 +443,12 @@
       "confirmNewPassword": "Confirm New Password",
       "update": "Update",
       "saved": "Saved successfully"
+    },
+    "preview": {
+      "page": "Page",
+      "of": "of",
+      "go": "Go",
+      "threeD": "3D"
     }
   },
   "admin": {
@@ -446,7 +464,21 @@
       "totalProfit": "Total Profit",
       "monthlyRevenue": "Monthly Revenue (₫)",
       "monthlyOrders": "Monthly Orders",
-      "revenueOverview": "Revenue Overview"
+      "revenueOverview": "Revenue Overview",
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ]
     },
     "finance": {
       "label": "Admin · Finance",
@@ -573,7 +605,19 @@
       "saveSuccess": "Supplier updated successfully",
       "saveFailed": "Failed to update supplier",
       "back": "Back to list",
-      "partnerSince": "Partner since"
+      "partnerSince": "Partner since",
+      "createBtn": "+ New Supplier",
+      "createTitle": "Create Supplier",
+      "createSuccess": "Supplier created!",
+      "createFailed": "Failed to create supplier",
+      "accountNotFound": "Account not found",
+      "generalInfo": "General Information",
+      "optionTitle": "Option",
+      "paperSizeOptions": "Paper Size Options",
+      "paperOptions": "Paper Options",
+      "coverOptions": "Cover Options",
+      "addOption": "Add",
+      "optionDuplicate": "Code already exists"
     },
     "users": {
       "label": "Admin · Users",
@@ -606,7 +650,6 @@
       "categories": "Categories",
       "all": "All",
       "sticker": "Sticker",
-      "background": "Background",
       "searchPlaceholder": "Search assets…",
       "noAssets": "No assets found",
       "uploadModal": "Upload Asset",
@@ -653,7 +696,9 @@
       "assets": "Assets",
       "account": "Account",
       "studio": "Studio",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "coupons": "Coupons",
+      "sampleBooks": "Template"
     },
     "pagination": {
       "previous": "Previous",
@@ -680,6 +725,59 @@
       "unknown": "unknown",
       "admin": "Admin",
       "noData": "No data available"
+    },
+    "coupons": {
+      "label": "Admin · Coupons",
+      "title": "Coupon Management",
+      "createBtn": "+ New Coupon",
+      "createTitle": "Create Coupon",
+      "code": "Code *",
+      "scope": {
+        "label": "Scope",
+        "order": "Order",
+        "item": "Per Book"
+      },
+      "type": "Type",
+      "value": "Value",
+      "maxDiscount": "Max Discount",
+      "minOrder": "Min Order",
+      "maxUsage": "Max Uses",
+      "expiresAt": "Expires At",
+      "create": "Create",
+      "creating": "Creating...",
+      "created": "Coupon created!",
+      "createFailed": "Failed to create coupon",
+      "deleted": "Coupon deleted",
+      "deleteFailed": "Failed to delete coupon",
+      "empty": "No coupons yet",
+      "used": "Used",
+      "searchPlaceholder": "Search coupon code...",
+      "fetchFailed": "Failed to load coupons",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "detailLabel": "Admin · Coupon Detail",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "sampleBooks": {
+      "label": "Template",
+      "title": "Template",
+      "subtitle": "Pre-built designs ready to publish",
+      "addNew": "Add New",
+      "name": "Name",
+      "type": "Type",
+      "style": "Style",
+      "pages": "Pages",
+      "status": "Status",
+      "noItems": "No templates yet",
+      "fetchFailed": "Failed to load templates",
+      "deleteTitle": "Delete Template",
+      "deleteConfirm": "Are you sure you want to delete template {title}?",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteSuccess": "Template deleted",
+      "deleteFailed": "Delete failed"
     }
   },
   "account": {
@@ -725,5 +823,12 @@
     "invalid": "Invalid or expired code",
     "removeCode": "Remove Code",
     "tryThese": "Try these codes"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Lost in transit",
+    "desc": "This page has wandered off the map. The coordinates don't match any journal in our archive.",
+    "back": "Back to start",
+    "explore": "Explore journals"
   }
 }

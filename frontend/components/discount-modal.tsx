@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog } from "@/components/ui/dialog";
 import { X, Check, Tag } from "lucide-react";
+import { neoBtn, neoBtnPrimary } from "@/lib/styles";
 
 export function DiscountModal({
   open,
@@ -71,7 +72,7 @@ export function DiscountModal({
               </div>
               <button
                 onClick={handleRemove}
-                className="w-full font-mono text-[9px] font-bold tracking-widest uppercase py-2 rounded-lg border-2 border-[#222] hover:bg-[#e8e6e0] transition-[background-color]"
+                className={`${neoBtn} w-full font-mono text-[9px] font-bold tracking-widest uppercase py-2`}
               >
                 {t("discount.removeCode")}
               </button>
@@ -89,7 +90,7 @@ export function DiscountModal({
                 <button
                   onClick={handleApply}
                   disabled={!code.trim()}
-                  className="font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5 bg-[#222] text-white rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] disabled:opacity-40"
+                  className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5 disabled:opacity-40`}
                 >
                   {t("discount.apply")}
                 </button>
@@ -106,7 +107,7 @@ export function DiscountModal({
                     <button
                       key={c}
                         onClick={() => { setCode(c); }}
-                      className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1 rounded-[6px] border-2 border-[#222] text-[#666] hover:bg-[#e8e6e0] transition-[background-color]"
+                      className={`${neoBtn} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1 text-[#666]`}
                     >
                       {c}
                     </button>

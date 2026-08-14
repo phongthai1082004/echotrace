@@ -9,7 +9,6 @@ const sidebarLabelKeys: Record<string, string> = {
   Stickers: "customer.studio.sticker",
   Frames: "customer.studio.sectionFrames",
   Filter: "customer.studio.smartFilters",
-  Backgrounds: "customer.studio.background",
   Layers: "customer.studio.layers",
 };
 

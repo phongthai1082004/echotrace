@@ -6,8 +6,9 @@ import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { uploadToCloudinary } from "@/lib/upload";
-import { cloudinaryUrl } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@echotrace/shared";
 import { X, Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api.fetch";
 
 function DraggablePhoto({ id, url, label, onDelete }: { id: number; url: string; label?: string; onDelete: (id: number) => void }) {
   const [{ isDragging }, dragRef] = useDrag(() => ({
@@ -52,14 +53,8 @@ export function PhotosPanel() {
   const fetchImages = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/uploads/images`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-cache",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUserImages(data.data || []);
-      }
+      const data = await apiFetch<any[]>("/api/uploads/images", token, { cache: "no-cache" });
+      if (data) setUserImages(data);
     } catch {}
   };
 
@@ -77,15 +72,8 @@ export function PhotosPanel() {
       const currentId = ids[i++];
       try {
         const { url, publicId } = await uploadToCloudinary(file, "gallery", token);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/uploads/image`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ url, publicId }),
-        });
-        if (res.ok) {
-          const saved = await res.json();
-          setUserImages((prev) => [{ id: saved.data?.id || Date.now(), url }, ...prev]);
-        }
+        const saved = await apiFetch<any>("/api/uploads/image", token, { method: "POST", body: JSON.stringify({ url, publicId }) });
+        setUserImages((prev) => [{ id: saved?.id || Date.now(), url }, ...prev]);
       } catch (err: any) {
         setError(err?.message || "Upload failed");
       }
@@ -100,10 +88,7 @@ export function PhotosPanel() {
     if (!token) return;
     setUserImages((prev) => prev.filter((img) => img.id !== id));
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/uploads/images/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiFetch(`/api/uploads/images/${id}`, token, { method: "DELETE" });
     } catch {}
   };
 

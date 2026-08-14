@@ -7,6 +7,6 @@ export interface Profile {
   address: string | null;
   city: string | null;
   role: string;
-  status: string | null;
+  banned: boolean;
   hasPassword: boolean;
 }

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "./app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -19,9 +19,9 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(payload.userId) },
-      select: { status: true, role: true },
+      select: { isDelete: true, role: true },
     });
-    if (!user || user.status === "banned") throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
+    if (!user || user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
     req.userId = payload.userId;
     req.userRole = user?.role;

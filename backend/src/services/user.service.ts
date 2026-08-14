@@ -2,13 +2,13 @@ import { injectable, inject } from "tsyringe";
 import { BaseService } from "../utils/base.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 import bcrypt from "bcryptjs";
-import { UserListDTO, UserMapper } from "../dto/user/user.list.js";
-import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from "../dto/user/profile.dto.js";
+import { UserListDTO, UserMapper } from "@echotrace/shared";
+import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from "@echotrace/shared";
 
 export abstract class IUserService {
-  abstract findAll(filter: any, options?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
+  abstract findAll(filter: any, options?: any, extraWhere?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
   abstract findById(id: number, extraWhere?: Record<string, any>): Promise<any>;
   abstract update(id: number, data: any, extraWhere?: Record<string, any>): Promise<void>;
   abstract getProfile(userId: string): Promise<ProfileDTO>;
@@ -24,8 +24,8 @@ export class UserService extends IUserService {
     super();
   }
 
-  public async findAll(filter: any, options?: any) {
-    return await this.userBase.findAll(filter, options);
+  public async findAll(filter: any, options?: any, extraWhere?: any) {
+    return await this.userBase.findAll(filter, options, extraWhere);
   }
 
   public async findById(id: number, extraWhere: Record<string, any> = {}) {
@@ -41,7 +41,7 @@ export class UserService extends IUserService {
       where: { id: parseInt(userId) },
       select: {
         id: true, email: true, name: true, avatar: true, phone: true, address: true, city: true,
-        role: true, status: true, password: true,
+        role: true, isDelete: true, password: true,
       },
     });
     if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);

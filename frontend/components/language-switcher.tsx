@@ -55,10 +55,10 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
             <button
               key={l.code}
               onClick={() => { localStorage.setItem("i18nextLng", l.code); i18n.changeLanguage(l.code); }}
-              className={`flex items-center gap-2 w-full text-left font-mono font-bold tracking-wider text-[10px] px-3 py-2.5 rounded-[6px] border-2 transition-[background-color,color,border-color,box-shadow] ${
+              className={`flex items-center gap-2 w-full text-left font-mono font-bold tracking-wider text-[10px] px-3 py-2.5 rounded-[6px] border-2 transition-[background-color,color,border-color,box-shadow,transform] ${
                 active
                   ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
-                  : "bg-transparent text-[#666] border-transparent cursor-pointer"
+                  : "bg-white text-[#666] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer"
               }`}
             >
               <l.Flag />

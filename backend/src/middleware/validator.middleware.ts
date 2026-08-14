@@ -2,7 +2,7 @@ import { plainToInstance } from "class-transformer";
 import { validate, ValidationError } from "class-validator";
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "./app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 
 export function validateDto(dtoClass: any) {
   return async (req: Request, res: Response, next: NextFunction) => {

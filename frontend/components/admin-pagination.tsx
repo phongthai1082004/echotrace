@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { neoBtn } from "@/lib/styles";
 
 interface Props {
   hasNext: boolean;
@@ -15,13 +16,13 @@ export function AdminPagination({ hasNext, hasPrevious, onNext, onPrevious}: Pro
   
   return (
     <div className="px-6 py-3 border-t-[3px] border-[#222] flex items-center justify-between bg-[#FFF7D6] shrink-0">
-      <div className="ml-auto flex gap-2">
+      <div className="ml-auto flex gap-3">
         <button onClick={onPrevious} disabled={!hasPrevious}
-          className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-[border-color,color,background-color] disabled:border-[#ccc] disabled:text-[#ccc] enabled:border-[#222] enabled:text-[#666] enabled:hover:bg-[#e8e6e0]">
+          className={`${neoBtn} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 disabled:opacity-40`}>
           {t("admin.pagination.previous")}
         </button>
         <button onClick={onNext} disabled={!hasNext}
-          className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-md border-2 transition-[border-color,color,background-color] disabled:border-[#ccc] disabled:text-[#ccc] enabled:border-[#222] enabled:text-[#666] enabled:hover:bg-[#e8e6e0]">
+          className={`${neoBtn} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 disabled:opacity-40`}>
           {t("admin.pagination.next")}
         </button>
       </div>

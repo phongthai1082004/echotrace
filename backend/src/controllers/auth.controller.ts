@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { IAuthService } from "../services/auth.service.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 
 @injectable()

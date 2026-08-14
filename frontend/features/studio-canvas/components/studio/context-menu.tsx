@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../../hooks/useCanvasState";
-import { isFrameObject, enforceZLayers, resolveFrameForPhoto, removePhotoDimOverlays, serializeSel } from "../../lib/layout-engine";
+import { isFrameObject, enforceZLayers, resolveFrameForPhoto, removePhotoDimOverlays, serializeSel, groupSelectedObjects, ungroupSelectedObjects } from "../../lib/layout-engine";
 
 interface Props {
   x: number;
@@ -92,6 +92,16 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
     },
     {
       items: [
+        ...(objects.length > 1 && objects.every((o) => !isFrameObject(o) && (o as any).customProperties?.layer !== "photo")
+          ? [{ label: "Group", fn: () => act(() => { useCanvasStore.getState().pushUndo(); groupSelectedObjects(canvas); useCanvasStore.getState().incrementLayerVersion(); }) }]
+          : []),
+        ...(objects.length === 1 && objects[0].type === "group"
+          ? [{ label: "Ungroup", fn: () => act(() => { useCanvasStore.getState().pushUndo(); ungroupSelectedObjects(canvas); useCanvasStore.getState().incrementLayerVersion(); }) }]
+          : []),
+      ],
+    },
+    {
+      items: [
         { label: "Flip Horizontal", fn: () => act(() => { useCanvasStore.getState().pushUndo(); objects.forEach(o => { o.set("flipX", !o.flipX); o.setCoords(); if (isFrameObject(o)) { const photo = canvas.getObjects().find((p: any) => cp(p).frameId === (o as any)._selId); if (photo) { photo.set("flipX", !(photo as any).flipX); photo.setCoords(); } } }); canvas.renderAll(); }) },
         { label: "Flip Vertical", fn: () => act(() => { useCanvasStore.getState().pushUndo(); objects.forEach(o => { o.set("flipY", !o.flipY); o.setCoords(); if (isFrameObject(o)) { const photo = canvas.getObjects().find((p: any) => cp(p).frameId === (o as any)._selId); if (photo) { photo.set("flipY", !(photo as any).flipY); photo.setCoords(); } } }); canvas.renderAll(); }) },
       ],
@@ -108,7 +118,7 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
   return (
     <div ref={ref} className="fixed z-[9999] min-w-[180px]" style={{ left: x, top: y }}>
       <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden py-1">
-        {sections.map((section, si) => (
+        {sections.filter((s) => s.items.length).map((section, si) => (
           <div key={si}>
             {si > 0 && <div className="mx-2 h-[2px] bg-[#222]/10" />}
             {section.items.map((item) => (

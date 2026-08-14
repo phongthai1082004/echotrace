@@ -3,7 +3,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 import { ICloudinaryService } from "../infrastructure/cloudinary/cloudinary.service.js";
 import { IUserImageService } from "../services/user-image.service.js";
 
@@ -15,7 +15,7 @@ export class UploadController {
   ) {}
 
   getSignature = async (req: AuthRequest, res: Response) => {
-    const { type } = req.query as { type: "gallery" | "sticker" | "background" };
+    const { type } = req.query as { type: "gallery" | "sticker" };
     const userId = req.userId!;
 
     const timestamp = Math.round(Date.now() / 1000);
@@ -25,9 +25,6 @@ export class UploadController {
 
     if (type === "sticker") {
       folder = "echotrace/stickers";
-      params.folder = folder;
-    } else if (type === "background") {
-      folder = "echotrace/backgrounds";
       params.folder = folder;
     } else {
       folder = `echotrace/gallery/user_${userId}`;

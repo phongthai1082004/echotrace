@@ -4,7 +4,6 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { PhotosPanel } from "./photos-panel";
 import { StickersPanel } from "./stickers-panel";
 import { FilterPanel } from "./filter-panel";
-import { BackgroundsPanel } from "./backgrounds-panel";
 import { LayoutsPanel } from "./layouts-panel";
 import { FramesPanel } from "./frames-panel";
 
@@ -17,7 +16,6 @@ export function StudioSidebarPanel() {
     Stickers: <StickersPanel />,
     Frames: <FramesPanel />,
     Filter: <FilterPanel />,
-    Backgrounds: <BackgroundsPanel />,
   };
 
   return (

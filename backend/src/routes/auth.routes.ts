@@ -3,7 +3,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { AuthController } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 
 const router = Router();
 const auth = container.resolve(AuthController);

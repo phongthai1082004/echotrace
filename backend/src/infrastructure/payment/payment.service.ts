@@ -1,29 +1,45 @@
-import { PaymentGateway } from '../../../enum/payment.enum.js';
-import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from '../../dto/payment/payment.link.dto.js';
+import { PaymentGateway } from '@echotrace/shared';
+import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from '@echotrace/shared';
 import { IPaymentStrategy } from './payment.strategy.js'; 
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class PaymentService {
-    private strategies: Map<PaymentGateway, IPaymentStrategy> = new Map();
+    private strategies: IPaymentStrategy[];
 
     constructor(strategies: IPaymentStrategy[]) {
-        strategies.forEach((strategy) => {
-            this.strategies.set(strategy.providerName, strategy);
-        })
+        this.strategies = strategies;
     }
-    private getStrategy(gateway: PaymentGateway): IPaymentStrategy {
-        const strategy = this.strategies.get(gateway);
-        if (!strategy) {
-            throw new Error(`Payment gateway [${gateway}] is not supported.`);
+
+    async createPaymentLink(dto: CreatePaymentLinkDto): Promise<PaymentLinkResponse> {
+        if (this.strategies.length === 0) {
+            throw new Error("No payment gateways configured.");
         }
-        return strategy;
-    }
-    async createPaymentLink(gateway: PaymentGateway, dto: CreatePaymentLinkDto): Promise<PaymentLinkResponse> {
-        const strategy = this.getStrategy(gateway);
-        return await strategy.createPaymentLink(dto);
+
+        let lastError: any;
+
+        for (const strategy of this.strategies) {
+            try {
+                console.log(`Attempting to create payment link via gateway: [${strategy.providerName}]...`);
+                const result = await strategy.createPaymentLink(dto);
+                
+                console.log(`Successfully created payment link via gateway: [${strategy.providerName}]`);
+                return result;
+
+            } catch (error) {
+                lastError = error;
+                console.warn(`Gateway [${strategy.providerName}] failed, switching to the next available gateway...`, error);
+            }
+        }
+
+        throw new Error(`All payment gateways failed. Last error: ${lastError?.message || lastError}`);
     }
 
     async handleWebhook(gateway: PaymentGateway, payload: any): Promise<WebhookProcessResult> {
-        const strategy = this.getStrategy(gateway);
+        const strategy = this.strategies.find((s) => s.providerName === gateway);
+        if (!strategy) {
+            throw new Error(`Payment gateway [${gateway}] is not supported.`);
+        }
         return await strategy.handleWebhook(payload);
     }
 }

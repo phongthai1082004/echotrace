@@ -53,3 +53,4 @@ export async function sendOtpEmail(to: string, otp: string) {
     console.log(`[Mailer] Resend failed: ${err}`);
   }
 }
+

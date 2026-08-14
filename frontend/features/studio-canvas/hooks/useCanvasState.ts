@@ -11,10 +11,11 @@ type BookMeta = {
   id: number | null;
   title: string;
   themeId: number | null;
-  format: FormatKey;
+  format: string;
   gsm: number;
-  paperType: string;
-  bindingType: "perfect" | "layflat";
+  paper: string;
+  width?: number | null;
+  height?: number | null;
 };
 
 export type UndoEntry = {
@@ -56,6 +57,7 @@ interface CanvasStore {
   incrementFilterVersion: () => void;
   selectionVersion: number;
   incrementSelectionVersion: () => void;
+  incrementUndoVersion: () => void;
   filterSliderValues: { Brightness: number; Contrast: number; Saturation: number; Vibrance: number };
   setFilterSliderValues: (vals: { Brightness: number; Contrast: number; Saturation: number; Vibrance: number }) => void;
   activeLayout: LayoutConfig | null;
@@ -81,10 +83,10 @@ const INITIAL_STATE: Partial<CanvasStore> = {
   activeMenu: navItems[0]?.label || "Templates",
   activePageIndex: 0,
   pages: [
-    { index: 0, canvasJson: null, thumbnailUrl: null, layout: null },
-    { index: 1, canvasJson: null, thumbnailUrl: null, layout: null },
+    { index: 0, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
+    { index: 1, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
   ],
-  bookMeta: { id: null, title: "Untitled", themeId: null, format: "A4_PORTRAIT", gsm: 200, paperType: "matte", bindingType: "perfect" },
+  bookMeta: { id: null, title: "Untitled", themeId: null, format: "PORTRAIT_A4", gsm: 200, paper: "matte" },
   undoStack: [],
   undoVersion: 0,
   redoStack: [],
@@ -159,6 +161,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   resetPasteCount: () => set({ pasteCount: 0 }),
   bumpPasteCount: () => set((s) => ({ pasteCount: s.pasteCount + 1 })),
   incrementLayerVersion: () => set((s) => ({ layerVersion: s.layerVersion + 1 })),
+  incrementUndoVersion: () => set((s) => ({ undoVersion: s.undoVersion + 1 })),
   setAutoPlaced: (v) => set({ autoPlaced: v }),
   setViewMode: (v) => set({ viewMode: v }),
   resetStore: () => set({ ...INITIAL_STATE }),

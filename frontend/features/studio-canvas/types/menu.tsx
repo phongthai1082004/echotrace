@@ -21,8 +21,4 @@ export const navItems: { label: string; icon: React.ReactNode }[] = [
     label: "Filter",
     icon: <><circle cx="12" cy="8" r="5" /><circle cx="7" cy="18" r="3.5" /><circle cx="17" cy="18" r="3.5" /></>
   },
-  {
-    label: "Backgrounds",
-    icon: <><rect x="3" y="3" width="18" height="18" rx="2" /><rect x="7" y="7" width="10" height="10" rx="1" /></>
-  },
 ];

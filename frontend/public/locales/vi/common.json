@@ -21,7 +21,8 @@
       "price": "1.200.000₫"
     },
     "notifications": "Thông báo",
-    "noNotifications": "Chưa có thông báo"
+    "noNotifications": "Chưa có thông báo",
+    "cartEmpty": "Giỏ hàng trống"
   },
   "common": {
     "loading": "Đang tải...",
@@ -36,7 +37,8 @@
     "error": "Lỗi",
     "success": "Thành công",
     "retry": "Thử lại",
-    "viewAll": "Xem tất cả",
+      "viewAll": "Xem tất cả",
+      "action": "Hành động",
     "dash": "—",
     "unknownUser": "Người dùng không xác định",
     "member": "Thành viên",
@@ -242,7 +244,9 @@
       "cancel": "Hủy",
       "error": "Không thể tải sổ tay",
       "noCover": "Không có bìa",
-      "pg": "tr"
+      "pg": "tr",
+      "chooseSize": "Chọn khổ giấy",
+      "noSize": "Chưa có kích thước nào"
     },
     "studio": {
       "title": "Studio Thiết kế",
@@ -261,7 +265,6 @@
       "image": "Hình ảnh",
       "shape": "Hình dạng",
       "sticker": "Nhãn dán",
-      "background": "Nền",
       "font": "Font",
       "color": "Màu",
       "alignment": "Căn chỉnh",
@@ -299,7 +302,6 @@
       "applyFilter": "Áp dụng bộ lọc",
       "applyFilterConfirm": "\"{{name}}\" sẽ được áp dụng cho tất cả ảnh trên mọi trang. Tiếp tục?",
       "apply": "Áp dụng",
-      "noBackgrounds": "Chưa có nền",
       "clearLayout": "Xóa bố cục",
       "noCanvas": "Không có canvas",
       "searchStickers": "Tìm nhãn dán…",
@@ -307,10 +309,8 @@
       "noMatch": "Không có nhãn dán phù hợp",
       "noStickers": "Chưa có nhãn dán",
       "layouts": "Bố cục",
-      "sectionBackground": "Nền",
       "sectionFrames": "Khung",
       "sectionElements": "Phần tử",
-      "itemBackground": "Nền",
       "itemFrame": "Khung",
       "itemText": "Văn bản",
       "itemSticker": "Nhãn dán",
@@ -322,7 +322,8 @@
       "saveFailed": "Lưu thất bại",
       "yourPhotos": "Ảnh của bạn",
       "upload": "+ Tải lên",
-      "noPhotos": "Chưa có ảnh. Nhấn \"+ Tải lên\" để thêm ảnh."
+      "noPhotos": "Chưa có ảnh. Nhấn \"+ Tải lên\" để thêm ảnh.",
+      "addedToCart": "Đã thêm vào giỏ hàng!"
     },
     "orders": {
       "title": "Đơn hàng của tôi",
@@ -412,7 +413,19 @@
       "scanInstruction": "Quét mã QR để thanh toán",
       "thankYou": "Cảm ơn {{name}}! Đơn hàng đã được đặt.",
       "haveDiscount": "Có mã giảm giá?",
-      "changeCode": "Đổi mã"
+      "changeCode": "Đổi mã",
+      "orderList": "Danh sách đặt hàng",
+      "cartItemHint": "Bấm vào sách để tùy chỉnh bìa, giấy & kích thước",
+      "noSupplier": "Không có nhà cung cấp cho lựa chọn này",
+      "minQuantity": "Số lượng tối thiểu là 1",
+      "continueDelivery": "Tiếp tục đến giao hàng",
+      "paymentMethod": "Phương thức thanh toán",
+      "paymentFull": "Thanh toán toàn bộ",
+      "paymentHalf": "Trả 50% (COD 50% khi nhận)",
+      "paymentHalfNote": "Sản phẩm cá nhân hóa không được trả lại",
+      "editOptions": "Tùy chỉnh sách",
+      "cancel": "Hủy",
+      "save": "Lưu"
     },
     "account": {
       "title": "Cài đặt tài khoản",
@@ -430,6 +443,12 @@
       "confirmNewPassword": "Xác nhận mật khẩu mới",
       "update": "Cập nhật",
       "saved": "Đã lưu thành công"
+    },
+    "preview": {
+      "page": "Trang",
+      "of": "của",
+      "go": "Đi",
+      "threeD": "3D"
     }
   },
   "admin": {
@@ -445,7 +464,21 @@
       "totalProfit": "Tổng lợi nhuận",
       "monthlyRevenue": "Doanh thu hàng tháng (VND)",
       "monthlyOrders": "Đơn hàng hàng tháng",
-      "revenueOverview": "Tổng quan Doanh thu"
+      "revenueOverview": "Tổng quan Doanh thu",
+      "months": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8",
+        "T9",
+        "T10",
+        "T11",
+        "T12"
+      ]
     },
     "finance": {
       "label": "Admin · Tài chính",
@@ -549,7 +582,6 @@
       "categories": "Danh mục",
       "all": "Tất cả",
       "sticker": "Nhãn dán",
-      "background": "Nền",
       "searchPlaceholder": "Tìm tài sản…",
       "noAssets": "Không có tài sản",
       "uploadModal": "Tải lên tài sản",
@@ -608,7 +640,19 @@
       "saveSuccess": "Cập nhật nhà cung cấp thành công",
       "saveFailed": "Cập nhật nhà cung cấp thất bại",
       "back": "Quay lại",
-      "partnerSince": "Đã hợp tác"
+      "partnerSince": "Đã hợp tác",
+      "createBtn": "+ Nhà cung cấp mới",
+      "createTitle": "Tạo nhà cung cấp",
+      "createSuccess": "Đã tạo nhà cung cấp!",
+      "createFailed": "Tạo nhà cung cấp thất bại",
+      "accountNotFound": "Tài khoản không tồn tại",
+      "generalInfo": "Thông tin chung",
+      "optionTitle": "Tùy chọn",
+      "paperSizeOptions": "Kích thước giấy",
+      "paperOptions": "Loại giấy",
+      "coverOptions": "Loại bìa",
+      "addOption": "Thêm",
+      "optionDuplicate": "Code đã tồn tại"
     },
     "users": {
       "label": "Admin · Người dùng",
@@ -652,7 +696,9 @@
       "assets": "Tài sản",
       "account": "Tài khoản",
       "studio": "Studio",
-      "notifications": "Thông báo"
+      "notifications": "Thông báo",
+      "coupons": "Mã giảm giá",
+      "sampleBooks": "Mẫu"
     },
     "pagination": {
       "previous": "Trước",
@@ -679,6 +725,59 @@
       "unknown": "không xác định",
       "admin": "Quản trị",
       "noData": "Không có dữ liệu"
+    },
+    "coupons": {
+      "label": "Admin · Mã giảm giá",
+      "title": "Quản lý mã giảm giá",
+      "createBtn": "+ Mã giảm giá mới",
+      "createTitle": "Tạo mã giảm giá",
+      "code": "Mã *",
+      "scope": {
+        "label": "Phạm vi",
+        "order": "Toàn đơn",
+        "item": "Theo từng quyển"
+      },
+      "type": "Loại",
+      "value": "Giá trị",
+      "maxDiscount": "Giảm tối đa",
+      "minOrder": "Đơn tối thiểu",
+      "maxUsage": "Số lần dùng tối đa",
+      "expiresAt": "Hết hạn lúc",
+      "create": "Tạo",
+      "creating": "Đang tạo...",
+      "created": "Đã tạo mã giảm giá!",
+      "createFailed": "Tạo mã giảm giá thất bại",
+      "deleted": "Đã xóa mã giảm giá",
+      "deleteFailed": "Xóa mã giảm giá thất bại",
+      "empty": "Chưa có mã giảm giá nào",
+      "used": "Đã dùng",
+      "searchPlaceholder": "Tìm mã giảm giá...",
+      "fetchFailed": "Tải mã giảm giá thất bại",
+      "status": "Trạng thái",
+      "active": "Hoạt động",
+      "inactive": "Ngừng hoạt động",
+      "detailLabel": "Admin · Chi tiết mã giảm giá",
+      "save": "Lưu",
+      "saving": "Đang lưu..."
+    },
+    "sampleBooks": {
+      "label": "Mẫu",
+      "title": "Mẫu",
+      "subtitle": "Thiết kế có sẵn sẵn sàng xuất bản",
+      "addNew": "Thêm mới",
+      "name": "Tên",
+      "type": "Loại",
+      "style": "Phong cách",
+      "pages": "Số trang",
+      "status": "Trạng thái",
+      "noItems": "Chưa có mẫu nào",
+      "fetchFailed": "Tải mẫu thất bại",
+      "deleteTitle": "Xóa mẫu",
+      "deleteConfirm": "Bạn có chắc muốn xóa mẫu {title}?",
+      "delete": "Xóa",
+      "deleting": "Đang xóa...",
+      "deleteSuccess": "Đã xóa mẫu",
+      "deleteFailed": "Xóa thất bại"
     }
   },
   "account": {
@@ -724,5 +823,12 @@
     "invalid": "Mã không hợp lệ hoặc đã hết hạn",
     "removeCode": "Xóa mã",
     "tryThese": "Thử các mã sau"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Lạc đường",
+    "desc": "Trang này đã rời khỏi bản đồ. Tọa độ không khớp với bất kỳ nhật ký nào trong kho lưu trữ.",
+    "back": "Về trang chủ",
+    "explore": "Khám phá nhật ký"
   }
 }

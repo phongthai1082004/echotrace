@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed": "tsx prisma/seed-admin.ts",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
+    "@echotrace/shared": "workspace:*",
     "@payos/node": "^2.0.5",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -26,6 +29,7 @@
     "i18next-fs-backend": "^2.6.6",
     "i18next-http-middleware": "^3.9.7",
     "jsonwebtoken": "^9.0.3",
+    "lru-cache": "^11.5.2",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
@@ -49,5 +53,8 @@
       "react": "$react",
       "react-dom": "$react-dom"
     }
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed-admin.ts"
   }
 }

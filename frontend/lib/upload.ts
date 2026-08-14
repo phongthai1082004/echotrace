@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/api.fetch";
+
 interface SignatureData {
   signature: string;
   timestamp: number;
@@ -23,16 +25,11 @@ interface SignatureData {
  */
 export async function uploadToCloudinary(
   file: File,
-  type: "avatar" | "gallery" | "sticker" | "background",
+  type: "avatar" | "gallery" | "sticker",
   accessToken: string
 ): Promise<{ url: string; publicId: string }> {
   // Bước A: Lấy chữ ký từ backend
-  const sigRes = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/get-upload-signature?type=${type}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  if (!sigRes.ok) throw new Error("Failed to get upload signature");
-  const sigData = (await sigRes.json()).data as SignatureData;
+  const sigData = await apiFetch<SignatureData>(`/api/get-upload-signature?type=${type}`, accessToken);
 
   // Bước C: Upload thẳng lên Cloudinary
   const formData = new FormData();

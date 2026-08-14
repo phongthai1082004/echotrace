@@ -7,6 +7,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ExpenseCategory {
+  OPERATING  // Hạ tầng, Server, Văn phòng
+  PAYROLL    // Lương, Thưởng
+  MARKETING  // Ads, Seeding, PR
+  DEBT       // Trả nợ Supplier, Vay ngoài, Vay ngân hàng
+  OTHER
+}
+
 model User {
   id       Int     @id @default(autoincrement())
   email    String? @unique
@@ -16,7 +24,6 @@ model User {
   phone    String?
   address  String?
   city     String?
-  status   String?
   role     String  @default("user")
   googleId String? @unique
   createdAt DateTime @default(now())
@@ -32,8 +39,8 @@ model User {
   sampleBooks SampleBook[]
   decorAssets DecorAsset[]
   cart        Cart?
+  expenses    Expense[]
 
-  @@index([status])
   @@index([role])
   @@index([isDelete])
 }
@@ -97,12 +104,10 @@ model Order {
   note           String?
   couponId       Int?
   discountAmount Float    @default(0)
-  timeline       String?
-  product        String?
-  coverType      String?
   orderShippingFee    Float?   
   supplierShippingFee Float?   
   trackingCode      String?
+  orderItems     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
@@ -112,7 +117,7 @@ model Order {
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
   coupon       Coupon?       @relation(fields: [couponId], references: [id])
   transactions Transaction[]
-  orderItems   OrderItem[]
+  expenses     Expense[]
 
   @@index([userId])
   @@index([supplierId])
@@ -138,7 +143,7 @@ model Transaction {
   reference              String?
   status                 String
   transactionTime        DateTime
-  rawPayload             String?
+  rawPayload             Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
@@ -152,59 +157,36 @@ model Transaction {
   @@index([type])
 }
 
-model OrderItem {
-  id       Int   @id @default(autoincrement())
-  orderId  Int
-  bookId   Int
-  quantity Int   @default(1)
-  price    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
-
-  order    Order @relation(fields: [orderId], references: [id])
-  book     Book  @relation(fields: [bookId], references: [id])
-
-  @@index([orderId])
-  @@index([bookId])
-}
-
+// orderItems: JSON snapshot of books at order time, like Cart.items.
+// OrderItem table was replaced by this column — one row per order, items stored as JSON string.
 model Book {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  type      String  @default("TRAVEL")
-  title     String
-  style     String
-  font      String
-  cover     String  @default("softcover")
-  coverPrice Float  @default(0)
-  paperSize String?
-  paperType String?
-  paperPrice Float  @default(0)
-  pages     Int     @default(0)
-  coverUrl  String?
-  status    String  @default("DRAFT")
-  content   String?
+  id          Int     @id @default(autoincrement())
+  userId      Int
+  type        String  @default("TRAVEL")
+  title       String
+  style       String
+  font        String
+  cover       String  @default("softcover")
+  coverUrl    String?
+  paperHeight Float?
+  paperWidth  Float?
+
+  content   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
   user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[]
 
   @@index([userId])
   @@index([type])
-  @@index([status])
 }
 
-// Gio hang: moi User co 1 gio hang dang hoat dong.
-// items: JSON string array of { bookId, quantity, price }, e.g. '[{"bookId":1,"quantity":1,"price":250000}]'
 model Cart {
   id        Int      @id @default(autoincrement())
   userId    Int      @unique
-  items     String?
+  items     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -221,11 +203,11 @@ model SampleBook {
   style       String
   font        String
   cover       String  @default("softcover")
-  pageCount   Int     @default(0)
   coverUrl    String?
-  price       Float   @default(0)
+  paperHeight Float?
+  paperWidth  Float?
   isActive    Boolean @default(true)
-  content     String?
+  content     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
@@ -263,7 +245,6 @@ model Supplier {
   name        String
   contact     String
   email       String
-  status      String   @default("active")
   totalDebt   Float    @default(0)
   overdueDebt Float    @default(0)
   monthDebt   Float    @default(0)
@@ -271,57 +252,43 @@ model Supplier {
   bankName          String?
   bankAccountNumber String?
   bankAccountName   String?
+  banned            Boolean   @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
+  supplierOptions SupplierOption[]
   orders Order[]
-  supplierPapers SupplierPaper[]
-  coverOptions   CoverOption[]
+  expenses       Expense[]
 }
 
-// Danh muc kho giay / loai giay ma supplier co the cung cap, kem gia
-model SupplierPaper {
-  id         Int      @id @default(autoincrement())
-  supplierId Int
-  paperSize  String
-  paperType  String
-  price      Float    @default(0)
-  isActive   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
+// Source of truth cho mọi option (paperSize / paper / cover) của từng supplier.
+model SupplierOption {
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
+  type        String // "paperSize" | "paper" | "cover"
+  code        String
+  name        Json
+  description Json     @default("{}")
+  width       Int?    // paperSize: kích thước thật (mm) để studio tính canvas
+  height      Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDelete    Boolean  @default(false)
+  deletedAt   DateTime?
 
   supplier Supplier @relation(fields: [supplierId], references: [id])
 
-  @@index([supplierId])
-  @@index([isActive])
-}
-
-// Danh muc loai bia (softcover, hardcover, leather...) ma supplier cung cap, kem gia
-model CoverOption {
-  id         Int     @id @default(autoincrement())
-  supplierId Int
-  name       String
-  price      Float   @default(0)
-  isActive   Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
-
-  supplier Supplier @relation(fields: [supplierId], references: [id])
-
-  @@unique([supplierId, name])
-  @@index([supplierId])
-  @@index([isActive])
+  @@unique([supplierId, type, code])
+  @@index([type])
+  @@index([isDelete])
 }
 
 model Coupon {
   id                Int       @id @default(autoincrement())
   code              String    @unique
+  scope             String    @default("ORDER")   // ORDER (toàn đơn) | ITEM (theo từng quyển)
   discountType      String
   discountValue     Float
   minOrderAmount    Float     @default(0)
@@ -357,4 +324,43 @@ model CouponUsage {
 
   @@unique([couponId, userId])
   @@index([userId])
+}
+
+model Expense {
+  id           Int              @id @default(autoincrement())
+  amount       Float
+  category     ExpenseCategory
+  description  String?          // nội dung chi
+  date         DateTime
+  paymentMethod String?
+  supplierId   Int?
+  orderId      Int?
+  note         String?
+  createdBy    Int
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  isDelete     Boolean          @default(false)
+  deletedAt    DateTime?
+
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  order       Order?    @relation(fields: [orderId], references: [id])
+  creator     User      @relation(fields: [createdBy], references: [id])
+
+  @@index([date])
+  @@index([category])
+  @@index([supplierId])
+  @@index([createdBy])
+}
+
+model Cashflow {
+  id          Int      @id @default(autoincrement())
+  month       String   @unique   // "2026-07"
+  totalIncome Float    @default(0)
+  totalExpense Float   @default(0)
+  netAmount   Float    @default(0)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([month])
 }

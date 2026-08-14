@@ -28,16 +28,19 @@ export class UserController {
 
   getUserList = async (req: AuthRequest, res: Response) => {
     const { status, customerId, search, order, limit, cursor } = req.query;
+    const extraWhere: any = {};
+    if (status === "banned") extraWhere.isDelete = true;
+    else if (status === "active") extraWhere.isDelete = false;
+    else extraWhere.isDelete = undefined;
     const params = {
-      status: status as string | undefined,
       customerId: customerId ? Number(customerId) : undefined,
       search: search as string | undefined,
       order: (order as string) || "desc",
       limit: limit ? Number(limit) : 1000,
       cursor: cursor ? Number(cursor) : undefined,
     };
-    const options = { searchFields: ["name", "email"], allowedFilterFields: ["status"] };
-    const { items, nextCursor } = await this.userService.findAll(params, options);
+    const options = { searchFields: ["name", "email"], allowedFilterFields: [] };
+    const { items, nextCursor } = await this.userService.findAll(params, options, extraWhere);
     res.json(ApiResponse.success({ users: items, nextCursor }));
   };
 }

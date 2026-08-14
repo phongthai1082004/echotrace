@@ -1,8 +1,8 @@
 import { injectable, inject } from "tsyringe";
 import { BaseService } from "../utils/base.service.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
-import { ImageDTO, SaveImageDTO, ImageMapper } from "../dto/upload/upload.dto.js";
+import { ErrorCode } from "@echotrace/shared";
+import { ImageDTO, SaveImageDTO, ImageMapper } from "@echotrace/shared";
 
 export abstract class IUserImageService {
   abstract getById(id: number, userId: number): Promise<ImageDTO>;

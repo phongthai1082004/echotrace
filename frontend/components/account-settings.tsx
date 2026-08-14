@@ -109,8 +109,8 @@ export function AccountSettings() {
           { id: "language" as const, label: t("account.language") }
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg transition-[background-color,color,box-shadow] ${
-              t.id === tab ? "bg-[#222] text-white shadow-[2px_2px_0_#222]" : "text-[#999] cursor-pointer"
+            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg transition-all ${
+              t.id === tab ? "bg-[#222] text-white border-2 border-[#222] shadow-[2px_2px_0_#222]" : "text-[#999] hover:text-[#222] cursor-pointer bg-[#FFF7D6] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
             }`}>
             {t.label}
           </button>
@@ -146,7 +146,7 @@ export function AccountSettings() {
                   <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">{t("account.connected")}</span>
                 </div>
               ) : (
-                <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]">
+                <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform] cursor-pointer">
                   <span className="text-sm text-[#999]">{t("account.notConnected")}</span>
                   <span className="flex items-center gap-2 font-mono text-[8px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#222] text-white rounded-md">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -178,8 +178,8 @@ export function AccountSettings() {
           </div>
 
           <button type="submit" disabled={!hasChanges}
-            className="font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-[background-color,color,border-color,box-shadow,transform]"
-            style={{ background: hasChanges ? "#222" : "#999", color: "#fff", borderColor: hasChanges ? "#222" : "#999", boxShadow: hasChanges ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
+            className={`${hasChanges ? "bg-[#222] text-white" : "bg-[#999] text-white"} font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-all disabled:opacity-40`}
+            style={{ borderColor: hasChanges ? "#222" : "#999", boxShadow: hasChanges ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
             {t("account.saveChanges")}
           </button>
         </form>
@@ -217,8 +217,8 @@ export function AccountSettings() {
             </div>
           </div>
           <button type="submit" disabled={!canSubmitPassword}
-            className="mt-5 font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-[background-color,color,border-color,box-shadow,transform]"
-            style={{ background: canSubmitPassword ? "#222" : "#999", color: "#fff", borderColor: canSubmitPassword ? "#222" : "#999", boxShadow: canSubmitPassword ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
+            className={`${canSubmitPassword ? "bg-[#222] text-white" : "bg-[#999] text-white"} mt-5 font-mono text-[10px] font-bold tracking-widest uppercase px-7 py-3 rounded-[10px] border-[3px] transition-all disabled:opacity-40`}
+            style={{ borderColor: canSubmitPassword ? "#222" : "#999", boxShadow: canSubmitPassword ? "4px 4px 0 #222" : "4px 4px 0 #999" }}>
             {profile?.hasPassword ? t("account.updatePassword") : t("account.setPassword")}
           </button>
         </form>

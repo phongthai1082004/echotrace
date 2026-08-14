@@ -1,5 +1,5 @@
-import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from "../../dto/payment/payment.link.dto.js";
-import { PaymentGateway } from '../../../enum/payment.enum.js'
+import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from "@echotrace/shared";
+import { PaymentGateway } from '@echotrace/shared'
 import { IPaymentStrategy } from './payment.strategy.js';
 
 export class PayOSGateway implements IPaymentStrategy {

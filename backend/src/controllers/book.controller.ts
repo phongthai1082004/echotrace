@@ -4,7 +4,7 @@ import { AuthRequest } from "../middleware/auth.middleware.js";
 import { IBookService } from "../services/book.service.js";
 import { ApiResponse } from "../middleware/api.response.js";
 import { AppError } from "../middleware/app.error.js";
-import { ErrorCode } from "../errors/error-codes.js";
+import { ErrorCode } from "@echotrace/shared";
 
 @injectable()
 export class BookController {
@@ -25,11 +25,16 @@ export class BookController {
   create = async (req: AuthRequest, res: Response) => {
     const userId = parseInt(req.userId!);
     if (isNaN(userId)) throw new AppError(ErrorCode.AUTH_NOT_AUTHENTICATED, 401);
-    const { title, content } = req.body;
+    const { title, content, paperHeight, paperWidth } = req.body;
     if (!content) throw new AppError(ErrorCode.BOOK_MISSING_CONTENT, 400);
-    const contentStr = typeof content === "string" ? content : JSON.stringify(content);
+    const contentJson = typeof content === "string" ? JSON.parse(content) : content;
     try {
-      const book = await this.bookService.create(userId, { content: contentStr, title });
+      const book = await this.bookService.create(userId, {
+        content: contentJson,
+        title,
+        paperHeight: toNumOrNull(paperHeight),
+        paperWidth: toNumOrNull(paperWidth),
+      });
       res.status(201).json(ApiResponse.success(book));
     } catch (err: any) {
       if (err instanceof AppError) throw err;
@@ -47,16 +52,14 @@ export class BookController {
 
   updatePages = async (req: AuthRequest, res: Response) => {
     const id = parseInt(req.params.id as string);
-    const { content, title } = req.body;
+    const { content, title, paperHeight, paperWidth } = req.body;
     const updateData: any = {};
     if (content) {
-      updateData.content = typeof content === "string" ? content : JSON.stringify(content);
-      try {
-        const parsedPages = JSON.parse(updateData.content)?.pages;
-        if (Array.isArray(parsedPages)) updateData.pages = parsedPages.length;
-      } catch {}
+      updateData.content = typeof content === "string" ? JSON.parse(content) : content;
     }
     if (title !== undefined) updateData.title = title;
+    if (paperHeight !== undefined) updateData.paperHeight = toNumOrNull(paperHeight);
+    if (paperWidth !== undefined) updateData.paperWidth = toNumOrNull(paperWidth);
     try {
       await this.bookService.updatePages(id, updateData);
       res.json(ApiResponse.success({ id }));
@@ -66,4 +69,11 @@ export class BookController {
       throw new AppError(ErrorCode.BOOK_CREATE_FAILED, 500);
     }
   };
+}
+
+function toNumOrNull(v: unknown): number | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
