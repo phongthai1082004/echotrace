@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api.fetch';
 
 export interface UseApiQueryOptions<T> {
@@ -41,11 +41,17 @@ export function useApiQuery<T = any>(
   options: UseApiQueryOptions<T> = {}
 ): UseApiQueryResult<T> {
   const { enabled = true, onSuccess, onError, retry = 0 } = options;
-  
+
+  // Keep callbacks in refs so their identity changes never retrigger fetches
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  onSuccessRef.current = onSuccess;
+  onErrorRef.current = onError;
+
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const retryCountRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     if (!enabled || !url) return;
@@ -56,33 +62,33 @@ export function useApiQuery<T = any>(
     try {
       const result = await apiFetch<T>(url, token);
       setData(result);
-      setRetryCount(0);
-      onSuccess?.(result);
+      retryCountRef.current = 0;
+      onSuccessRef.current?.(result);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      
+
       // Retry logic
-      if (retryCount < retry) {
-        setRetryCount(prev => prev + 1);
+      if (retryCountRef.current < retry) {
+        retryCountRef.current += 1;
         // Exponential backoff: 1s, 2s, 4s, etc.
-        const delay = Math.pow(2, retryCount) * 1000;
-        setTimeout(fetchData, delay);
+        const delay = Math.pow(2, retryCountRef.current) * 1000;
+        setTimeout(() => fetchData(), delay);
         return;
       }
 
       setError(error);
-      onError?.(error);
+      onErrorRef.current?.(error);
     } finally {
       setLoading(false);
     }
-  }, [url, token, enabled, retry, retryCount, onSuccess, onError]);
+  }, [url, token, enabled, retry]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const refetch = useCallback(async () => {
-    setRetryCount(0);
+    retryCountRef.current = 0;
     await fetchData();
   }, [fetchData]);
 

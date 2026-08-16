@@ -49,115 +49,194 @@
   },
   "home": {
     "hero": {
-      "vol": "Vol. IV — 2024",
-      "headline": "Your\nJourney,\nBound\nin Print.",
-      "subhead": "Design bespoke travel journals with editorial-grade layouts. Every photograph placed with intent.",
-      "ctaPrimary": "Start Your First Journal Free",
-      "ctaSecondary": "See Sample Layouts",
-      "socialProof": "Join <bold>{{count}}</bold> travelers"
+      "newBadge": "✦ NEW: Lay-Flat Pages",
+      "booksBadge": "★ 50K+ Books Printed",
+      "location": "N 51°30′ / E 0°7′ · LONDON",
+      "titleLine1": "Your Photos.",
+      "titleLine2": "Your Story.",
+      "titleLine3": "Bound for Life.",
+      "subhead": "Design a premium photo book in our 3D studio, preview every page in real time, and have it printed on archival paper—delivered in 5 days.",
+      "ctaPrimary": "Design in Studio",
+      "ctaSecondary": "Explore Books",
+      "bookTitle": "MEMORIES 2024",
+      "shipsIn": "Ships in",
+      "shipsInValue": "5 Days",
+      "startingFrom": "Starting from",
+      "startingPrice": "$29",
+      "section": "HERO",
+      "themeWedding": "WEDDING",
+      "themeWeddingValue": "Wedding 2026",
+      "themeFamily": "BIG DAY",
+      "themeFamilyValue": "Anniversary · Family",
+      "themeAnniversary": "ANNIVERSARY",
+      "themeAnniversaryValue": "10 Years Together"
     },
-    "fieldJournals": {
-      "sub": "Inspiration",
-      "title": "Field Journals"
+    "book3d": {
+      "autoRotate": "[AUTO ROTATE]",
+      "dragToRotate": "[DRAG TO ROTATE]"
     },
-    "marquee": {
-      "editorialTypography": "Editorial Typography",
-      "asymmetricLayouts": "Asymmetric Layouts",
-      "gpsMetadata": "GPS Metadata",
-      "archivalPaper": "Archival Paper",
-      "hardShadows": "Hard Shadows",
-      "premiumBinding": "Premium Binding",
-      "handcrafted": "Handcrafted"
+    "marquee": [
+      "PREMIUM BINDING",
+      "ARCHIVAL PAPER",
+      "LAY-FLAT PAGES",
+      "FOIL STAMPING",
+      "SATIN FINISH",
+      "MATTE COVER",
+      "DUOTONE PRINTING",
+      "HAND-SEWN SPINE",
+      "ACID-FREE PAPER",
+      "LINEN HARDCOVER",
+      "PHOTO EDITING",
+      "CUSTOM LAYOUTS"
+    ],
+    "process": {
+      "section": "PROCESS",
+      "titleLine1": "From Idea to",
+      "titleLine2": "Doorstep",
+      "desc": "Three steps is all it takes. Our studio guides you from first upload to print-ready file.",
+      "steps": [
+        {
+          "label": "DESIGN",
+          "title": "Create in Studio",
+          "desc": "Upload photos, arrange layouts, pick covers. Our drag-and-drop 3D studio shows every page live."
+        },
+        {
+          "label": "PREVIEW",
+          "title": "Preview in 3D",
+          "desc": "Rotate your finished book in real-time 3D. Flip pages, check spreads, zoom in on details."
+        },
+        {
+          "label": "DELIVER",
+          "title": "Printed & Shipped",
+          "desc": "Archival-quality printing on 170gsm paper. Flat-packed and shipped in protective casing."
+        }
+      ]
     },
-    "howItWorks": {
-      "sub": "Process",
-      "title": "How It Works",
-      "step1Title": "Upload Your Photos",
-      "step1Desc": "Import from any device. GPS coordinates are extracted automatically so your journal knows where each shot was taken.",
-      "step2Title": "Design in Studio",
-      "step2Desc": "Drag photos into editorial layouts, apply filters, set typography, and preview every spread in real time.",
-      "step3Title": "Order & Receive",
-      "step3Desc": "Printed on archival matte paper, bound by hand in Hanoi, and shipped to your door within a week.",
-      "cta": "Explore All Templates →"
+    "showcase": {
+      "section": "SHOWCASE",
+      "titleLine1": "Every Page, a",
+      "titleLine2": "Masterpiece",
+      "sampleCovers": "SAMPLE COVERS",
+      "desc": "Browse real books made by customers. Each cover is custom-designed in our studio using your own photos.",
+      "browseGallery": "Browse Gallery",
+      "bookTitle": "WEDDING 2024",
+      "badgeWedding": "WEDDING",
+      "badgeWeddingValue": "Wedding 2026",
+      "badgeBaby": "BABY",
+      "badgeBabyValue": "First Year",
+      "badgeGraduation": "GRADUATION",
+      "badgeGraduationValue": "Class of 2026",
+      "galleryTitle": "Made by customers, printed to last",
+      "galleryBody": "Every book here started as a photo folder and a few clicks in our studio. Browse what real people made, then make your own. From wedding albums to travel diaries and first-year memories, each cover is laid out by hand in our editor using your own photos — then printed on archival paper and bound to last generations.",
+      "point1": "Custom covers & layouts",
+      "point2": "Premium paper, hardcover binding",
+      "point3": "Shipped to your door in days",
+      "point4": "Live 3D preview before you print",
+      "point5": "Free to design, pay only when ready",
+      "point6": "Lay-flat spreads, no gutter gap",
+      "point7": "Foil stamping & matte finishes"
     },
-    "why": {
-      "sub": "Why Us",
-      "title": "Everything You Need",
-      "feature1Title": "Editorial-Grade Layouts",
-      "feature1Desc": "Every template is designed by publication designers. Asymmetric grids, pull quotes, full-bleed spreads — no clip art.",
-      "feature2Title": "Archival Paper & Binding",
-      "feature2Desc": "200–250 gsm matte stock with layflat binding. Your journal lies open on a table without cracking the spine.",
-      "feature3Title": "GPS-Powered Metadata",
-      "feature3Desc": "Upload a photo with location data and we plot it on every page. Your journal becomes a map of where you’ve been.",
-      "feature4Title": "Handcrafted in Hanoi",
-      "feature4Desc": "Each book is printed, trimmed, and bound by hand in our Hanoi workshop. Quality that industrial print shops can’t match.",
-      "cta": "Build Your First Page Free"
+    "materials": {
+      "section": "MATERIALS",
+      "titleLine1": "Built to Last",
+      "titleLine2": "Generations",
+      "desc": "Choose your binding. Every cover is hand-inspected before shipping.",
+      "items": [
+        {
+          "name": "Softcover",
+          "tag": "SOFTCOVER",
+          "desc": "Flexible matte laminate cover. Great for everyday memories and gifting. 170gsm interior paper.",
+          "badge": "POPULAR"
+        },
+        {
+          "name": "Hardcover",
+          "tag": "HARDCOVER",
+          "desc": "Rigid board-backed cover with image wrap or linen. Lay-flat binding for seamless spreads.",
+          "badge": "BESTSELLER"
+        },
+        {
+          "name": "Leather",
+          "tag": "LEATHER",
+          "desc": "Full-grain Italian leather with gold foil stamping. Heirloom quality for weddings and milestones.",
+          "badge": "PREMIUM"
+        }
+      ]
     },
     "pricing": {
-      "sub": "Pricing",
-      "title": "Choose Your Binding",
-      "desc": "Every journal includes free shipping, archival paper, and access to all Studio features.",
-      "mostPopular": "Most Popular",
-      "labels": {
-        "pages": "Pages",
-        "paper": "Paper",
-        "binding": "Binding",
-        "cover": "Cover"
-      },
-      "plans": {
-        "softcover": {
-          "name": "Softcover",
-          "pages": "24–48",
-          "paper": "Matte 200gsm",
-          "binding": "Perfect bound",
-          "cover": "Soft, 300gsm"
-        },
-        "hardcover": {
-          "name": "Hardcover",
-          "pages": "24–80",
-          "paper": "Matte 200gsm",
-          "binding": "Layflat",
-          "cover": "Hard, 350gsm"
-        },
-        "leather": {
-          "name": "Leather-bound",
-          "pages": "24–120",
-          "paper": "Premium Matte 250gsm",
-          "binding": "Smyth-sewn layflat",
-          "cover": "Genuine leather, foil-stamped"
-        }
-      },
-      "choose": "Choose"
+      "section": "PRICING",
+      "titleLine1": "Simple Pricing.",
+      "titleLine2": "No Surprises.",
+      "desc": "Every plan includes free studio access, 3D preview, and tracked shipping.",
+      "tierLabels": [
+        "SOFTCOVER",
+        "HARDCOVER",
+        "LEATHER"
+      ],
+      "note": "All prices in USD · VAT included · 30-day satisfaction guarantee"
     },
-    "quote": {
-      "text": "Memory is not storage. It is the texture of the paper on which a moment insists on being pressed.",
-      "author": "— Cabinet Memoir Manifesto",
-      "alt": "Field documentation"
+    "testimonial": {
+      "section": "TESTIMONIAL",
+      "quote": "The quality knocked me out. My grandmother cried when she saw the leather edition. Worth every penny and then some.",
+      "name": "Sofía Marchetti",
+      "detail": "Wedding Album · Hardcover · Milan, IT",
+      "statsLabels": [
+        "Books Printed",
+        "Would Recommend"
+      ]
     },
     "cta": {
-      "sub": "Ready?",
-      "title": "Preserve Your Journey for Generations",
-      "desc": "Every photograph holds a story. Give yours the permanence it deserves — designed by you, printed by hand in Hanoi.",
-      "ctaPrimary": "Start Your Journal Free",
-      "ctaSecondary": "Browse Samples",
-      "noCard": "No credit card required. Start designing in seconds."
+      "section": "GET STARTED",
+      "titleLine1": "Open the Studio.",
+      "titleLine2": "Make Something",
+      "titleLine3": "Beautiful.",
+      "desc": "Free to design. Pay only when you're ready to print. No account needed to start.",
+      "ctaPrimary": "Start Designing Free",
+      "ctaSecondary": "See Examples",
+      "bookTitle": "YOUR STORY"
     },
     "footer": {
-      "desc": "Bespoke travel journals, printed and bound by hand in Hanoi, Vietnam.",
-      "product": "Product",
-      "studio": "Studio",
-      "pricing": "Pricing",
-      "samples": "Samples",
-      "shipping": "Shipping",
-      "company": "Company",
-      "about": "About",
-      "blog": "Blog",
-      "careers": "Careers",
-      "contact": "Contact",
-      "copyright": "© {{year}} Cabinet Memoir",
-      "privacy": "Privacy",
-      "terms": "Terms",
-      "returns": "Returns"
+      "brandBox": "FOLIO",
+      "brandTag": "PRESS™",
+      "desc": "Premium photo books, designed online and printed with archival quality. Based in London, shipped worldwide.",
+      "cols": [
+        {
+          "title": "Product",
+          "links": [
+            "Photo Books",
+            "Design Studio",
+            "Materials",
+            "Pricing",
+            "Templates"
+          ]
+        },
+        {
+          "title": "Company",
+          "links": [
+            "About Us",
+            "Blog",
+            "Press",
+            "Careers",
+            "Contact"
+          ]
+        },
+        {
+          "title": "Support",
+          "links": [
+            "Help Center",
+            "Shipping Info",
+            "Returns",
+            "File Guide",
+            "Status"
+          ]
+        }
+      ],
+      "legal": "© 2024 FOLIO PRESS LTD · ALL RIGHTS RESERVED",
+      "links": [
+        "Privacy Policy",
+        "Terms of Service",
+        "Cookie Preferences"
+      ],
+      "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
   "auth": {
@@ -770,6 +849,12 @@
       "style": "Style",
       "pages": "Pages",
       "status": "Status",
+      "published": "Published",
+      "draft": "Draft",
+      "publish": "Publish",
+      "moveToDraft": "Move to Draft",
+      "statusUpdated": "Status updated",
+      "statusUpdateFailed": "Failed to update status",
       "noItems": "No templates yet",
       "fetchFailed": "Failed to load templates",
       "deleteTitle": "Delete Template",

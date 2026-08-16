@@ -7,7 +7,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { useElementControls } from "../../../hooks/useElementControls";
 import { usePageManager } from "../../../hooks/usePageManager";
 import { FORMATS, ZOOM_LEVELS, resolveFormat } from "../../../types";
-import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, reviveObject, isCoverPage, canvasPointer, applyInteractionLock, syncViewVisibility, serializeSel, pasteClipboard, groupSelectedObjects, ungroupSelectedObjects } from "../../../lib/layout-engine";
+import { isFrameObject, hitTestFrame, enforceZLayers, removeDragOverlays, addFrameDragOverlays, placePhotoInFrame, movePhotoWithFrame, unlockPhotoInFrame, lockPhotoInFrame, removePhotoDimOverlays, addPhotoDimOverlays, resolveFrameForPhoto, findPhotoInFrame, applyUndo, applyRedo, reviveObject, isCoverPage, canvasPointer, applyInteractionLock, syncViewVisibility, serializeSel, pasteClipboard, groupSelectedObjects, ungroupSelectedObjects, syncFrameBorders } from "../../../lib/layout-engine";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
@@ -224,8 +224,8 @@ export function StudioWorkspace() {
           lockPhotoInFrame(c, photo);
         });
       });
-      c.on("object:added", (e: any) => { if (e.target) applyStyle(e.target); enforceZLayers(c); useCanvasStore.getState().incrementLayerVersion(); });
-      c.on("object:removed", () => { useCanvasStore.getState().incrementLayerVersion(); });
+      c.on("object:added", (e: any) => { if (e.target) applyStyle(e.target); syncFrameBorders(c); enforceZLayers(c); useCanvasStore.getState().incrementLayerVersion(); });
+      c.on("object:removed", () => { syncFrameBorders(c); useCanvasStore.getState().incrementLayerVersion(); });
       c.on("text:changed", () => useCanvasStore.getState().incrementLayerVersion());
       c.on("mouse:dblclick", () => { const a = c.getActiveObject(); if (!a || !isFrameObject(a)) return; const fid = (a as any)._selId; let p: any = c.getObjects().find((o: any) => o.customProperties?.frameId === fid); if (!p) { p = c.getObjects().find((o: any) => o.customProperties?.layer === "photo" && a.containsPoint(new fabric.Point(o.left || 0, o.top || 0))); } if (p) { unlockPhotoInFrame(c, p as any); c.setActiveObject(p as any); c.renderAll(); } });
       const onContextMenu = (e: MouseEvent) => { e.preventDefault(); };
@@ -271,8 +271,7 @@ export function StudioWorkspace() {
         if ((e.ctrlKey || e.metaKey) && e.key === "c" && !e.shiftKey) { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); } }
         if ((e.ctrlKey || e.metaKey) && e.key === "x") { e.preventDefault(); const a2 = c.getActiveObject(); if (a2 && !(a2 as any)._dragOverlay) { useCanvasStore.getState().setClipboard(serializeSel(c, a2)); useCanvasStore.getState().resetPasteCount(); useCanvasStore.getState().pushUndo(); if (isFrameObject(a2)) { const fid = (a2 as any)._selId; c.getObjects().filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === fid).forEach((p) => c.remove(p)); } c.remove(a2); c.discardActiveObject(); c.renderAll(); } }
         if ((e.ctrlKey || e.metaKey) && e.key === "v") { e.preventDefault(); const { clipboard, pasteCount, bumpPasteCount } = useCanvasStore.getState(); if (!clipboard) return; pasteClipboard(c, clipboard, pasteCount, bumpPasteCount, () => useCanvasStore.getState().pushUndo()); }
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g" && !e.shiftKey) { e.preventDefault(); const s = useCanvasStore.getState(); s.pushUndo(); groupSelectedObjects(c); s.incrementLayerVersion(); }
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "g") { e.preventDefault(); const s = useCanvasStore.getState(); s.pushUndo(); ungroupSelectedObjects(c); s.incrementLayerVersion(); }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g") { e.preventDefault(); const s = useCanvasStore.getState(); s.pushUndo(); (e.shiftKey ? ungroupSelectedObjects : groupSelectedObjects)(c); s.incrementLayerVersion(); }
       };
       window.addEventListener("keydown", onKeyDown);
       c.backgroundColor = "#fff";

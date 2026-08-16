@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Undo2, Redo2, Type, Trash2, Eye } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
@@ -10,8 +11,7 @@ import { usePageManager } from "../../hooks/usePageManager";
 import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
-import { ZOOM_LEVELS, FONTS, resolveFormat } from "../../types";
-import { BookPreview } from "../book-preview";
+import { ZOOM_LEVELS, FONTS} from "../../types";
 import { applyUndo, applyRedo, isFrameObject, serializeCanvasState, enforceZLayers, placePhotoInFrame, applyFrameClip } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
@@ -75,11 +75,11 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   const { saveCurrentPage } = usePageManager();
   const { showToast } = useToast();
   const { data: session } = useSession();
+  const router = useRouter();
   const token = (session as any)?.accessToken;
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (editingTitle && titleRef.current) {
@@ -333,7 +333,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
           </button>
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
-        <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"><Eye size={11} /> {t("customer.studio.preview")}</button>
+        <button disabled onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"><Eye size={11} /> {t("customer.studio.preview")}</button>
         <button onClick={handleAutoFill} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           {t("customer.studio.autoFill")}
@@ -421,15 +421,6 @@ await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items
           </button>
         )}
       </div>
-      {previewOpen && (
-        <BookPreview
-          open
-          onClose={() => setPreviewOpen(false)}
-          pages={useCanvasStore.getState().pages.map((p: any) => ({ thumbnailUrl: p.thumbnailUrl }))}
-          title={bookMeta.title}
-          ratio={resolveFormat(bookMeta).height / resolveFormat(bookMeta).width}
-        />
-      )}
     </div>
   );
 }

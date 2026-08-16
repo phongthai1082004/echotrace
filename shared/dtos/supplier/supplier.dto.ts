@@ -8,6 +8,7 @@ export interface SupplierOption {
   code: string;
   name: L10NText;
   description: L10NText;
+  price?: number | null;
 }
 
 export interface SupplierDTO {

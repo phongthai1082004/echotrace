@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
+import { roleHome } from "@/lib/routing";
 import { useToast } from "@/components/toast";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 
@@ -15,6 +16,7 @@ function validateEmail(e: string): string | null {
 
 export default function AuthPage() {
   const { showToast } = useToast();
+  const { data: session, status } = useSession();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +27,12 @@ export default function AuthPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   const otpValue = otp.join("");
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      window.location.href = roleHome((session?.user as { role?: string } | undefined)?.role);
+    }
+  }, [status, session]);
 
   const handleSendOtp = async () => {
     const eErr = validateEmail(email);
@@ -70,7 +78,7 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      window.location.href = data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
+      window.location.href = roleHome(data?.user?.role);
     } catch (err: any) { 
       const msg = err.message || "Verification failed";
       setError(msg); 
@@ -91,7 +99,7 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error(result.error);
-      window.location.href = data?.user?.role === "admin" ? "/admin/analytics" : "/explore";
+      window.location.href = roleHome(data?.user?.role);
     } catch (err: any) { 
       const msg = err.message || "Account not found or invalid password";
       setError(msg); 
@@ -214,7 +222,7 @@ export default function AuthPage() {
                   Sign In
                 </button>
               ) : (
-                <button onClick={() => signIn("google", { callbackUrl: "/explore" })} type="button"
+                <button onClick={() => signIn("google")} type="button"
                   className={`${neoBtn} ${labelSm} w-full py-3.5 flex items-center justify-center gap-2 text-[#222]`}>
                   <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>

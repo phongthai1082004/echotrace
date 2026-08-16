@@ -107,7 +107,7 @@ export default function CheckoutPage() {
     return o.name?.[lang] || o.name?.en || o.name?.vi || code;
   };
 
-  const optionList = (list: any[]) => list.map((o) => ({ value: o.code, label: o.name?.[(i18n.language || "en").slice(0, 2)] || o.name?.en || o.name?.vi || o.code, desc: o.description?.[(i18n.language || "en").slice(0, 2)] || o.description?.en || "" }));
+  const optionList = (list: any[]) => list.map((o) => ({ value: o.code, label: o.name?.[(i18n.language || "en").slice(0, 2)] || o.name?.en || o.name?.vi || o.code, desc: o.description?.[(i18n.language || "en").slice(0, 2)] || o.description?.en || (o.price != null ? `₫${o.price.toLocaleString()}` : "") }));
 
   const describeItem = (item: any, index: number): string => {
     const s = avail[index]?.suppliers ?? [];

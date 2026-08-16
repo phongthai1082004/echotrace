@@ -66,6 +66,7 @@ export function Nav({ user }: NavProps) {
   }, [status, router]);
 
   const token = (session as any)?.accessToken;
+  const currentUser = user ?? session?.user ?? null;
 
   if (pathname === "/auth" || pathname.match(/^\/(en|vi|es)\/auth$/)) return null;
 
@@ -134,7 +135,7 @@ export function Nav({ user }: NavProps) {
               </div>
             )}
           </div>
-          {user && (
+          {currentUser && (
             <div className="relative"
               onMouseEnter={() => setNotifOpen(true)}
               onMouseLeave={() => setNotifOpen(false)}>
@@ -159,7 +160,7 @@ export function Nav({ user }: NavProps) {
               )}
             </div>
           )}
-          {user && (
+          {currentUser && (
             <div className="relative"
               onMouseEnter={() => {
                 setCartOpen(true);
@@ -223,7 +224,7 @@ export function Nav({ user }: NavProps) {
               )}
             </div>
           )}
-          {user ? (
+          {currentUser ? (
             <div
               className="relative"
               onMouseEnter={() => setDropdown(true)}
@@ -233,17 +234,17 @@ export function Nav({ user }: NavProps) {
                 type="button"
                 className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
               >
-                {user.image ? (
-                  <Image src={cloudinaryUrl(user.image)} alt="" width={28} height={28} className="rounded-full object-cover" />
+                {currentUser.image ? (
+                  <Image src={cloudinaryUrl(currentUser.image)} alt="" width={28} height={28} className="rounded-full object-cover" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-[#222] flex items-center justify-center shrink-0 overflow-hidden">
                     <span className="font-mono text-[10px] font-bold text-white leading-none">
-                      {user.name?.charAt(0).toLocaleUpperCase() || user.email?.charAt(0).toLocaleUpperCase() || "?"}
+                      {currentUser.name?.charAt(0).toLocaleUpperCase() || currentUser.email?.charAt(0).toLocaleUpperCase() || "?"}
                     </span>
                   </div>
                 )}
                 <span suppressHydrationWarning className="text-sm font-bold leading-none">
-                  {user.name || user.email || t("nav.user")}
+                  {currentUser.name || currentUser.email || t("nav.user")}
                 </span>
               </button>
 

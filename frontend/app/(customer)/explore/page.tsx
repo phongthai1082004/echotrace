@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { SidebarNav } from "@/components/sidebar-nav";
 import Image from "next/image";

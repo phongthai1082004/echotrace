@@ -92,7 +92,7 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
     },
     {
       items: [
-        ...(objects.length > 1 && objects.every((o) => !isFrameObject(o) && (o as any).customProperties?.layer !== "photo")
+        ...(objects.length > 1
           ? [{ label: "Group", fn: () => act(() => { useCanvasStore.getState().pushUndo(); groupSelectedObjects(canvas); useCanvasStore.getState().incrementLayerVersion(); }) }]
           : []),
         ...(objects.length === 1 && objects[0].type === "group"

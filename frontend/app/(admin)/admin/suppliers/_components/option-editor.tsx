@@ -14,6 +14,7 @@ function emptyOption(): SupplierOption {
     code: "",
     name: { vi: "", en: "", es: "" },
     description: { vi: "", en: "", es: "" },
+    price: null,
   };
 }
 
@@ -32,6 +33,10 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions }: {
   const setNum = (key: "width" | "height", v: string) => {
     const n = v.trim() === "" ? null : Number(v);
     setDraft({ ...draft, [key]: Number.isNaN(n) ? null : n });
+  };
+  const setPrice = (v: string) => {
+    const n = v.trim() === "" ? null : Number(v);
+    setDraft({ ...draft, price: Number.isNaN(n) ? null : n });
   };
   return (
     <div className="fixed inset-0 z-[60] bg-black/30 flex items-center justify-center" onClick={onCancel}>
@@ -57,6 +62,10 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions }: {
               </label>
             </div>
           )}
+          <label className="flex flex-col gap-0.5">
+            <span className={`${label} text-[#999]`}>price (₫)</span>
+            <input className={input} inputMode="numeric" value={num(draft.price)} onChange={(e) => setPrice(e.target.value)} />
+          </label>
           <div className="grid grid-cols-3 gap-2">
             {LANGS.map((lng) => (
               <label key={lng} className="flex flex-col gap-0.5">
@@ -117,7 +126,7 @@ export function OptionPanel({ title, options, onChange, onSave, saving = false, 
     onChange(options.filter((_, idx) => idx !== i));
   };
   const head = (s: string) => <div key={s} className={`px-2 py-2 ${label} text-[#666] border-b-[3px] border-[#222] whitespace-nowrap text-left`}>{s}</div>;
-  const cols = "90px repeat(3, 1fr) repeat(3, 1fr) 140px";
+  const cols = "90px repeat(3, 1fr) repeat(3, 1fr) 90px 140px";
   return (
     <section className={`${card} p-5`}>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -139,11 +148,12 @@ export function OptionPanel({ title, options, onChange, onSave, saving = false, 
         <p className="text-xs text-[#999]">—</p>
       ) : (
         <div className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
-          <div style={{ minWidth: 760 }}>
+          <div style={{ minWidth: 850 }}>
             <div className="grid border-b-[3px] border-[#222]" style={{ gridTemplateColumns: cols }}>
               <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-left`}>code</div>
               {LANGS.map((l) => head(`name · ${l}`))}
               {LANGS.map((l) => head(`desc · ${l}`))}
+              <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-left`}>price</div>
               <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-center`}>actions</div>
             </div>
             {options.map((o, i) => (
@@ -152,6 +162,7 @@ export function OptionPanel({ title, options, onChange, onSave, saving = false, 
                 <div className="px-2 py-2 font-mono text-[11px] font-bold truncate">{o.code || "—"}</div>
                 {LANGS.map((l) => <div key={l} className="px-2 py-2 text-xs font-bold truncate">{o.name[l] || "—"}</div>)}
                 {LANGS.map((l) => <div key={l} className="px-2 py-2 text-xs text-[#666] truncate">{o.description[l] || "—"}</div>)}
+                <div className="px-2 py-2 font-mono text-[11px] font-bold truncate">{o.price != null ? `₫${o.price.toLocaleString()}` : "—"}</div>
                 <div className="px-2 py-2 flex items-center justify-center gap-1">
                   <button onClick={() => openEdit(i)} title={t("common.edit") ?? "Edit"} className="p-1 rounded hover:bg-[#e8e6e0] cursor-pointer"><Pencil size={13} /></button>
                   <button onClick={() => remove(i)} title={t("common.delete") ?? "Delete"} className="p-1 rounded hover:bg-[#F8D7DA] text-[#B54843] cursor-pointer"><Trash2 size={13} /></button>

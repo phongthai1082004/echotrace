@@ -37,8 +37,8 @@
     "error": "Lỗi",
     "success": "Thành công",
     "retry": "Thử lại",
-      "viewAll": "Xem tất cả",
-      "action": "Hành động",
+    "viewAll": "Xem tất cả",
+    "action": "Hành động",
     "dash": "—",
     "unknownUser": "Người dùng không xác định",
     "member": "Thành viên",
@@ -49,115 +49,195 @@
   },
   "home": {
     "hero": {
-      "vol": "Tập IV — 2024",
-      "headline": "Hành Trình\nCủa Bạn,\nĐóng Thành\nSách.",
-      "subhead": "Thiết kế tạp chí du ký đẳng cấp biên tập. Mọi bức ảnh được đặt với chủ đích.",
-      "ctaPrimary": "Bắt Đầu Tạo Nhật Ký Miễn Phí",
-      "ctaSecondary": "Xem Mẫu Bố Cục",
-      "socialProof": "Cùng <bold>{{count}}</bold> người yêu du ký"
+      "newBadge": "✦ MỚI: Trang Lay-Flat",
+      "booksBadge": "★ 50K+ Sách Đã In",
+      "location": "N 51°30′ / E 0°7′ · LONDON",
+      "titleLine1": "Ảnh Của Bạn.",
+      "titleLine2": "Câu Chuyện Của Bạn.",
+      "titleLine3": "Đóng Bìa Trọn Đời.",
+      "subhead": "Thiết kế sách ảnh cao cấp trong studio 3D của chúng tôi, xem trước từng trang theo thời gian thực và in trên giấy lưu trữ—giao trong 5 ngày.",
+      "ctaPrimary": "Thiết Kế Trong Studio",
+      "ctaSecondary": "Khám Phá Sách",
+      "bookTitle": "KỶ NIỆM 2024",
+      "shipsIn": "Giao trong",
+      "shipsInValue": "5 Ngày",
+      "startingFrom": "Giá từ",
+      "startingPrice": "$29",
+      "section": "HERO",
+      "themeWedding": "CHỦ ĐỀ CƯỚI",
+      "themeWeddingValue": "Đám Cưới 2026",
+      "themeFamily": "DỊP ĐẶC BIỆT",
+      "themeFamilyValue": "Kỷ Niệm·Gia Đình",
+      "themeAnniversary": "KỶ NIỆM",
+      "themeAnniversaryValue": "10 Năm Bên Nhau"
     },
-    "fieldJournals": {
-      "sub": "Cảm Hứng",
-      "title": "Nhật Ký Thực Địa"
+    "book3d": {
+      "autoRotate": "[TỰ XOAY]",
+      "dragToRotate": "[KÉO ĐỂ XOAY]"
     },
-    "marquee": {
-      "editorialTypography": "Typography Biên Tập",
-      "asymmetricLayouts": "Bố Cục Bất Đối Xứng",
-      "gpsMetadata": "Metadata GPS",
-      "archivalPaper": "Giấy Lưu Trữ",
-      "hardShadows": "Bóng Cứng",
-      "premiumBinding": "Đóng Sách Cao Cấp",
-      "handcrafted": "Thủ Công"
+    "marquee": [
+      "ĐÓNG SÁCH CAO CẤP",
+      "GIẤY LƯU TRỮ",
+      "TRANG LAY-FLAT",
+      "DẬP FOIL",
+      "BỀ MẶT BÓNG",
+      "BÌA MỜ",
+      "IN DUOTONE",
+      "GÁY KHÂU TAY",
+      "GIẤY KHÔNG AXIT",
+      "BÌA CỨNG VẢI LANH",
+      "CHỈNH SỬA ẢNH",
+      "BỐ CỤC TÙY CHỈNH"
+    ],
+    "process": {
+      "section": "QUY TRÌNH",
+      "titleLine1": "Từ Ý Tưởng",
+      "titleLine2": "Đến Cửa Nhà",
+      "desc": "Chỉ cần ba bước. Studio của chúng tôi hướng dẫn bạn từ lần tải ảnh đầu tiên đến tệp sẵn sàng in.",
+      "steps": [
+        {
+          "label": "THIẾT KẾ",
+          "title": "Tạo Trong Studio",
+          "desc": "Tải ảnh, sắp xếp bố cục, chọn bìa. Studio 3D kéo-thả của chúng tôi hiển thị trực tiếp từng trang."
+        },
+        {
+          "label": "XEM THỬ",
+          "title": "Xem Trước 3D",
+          "desc": "Xoay cuốn sách hoàn chỉnh theo thời gian thực trong 3D. Lật trang, kiểm tra trải rộng, phóng to chi tiết."
+        },
+        {
+          "label": "GIAO HÀNG",
+          "title": "In Và Giao Hàng",
+          "desc": "In chất lượng lưu trữ trên giấy 170gsm. Đóng gói phẳng và giao trong hộp bảo vệ."
+        }
+      ]
     },
-    "howItWorks": {
-      "sub": "Quy Trình",
-      "title": "Cách Hoạt Động",
-      "step1Title": "Tải Ảnh Lên",
-      "step1Desc": "Nhập từ bất kỳ thiết bị nào. Tọa độ GPS được trích xuất tự động để nhật ký biết mỗi bức ảnh được chụp ở đâu.",
-      "step2Title": "Thiết Kế Trong Studio",
-      "step2Desc": "Kéo ảnh vào bố cục biên tập, áp dụng bộ lọc, đặt typography, và xem trước từng trang trong thời gian thực.",
-      "step3Title": "Đặt Hàng & Nhận",
-      "step3Desc": "In trên giấy mờ lưu trữ, đóng bằng tay tại Hà Nội, và giao đến tận nhà trong vòng một tuần.",
-      "cta": "Xem Tất Cả Mẫu →"
+    "showcase": {
+      "section": "TRƯNG BÀY",
+      "titleLine1": "Mỗi Trang Là",
+      "titleLine2": "Một Kiệt Tác",
+      "sampleCovers": "BÌA MẪU",
+      "desc": "Khám phá những cuốn sách thật do khách hàng tạo ra. Mỗi bìa được thiết kế riêng trong studio của chúng tôi từ chính ảnh của bạn.",
+      "browseGallery": "Xem Thư Viện",
+      "bookTitle": "ĐÁM CƯỚI 2024",
+      "badgeWedding": "ĐÁM CƯỚI",
+      "badgeWeddingValue": "Đám Cưới 2026",
+      "badgeBaby": "BÉ YÊU",
+      "badgeBabyValue": "Năm Đầu Đời",
+      "badgeGraduation": "TỐT NGHIỆP",
+      "badgeGraduationValue": "Lễ Tốt Nghiệp",
+      "galleryTitle": "Làm bởi khách hàng, in bền theo năm tháng",
+      "galleryBody": "Mỗi cuốn sách ở đây bắt đầu từ một thư mục ảnh và vài cú click trong studio. Xem những gì người thật đã tạo, rồi tự làm cuốn của bạn. Từ album cưới, nhật ký du lịch đến kỷ niệm năm đầu đời, mỗi bìa đều được dàn trang thủ công trong trình chỉnh sửa từ chính ảnh của bạn — rồi in trên giấy lưu trữ và đóng bìa để bền theo nhiều thế hệ.",
+      "point1": "Bìa & bố cục thiết kế riêng",
+      "point2": "Giấy cao cấp, đóng bìa cứng",
+      "point3": "Giao tận nơi chỉ trong vài ngày",
+      "point4": "Xem trước 3D trực tiếp trước khi in",
+      "point5": "Thiết kế miễn phí, chỉ trả tiền khi in",
+      "point6": "Trang mở phẳng, không bị hở gáy",
+      "point7": "Dập nhũ kim & hoàn thiện mờ"
     },
-    "why": {
-      "sub": "Tại Sao Là Chúng Tôi",
-      "title": "Mọi Thứ Bạn Cần",
-      "feature1Title": "Bố Cục Đẳng Cấp Biên Tập",
-      "feature1Desc": "Mọi mẫu đều được thiết kế bởi nhà thiết kế xuất bản. Lưới bất đối xứng, trích dẫn, trải rộng toàn trang — không clip art.",
-      "feature2Title": "Giấy & Đóng Sách Lưu Trữ",
-      "feature2Desc": "Giấy mờ 200–250 gsm với đóng sách layflat. Nhật ký của bạn mở phẳng trên bàn mà không nứt gáy.",
-      "feature3Title": "Metadata Hỗ Trợ GPS",
-      "feature3Desc": "Tải ảnh lên với dữ liệu vị trí và chúng tôi vẽ nó lên mọi trang. Nhật ký của bạn trở thành bản đồ nơi bạn đã đến.",
-      "feature4Title": "Thủ Công Tại Hà Nội",
-      "feature4Desc": "Mỗi cuốn sách được in, cắt và đóng bằng tay tại xưởng Hà Nội. Chất lượng mà nhà in công nghiệp không thể sánh kịp.",
-      "cta": "Tạo Trang Đầu Miễn Phí"
+    "materials": {
+      "section": "CHẤT LIỆU",
+      "titleLine1": "Bền Vững",
+      "titleLine2": "Qua Các Thế Hệ",
+      "desc": "Chọn kiểu đóng bìa của bạn. Mọi bìa đều được kiểm tra tay trước khi giao.",
+      "items": [
+        {
+          "name": "Bìa Mềm",
+          "tag": "BÌA MỀM",
+          "desc": "Bìa laminate mờ linh hoạt. Tuyệt vời cho kỷ niệm hằng ngày và quà tặng. Giấy ruột 170gsm.",
+          "badge": "PHỔ BIẾN"
+        },
+        {
+          "name": "Bìa Cứng",
+          "tag": "BÌA CỨNG",
+          "desc": "Bìa cứng với ảnh bọc ngoài hoặc vải lanh. Đóng lay-flat cho trải rộng liền mạch.",
+          "badge": "BÁN CHẠY"
+        },
+        {
+          "name": "Bìa Da",
+          "tag": "BÌA DA",
+          "desc": "Da Ý nguyên hạt với dập nổi vàng. Chất lượng gia truyền cho đám cưới và cột mốc đời người.",
+          "badge": "PREMIUM"
+        }
+      ]
     },
     "pricing": {
-      "sub": "Bảng Giá",
-      "title": "Chọn Kiểu Đóng Sách",
-      "desc": "Mọi nhật ký đều bao gồm miễn phí vận chuyển, giấy lưu trữ và quyền truy cập tất cả tính năng Studio.",
-      "mostPopular": "Phổ Biến Nhất",
-      "labels": {
-        "pages": "Số Trang",
-        "paper": "Giấy",
-        "binding": "Đóng Sách",
-        "cover": "Bìa"
-      },
-      "plans": {
-        "softcover": {
-          "name": "Bìa Mềm",
-          "pages": "24–48",
-          "paper": "Mờ 200gsm",
-          "binding": "Keo nhiệt",
-          "cover": "Mềm, 300gsm"
-        },
-        "hardcover": {
-          "name": "Bìa Cứng",
-          "pages": "24–80",
-          "paper": "Mờ 200gsm",
-          "binding": "Layflat",
-          "cover": "Cứng, 350gsm"
-        },
-        "leather": {
-          "name": "Bìa Da",
-          "pages": "24–120",
-          "paper": "Mờ Cao Cấp 250gsm",
-          "binding": "Chỉ Smyth layflat",
-          "cover": "Da thật, dập foil"
-        }
-      },
-      "choose": "Chọn"
+      "section": "BẢNG GIÁ",
+      "titleLine1": "Giá Đơn Giản.",
+      "titleLine2": "Không Bất Ngờ.",
+      "desc": "Mọi gói đều bao gồm quyền truy cập studio miễn phí, xem trước 3D và vận chuyển có theo dõi.",
+      "tierLabels": [
+        "BÌA MỀM",
+        "BÌA CỨNG",
+        "BÌA DA"
+      ],
+      "note": "Tất cả giá bằng USD · Đã gồm VAT · Cam kết hài lòng 30 ngày"
     },
-    "quote": {
-      "text": "Ký ức không phải là bộ nhớ. Đó là kết cấu của tờ giấy mà một khoảnh khắc nhất quyết được ép lên.",
-      "author": "— Tuyên Ngôn Cabinet Memoir",
-      "alt": "Tài liệu thực địa"
+    "testimonial": {
+      "section": "CẢM NHẬN",
+      "quote": "Chất lượng làm tôi choáng ngợp. Bà tôi đã khóc khi thấy bản bìa da. Xứng đáng từng xu và còn hơn thế.",
+      "name": "Sofía Marchetti",
+      "detail": "Album Cưới · Bìa Cứng · Milan, Ý",
+      "statsLabels": [
+        "Sách Đã In",
+        "Đánh Giá Trung Bình",
+        "Sẽ Giới Thiệu"
+      ]
     },
     "cta": {
-      "sub": "Sẵn Sàng?",
-      "title": "Lưu Giữ Hành Trình Của Bạn Qua Nhiều Thế Hệ",
-      "desc": "Mọi bức ảnh đều chứa một câu chuyện. Hãy trao cho nó sự vĩnh cửu xứng đáng — do bạn thiết kế, in bằng tay tại Hà Nội.",
-      "ctaPrimary": "Bắt Đầu Nhật Ký Miễn Phí",
-      "ctaSecondary": "Xem Mẫu",
-      "noCard": "Không yêu cầu thẻ tín dụng. Bắt đầu thiết kế trong vài giây."
+      "section": "BẮT ĐẦU",
+      "titleLine1": "Mở Studio.",
+      "titleLine2": "Tạo Nên",
+      "titleLine3": "Điều Đẹp Đẽ.",
+      "desc": "Thiết kế miễn phí. Chỉ thanh toán khi bạn sẵn sàng in. Không cần tài khoản để bắt đầu.",
+      "ctaPrimary": "Bắt Đầu Thiết Kế Miễn Phí",
+      "ctaSecondary": "Xem Ví Dụ",
+      "bookTitle": "CÂU CHUYỆN CỦA BẠN"
     },
     "footer": {
-      "desc": "Tạp chí du ký đặt làm riêng, in và đóng bằng tay tại Hà Nội, Việt Nam.",
-      "product": "Sản Phẩm",
-      "studio": "Studio",
-      "pricing": "Bảng Giá",
-      "samples": "Mẫu",
-      "shipping": "Vận Chuyển",
-      "company": "Công Ty",
-      "about": "Giới Thiệu",
-      "blog": "Blog",
-      "careers": "Tuyển Dụng",
-      "contact": "Liên Hệ",
-      "copyright": "© {{year}} Cabinet Memoir",
-      "privacy": "Riêng Tư",
-      "terms": "Điều Khoản",
-      "returns": "Đổi Trả"
+      "brandBox": "FOLIO",
+      "brandTag": "PRESS™",
+      "desc": "Sách ảnh cao cấp, thiết kế trực tuyến và in với chất lượng lưu trữ. Trụ sở tại London, giao hàng toàn thế giới.",
+      "cols": [
+        {
+          "title": "Sản Phẩm",
+          "links": [
+            "Sách Ảnh",
+            "Studio Thiết Kế",
+            "Chất Liệu",
+            "Bảng Giá",
+            "Mẫu"
+          ]
+        },
+        {
+          "title": "Công Ty",
+          "links": [
+            "Về Chúng Tôi",
+            "Blog",
+            "Báo Chí",
+            "Tuyển Dụng",
+            "Liên Hệ"
+          ]
+        },
+        {
+          "title": "Hỗ Trợ",
+          "links": [
+            "Trung Tâm Trợ Giúp",
+            "Thông Tin Giao Hàng",
+            "Đổi Trả",
+            "Hướng Dẫn Tệp",
+            "Trạng Thái"
+          ]
+        }
+      ],
+      "legal": "© 2024 FOLIO PRESS LTD · BẢO LƯU MỌI QUYỀN",
+      "links": [
+        "Chính Sách Bảo Mật",
+        "Điều Khoản Dịch Vụ",
+        "Tùy Chọn Cookie"
+      ],
+      "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
   "auth": {
@@ -770,6 +850,12 @@
       "style": "Phong cách",
       "pages": "Số trang",
       "status": "Trạng thái",
+      "published": "Đã xuất bản",
+      "draft": "Nháp",
+      "publish": "Xuất bản",
+      "moveToDraft": "Chuyển về Nháp",
+      "statusUpdated": "Đã cập nhật trạng thái",
+      "statusUpdateFailed": "Cập nhật trạng thái thất bại",
       "noItems": "Chưa có mẫu nào",
       "fetchFailed": "Tải mẫu thất bại",
       "deleteTitle": "Xóa mẫu",

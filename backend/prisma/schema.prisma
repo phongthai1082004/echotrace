@@ -207,6 +207,7 @@ model SampleBook {
   paperHeight Float?
   paperWidth  Float?
   isActive    Boolean @default(true)
+  status      String  @default("draft")
   content     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -273,6 +274,7 @@ model SupplierOption {
   description Json     @default("{}")
   width       Int?    // paperSize: kích thước thật (mm) để studio tính canvas
   height      Int?
+  price       Float?  // giá (VND) của option này
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   isDelete    Boolean  @default(false)

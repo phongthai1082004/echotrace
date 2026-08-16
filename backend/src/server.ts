@@ -7,12 +7,15 @@ import cors from "cors";
 import i18next from "i18next";
 import Backend from "i18next-fs-backend";
 import { handle, LanguageDetector } from "i18next-http-middleware";
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user/user.routes.js";
-import uploadRoutes from "./routes/user/upload.routes.js";
-import adminRoutes from "./routes/admin/admin.routes.js";
-import bookRoutes from "./routes/user/book.routes.js";
-import cartRoutes from "./routes/user/cart.routes.js";
+import authRoutes from "./features/auth/auth.routes.js";
+import usersRoutes from "./features/users/users.routes.js";
+import suppliersRoutes from "./features/suppliers/suppliers.routes.js";
+import sampleBooksRoutes from "./features/sample-books/sample-books.routes.js";
+import booksRoutes from "./features/books/books.routes.js";
+import cartRoutes from "./features/cart/cart.routes.js";
+import couponsRoutes from "./features/coupons/coupons.routes.js";
+import stickersRoutes from "./features/stickers/stickers.routes.js";
+import uploadsRoutes from "./features/uploads/uploads.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const PORT = process.env.PORT || 4000;
@@ -47,11 +50,14 @@ async function bootstrap() {
   });
 
   apiRouter.use("/auth", authRoutes);
-  apiRouter.use("/user", userRoutes);
-  apiRouter.use("/", uploadRoutes);
-  apiRouter.use("/", adminRoutes);
-  apiRouter.use("/", bookRoutes);
+  apiRouter.use("/", usersRoutes);
+  apiRouter.use("/", suppliersRoutes);
+  apiRouter.use("/", sampleBooksRoutes);
+  apiRouter.use("/", booksRoutes);
   apiRouter.use("/", cartRoutes);
+  apiRouter.use("/", couponsRoutes);
+  apiRouter.use("/", stickersRoutes);
+  apiRouter.use("/", uploadsRoutes);
 
   app.use("/:lang/api", apiRouter);
   app.use("/api", apiRouter);

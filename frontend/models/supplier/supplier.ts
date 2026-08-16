@@ -16,6 +16,7 @@ export interface SupplierOption {
   description: L10NText;
   width?: number | null;
   height?: number | null;
+  price?: number | null;
 }
 
 export interface Supplier {

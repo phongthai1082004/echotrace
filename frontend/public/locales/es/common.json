@@ -37,8 +37,8 @@
     "error": "Error",
     "success": "Éxito",
     "retry": "Reintentar",
-      "viewAll": "Ver todo",
-      "action": "Acción",
+    "viewAll": "Ver todo",
+    "action": "Acción",
     "dash": "—",
     "unknownUser": "Usuario desconocido",
     "member": "Miembro",
@@ -49,115 +49,195 @@
   },
   "home": {
     "hero": {
-      "vol": "Vol. IV — 2024",
-      "headline": "Tu\nViaje,\nEncuadernado\nen Papel.",
-      "subhead": "Diseña diarios de viaje personalizados con diseños de calidad editorial. Cada fotografía colocada con intención.",
-      "ctaPrimary": "Comienza Tu Diario Gratis",
-      "ctaSecondary": "Ver Ejemplos de Diseños",
-      "socialProof": "Únete a <bold>{{count}}</bold> viajeros"
+      "newBadge": "✦ NUEVO: Páginas Lay-Flat",
+      "booksBadge": "★ 50K+ Libros Impresos",
+      "location": "N 51°30′ / E 0°7′ · LONDRES",
+      "titleLine1": "Tus Fotos.",
+      "titleLine2": "Tu Historia.",
+      "titleLine3": "Encuadernada para Siempre.",
+      "subhead": "Diseña un fotolibro premium en nuestro estudio 3D, previsualiza cada página en tiempo real e imprímelo en papel de archivo—entregado en 5 días.",
+      "ctaPrimary": "Diseñar en el Estudio",
+      "ctaSecondary": "Explorar Libros",
+      "bookTitle": "RECUERDOS 2024",
+      "shipsIn": "Envía en",
+      "shipsInValue": "5 Días",
+      "startingFrom": "Desde",
+      "startingPrice": "$29",
+      "section": "PORTADA",
+      "themeWedding": "BODA",
+      "themeWeddingValue": "Boda 2026",
+      "themeFamily": "GRAN DÍA",
+      "themeFamilyValue": "Aniversario · Familia",
+      "themeAnniversary": "ANIVERSARIO",
+      "themeAnniversaryValue": "10 Años Juntos"
     },
-    "fieldJournals": {
-      "sub": "Inspiración",
-      "title": "Diarios de Campo"
+    "book3d": {
+      "autoRotate": "[ROTACIÓN AUTO]",
+      "dragToRotate": "[ARRASTRA PARA ROTAR]"
     },
-    "marquee": {
-      "editorialTypography": "Tipografía Editorial",
-      "asymmetricLayouts": "Diseños Asimétricos",
-      "gpsMetadata": "Metadatos GPS",
-      "archivalPaper": "Papel de Archivo",
-      "hardShadows": "Sombras Fuertes",
-      "premiumBinding": "Encuadernación Premium",
-      "handcrafted": "Artesanal"
+    "marquee": [
+      "ENCUADERNACIÓN PREMIUM",
+      "PAPEL DE ARCHIVO",
+      "PÁGINAS LAY-FLAT",
+      "ESTAMPADO EN FOIL",
+      "ACABADO SATINADO",
+      "CUBIERTA MATE",
+      "IMPRESIÓN DUOTONO",
+      "LOMO COSIDO A MANO",
+      "PAPEL SIN ÁCIDO",
+      "TAPA DURA DE LINO",
+      "EDICIÓN DE FOTOS",
+      "DISEÑOS PERSONALIZADOS"
+    ],
+    "process": {
+      "section": "PROCESO",
+      "titleLine1": "De la Idea",
+      "titleLine2": "a tu Puerta",
+      "desc": "Solo hacen falta tres pasos. Nuestro estudio te guía desde la primera subida hasta el archivo listo para imprimir.",
+      "steps": [
+        {
+          "label": "DISEÑAR",
+          "title": "Crear en el Estudio",
+          "desc": "Sube fotos, organiza diseños, elige cubiertas. Nuestro estudio 3D de arrastrar y soltar muestra cada página en vivo."
+        },
+        {
+          "label": "VISTA 3D",
+          "title": "Vista Previa en 3D",
+          "desc": "Gira tu libro terminado en 3D en tiempo real. Pasa páginas, revisa las dobles y acerca los detalles."
+        },
+        {
+          "label": "ENTREGA",
+          "title": "Impreso y Enviado",
+          "desc": "Impresión de calidad de archivo en papel de 170gsm. Enviado plano en una funda protectora."
+        }
+      ]
     },
-    "howItWorks": {
-      "sub": "Proceso",
-      "title": "Cómo Funciona",
-      "step1Title": "Sube Tus Fotos",
-      "step1Desc": "Importa desde cualquier dispositivo. Las coordenadas GPS se extraen automáticamente para que tu diario sepa dónde se tomó cada toma.",
-      "step2Title": "Diseña en Studio",
-      "step2Desc": "Arrastra fotos a diseños editoriales, aplica filtros, configura tipografía y previsualiza cada página en tiempo real.",
-      "step3Title": "Pide y Recibe",
-      "step3Desc": "Impreso en papel mate de archivo, encuadernado a mano en Hanói y enviado a tu puerta en una semana.",
-      "cta": "Explorar Todas las Plantillas →"
+    "showcase": {
+      "section": "MUESTRARIO",
+      "titleLine1": "Cada Página,",
+      "titleLine2": "una Obra Maestra",
+      "sampleCovers": "CUBIERTAS DE MUESTRA",
+      "desc": "Explora libros reales creados por clientes. Cada cubierta está diseñada a medida en nuestro estudio con tus propias fotos.",
+      "browseGallery": "Ver Galería",
+      "bookTitle": "BODA 2024",
+      "badgeWedding": "BODA",
+      "badgeWeddingValue": "Boda 2026",
+      "badgeBaby": "BEBÉ",
+      "badgeBabyValue": "Primer Año",
+      "badgeGraduation": "GRADUACIÓN",
+      "badgeGraduationValue": "Promoción 2026",
+      "galleryTitle": "Hechos por clientes, impresos para durar",
+      "galleryBody": "Cada libro aquí comenzó como una carpeta de fotos y unos clics en nuestro estudio. Explora lo que gente real creó y luego haz el tuyo. Desde álbumes de boda, diarios de viaje hasta recuerdos del primer año, cada cubierta se maqueta a mano en nuestro editor con tus propias fotos — y luego se imprime en papel de archivo y se encuaderna para durar generaciones.",
+      "point1": "Cubiertas y diseños personalizados",
+      "point2": "Papel premium, encuadernación de tapa dura",
+      "point3": "Enviado a tu puerta en días",
+      "point4": "Vista previa 3D en vivo antes de imprimir",
+      "point5": "Diseña gratis, paga solo cuando esté listo",
+      "point6": "Dobles páginas lay-flat, sin pliegue central",
+      "point7": "Estampado en foil y acabados mate"
     },
-    "why": {
-      "sub": "Por Qué Nosotros",
-      "title": "Todo Lo Que Necesitas",
-      "feature1Title": "Diseños de Calidad Editorial",
-      "feature1Desc": "Cada plantilla está diseñada por diseñadores de publicaciones. Cuadrículas asimétricas, citas destacadas, páginas a sangre — sin clip art.",
-      "feature2Title": "Papel y Encuadernación de Archivo",
-      "feature2Desc": "Papel mate de 200–250 gsm con encuadernación layflat. Tu diario se abre plano sobre una mesa sin agrietar el lomo.",
-      "feature3Title": "Metadatos Impulsados por GPS",
-      "feature3Desc": "Sube una foto con datos de ubicación y la trazamos en cada página. Tu diario se convierte en un mapa de dónde has estado.",
-      "feature4Title": "Artesanal en Hanói",
-      "feature4Desc": "Cada libro se imprime, recorta y encuaderna a mano en nuestro taller de Hanói. Calidad que las imprentas industriales no pueden igualar.",
-      "cta": "Crea Tu Primera Página Gratis"
+    "materials": {
+      "section": "MATERIALES",
+      "titleLine1": "Hecho para Durar",
+      "titleLine2": "Generaciones",
+      "desc": "Elige tu encuadernación. Cada cubierta se inspecciona a mano antes del envío.",
+      "items": [
+        {
+          "name": "Tapa Blanda",
+          "tag": "TAPA BLANDA",
+          "desc": "Cubierta laminada mate y flexible. Ideal para recuerdos cotidianos y regalos. Papel interior de 170gsm.",
+          "badge": "POPULAR"
+        },
+        {
+          "name": "Tapa Dura",
+          "tag": "TAPA DURA",
+          "desc": "Cubierta rígida con imagen impresa o lino. Encuadernación lay-flat para dobles páginas perfectas.",
+          "badge": "MÁS VENDIDO"
+        },
+        {
+          "name": "Cuero",
+          "tag": "CUERO",
+          "desc": "Cuero italiano de grano entero con estampado dorado. Calidad de herencia para bodas y hitos de la vida.",
+          "badge": "PREMIUM"
+        }
+      ]
     },
     "pricing": {
-      "sub": "Precios",
-      "title": "Elige Tu Encuadernación",
-      "desc": "Cada diario incluye envío gratuito, papel de archivo y acceso a todas las funciones de Studio.",
-      "mostPopular": "Más Popular",
-      "labels": {
-        "pages": "Páginas",
-        "paper": "Papel",
-        "binding": "Encuadernación",
-        "cover": "Cubierta"
-      },
-      "plans": {
-        "softcover": {
-          "name": "Tapa Blanda",
-          "pages": "24–48",
-          "paper": "Mate 200gsm",
-          "binding": "Encuadernación perfecta",
-          "cover": "Blanda, 300gsm"
-        },
-        "hardcover": {
-          "name": "Tapa Dura",
-          "pages": "24–80",
-          "paper": "Mate 200gsm",
-          "binding": "Layflat",
-          "cover": "Dura, 350gsm"
-        },
-        "leather": {
-          "name": "Piel",
-          "pages": "24–120",
-          "paper": "Mate Premium 250gsm",
-          "binding": "Cosido Smyth layflat",
-          "cover": "Piel genuina, estampado en foil"
-        }
-      },
-      "choose": "Elegir"
+      "section": "PRECIOS",
+      "titleLine1": "Precios Simples.",
+      "titleLine2": "Sin Sorpresas.",
+      "desc": "Cada plan incluye acceso gratuito al estudio, vista previa 3D y envío con seguimiento.",
+      "tierLabels": [
+        "TAPA BLANDA",
+        "TAPA DURA",
+        "CUERO"
+      ],
+      "note": "Todos los precios en USD · IVA incluido · Garantía de satisfacción de 30 días"
     },
-    "quote": {
-      "text": "La memoria no es almacenamiento. Es la textura del papel sobre el que un momento insiste en ser presionado.",
-      "author": "— Manifiesto de Cabinet Memoir",
-      "alt": "Documentación de campo"
+    "testimonial": {
+      "section": "TESTIMONIO",
+      "quote": "La calidad me dejó sin palabras. Mi abuela lloró al ver la edición en cuero. Vale cada centavo y mucho más.",
+      "name": "Sofía Marchetti",
+      "detail": "Álbum de Boda · Tapa Dura · Milán, IT",
+      "statsLabels": [
+        "Libros Impresos",
+        "Valoración Media",
+        "Lo Recomendarían"
+      ]
     },
     "cta": {
-      "sub": "¿Listo?",
-      "title": "Preserva Tu Viaje para las Generaciones",
-      "desc": "Cada fotografía guarda una historia. Dale la permanencia que merece — diseñado por ti, impreso a mano en Hanói.",
-      "ctaPrimary": "Comienza Tu Diario Gratis",
-      "ctaSecondary": "Ver Muestras",
-      "noCard": "No se requiere tarjeta de crédito. Empieza a diseñar en segundos."
+      "section": "EMPEZAR",
+      "titleLine1": "Abre el Estudio.",
+      "titleLine2": "Crea Algo",
+      "titleLine3": "Hermoso.",
+      "desc": "Diseñar es gratis. Paga solo cuando estés listo para imprimir. No necesitas cuenta para empezar.",
+      "ctaPrimary": "Empieza a Diseñar Gratis",
+      "ctaSecondary": "Ver Ejemplos",
+      "bookTitle": "TU HISTORIA"
     },
     "footer": {
-      "desc": "Diarios de viaje a medida, impresos y encuadernados a mano en Hanói, Vietnam.",
-      "product": "Producto",
-      "studio": "Studio",
-      "pricing": "Precios",
-      "samples": "Muestras",
-      "shipping": "Envío",
-      "company": "Empresa",
-      "about": "Acerca de",
-      "blog": "Blog",
-      "careers": "Carreras",
-      "contact": "Contacto",
-      "copyright": "© {{year}} Cabinet Memoir",
-      "privacy": "Privacidad",
-      "terms": "Términos",
-      "returns": "Devoluciones"
+      "brandBox": "FOLIO",
+      "brandTag": "PRESS™",
+      "desc": "Fotolibros premium, diseñados en línea e impresos con calidad de archivo. Con sede en Londres, envíos a todo el mundo.",
+      "cols": [
+        {
+          "title": "Producto",
+          "links": [
+            "Fotolibros",
+            "Estudio de Diseño",
+            "Materiales",
+            "Precios",
+            "Plantillas"
+          ]
+        },
+        {
+          "title": "Empresa",
+          "links": [
+            "Sobre Nosotros",
+            "Blog",
+            "Prensa",
+            "Empleo",
+            "Contacto"
+          ]
+        },
+        {
+          "title": "Soporte",
+          "links": [
+            "Centro de Ayuda",
+            "Información de Envío",
+            "Devoluciones",
+            "Guía de Archivos",
+            "Estado"
+          ]
+        }
+      ],
+      "legal": "© 2024 FOLIO PRESS LTD · TODOS LOS DERECHOS RESERVADOS",
+      "links": [
+        "Política de Privacidad",
+        "Términos del Servicio",
+        "Preferencias de Cookies"
+      ],
+      "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
   "auth": {
@@ -770,6 +850,12 @@
       "style": "Estilo",
       "pages": "Páginas",
       "status": "Estado",
+      "published": "Publicado",
+      "draft": "Borrador",
+      "publish": "Publicar",
+      "moveToDraft": "Mover a Borrador",
+      "statusUpdated": "Estado actualizado",
+      "statusUpdateFailed": "Error al actualizar el estado",
       "noItems": "Sin plantillas",
       "fetchFailed": "Error al cargar plantillas",
       "deleteTitle": "Eliminar plantilla",

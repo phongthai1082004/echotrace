@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
+import { roleHome } from "@/lib/routing";
 
 export default function NotFound() {
   const { t } = useTranslation();
   const { data: session } = useSession();
-  const role = (session as { user?: { role?: string } } | null)?.user?.role;
-  const home = role === "admin" ? "/admin/analytics" : role === "user" ? "/explore" : "/en";
+  const home = roleHome((session as { user?: { role?: string } } | null)?.user?.role);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#FFF7D6] relative overflow-hidden">

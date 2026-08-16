@@ -30,6 +30,19 @@ export default function AdminSampleBooksPage() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SampleBookDTO | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [publishingId, setPublishingId] = useState<number | null>(null);
+
+  const toggleStatus = async (s: SampleBookDTO) => {
+    if (!accessToken) return;
+    setPublishingId(s.id);
+    const next = s.status === "published" ? "draft" : "published";
+    try {
+      await apiFetch(`/api/admin/sample-books/${s.id}`, accessToken, { method: "PATCH", body: JSON.stringify({ status: next }) });
+      setItems((prev) => prev.map((b) => (b.id === s.id ? { ...b, status: next } : b)));
+      showToast(t("admin.sampleBooks.statusUpdated"), "success");
+    } catch { showToast(t("admin.sampleBooks.statusUpdateFailed"), "error"); }
+    finally { setPublishingId(null); }
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget || !accessToken) return;
@@ -94,9 +107,21 @@ export default function AdminSampleBooksPage() {
                           <span suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">{t("customer.myJournals.noCover")}</span>
                         </div>
                       )}
+                      <div className="absolute top-2 left-2">
+                        <span
+                          className={`font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 border-[#222] ${
+                            s.status === "published" ? "bg-[#2e7d32] text-white" : "bg-[#FFF7D6] text-[#666]"
+                          }`}>
+                          {s.status === "published" ? t("admin.sampleBooks.published") : t("admin.sampleBooks.draft")}
+                        </span>
+                      </div>
                       <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(s); }}
                         className="absolute top-2 right-2 p-1.5 bg-[#B54843] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#943a36] cursor-pointer z-10">
                         <Trash2 size={14} />
+                      </button>
+                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleStatus(s); }} disabled={publishingId === s.id}
+                        className="absolute bottom-2 right-2 font-mono text-[8px] font-bold tracking-widest uppercase px-2.5 py-1.5 rounded-md border-2 border-[#222] opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40 cursor-pointer z-10 bg-[#222] text-white hover:bg-[#FFF7D6] hover:text-[#222]">
+                        {publishingId === s.id ? t("common.loading") : s.status === "published" ? t("admin.sampleBooks.moveToDraft") : t("admin.sampleBooks.publish")}
                       </button>
                     </div>
                     <div className="p-4 border-t-[3px] border-[#222]">

@@ -54,33 +54,46 @@ export function enforceZLayers(canvas: fabric.Canvas) {
   objs.forEach((obj, i) => canvas.moveObjectTo(obj, i));
 }
 
-export function groupSelectedObjects(canvas: fabric.Canvas): fabric.Group | null {
+export function groupSelectedObjects(canvas: fabric.Canvas) {
   const sel = canvas.getActiveObject();
-  if (!sel) return null;
-  const t = (sel as any).type;
-  if (t !== "activeselection" && t !== "activeSelection") return null;
+  if (!sel || (sel as any).type !== "activeselection") return;
   const objects = (sel as any).removeAll() as fabric.FabricObject[];
-  if (!objects.length) return null;
-  const group = new fabric.Group(objects);
-  const maxZ = objects.reduce((m: number, o: any) => Math.max(m, o.customProperties?.z ?? 0), 0);
+  const all = [...objects];
+  objects.forEach((o: any) => {
+    if (o.customProperties?.layer === "frame") {
+      const photo = findPhotoInFrame(canvas, o);
+      if (photo && !all.includes(photo)) {
+        canvas.remove(photo);
+        all.push(photo);
+      }
+    }
+  });
+  const group = new fabric.Group(all);
+  const maxZ = all.reduce((m: number, o: any) => Math.max(m, o.customProperties?.z ?? 0), 0);
   (group as any).customProperties = { z: maxZ + 10, layer: "element" };
   canvas.add(group);
   canvas.setActiveObject(group);
   canvas.requestRenderAll();
   enforceZLayers(canvas);
-  return group;
 }
 
-export function ungroupSelectedObjects(canvas: fabric.Canvas): fabric.FabricObject[] | null {
+export function syncFrameBorders(canvas: fabric.Canvas) {
+  canvas.getObjects().forEach((o: any) => {
+    if (o.customProperties?.layer !== "frame") return;
+    const covered = !!findPhotoInFrame(canvas, o);
+    o.set({ stroke: covered ? "transparent" : "#000", strokeWidth: covered ? 0 : 2 } as any);
+  });
+  canvas.requestRenderAll();
+}
+
+export function ungroupSelectedObjects(canvas: fabric.Canvas) {
   const group = canvas.getActiveObject() as any;
-  if (!group || group.type !== "group") return null;
+  if (!group || group.type !== "group") return;
   canvas.remove(group);
-  const objects = group.removeAll() as fabric.FabricObject[];
-  const sel = new (fabric.ActiveSelection as any)(objects, { canvas: canvas as any });
+  const sel = new (fabric.ActiveSelection as any)(group.removeAll(), { canvas: canvas as any });
   canvas.setActiveObject(sel);
   canvas.requestRenderAll();
   enforceZLayers(canvas);
-  return objects;
 }
 
 export function nextFrameZ(canvas: fabric.Canvas): number {

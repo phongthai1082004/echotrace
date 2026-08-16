@@ -12,6 +12,7 @@ export interface SampleBookDTO {
   paperHeight: number | null;
   paperWidth: number | null;
   isActive: boolean;
+  status: string;
   content: any | null;
   thumbnailUrl: string | null;
   createdAt: string;
@@ -30,6 +31,7 @@ export interface CreateSampleBookDTO {
   paperHeight?: number | null;
   paperWidth?: number | null;
   isActive?: boolean;
+  status?: string;
   content?: any;
 }
 
@@ -45,6 +47,7 @@ export interface UpdateSampleBookDTO {
   paperHeight?: number | null;
   paperWidth?: number | null;
   isActive?: boolean;
+  status?: string;
   content?: any;
 }
 
@@ -70,6 +73,7 @@ export class SampleBookMapper {
       paperHeight: book.paperHeight ?? null,
       paperWidth: book.paperWidth ?? null,
       isActive: book.isActive ?? true,
+      status: book.status ?? "draft",
       content: book.content ?? null,
       thumbnailUrl: thumb,
       createdAt: book.createdAt,

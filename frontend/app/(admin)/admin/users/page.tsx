@@ -35,8 +35,9 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserStatus | "all">("all");
+  const [cursor, setCursor] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
-  const [cursorStack, setCursorStack] = useState<(string | undefined)[]>([]);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [selected, setSelected] = useState<User | null>(null);
   const [statusForm, setStatusForm] = useState<UserStatus>("active");
 
@@ -46,12 +47,12 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
     const params = new URLSearchParams();
     if (filter !== "all") params.set("status", filter);
     if (search) params.set("search", search);
-    if (nextCursor) params.set("cursor", nextCursor);
+    if (cursor) params.set("cursor", cursor);
     return `/api/admin/users?${params.toString()}`;
-  }, [isAuthenticated, filter, search, nextCursor]);
+  }, [isAuthenticated, filter, search, cursor]);
 
   // Fetch users with useApiQuery
-  const { data: response, loading, refetch } = useApiQuery<UserResponse>(
+  const { data: response, loading } = useApiQuery<UserResponse>(
     queryUrl,
     isAuthenticated ? session.accessToken : undefined,
     {
@@ -74,17 +75,15 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
 
   const handleNext = () => {
     if (!nextCursor) return;
-    setCursorStack((prev) => [...prev, nextCursor]);
+    setCursorStack((prev) => (cursor ? [...prev, cursor] : prev));
+    setCursor(nextCursor);
   };
 
   const handlePrevious = () => {
-    setCursorStack((prev) => {
-      const stack = [...prev];
-      stack.pop();
-      const prevCursor = stack[stack.length - 1];
-      setNextCursor(prevCursor || null);
-      return stack;
-    });
+    const stack = [...cursorStack];
+    const prevCursor = stack.pop() ?? null;
+    setCursor(prevCursor);
+    setCursorStack(stack);
   };
 
   const openDetail = (u: User) => {

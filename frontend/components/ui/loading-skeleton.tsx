@@ -71,18 +71,18 @@ export function TableSkeletonRow({
   return (
     <>
       <style>{shimmerKeyframes}</style>
-      <tr>
+      <div className="flex items-center border-b-[2px] border-[#222]/10 px-2">
         {Array.from({ length: columns }).map((_, i) => (
-          <td key={i} className="px-6 py-4">
+          <div key={i} className="px-4 py-5 flex-1">
             <div
               className="h-4 bg-gray-200 rounded"
               style={{
                 animation: animated ? 'shimmer 2s infinite' : 'none',
               }}
             />
-          </td>
+          </div>
         ))}
-      </tr>
+      </div>
     </>
   );
 }

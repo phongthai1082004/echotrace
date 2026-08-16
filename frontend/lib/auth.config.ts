@@ -1,7 +1,5 @@
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { UserRole } from "@echotrace/shared";
-
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 async function refreshAccessToken(token: any) {
@@ -74,7 +72,7 @@ export const authOptions = {
         (user as any).role = data.data?.user?.role || "user";
         user.image = data.data?.user?.avatar || null;
         (user as any).dbId = data.data?.user?.id;
-        return data.data?.user?.role === "admin" ? "/admin/analytics" : true;
+        return true;
       }
       return !!user;
     },
