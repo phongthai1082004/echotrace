@@ -53,9 +53,10 @@ function DelBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string
 
 type Props = {
   hideOrder?: boolean;
+  isAdmin?: boolean;
 };
 
-export function StudioTopbar({ hideOrder }: Props = {}) {
+export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   const { t } = useTranslation();
   const TEXT_PRESETS = useTextPresets(t);
   const canvas = useCanvasStore((s) => s.canvas);
@@ -318,7 +319,9 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
               const spread = v === "spread" && !isCoverPage(s.activePageIndex, s.pages.length);
               const target = spread
                 ? s.pages[s.activePageIndex]?.spreadLayout ?? null
-                : s.pages[s.activePageIndex]?.layout ?? null;
+                : v === "right"
+                  ? s.pages[Math.min(s.activePageIndex + 1, s.pages.length - 1)]?.layout ?? null
+                  : s.pages[s.activePageIndex]?.layout ?? null;
               useCanvasStore.setState({ activeLayout: target });
             }}
               disabled={useCanvasStore.getState().pages.length <= 2 || useCanvasStore.getState().activePageIndex === 0 || useCanvasStore.getState().activePageIndex === useCanvasStore.getState().pages.length - 1}
@@ -333,6 +336,18 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
           </button>
           <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
         </div>
+        {isAdmin && (
+          <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden" title={t("customer.studio.kindLabel")}>
+            {(["TEMPLATE", "ALBUM"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setBookMeta({ kind: k })}
+                className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${bookMeta.kind === k ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${k === "TEMPLATE" ? "border-r-2 border-[#222]" : ""}`}>
+                {t(`customer.studio.${k === "TEMPLATE" ? "kindTemplate" : "kindAlbum"}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <button disabled onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"><Eye size={11} /> {t("customer.studio.preview")}</button>
         <button onClick={handleAutoFill} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>

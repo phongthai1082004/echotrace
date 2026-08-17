@@ -3,6 +3,7 @@ import { BaseService } from "../../utils/base.service.js";
 import { SupplierDTO, SupplierMapper, SupplierOption, AggregatedOptionsResponse, PriceOptionsResponse, CatalogSize } from "@echotrace/shared";
 import { CreateSupplierDTO } from "../../dto/supplier/supplier.create.dto.js";
 import { UpdateSupplierDTO } from "../../dto/supplier/supplier.update.dto.js";
+import { optionCatalogCache } from "../../infrastructure/cache/cache.service.js";
 
 type OptionGroups = { paperSizeOptions: any[]; paperOptions: any[]; coverOptions: any[] };
 
@@ -16,6 +17,8 @@ export abstract class ISupplierService {
   abstract findAvailableSuppliers(query: { paperSize?: string; paper?: string; cover?: string }): Promise<any[]>;
   abstract getAggregatedOptions(): Promise<AggregatedOptionsResponse>;
   abstract getPriceOptions(query: { paperSize?: string; paper?: string; cover?: string }): Promise<PriceOptionsResponse>;
+  abstract getOptionCatalog(type: string): Promise<SupplierOption[]>;
+  abstract getOptionInfo(type: string, code: string): Promise<SupplierOption | null>;
 }
 
 @injectable()
@@ -116,6 +119,7 @@ export class SupplierService extends ISupplierService {
         description: o.description ?? { vi: "", en: "", es: "" },
         width: o.width ?? null,
         height: o.height ?? null,
+        price: o.price ?? null,
       });
     }
     const existing = await d.findMany({ where: { supplierId, type } });
@@ -130,6 +134,18 @@ export class SupplierService extends ISupplierService {
       } else {
         await d.create({ data: { supplierId, type, code, ...fields } });
       }
+    }
+    // ponytail: write-through — refresh cached catalog/info for this type so the picker stays in sync after add/update.
+    await optionCatalogCache.delete(`catalog:${type}`);
+    for (const [code, fields] of want) {
+      await optionCatalogCache.set(`info:${type}:${code}`, {
+        code,
+        name: fields.name,
+        description: fields.description,
+        width: fields.width,
+        height: fields.height,
+        price: fields.price,
+      });
     }
   }
 
@@ -201,5 +217,51 @@ export class SupplierService extends ISupplierService {
       papers: this.uniqOptions(paperOpts),
       covers: this.uniqOptions(coverOpts),
     };
+  }
+
+  // Lazy catalog/info for the admin option picker: unique codes by type + per-code info, LRU-cached.
+  async getOptionCatalog(type: string): Promise<SupplierOption[]> {
+    const cacheKey = `catalog:${type}`;
+    const cached = await optionCatalogCache.get<SupplierOption[]>(cacheKey);
+    if (cached) return cached;
+    const rows: any[] = await this.optionBase.delegate.findMany({ where: { type, isDelete: false }, orderBy: { updatedAt: "desc" } });
+    const byCode = new Map<string, SupplierOption>();
+    for (const r of rows) {
+      const cur = byCode.get(r.code);
+      const entry = {
+        code: r.code,
+        name: r.name ?? { vi: r.code, en: r.code, es: r.code },
+        description: r.description ?? { vi: "", en: "", es: "" },
+        width: r.width ?? null,
+        height: r.height ?? null,
+        price: r.price ?? null,
+      };
+      if (!cur) byCode.set(r.code, entry);
+      else for (const lng of ["vi", "en", "es"] as const) { // merge: fill missing langs from other suppliers
+        if (!cur.name[lng]) cur.name[lng] = entry.name[lng];
+      }
+    }
+    const list = [...byCode.values()];
+    await optionCatalogCache.set(cacheKey, list);
+    return list;
+  }
+
+  async getOptionInfo(type: string, code: string): Promise<SupplierOption | null> {
+    const cacheKey = `info:${type}:${code}`;
+    const cached = await optionCatalogCache.get<SupplierOption>(cacheKey);
+    if (cached) return cached;
+    const rows2: any[] = await this.optionBase.delegate.findMany({ where: { type, code, isDelete: false }, orderBy: { updatedAt: "desc" }, take: 1 });
+    if (!rows2.length) return null;
+    const row = rows2[0];
+    const info = {
+      code: row.code,
+      name: row.name ?? { vi: row.code, en: row.code, es: row.code },
+      description: row.description ?? { vi: "", en: "", es: "" },
+      width: row.width ?? null,
+      height: row.height ?? null,
+      price: row.price ?? null,
+    };
+    await optionCatalogCache.set(cacheKey, info);
+    return info;
   }
 }

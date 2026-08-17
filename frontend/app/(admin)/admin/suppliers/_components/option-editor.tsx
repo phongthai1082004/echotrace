@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSession } from "next-auth/react";
 import { label, input, neoBtn, neoBtnPrimary, card } from "@/lib/styles";
 import { SupplierOption, L10NText } from "@/models/supplier/supplier";
-import { Pencil, X, Save, Plus, Trash2 } from "lucide-react";
+import { Pencil, X, Save, Plus, Trash2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { apiFetch } from "@/lib/api.fetch";
 
 const LANGS = ["vi", "en", "es"] as const;
 
@@ -18,15 +20,22 @@ function emptyOption(): SupplierOption {
   };
 }
 
-function OptionModal({ initial, onCancel, onSave, add, withDimensions }: {
+function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionType }: {
   initial: SupplierOption;
   onCancel: () => void;
   onSave: (o: SupplierOption) => void;
   add: boolean;
   withDimensions?: boolean;
+  optionType: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
+  const { data: session } = useSession();
+  const token = (session as any)?.accessToken;
+  const lng = (i18n.language?.split("-")[0] as keyof L10NText) || "vi";
   const [draft, setDraft] = useState<SupplierOption>(initial);
+  const [catalog, setCatalog] = useState<SupplierOption[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const setLang = (key: "name" | "description", lng: keyof L10NText, v: string) =>
     setDraft({ ...draft, [key]: { ...draft[key], [lng]: v } });
   const num = (v: number | null | undefined) => (v == null ? "" : String(v));
@@ -38,141 +47,268 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions }: {
     const n = v.trim() === "" ? null : Number(v);
     setDraft({ ...draft, price: Number.isNaN(n) ? null : n });
   };
+
+  const openPicker = async () => {
+    setPickerOpen((open) => !open);
+    // ponytail: refetch every open so the list reflects recent add/update (no component-level staleness).
+    try {
+      const data = await apiFetch<{ items: SupplierOption[] }>(`/api/admin/supplier-options/catalog?type=${optionType}`, token);
+      setCatalog(data.items ?? []);
+    } catch { /* picker stays usable with current draft */ }
+  };
+
+  const pick = async (code: string) => {
+    setPickerOpen(false);
+    try {
+      const info = await apiFetch<SupplierOption>(`/api/admin/supplier-options/info?type=${optionType}&code=${encodeURIComponent(code)}`, token);
+      setDraft((d) => ({
+        ...d,
+        code,
+        name: info.name,
+        description: info.description,
+        price: info.price ?? d.price,
+      }));
+    } catch { showToast(t("admin.suppliers.fetchFailed"), "error"); }
+  };
+
+  const save = () => {
+    if (!draft.code.trim()) { showToast(t("admin.suppliers.optionCode") + "…", "error"); return; }
+    onSave(draft);
+  };
+
   return (
-    <div className="fixed inset-0 z-[60] bg-black/30 flex items-center justify-center" onClick={onCancel}>
-      <div className="bg-[#F8F2E5] rounded-[10px] border-[3px] border-[#222] shadow-[6px_6px_0_#222] w-[480px] max-w-[92vw] max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b-[3px] border-[#222] shrink-0">
-          <h3 className="text-lg font-bold">{add ? t("admin.suppliers.addOption") : t("admin.suppliers.optionTitle")}</h3>
-          <button onClick={onCancel} className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] cursor-pointer"><X size={16} /></button>
+    <div className="fixed inset-0 z-[60] bg-black/30 flex items-center justify-center">
+      <div
+        className="bg-[#F8F2E5] rounded-[10px] border-[3px] border-[#222] shadow-[6px_6px_0_#222] w-[480px] max-w-[92vw] max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b-[3px] border-[#222] bg-[#F8F2E5] rounded-t-[10px]">
+          <h3 className="text-[15px] font-extrabold uppercase tracking-wide">
+            {t(add ? "admin.suppliers.addOption" : "admin.suppliers.editOption")}
+          </h3>
+          <button onClick={onCancel} className="cursor-pointer text-[#666] hover:text-[#222]"><X size={18} /></button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-6">
           <div>
-            <p className={`${label} text-xs text-[#666] mb-1`}>Code</p>
-            <input className={input} value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+            <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionCode")}</p>
+            <div className="relative">
+              <input
+                className={input}
+                value={draft.code}
+                onChange={(e) => setDraft({ ...draft, code: e.target.value })}
+                placeholder={t("admin.suppliers.optionCodePlaceholder")}
+                disabled={!add}
+                readOnly={!add}
+                style={!add ? { backgroundColor: "#EAE5DA", color: "#888" } : undefined}
+              />
+              {add && (
+                <>
+                  <button
+                    onClick={openPicker}
+                    title={t("admin.suppliers.pickExisting")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#666] hover:text-[#222] cursor-pointer"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                  {pickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setPickerOpen(false)} />
+                      <div className="absolute z-50 right-0 mt-1 w-full bg-white border-2 border-[#222] rounded-[8px] shadow-[3px_3px_0_rgba(0,0,0,0.25)] max-h-48 overflow-y-auto">
+                        {catalog.length === 0 && (
+                          <p className="px-3 py-2 text-xs text-[#888]">{t("common.noData")}</p>
+                        )}
+                        {catalog.map((o) => (
+                          <button
+                            key={o.code}
+                            onClick={() => pick(o.code)}
+                            className="block w-full text-left px-3 py-2 text-xs font-mono hover:bg-[#F8F2E5] cursor-pointer border-b last:border-b-0 border-[#222]/10"
+                          >
+                            {o.code}{o.name?.[lng] ? ` — ${o.name[lng]}` : o.name?.vi ? ` — ${o.name.vi}` : ""}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
+
+          <div>
+            <p className={`${label} text-xs text-[#666] mb-2`}>{t("admin.suppliers.optionName")}</p>
+            <div className="space-y-2">
+            {LANGS.map((lng) => (
+              <input
+                key={lng}
+                className={input}
+                value={draft.name[lng]}
+                onChange={(e) => setLang("name", lng, e.target.value)}
+                placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionName")}`}
+              />
+            ))}
+            </div>
+          </div>
+
+          <div>
+            <p className={`${label} text-xs text-[#666] mb-2`}>{t("admin.suppliers.optionDescription")}</p>
+            <div className="space-y-2">
+            {LANGS.map((lng) => (
+              <input
+                key={lng}
+                className={input}
+                value={draft.description[lng]}
+                onChange={(e) => setLang("description", lng, e.target.value)}
+                placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionDescription")}`}
+              />
+            ))}
+            </div>
+          </div>
+
           {withDimensions && (
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-0.5">
-                <span className={`${label} text-[#999]`}>width (mm)</span>
-                <input className={input} inputMode="numeric" value={num(draft.width)} onChange={(e) => setNum("width", e.target.value)} />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className={`${label} text-[#999]`}>height (mm)</span>
-                <input className={input} inputMode="numeric" value={num(draft.height)} onChange={(e) => setNum("height", e.target.value)} />
-              </label>
+              <div>
+                <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionWidth")}</p>
+                <input
+                  className={input}
+                  value={num(draft.width)}
+                  onChange={(e) => setNum("width", e.target.value)}
+                />
+              </div>
+              <div>
+                <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionHeight")}</p>
+                <input
+                  className={input}
+                  value={num(draft.height)}
+                  onChange={(e) => setNum("height", e.target.value)}
+                />
+              </div>
             </div>
           )}
-          <label className="flex flex-col gap-0.5">
-            <span className={`${label} text-[#999]`}>price (₫)</span>
-            <input className={input} inputMode="numeric" value={num(draft.price)} onChange={(e) => setPrice(e.target.value)} />
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {LANGS.map((lng) => (
-              <label key={lng} className="flex flex-col gap-0.5">
-                <span className={`${label} text-[#999]`}>name {lng}</span>
-                <input className={input} value={draft.name[lng]} onChange={(e) => setLang("name", lng, e.target.value)} />
-              </label>
-            ))}
+
+          <div>
+            <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionPrice")}</p>
+            <input
+              className={input}
+              value={num(draft.price)}
+              onChange={(e) => setPrice(e.target.value)}
+            />
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {LANGS.map((lng) => (
-              <label key={lng} className="flex flex-col gap-0.5">
-                <span className={`${label} text-[#999]`}>desc {lng}</span>
-                <input className={input} value={draft.description[lng]} onChange={(e) => setLang("description", lng, e.target.value)} />
-              </label>
-            ))}
+
+          <div className="flex gap-2 pt-2">
+            <button onClick={onCancel} className={`${neoBtn} px-4 py-2`}>{t("common.cancel")}</button>
+            <button onClick={save} className={`${neoBtnPrimary} px-4 py-2`}>{t("common.save")}</button>
           </div>
-        </div>
-        <div className="px-5 py-4 border-t-[3px] border-[#222] flex gap-3 shrink-0">
-          <button onClick={onCancel} className={`${neoBtn} flex-1 font-mono text-[9px] font-bold tracking-widest uppercase py-2.5 cursor-pointer`}>
-            {t("common.cancel")}
-          </button>
-          <button onClick={() => onSave(draft)}
-            className={`${neoBtnPrimary} flex-1 flex items-center justify-center gap-2 font-mono text-[9px] font-bold tracking-widest uppercase py-2.5 cursor-pointer`}>
-            <Save size={14} /> {t("common.save")}
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
-export function OptionPanel({ title, options, onChange, onSave, saving = false, withDimensions = false }: {
+interface PanelProps {
   title: string;
   options: SupplierOption[];
-  onChange: (o: SupplierOption[]) => void;
-  onSave?: () => void;
+  onChange: (v: SupplierOption[]) => void;
+  onSave: () => void;
   saving?: boolean;
   withDimensions?: boolean;
-}) {
-  const { t } = useTranslation();
+  optionType: string;
+}
+
+function OptionPanel({ title, options, onChange, onSave, saving, withDimensions, optionType }: PanelProps) {
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
-  const [editing, setEditing] = useState<{ index: number; item: SupplierOption } | null>(null);
-  const openEdit = (i: number) => setEditing({ index: i, item: options[i] });
-  const openAdd = () => setEditing({ index: -1, item: emptyOption() });
-  const save = (item: SupplierOption) => {
-    if (editing && editing.index === -1) {
-      if (options.some((o) => o.code === item.code)) {
-        showToast(t("admin.suppliers.optionDuplicate") || "Code đã tồn tại", "error");
+  const [modal, setModal] = useState<{ option: SupplierOption; add: boolean; index?: number } | null>(null);
+
+  const handleModalSave = (o: SupplierOption) => {
+    if (modal?.add) {
+      if (options.some((x) => x.code === o.code)) {
+        showToast(t("admin.suppliers.optionDuplicate"), "error");
         return;
       }
-      onChange([...options, item]);
-    } else if (editing && editing.index !== -1) {
-      onChange(options.map((o, i) => (i === editing.index ? item : o)));
+      onChange([...options, o]);
+    } else if (modal?.index != null) {
+      const next = [...options];
+      next[modal.index] = o;
+      onChange(next);
     }
-    setEditing(null);
+    setModal(null);
   };
-  const remove = (i: number) => {
-    onChange(options.filter((_, idx) => idx !== i));
+
+  const remove = (index: number) => {
+    onChange(options.filter((_, i) => i !== index));
+    showToast(t("admin.suppliers.optionRemoved"), "success");
   };
-  const head = (s: string) => <div key={s} className={`px-2 py-2 ${label} text-[#666] border-b-[3px] border-[#222] whitespace-nowrap text-left`}>{s}</div>;
-  const cols = "90px repeat(3, 1fr) repeat(3, 1fr) 90px 140px";
+
   return (
     <section className={`${card} p-5`}>
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm text-[#666] font-bold">{title}</h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={openAdd}
-            className={`${neoBtn} flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 cursor-pointer`}>
-            <Plus size={12} /> {t("admin.suppliers.addOption")}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setModal({ option: emptyOption(), add: true })}
+            className={`${neoBtn} flex items-center gap-1 cursor-pointer px-3 py-2`}
+          >
+            <Plus size={13} /> <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{t("admin.suppliers.addOption")}</span>
           </button>
-          {onSave && (
-            <button onClick={onSave} disabled={saving}
-              className={`${neoBtnPrimary} flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 cursor-pointer disabled:opacity-40`}>
-              <Save size={12} /> {saving ? "…" : "Save"}
-            </button>
-          )}
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className={`${neoBtnPrimary} flex items-center gap-1 cursor-pointer disabled:opacity-40 px-3 py-2`}
+          >
+            <Save size={13} /> <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{saving ? `${t("common.save")}…` : t("common.save")}</span>
+          </button>
         </div>
       </div>
+
       {options.length === 0 ? (
-        <p className="text-xs text-[#999]">—</p>
+        <p className="text-xs text-[#888] font-mono">{t("common.noData")}</p>
       ) : (
-        <div className="overflow-x-auto" style={{ scrollbarWidth: "thin" }}>
-          <div style={{ minWidth: 850 }}>
-            <div className="grid border-b-[3px] border-[#222]" style={{ gridTemplateColumns: cols }}>
-              <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-left`}>code</div>
-              {LANGS.map((l) => head(`name · ${l}`))}
-              {LANGS.map((l) => head(`desc · ${l}`))}
-              <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-left`}>price</div>
-              <div className={`px-2 py-2 ${label} text-[#666] whitespace-nowrap text-center`}>actions</div>
-            </div>
-            {options.map((o, i) => (
-              <div key={i} className="grid items-center border-b-[2px] border-[#222]/10 hover:bg-[#FFF7D6] transition-colors"
-                style={{ gridTemplateColumns: cols }}>
-                <div className="px-2 py-2 font-mono text-[11px] font-bold truncate">{o.code || "—"}</div>
-                {LANGS.map((l) => <div key={l} className="px-2 py-2 text-xs font-bold truncate">{o.name[l] || "—"}</div>)}
-                {LANGS.map((l) => <div key={l} className="px-2 py-2 text-xs text-[#666] truncate">{o.description[l] || "—"}</div>)}
-                <div className="px-2 py-2 font-mono text-[11px] font-bold truncate">{o.price != null ? `₫${o.price.toLocaleString()}` : "—"}</div>
-                <div className="px-2 py-2 flex items-center justify-center gap-1">
-                  <button onClick={() => openEdit(i)} title={t("common.edit") ?? "Edit"} className="p-1 rounded hover:bg-[#e8e6e0] cursor-pointer"><Pencil size={13} /></button>
-                  <button onClick={() => remove(i)} title={t("common.delete") ?? "Delete"} className="p-1 rounded hover:bg-[#F8D7DA] text-[#B54843] cursor-pointer"><Trash2 size={13} /></button>
+        <div className="space-y-1">
+          {options.map((o, i) => {
+            const lng = (i18n.language?.split("-")[0] as keyof L10NText) || "vi";
+            const name = o.name?.[lng] || o.name?.vi || o.name?.en || o.name?.es || o.code;
+            const desc = o.description?.[lng] || o.description?.vi || "";
+            return (
+              <div key={`${o.code}-${i}`} className="flex items-center justify-between gap-2 border-b last:border-b-0 border-[#222]/10 py-1.5">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold font-mono">{o.code}</p>
+                  <p className="text-[11px] text-[#666] truncate">{name}{desc ? ` — ${desc}` : ""}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => setModal({ option: { ...o }, add: false, index: i })}
+                    className="p-1.5 text-[#666] hover:text-[#222] cursor-pointer"
+                    title={t("common.edit")}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => remove(i)}
+                    className="p-1.5 text-[#B02A2A] hover:text-[#7A1C1C] cursor-pointer"
+                    title={t("common.delete")}
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
-      {editing && <OptionModal initial={editing.item} onCancel={() => setEditing(null)} onSave={save} add={editing.index === -1} withDimensions={withDimensions} />}
+
+      {modal && (
+        <OptionModal
+          initial={modal.option}
+          add={modal.add}
+          withDimensions={withDimensions}
+          optionType={optionType}
+          onCancel={() => setModal(null)}
+          onSave={handleModalSave}
+        />
+      )}
     </section>
   );
 }
+
+export { OptionPanel };

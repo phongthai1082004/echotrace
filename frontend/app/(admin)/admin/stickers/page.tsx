@@ -183,7 +183,7 @@ export default function AdminAssetsPage() {
 
       {/* upload modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center" onClick={() => !uploading && setShowForm(false)}>
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className={`${card} w-80 p-5`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-sm">{t("admin.stickers.uploadModal")}</p>

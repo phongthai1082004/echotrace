@@ -16,7 +16,6 @@ export function HeroSection() {
 
       <div style={{ padding:"80px 56px", position:"relative", zIndex:2 }}>
         <div style={{ marginBottom:20, display:"flex", gap:8, flexWrap:"wrap" }}>
-          <span className="sticker-label" style={{ background:"#155724", color:"#fff", borderColor:"#155724" }}>{t("home.hero.newBadge")}</span>
           <span className="sticker-label">{t("home.hero.booksBadge")}</span>
         </div>
         <div className="coord-label" style={{ marginBottom:12 }}>{t("home.hero.location")}</div>

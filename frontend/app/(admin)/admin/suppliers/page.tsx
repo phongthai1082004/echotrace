@@ -18,7 +18,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { useApiQuery } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
 
-const colWidths = ["1.75fr", "1.25fr", "1fr", "100px", "100px", "100px", "80px", "60px"];
+const colWidths = ["1.75fr", "1.25fr", "1fr", "100px", "100px", "100px", "80px", "120px"];
 const gridCols = colWidths.join(" ");
 
 export default function AdminSuppliersPage() {

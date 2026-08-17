@@ -15,6 +15,11 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum SampleBookKind {
+  ALBUM
+  TEMPLATE
+}
+
 model User {
   id       Int     @id @default(autoincrement())
   email    String? @unique
@@ -199,6 +204,7 @@ model SampleBook {
   name        String
   description String?
   type        String  @default("TRAVEL")
+  kind        SampleBookKind @default(TEMPLATE)
   category    String?
   style       String
   font        String

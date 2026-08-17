@@ -9,6 +9,7 @@ export type LayoutSlot = {
 export type LayoutConfig = {
   layoutId: string;
   name: string;
+  kind: "single" | "spread";
   slots: LayoutSlot[];
 };
 
@@ -16,6 +17,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "photobooth-strip": {
     layoutId: "photobooth-strip",
     name: "Photobooth Strip",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 180, height: 59 },
       { type: "rect", left: 15, top: 84, width: 180, height: 59 },
@@ -26,6 +28,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "grid-6": {
     layoutId: "grid-6",
     name: "Grid 6",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 86, height: 83 },
       { type: "rect", left: 109, top: 15, width: 86, height: 83 },
@@ -38,6 +41,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "hero-grid-5": {
     layoutId: "hero-grid-5",
     name: "Hero + Grid",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 180, height: 100 },
       { type: "rect", left: 15, top: 123, width: 86, height: 76 },
@@ -49,6 +53,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "single-center": {
     layoutId: "single-center",
     name: "Single Center",
+    kind: "single",
     slots: [
       { type: "rect", left: 25, top: 48, width: 160, height: 200 },
     ],
@@ -56,6 +61,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "2-stacked": {
     layoutId: "2-stacked",
     name: "2 Stacked",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 180, height: 130 },
       { type: "rect", left: 15, top: 152, width: 180, height: 130 },
@@ -64,6 +70,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "2-top-1-bottom": {
     layoutId: "2-top-1-bottom",
     name: "2 Top 1 Bottom",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 86, height: 120 },
       { type: "rect", left: 109, top: 15, width: 86, height: 120 },
@@ -73,6 +80,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   "1-top-2-bottom": {
     layoutId: "1-top-2-bottom",
     name: "1 Top 2 Bottom",
+    kind: "single",
     slots: [
       { type: "rect", left: 15, top: 15, width: 180, height: 135 },
       { type: "rect", left: 15, top: 162, width: 86, height: 120 },
@@ -86,6 +94,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-2-photo": {
     layoutId: "spread-2-photo",
     name: "2 Photos Spread",
+    kind: "spread",
     slots: [
       { type: "rect", left: 15, top: 30, width: 185, height: 237 },
       { type: "rect", left: 220, top: 30, width: 185, height: 237 },
@@ -94,6 +103,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-3-photo": {
     layoutId: "spread-3-photo",
     name: "3 Photos Spread",
+    kind: "spread",
     slots: [
       { type: "rect", left: 15, top: 15, width: 185, height: 130 },
       { type: "rect", left: 220, top: 15, width: 185, height: 130 },
@@ -103,6 +113,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-4-photo": {
     layoutId: "spread-4-photo",
     name: "4 Photos Spread",
+    kind: "spread",
     slots: [
       { type: "rect", left: 15, top: 15, width: 185, height: 130 },
       { type: "rect", left: 220, top: 15, width: 185, height: 130 },
@@ -113,6 +124,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-hero": {
     layoutId: "spread-hero",
     name: "Hero Spread",
+    kind: "spread",
     slots: [
       { type: "rect", left: 15, top: 15, width: 390, height: 267 },
     ],
@@ -120,6 +132,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-triptych": {
     layoutId: "spread-triptych",
     name: "Triptych Spread",
+    kind: "spread",
     slots: [
       { type: "rect", left: 15, top: 30, width: 120, height: 237 },
       { type: "rect", left: 150, top: 30, width: 120, height: 237 },

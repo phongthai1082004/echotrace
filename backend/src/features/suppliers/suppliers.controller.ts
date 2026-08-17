@@ -102,4 +102,18 @@ export class SupplierController {
         await this.supplierService.updateSupplierOptions(id, { paperSizeOptions, paperOptions, coverOptions });
         res.json(ApiResponse.success({ id, updated: true }));
     };
+
+    getOptionCatalog = async (req: AuthRequest, res: Response) => {
+        const type = String(req.query.type ?? "");
+        const result = await this.supplierService.getOptionCatalog(type);
+        res.json(ApiResponse.success({ items: result }));
+    };
+
+    getOptionInfo = async (req: AuthRequest, res: Response) => {
+        const type = String(req.query.type ?? "");
+        const code = String(req.query.code ?? "");
+        const result = await this.supplierService.getOptionInfo(type, code);
+        if (!result) throw new AppError(ErrorCode.ADMIN_INVALID_CODE, 404);
+        res.json(ApiResponse.success(result));
+    };
 }

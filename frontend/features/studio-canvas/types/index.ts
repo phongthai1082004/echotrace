@@ -44,17 +44,19 @@ export const FORMATS: Record<FormatKey, PaperFormat> = {
 export const CATEGORY_ORDER: PaperSizeCategory[] = ["square", "landscape", "portrait"];
 
 // Resolve a book format from supplier-derived sizes (code + width/height in px).
-// Falls back to FORMATS by key, else PORTRAIT_A4.
+// Falls back to FORMATS by key, else PORTRAIT_A4. Stored width/height win over
+// the fixed table so a sample saved as 200×200 never reopens as A4.
 export function resolveFormat(meta: { format: string; width?: number | null; height?: number | null }): PaperFormat {
   const f = FORMATS[meta.format as FormatKey];
-  if (f) return f;
+  const hasSize = (meta.width ?? null) != null && (meta.height ?? null) != null;
+  if (f && !hasSize) return f;
   return {
-    width: meta.width ?? FORMATS.PORTRAIT_A4.width,
-    height: meta.height ?? FORMATS.PORTRAIT_A4.height,
-    cm: meta.width ? `${meta.width / 40}×${meta.height ? meta.height / 40 : ""}` : FORMATS.PORTRAIT_A4.cm,
-    category: "portrait",
-    name: { vi: meta.format, en: meta.format, es: meta.format },
-    description: { vi: "", en: "", es: "" },
+    width: meta.width ?? f?.width ?? FORMATS.PORTRAIT_A4.width,
+    height: meta.height ?? f?.height ?? FORMATS.PORTRAIT_A4.height,
+    cm: meta.width ? `${meta.width / 40}×${meta.height ? meta.height / 40 : ""}` : (f?.cm ?? FORMATS.PORTRAIT_A4.cm),
+    category: f?.category ?? "portrait",
+    name: f?.name ?? { vi: meta.format, en: meta.format, es: meta.format },
+    description: f?.description ?? { vi: "", en: "", es: "" },
   };
 }
 

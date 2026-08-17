@@ -2,6 +2,8 @@ import { injectable, inject } from "tsyringe";
 import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware.js";
 import { ApiResponse } from "../../middleware/api.response.js";
+import { AppError } from "../../middleware/app.error.js";
+import { ErrorCode } from "@echotrace/shared";
 import { ISampleBookService } from "./sample-books.service.js";
 
 @injectable()
@@ -11,13 +13,17 @@ export class SampleBookController {
   ) {}
 
   list = async (req: AuthRequest, res: Response) => {
-    const { type, category, isActive } = req.query;
-    const filters: any = {};
-    if (type) filters.type = String(type);
-    if (category) filters.category = String(category);
-    if (isActive !== undefined) filters.isActive = isActive === "true";
-    const items = await this.sampleBookService.list(filters);
-    res.json(ApiResponse.success(items));
+    const { search, type, kind, status, order, limit, cursor } = req.query;
+    const { items, nextCursor } = await this.sampleBookService.list({
+      search: search as string | undefined,
+      type: type as string | undefined,
+      kind: kind as string | undefined,
+      status: status as string | undefined,
+      order: (order as string) || "desc",
+      limit: limit ? Number(limit) : 12,
+      cursor: cursor ? Number(cursor) : undefined,
+    });
+    res.json(ApiResponse.success({ items, nextCursor }));
   };
 
   getById = async (req: AuthRequest, res: Response) => {
@@ -38,6 +44,16 @@ export class SampleBookController {
     res.json(ApiResponse.success(item));
   };
 
+  updateStatus = async (req: AuthRequest, res: Response) => {
+    const id = parseInt(String(req.params.id));
+    const { status } = req.body;
+    if (!status || !["draft", "published", "archive"].includes(status)) {
+      throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);
+    }
+    const item = await this.sampleBookService.updateStatus(id, status);
+    res.json(ApiResponse.success(item));
+  };
+
   remove = async (req: AuthRequest, res: Response) => {
     const id = parseInt(String(req.params.id));
     await this.sampleBookService.remove(id);
@@ -47,5 +63,16 @@ export class SampleBookController {
   explore = async (req: AuthRequest, res: Response) => {
     const items = await this.sampleBookService.explore();
     res.json(ApiResponse.success(items));
+  };
+
+  albums = async (req: AuthRequest, res: Response) => {
+    const items = await this.sampleBookService.albums();
+    res.json(ApiResponse.success(items));
+  };
+
+  getPublishedById = async (req: AuthRequest, res: Response) => {
+    const id = parseInt(String(req.params.id));
+    const item = await this.sampleBookService.getPublishedById(id);
+    res.json(ApiResponse.success(item));
   };
 }

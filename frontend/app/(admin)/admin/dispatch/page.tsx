@@ -178,7 +178,7 @@ export default function DispatchPage() {
               <ResponsiveTable
                 header={
                   <div className="grid shrink-0 border-b-[3px] border-[#222]"
-                    style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 100px 80px" }}>
+                    style={{ gridTemplateColumns: "110px 0.5fr 1fr 100px 120px 150px 120px" }}>
                     {[t("admin.dispatch.orderId"), t("admin.dispatch.customer"), t("admin.dispatch.product"), t("admin.dispatch.amount"), t("admin.dispatch.status"), t("admin.dispatch.date"), t("common.action")].map((h) => (
                       <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
                     ))}
@@ -192,7 +192,7 @@ export default function DispatchPage() {
                   paged.map((order) => (
                     <div key={order.id}
                       className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: "110px 1fr 1fr 100px 120px 150px 80px" }}>
+                      style={{ gridTemplateColumns: "110px 0.5fr 1fr 100px 120px 150px 120px" }}>
                       <div className="px-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">{order.id}</div>
                       <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.customer}</div>
                       <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.product}</div>
@@ -217,7 +217,7 @@ export default function DispatchPage() {
       {/* ── ORDER DETAIL SLIDE-OVER ── */}
       {selectedOrder && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelectedOrder(null)} />
+          <div className="fixed inset-0 z-40 bg-black/20" />
           <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 400 }}>
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>
@@ -303,8 +303,7 @@ export default function DispatchPage() {
 
       {/* ── ASSIGN ORDERS MODAL ── */}
       {showAssignModal && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center"
-          onClick={() => setShowAssignModal(false)}>
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className={`${card} w-[520px] max-h-[80vh] flex flex-col`}
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b-[3px] border-[#222]">

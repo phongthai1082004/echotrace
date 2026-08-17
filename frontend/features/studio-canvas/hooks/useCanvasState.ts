@@ -14,6 +14,7 @@ type BookMeta = {
   format: string;
   gsm: number;
   paper: string;
+  kind?: "ALBUM" | "TEMPLATE";
   width?: number | null;
   height?: number | null;
 };
@@ -86,7 +87,7 @@ const INITIAL_STATE: Partial<CanvasStore> = {
     { index: 0, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
     { index: 1, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
   ],
-  bookMeta: { id: null, title: "Untitled", themeId: null, format: "PORTRAIT_A4", gsm: 200, paper: "matte" },
+  bookMeta: { id: null, title: "Untitled", themeId: null, format: "PORTRAIT_A4", gsm: 200, paper: "matte", kind: "TEMPLATE" },
   undoStack: [],
   undoVersion: 0,
   redoStack: [],

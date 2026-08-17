@@ -191,7 +191,7 @@ export default function AdminCouponsPage() {
       {/* ── DETAIL SIDEBAR ── */}
       {sidebarOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelected(null)} />
+          <div className="fixed inset-0 z-40 bg-black/20" />
           <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 420 }}>
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>

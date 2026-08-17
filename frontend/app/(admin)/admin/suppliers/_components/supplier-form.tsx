@@ -207,6 +207,7 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
           onChange={(o) => setDisplayOnly({ paperSizeOptions: o })} 
           onSave={() => handleSaveOptions("paperSizeOptions")}
           saving={savingOptions === "paperSizeOptions"}
+          optionType="paperSize"
           withDimensions
         />
 
@@ -217,6 +218,7 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
           onChange={(o) => setDisplayOnly({ paperOptions: o })}
           onSave={() => handleSaveOptions("paperOptions")}
           saving={savingOptions === "paperOptions"}
+          optionType="paper"
         />
 
         {/* Cover Options */}
@@ -226,6 +228,7 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
           onChange={(o) => setDisplayOnly({ coverOptions: o })}
           onSave={() => handleSaveOptions("coverOptions")}
           saving={savingOptions === "coverOptions"}
+          optionType="cover"
         />
       </div>
     </div>

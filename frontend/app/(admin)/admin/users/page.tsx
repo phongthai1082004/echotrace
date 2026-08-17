@@ -19,7 +19,7 @@ import { timeSince } from "@echotrace/shared";
 import { useApiQuery, useApiMutation } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
 
-const colWidths = ["1fr", "1.5fr", "0.5fr", "1fr", "70px", "80px", "90px", "80px"];
+const colWidths = ["1fr", "1.5fr", "0.5fr", "1fr", "70px", "80px", "90px", "120px"];
 const gridCols = colWidths.join(" ");
 const STATUS: UserStatus[] = ["active", "banned"];
 
@@ -181,7 +181,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
       {/* ── DETAIL SIDEBAR ── */}
       {selected && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setSelected(null)} />
+          <div className="fixed inset-0 z-40 bg-black/20" />
           <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 420 }}>
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>

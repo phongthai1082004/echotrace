@@ -46,6 +46,7 @@ export function useAutoSave() {
       version: 3,
       id: s.bookMeta.id || undefined,
       title: s.bookMeta.title,
+      kind: s.bookMeta.kind,
       pages: pagesPayload,
       pageCount,
       paperSize: s.bookMeta.format,

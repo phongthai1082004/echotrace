@@ -14,6 +14,8 @@ const asyncHandler =
   (req: Request, res: Response, next: NextFunction) => fn(req as AuthRequest, res, next).catch(next);
 
 router.get("/admin/suppliers", adminMiddleware, asyncHandler((req, res) => supplierCtrl.getSupplierList(req, res)));
+router.get("/admin/supplier-options/catalog", adminMiddleware, asyncHandler((req, res) => supplierCtrl.getOptionCatalog(req, res)));
+router.get("/admin/supplier-options/info", adminMiddleware, asyncHandler((req, res) => supplierCtrl.getOptionInfo(req, res)));
 router.get("/admin/suppliers/:id", adminMiddleware, asyncHandler((req, res) => supplierCtrl.getSupplierById(req, res)));
 router.patch("/admin/suppliers/:id/info", adminMiddleware, validateDto(UpdateSupplierDTO), asyncHandler((req, res) => supplierCtrl.updateSupplierInfo(req, res)));
 router.patch("/admin/suppliers/:id/options", adminMiddleware, asyncHandler((req, res) => supplierCtrl.updateSupplierOptions(req, res)));

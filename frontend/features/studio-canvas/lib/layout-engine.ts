@@ -80,8 +80,8 @@ export function groupSelectedObjects(canvas: fabric.Canvas) {
 export function syncFrameBorders(canvas: fabric.Canvas) {
   canvas.getObjects().forEach((o: any) => {
     if (o.customProperties?.layer !== "frame") return;
-    const covered = !!findPhotoInFrame(canvas, o);
-    o.set({ stroke: covered ? "transparent" : "#000", strokeWidth: covered ? 0 : 2 } as any);
+    // ponytail: border always visible — the photo is contain-fitted inside the frame
+    o.set({ stroke: "#000", strokeWidth: 2 } as any);
   });
   canvas.requestRenderAll();
 }
@@ -122,7 +122,7 @@ export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): s
     const photo = findPhotoInFrame(canvas, obj);
     if (photo) {
       const frameJson = (obj as any).toJSON(["z", "layer", "customProperties", "_selId"]);
-      const photoJson = (photo as any).toJSON(["z", "layer", "customProperties", "_selId", "clipPath", "__frameLockScaleX", "__frameLockScaleY", "__photoLockScaleX", "__photoLockScaleY", "__frameOffsetX", "__frameOffsetY"]);
+      const photoJson = (photo as any).toJSON(["z", "layer", "customProperties", "_selId", "clipPath", "__frameLockScaleX", "__frameLockScaleY", "__photoLockScaleX", "__photoLockScaleY", "__photoRelScaleX", "__photoRelScaleY", "__frameOffsetX", "__frameOffsetY"]);
       return JSON.stringify({ _composite: true, frame: frameJson, photo: photoJson, frameSelId: (obj as any)._selId, photoFrameId: (photo as any).customProperties?.frameId });
     }
   }
@@ -257,11 +257,20 @@ function kindMatches(o: any, kind?: string) {
 }
 
 export function clearLayoutFrames(canvas: fabric.Canvas, predicate?: (o: any) => boolean, kind?: string) {
-  canvas.getObjects().filter((o: any) => {
+  const toRemove = canvas.getObjects().filter((o: any) => {
     if (!o.customProperties?.layoutFrame) return false;
     if (!kindMatches(o, kind)) return false;
     return predicate ? predicate(o) : true;
-  }).forEach((o) => canvas.remove(o));
+  });
+  const removedIds = new Set(toRemove.map((o: any) => (o as any)._selId));
+  toRemove.forEach((o) => canvas.remove(o));
+  // remove photos that were locked into the cleared frames so they don't stay
+  // baked onto the canvas after the layout changes
+  if (removedIds.size) {
+    canvas.getObjects().filter((o: any) =>
+      o.customProperties?.layer === "photo" && !(o as any).hasControls && removedIds.has(o.customProperties?.frameId)
+    ).forEach((o) => canvas.remove(o));
+  }
 }
 
 function makeFrame(left: number, top: number, w: number, h: number, customProps: Record<string, any> = {}): fabric.Rect {
@@ -279,7 +288,9 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const fh = (frame.height || 100) * (frame.scaleY || 1);
   const fl = frame.left || 0, ft = frame.top || 0;
   const imgW = img.width || 1, imgH = img.height || 1;
-  const s = Math.max(fw / imgW, fh / imgH);
+  // ponytail: contain — image fits inside the frame so the border stays visible and
+  // resizing the frame can't make the image spill over it
+  const s = Math.min(fw / imgW, fh / imgH);
   const shapeName = (frame as any).customProperties?.shapeName;
   let clip;
   if (shapeName) {
@@ -291,11 +302,12 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
     clip.set({ left: fl, top: ft, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
   }
   clip.setCoords();
+  const fc = frame.getCenterPoint();
   img.set({
-    left: fl + fw / 2, top: ft + fh / 2,
+    left: fc.x, top: fc.y,
     originX: "center", originY: "center",
     scaleX: s, scaleY: s,
-    angle: 0,
+    angle: frame.angle || 0,
     flipX: frame.flipX || false, flipY: frame.flipY || false,
     clipPath: clip,
     objectCaching: false,
@@ -314,6 +326,8 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
   (img as any).__frameLockScaleY = frame.scaleY || 1;
   (img as any).__photoLockScaleX = img.scaleX || 1;
   (img as any).__photoLockScaleY = img.scaleY || 1;
+  (img as any).__photoRelScaleX = 1;
+  (img as any).__photoRelScaleY = 1;
   (img as any).__frameOffsetX = 0;
   (img as any).__frameOffsetY = 0;
   img.set({
@@ -366,23 +380,19 @@ export function findPhotoInFrame(canvas: fabric.Canvas, frame: fabric.FabricObje
 
 export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.FabricImage) {
   if ((photo as any).hasControls === true) return;
-  const lockSX = (photo as any).__frameLockScaleX || 1;
-  const lockSY = (photo as any).__frameLockScaleY || 1;
-  const photoSX = (photo as any).__photoLockScaleX || photo.scaleX || 1;
-  const photoSY = (photo as any).__photoLockScaleY || photo.scaleY || 1;
-  const ratioX = (frame.scaleX || 1) / lockSX;
-  const ratioY = (frame.scaleY || 1) / lockSY;
-  // only scale photo when both axes change (corner/diagonal drag), not edge-only
-  const uniform = Math.abs(ratioX / ratioY - 1) < 0.01;
-  const sx = uniform ? photoSX * ratioX : photoSX;
-  const sy = uniform ? photoSY * ratioY : photoSY;
-  const rawOffX = (photo as any).__frameOffsetX || 0;
-  const rawOffY = (photo as any).__frameOffsetY || 0;
-  const offX = uniform ? rawOffX * ratioX : rawOffX;
-  const offY = uniform ? rawOffY * ratioY : rawOffY;
   const fc = frame.getCenterPoint();
   const fw = (frame.width || 100) * (frame.scaleX || 1);
   const fh = (frame.height || 100) * (frame.scaleY || 1);
+  const imgW = photo.width || 1, imgH = photo.height || 1;
+  // ponytail: always re-contain-fit to the current frame size; user scale/offset
+  // edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
+  const containS = Math.min(fw / imgW, fh / imgH);
+  const relSX = (photo as any).__photoRelScaleX ?? 1;
+  const relSY = (photo as any).__photoRelScaleY ?? 1;
+  const lockW = (frame.width || 100) * ((photo as any).__frameLockScaleX || 1);
+  const lockH = (frame.height || 100) * ((photo as any).__frameLockScaleY || 1);
+  const offX = ((photo as any).__frameOffsetX || 0) * (fw / lockW);
+  const offY = ((photo as any).__frameOffsetY || 0) * (fh / lockH);
   const shapeName = (frame as any).customProperties?.shapeName;
   let clip;
   if (shapeName) {
@@ -394,7 +404,7 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
     clip.set({ left: frame.left, top: frame.top, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
   }
   clip.setCoords();
-  photo.set({ left: fc.x + offX, top: fc.y + offY, scaleX: sx, scaleY: sy, angle: frame.angle || 0, clipPath: clip } as any);
+  photo.set({ left: fc.x + offX, top: fc.y + offY, scaleX: containS * relSX, scaleY: containS * relSY, angle: frame.angle || 0, clipPath: clip } as any);
   photo.setCoords();
   photo.dirty = true;
 }
@@ -483,6 +493,11 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
     (photo as any).__frameLockScaleY = frame.scaleY || 1;
     (photo as any).__photoLockScaleX = photo.scaleX || 1;
     (photo as any).__photoLockScaleY = photo.scaleY || 1;
+    const fwl = (frame.width || 100) * (frame.scaleX || 1);
+    const fhl = (frame.height || 100) * (frame.scaleY || 1);
+    const containS = Math.min(fwl / (photo.width || 1), fhl / (photo.height || 1));
+    (photo as any).__photoRelScaleX = (photo.scaleX || 1) / containS;
+    (photo as any).__photoRelScaleY = (photo.scaleY || 1) / containS;
     applyFrameClip(frame, photo);
     frame.set({
       evented: (frame as any).__savedEvented !== undefined ? (frame as any).__savedEvented : true,

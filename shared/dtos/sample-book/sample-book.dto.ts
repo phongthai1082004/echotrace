@@ -3,6 +3,7 @@ export interface SampleBookDTO {
   name: string | null;
   description: string | null;
   type: string;
+  kind: "ALBUM" | "TEMPLATE";
   category: string | null;
   style: string;
   font: string;
@@ -23,6 +24,7 @@ export interface CreateSampleBookDTO {
   name?: string;
   description?: string | null;
   type?: string;
+  kind?: "ALBUM" | "TEMPLATE";
   category?: string | null;
   style?: string;
   font?: string;
@@ -39,6 +41,7 @@ export interface UpdateSampleBookDTO {
   name?: string;
   description?: string | null;
   type?: string;
+  kind?: "ALBUM" | "TEMPLATE";
   category?: string | null;
   style?: string;
   font?: string;
@@ -64,6 +67,7 @@ export class SampleBookMapper {
       name: book.name ?? null,
       description: book.description ?? null,
       type: book.type,
+      kind: book.kind ?? "TEMPLATE",
       category: book.category ?? null,
       style: book.style,
       font: book.font,

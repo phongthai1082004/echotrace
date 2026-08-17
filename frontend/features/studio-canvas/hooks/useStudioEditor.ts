@@ -10,16 +10,23 @@ export function useStudioEditor(
   load: (id: string) => Promise<any>,
   initialFormat?: string | null,
   initialSize?: { width: number; height: number } | null,
+  sampleId?: string | null,
 ) {
   const done = useRef(false);
+  const prevParams = useRef<string>("");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // sampleId → open a published sample layout as a fresh book (id stays null → save creates a new book).
+  const effectiveId = sampleId ?? bookId;
+  const paramsKey = `${effectiveId ?? ""}|${canLoad}|${initialFormat ?? ""}|${initialSize?.width ?? ""}|${initialSize?.height ?? ""}|${sampleId ? "sample" : "book"}`;
+
   useEffect(() => {
-    if (done.current) return;
+    if (done.current && prevParams.current === paramsKey) return;
+    prevParams.current = paramsKey;
     done.current = true;
     useCanvasStore.getState().resetStore();
-    if (!bookId) {
+    if (!effectiveId) {
       useCanvasStore.getState().setBookMeta({
         format: initialFormat || "PORTRAIT_A4",
         width: initialSize?.width ?? null,
@@ -29,7 +36,7 @@ export function useStudioEditor(
       return;
     }
     if (!canLoad) { done.current = false; return; }
-    load(bookId)
+    load(effectiveId)
       .then((data: any) => {
         const book = data.data || data;
         let content: any = {};
@@ -37,9 +44,10 @@ export function useStudioEditor(
         const paperHeight = book.paperHeight ?? null;
         const paperWidth = book.paperWidth ?? null;
         useCanvasStore.getState().setBookMeta({
-          id: book.id,
+          id: sampleId ? null : book.id,
           title: book.title || book.name || content.title || "Untitled",
           themeId: book.themeId || null,
+          kind: book.kind ?? "TEMPLATE",
           format: content.paperSize || "PORTRAIT_A4",
           gsm: content.gsm || 200,
           paper: content.paper || content.paperType || "matte",
@@ -58,7 +66,7 @@ export function useStudioEditor(
         setLoaded(true);
       })
       .catch((err: Error) => { console.warn("[studio] load error:", err); setLoadError(err.message); done.current = false; setLoaded(true); });
-  }, [bookId, canLoad, load]);
+  }, [effectiveId, canLoad, load, paramsKey]);
 
   return { loaded, loadError };
 }

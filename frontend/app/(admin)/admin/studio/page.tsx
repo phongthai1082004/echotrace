@@ -16,7 +16,7 @@ import { neoBtnPrimary } from "@/lib/styles";
 const StudioPage = dynamic(
   () => import("@/features/studio-canvas/components/StudioPage").then((m) => ({ default: m.StudioPage })),
   { ssr: false },
-) as ComponentType<{ api: StudioAPI; hideOrder?: boolean; noPadding?: boolean; backHref?: string }>;
+) as ComponentType<{ api: StudioAPI; hideOrder?: boolean; noPadding?: boolean; backHref?: string; isAdmin?: boolean }>;
 
 export default function AdminSampleStudioPage() {
   const { t, i18n } = useTranslation();
@@ -97,7 +97,7 @@ export default function AdminSampleStudioPage() {
   }
   return (
     <div className="min-h-screen bg-[#F8F2E5]">
-      <StudioPage api={sampleBookAPI} hideOrder noPadding backHref="/admin/sample-books" />
+      <StudioPage api={sampleBookAPI} isAdmin hideOrder noPadding backHref="/admin/sample-books" />
     </div>
   );
 }

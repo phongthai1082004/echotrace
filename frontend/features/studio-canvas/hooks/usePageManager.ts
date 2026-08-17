@@ -17,11 +17,19 @@ export function usePageManager() {
     if (!isCoverPage(activePageIndex, n) && cw > 400) {
       const mid = cw / 2;
       const { leftJson, rightJson } = splitCanvasByMidpoint(json, mid);
-      const layoutField = viewMode === "spread"
-        ? { spreadLayout: activeLayout, layout: null }
-        : { layout: activeLayout, spreadLayout: null };
-      setPage(activePageIndex, { canvasJson: leftJson, thumbnailUrl: thumbnail, ...layoutField });
-      setPage(Math.min(activePageIndex + 1, n - 1), { canvasJson: rightJson, ...layoutField });
+      const rightIdx = Math.min(activePageIndex + 1, n - 1);
+      // ponytail: layout belongs to the page being edited (left page on L view,
+      // right page on R view, both on spread) — never overwrite the other side
+      if (viewMode === "spread") {
+        setPage(activePageIndex, { canvasJson: leftJson, thumbnailUrl: thumbnail, spreadLayout: activeLayout, layout: null });
+        setPage(rightIdx, { canvasJson: rightJson, thumbnailUrl: thumbnail, spreadLayout: activeLayout, layout: null });
+      } else if (viewMode === "right") {
+        setPage(activePageIndex, { canvasJson: leftJson, thumbnailUrl: thumbnail });
+        setPage(rightIdx, { canvasJson: rightJson, thumbnailUrl: thumbnail, layout: activeLayout, spreadLayout: null });
+      } else {
+        setPage(activePageIndex, { canvasJson: leftJson, thumbnailUrl: thumbnail, layout: activeLayout, spreadLayout: null });
+        setPage(rightIdx, { canvasJson: rightJson, thumbnailUrl: thumbnail });
+      }
     } else {
       setPage(activePageIndex, { canvasJson: json, thumbnailUrl: thumbnail, layout: activeLayout });
     }
@@ -35,7 +43,9 @@ export function usePageManager() {
     const spread = viewMode === "spread" && !isCoverPage(newIndex, pages.length);
     const targetLayout = spread
       ? useCanvasStore.getState().pages[newIndex]?.spreadLayout ?? null
-      : useCanvasStore.getState().pages[newIndex]?.layout ?? null;
+      : viewMode === "right"
+        ? useCanvasStore.getState().pages[Math.min(newIndex + 1, pages.length - 1)]?.layout ?? null
+        : useCanvasStore.getState().pages[newIndex]?.layout ?? null;
     useCanvasStore.setState({ activeLayout: targetLayout });
   };
 

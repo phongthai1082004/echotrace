@@ -3,11 +3,10 @@
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { LAYOUT_LIST, SPREAD_LAYOUT_LIST } from "../../../types/layout";
-import type { LayoutSlot } from "../../../types/layout";
-import * as fabric from "fabric";
-import { clearLayoutFrames, showGuides, placePhotoInFrame, applyFrameClip, enforceZLayers } from "../../../lib/layout-engine";
+import type { LayoutConfig } from "../../../types/layout";
+import { clearLayoutFrames, showGuides, enforceZLayers } from "../../../lib/layout-engine";
 
-type AnyLayout = { layoutId: string; name: string; slots: LayoutSlot[] };
+type AnyLayout = LayoutConfig;
 
 function LayoutThumbnail({ layout, isSpread }: { layout: AnyLayout; isSpread?: boolean }) {
   const slots = layout.slots;
@@ -60,8 +59,8 @@ export function LayoutsPanel() {
     const activePageIndex = useCanvasStore.getState().activePageIndex;
     const pages = useCanvasStore.getState().pages;
     const pageW = (canvas.getWidth() ?? 840) / 2;
-    const isSingleSide = !spreadMode && viewMode !== "spread";
-    const kind: "single" | "spread" = spreadMode ? "spread" : "single";
+    const kind = layout.kind;
+    const isSingleSide = kind === "single" && viewMode !== "spread";
     // one page's pixel width in the current format (cover canvas is a single page wide)
     const pageWidth = spreadMode ? pageW : (viewMode === "spread" ? (canvas.getWidth() ?? 840) : pageW);
     const onSide = (o: any) => {
@@ -69,22 +68,16 @@ export function LayoutsPanel() {
       return viewMode === "left" ? (o.left || 0) < pageW : (o.left || 0) >= pageW;
     };
 
-    // gather every photo on the target side, then replace all layout frames there with the new layout
-    const photos = canvas.getObjects()
-      .filter((o: any) => o.customProperties?.layer === "photo" && onSide(o))
-      .sort((a: any, b: any) => (a.top || 0) - (b.top || 0) || (a.left || 0) - (b.left || 0));
+    // Replace frames on the target side; a single layout also removes any spread
+    // (2P) frames since the page pair is being edited as 1P pages.
+    if (isSingleSide) {
+      clearLayoutFrames(canvas, (o) => onSide(o) || o.customProperties?.layoutKind === "spread");
+    } else {
+      clearLayoutFrames(canvas);
+    }
 
-    // Clear ALL old layout frames from canvas (not just current side)
-    // This ensures complete cleanup when switching between 2P/R/L modes
-    clearLayoutFrames(canvas);
-
-    // Update page state: clear all layout data and set new layout only for target pages
+    // Update layout state for the target page(s) only — other pages keep their own layout
     const targetIdx = isSingleSide && viewMode === "right" ? activePageIndex + 1 : activePageIndex;
-    
-    // Clear layout/spreadLayout from all pages
-    pages.forEach((_, i) => {
-      useCanvasStore.getState().setPage(i, { layout: null, spreadLayout: null });
-    });
 
     // Set new layout on target page(s)
     if (kind === "spread") {
@@ -92,22 +85,16 @@ export function LayoutsPanel() {
       if (targetIdx + 1 < pages.length) useCanvasStore.getState().setPage(targetIdx + 1, { spreadLayout: layout, layout: null });
     } else {
       useCanvasStore.getState().setPage(targetIdx, { layout, spreadLayout: null });
+      // a single layout replaces any leftover spread on the page pair
+      const other = viewMode === "right" ? activePageIndex : activePageIndex + 1;
+      if (other >= 0 && other < pages.length && other !== targetIdx) {
+        useCanvasStore.getState().setPage(other, { spreadLayout: null });
+      }
     }
     useCanvasStore.setState({ activeLayout: layout });
 
     const offsetX = viewMode === "right" && !spreadMode ? pageW : 0;
     showGuides(canvas, layout, offsetX, (o) => !isSingleSide || onSide(o), kind, pageWidth);
-
-    const frames = canvas.getObjects()
-      .filter((o: any) => o.customProperties?.layer === "frame" && o.customProperties?.layoutFrame && onSide(o))
-      .sort((a: any, b: any) => (a.top || 0) - (b.top || 0) || (a.left || 0) - (b.left || 0));
-
-    photos.forEach((photo, i) => {
-      if (i < frames.length) {
-        placePhotoInFrame(frames[i], photo as fabric.FabricImage);
-        applyFrameClip(frames[i], photo as fabric.FabricImage);
-      }
-    });
 
     enforceZLayers(canvas);
     canvas.renderAll();
