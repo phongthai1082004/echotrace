@@ -16,11 +16,14 @@ export default function StudioPreviewPage() {
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    customerAPI.load(id)
+    customerAPI
+      .load(id)
       .then((res: any) => {
         const book = res.data || res;
         let content: any = {};
-        try { content = book.content || {}; } catch {}
+        try {
+          content = book.content || {};
+        } catch {}
         const pages: PageState[] = Array.isArray(content.pages)
           ? content.pages.map((p: any, i: number) => ({
               index: i,
@@ -37,9 +40,15 @@ export default function StudioPreviewPage() {
         });
         return renderBookImages(pages, fmt);
       })
-      .then((imgs) => { if (!cancelled) setImages(imgs); })
-      .catch((err) => { if (!cancelled) setError(String(err)); });
-    return () => { cancelled = true; };
+      .then((imgs) => {
+        if (!cancelled) setImages(imgs);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   return (
@@ -47,7 +56,9 @@ export default function StudioPreviewPage() {
       {error ? (
         <div className="h-full flex items-center justify-center text-sm font-bold text-[#B54843]">{error}</div>
       ) : images === null ? (
-        <div className="h-full flex items-center justify-center font-mono text-[10px] font-bold text-[#222]/60">Rendering pages…</div>
+        <div className="h-full flex items-center justify-center font-mono text-[10px] font-bold text-[#222]/60">
+          Rendering pages…
+        </div>
       ) : (
         <BookPreview images={images} />
       )}

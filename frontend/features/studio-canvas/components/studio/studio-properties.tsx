@@ -17,9 +17,21 @@ const SLIDER_FILTER: Record<(typeof SLIDER_KEYS)[number], keyof typeof defaultVa
 };
 
 const PRESET_COLORS = [
-  "#000000", "#FFFFFF", "#FF0000", "#FF6B00", "#FFD600",
-  "#4CAF50", "#2196F3", "#9C27B0", "#E91E63", "#795548",
-  "#607D8B", "#FF5722", "#8BC34A", "#00BCD4", "#3F51B5",
+  "#000000",
+  "#FFFFFF",
+  "#FF0000",
+  "#FF6B00",
+  "#FFD600",
+  "#4CAF50",
+  "#2196F3",
+  "#9C27B0",
+  "#E91E63",
+  "#795548",
+  "#607D8B",
+  "#FF5722",
+  "#8BC34A",
+  "#00BCD4",
+  "#3F51B5",
 ];
 
 export function StudioProperties() {
@@ -105,9 +117,8 @@ export function StudioProperties() {
   };
 
   const toHex = (color: string): string => {
-    if (color.startsWith("#")) return color.length === 4
-      ? "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3]
-      : color;
+    if (color.startsWith("#"))
+      return color.length === 4 ? "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3] : color;
     if (color.startsWith("rgb")) {
       const m = color.match(/\d+/g);
       if (m && m.length >= 3) {
@@ -125,9 +136,11 @@ export function StudioProperties() {
   const currentColor = toHex(((selected as any)?.fill as string) || "#000000");
   const [hexInput, setHexInput] = useState(currentColor.replace("#", ""));
   const photoFrameId = isImage ? (selected as any)?.customProperties?.frameId : null;
-  const photoFrame = photoFrameId && canvas?.getObjects().find((o: any) =>
-    (o as any).customProperties?.layer === "frame" && (o as any)._selId === photoFrameId
-  );
+  const photoFrame =
+    photoFrameId &&
+    canvas
+      ?.getObjects()
+      .find((o: any) => (o as any).customProperties?.layer === "frame" && (o as any)._selId === photoFrameId);
 
   useEffect(() => {
     setHexInput(currentColor.replace("#", ""));
@@ -138,22 +151,28 @@ export function StudioProperties() {
   return (
     <div className="w-56 shrink-0 bg-[#FFF7D6] overflow-y-auto border-l-[3px] border-[#222]">
       <div className="p-4 border-b-[3px] border-[#222]">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.properties")}</p>
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
+          {t("customer.studio.properties")}
+        </p>
         {isImage ? (
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.studio.adjust")}</p>
-                <button onClick={() => {
-                  setFilterSliderValues({ ...defaultVals });
-                  if (selected && selected.type === "image") {
-                    const img = selected as fabric.FabricImage;
-                    img.filters = [];
-                    img.applyFilters();
-                    canvas?.renderAll();
-                  }
-                }}
-                  className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
+                  {t("customer.studio.adjust")}
+                </p>
+                <button
+                  onClick={() => {
+                    setFilterSliderValues({ ...defaultVals });
+                    if (selected && selected.type === "image") {
+                      const img = selected as fabric.FabricImage;
+                      img.filters = [];
+                      img.applyFilters();
+                      canvas?.renderAll();
+                    }
+                  }}
+                  className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white"
+                >
                   {t("customer.studio.reset")}
                 </button>
               </div>
@@ -161,20 +180,34 @@ export function StudioProperties() {
                 <div key={key} className="mb-2">
                   <div className="flex justify-between mb-0.5">
                     <p className="font-mono text-[8px] font-bold text-[#999]">{t(`customer.studio.${key}`)}</p>
-                    <p className="font-mono text-[8px] font-bold text-[#999]">{storeSliderValues[SLIDER_FILTER[key]]}</p>
+                    <p className="font-mono text-[8px] font-bold text-[#999]">
+                      {storeSliderValues[SLIDER_FILTER[key]]}
+                    </p>
                   </div>
-                  <input type="range" min={-100} max={100} value={storeSliderValues[SLIDER_FILTER[key]]}
+                  <input
+                    type="range"
+                    min={-100}
+                    max={100}
+                    value={storeSliderValues[SLIDER_FILTER[key]]}
                     onChange={(e) => updateSlider(key, Number(e.target.value))}
-                    className="w-full h-1.5 bg-[#e8e6e0] rounded-full border-[1.5px] border-[#222] appearance-none cursor-pointer accent-[#222]" />
+                    className="w-full h-1.5 bg-[#e8e6e0] rounded-full border-[1.5px] border-[#222] appearance-none cursor-pointer accent-[#222]"
+                  />
                 </div>
               ))}
             </div>
             {photoFrame && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">{t("customer.studio.itemFrame")}</p>
-                  <button onClick={() => { canvas?.setActiveObject(photoFrame); canvas?.renderAll(); }}
-                    className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
+                  <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
+                    {t("customer.studio.itemFrame")}
+                  </p>
+                  <button
+                    onClick={() => {
+                      canvas?.setActiveObject(photoFrame);
+                      canvas?.renderAll();
+                    }}
+                    className="font-mono text-[8px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white"
+                  >
                     {t("customer.studio.selectFrame")}
                   </button>
                 </div>
@@ -184,48 +217,74 @@ export function StudioProperties() {
         ) : isText ? (
           <div className="space-y-3">
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.font")}</p>
-              <select value={(selected as any)?.fontFamily || ""} onChange={(e) => applyFont(e.target.value)}
-                className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white">
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+                {t("customer.studio.font")}
+              </p>
+              <select
+                value={(selected as any)?.fontFamily || ""}
+                onChange={(e) => applyFont(e.target.value)}
+                className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white"
+              >
                 {FONTS.map((f) => (
-                  <option key={f.name} value={f.css}>{f.name}</option>
+                  <option key={f.name} value={f.css}>
+                    {f.name}
+                  </option>
                 ))}
               </select>
             </div>
             {selected && (
               <div>
-                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.size")}</p>
-                <input type="number" value={Math.round((selected as any).fontSize || 24)} onChange={(e) => {
-                  selected.set({ fontSize: Number(e.target.value) });
-                  canvas?.renderAll();
-                }}
-                  className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white" />
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+                  {t("customer.studio.size")}
+                </p>
+                <input
+                  type="number"
+                  value={Math.round((selected as any).fontSize || 24)}
+                  onChange={(e) => {
+                    selected.set({ fontSize: Number(e.target.value) });
+                    canvas?.renderAll();
+                  }}
+                  className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white"
+                />
               </div>
             )}
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.style")}</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+                {t("customer.studio.style")}
+              </p>
               <div className="flex gap-1">
-                <button onClick={applyBold}
-                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] transition-all ${(selected as any)?.fontWeight === "bold" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                <button
+                  onClick={applyBold}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] transition-all ${(selected as any)?.fontWeight === "bold" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}
+                >
                   B
                 </button>
-                <button onClick={applyItalic}
-                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] italic transition-all ${(selected as any)?.fontStyle === "italic" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                <button
+                  onClick={applyItalic}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] italic transition-all ${(selected as any)?.fontStyle === "italic" ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}
+                >
                   I
                 </button>
-                <button onClick={applyUnderline}
-                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] underline transition-all ${(selected as any)?.underline ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}>
+                <button
+                  onClick={applyUnderline}
+                  className={`flex-1 py-1.5 rounded-md border-2 border-[#222] font-bold text-[10px] underline transition-all ${(selected as any)?.underline ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}
+                >
                   U
                 </button>
               </div>
             </div>
             <div>
-              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.color")}</p>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+                {t("customer.studio.color")}
+              </p>
               <div className="grid grid-cols-5 gap-1 mb-2">
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
-                    onClick={() => { applyColor(c); setHexInput(c.replace("#", "")); }}
+                    onClick={() => {
+                      applyColor(c);
+                      setHexInput(c.replace("#", ""));
+                    }}
                     className={`w-full aspect-square rounded-md border-2 transition-all ${currentColor.toUpperCase() === c.toUpperCase() ? "border-[#222] scale-110 shadow" : "border-[#ccc] hover:border-[#999]"}`}
                     style={{ backgroundColor: c }}
                   />
@@ -262,7 +321,9 @@ export function StudioProperties() {
           </div>
         ) : isFrame ? (
           <div>
-            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">{t("customer.studio.itemFrame")}</p>
+            <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+              {t("customer.studio.itemFrame")}
+            </p>
             <p className="font-mono text-[10px] font-bold text-[#999]">{t("customer.studio.resizeOrRotate")}</p>
           </div>
         ) : (
@@ -270,9 +331,18 @@ export function StudioProperties() {
         )}
       </div>
       <div className="p-4">
-        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.canvas")}</p>
-        {[[t("customer.studio.format"), `${fmt.cm} cm`], [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`], [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)]].map(([k, v]) => (
-          <div key={k} className="mb-2.5"><p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p><p className="font-mono text-[10px] font-bold text-[#222]">{v}</p></div>
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
+          {t("customer.studio.canvas")}
+        </p>
+        {[
+          [t("customer.studio.format"), `${fmt.cm} cm`],
+          [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`],
+          [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)],
+        ].map(([k, v]) => (
+          <div key={k} className="mb-2.5">
+            <p className="font-mono text-[9px] font-bold mb-0.5 text-[#999]">{k}</p>
+            <p className="font-mono text-[10px] font-bold text-[#222]">{v}</p>
+          </div>
         ))}
       </div>
     </div>

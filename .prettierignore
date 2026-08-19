@@ -1,0 +1,24 @@
+node_modules
+**/node_modules
+
+# build artifacts
+dist
+.next
+out
+coverage
+
+# generated code — Prisma client, etc.
+generated
+**/generated
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# worker (standalone deployment)
+cloudfare
+
+# misc
+*.lock
+pnpm-lock.yaml

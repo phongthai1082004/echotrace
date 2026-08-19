@@ -1,4 +1,5 @@
 import { PaymentDeposit } from "../../enums/payment.enum.js";
+import { PaymentMethod } from "../../enums/order.enum.js";
 
 export interface OrderItem {
   bookId: number | null;
@@ -13,6 +14,52 @@ export interface OrderItem {
   coverUrl: string | null;
   pdfUrl?: string | null;
   quantity: number;
+}
+
+export interface CreateOrderItem {
+  title: string;
+  style: string;
+  font: string;
+  cover: string;
+  paper: string;
+  paperSize?: string;
+  pages: number;
+  coverUrl?: string | null;
+  pdfUrl?: string | null;
+  thumbnailUrl?: string | null;
+  quantity: number;
+  price: number;
+}
+
+export interface CreateOrderDTO {
+  userId: number;
+  paymentMethod: PaymentMethod;
+  items: CreateOrderItem[];
+  name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  note?: string;
+  couponCode?: string;
+}
+
+export interface UpdateOrderDTO {
+  supplierId?: number | null;
+  paymentType?: string;
+  paymentStatus?: string;
+  status?: string;
+  name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  note?: string | null;
+  couponCode?: string | null;
+  discountAmount?: number;
+  paidAmount?: number;
+  orderShippingFee?: number | null;
+  supplierShippingFee?: number | null;
+  trackingCode?: string | null;
+  orderItems?: string | null;
 }
 
 export interface OrderDTO {
@@ -32,7 +79,7 @@ export interface OrderDTO {
   address: string | null;
   city: string | null;
   note: string | null;
-  couponId: number | null;
+  couponCode: string | null;
   discountAmount: number;
   orderShippingFee: number | null;
   supplierShippingFee: number | null;
@@ -120,7 +167,7 @@ export class OrderMapper {
       address: order.address,
       city: order.city,
       note: order.note,
-      couponId: order.couponId,
+      couponCode: order.couponCode,
       discountAmount: order.discountAmount,
       orderShippingFee: order.orderShippingFee,
       supplierShippingFee: order.supplierShippingFee,

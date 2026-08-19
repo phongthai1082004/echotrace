@@ -23,11 +23,39 @@ export default function MarketingPage() {
   ];
 
   const trafficSources = [
-    { channel: t("admin.marketing.channelFacebookAds"), visitors: 4120, orders: 158, conv: 3.83, spend: 1200, roas: 4.2 },
+    {
+      channel: t("admin.marketing.channelFacebookAds"),
+      visitors: 4120,
+      orders: 158,
+      conv: 3.83,
+      spend: 1200,
+      roas: 4.2,
+    },
     { channel: t("admin.marketing.channelTikTokBio"), visitors: 2840, orders: 92, conv: 3.24, spend: 800, roas: 3.8 },
-    { channel: t("admin.marketing.channelGoogleOrganic"), visitors: 3210, orders: 126, conv: 3.93, spend: 0, roas: null },
-    { channel: t("admin.marketing.channelInstagramReels"), visitors: 1890, orders: 43, conv: 2.28, spend: 600, roas: 2.5 },
-    { channel: t("admin.marketing.channelEmailCampaign"), visitors: 780, orders: 20, conv: 2.56, spend: 200, roas: 3.1 },
+    {
+      channel: t("admin.marketing.channelGoogleOrganic"),
+      visitors: 3210,
+      orders: 126,
+      conv: 3.93,
+      spend: 0,
+      roas: null,
+    },
+    {
+      channel: t("admin.marketing.channelInstagramReels"),
+      visitors: 1890,
+      orders: 43,
+      conv: 2.28,
+      spend: 600,
+      roas: 2.5,
+    },
+    {
+      channel: t("admin.marketing.channelEmailCampaign"),
+      visitors: 780,
+      orders: 20,
+      conv: 2.56,
+      spend: 200,
+      roas: 3.1,
+    },
   ];
 
   return (
@@ -35,11 +63,14 @@ export default function MarketingPage() {
       <AdminHeader label={t("admin.marketing.label")} title={t("admin.marketing.title")} />
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-8 max-[1600px]:py-6 max-[1440px]:py-5 max-[1280px]:py-4 space-y-8">
         <div className="grid grid-cols-4 gap-5">
-          {kpis.map(k => {
+          {kpis.map((k) => {
             const Icon = k.icon;
             return (
               <div key={k.key} className={`p-6 ${card}`}>
-                <div className="flex items-center gap-2 mb-3"><Icon size={14} className="text-[#666]" /><p className={`${label} text-[#666]`}>{t(`admin.marketing.${k.key}`)}</p></div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon size={14} className="text-[#666]" />
+                  <p className={`${label} text-[#666]`}>{t(`admin.marketing.${k.key}`)}</p>
+                </div>
                 <p className="text-2xl font-bold">{k.value}</p>
                 <p className="font-mono text-[9px] font-bold mt-1 text-[#2D6A2D]">{k.change}</p>
               </div>
@@ -65,8 +96,13 @@ export default function MarketingPage() {
               { label: "dropoffSiteToDesigner", val: "50%" },
               { label: "dropoffPreviewToCheckout", val: "53.3%" },
               { label: "overallCr", val: "3.42%" },
-            ].map(d => (
-              <div key={d.label}><p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999]">{t(`admin.marketing.${d.label}`)}</p><p className="text-lg font-bold mt-0.5">{d.val}</p></div>
+            ].map((d) => (
+              <div key={d.label}>
+                <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999]">
+                  {t(`admin.marketing.${d.label}`)}
+                </p>
+                <p className="text-lg font-bold mt-0.5">{d.val}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -79,22 +115,46 @@ export default function MarketingPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b-[3px] border-[#222]">
-                  {[t("admin.marketing.channel"), t("admin.marketing.visitors"), t("admin.marketing.orders"), t("admin.marketing.convRate"), t("admin.marketing.adSpend"), t("admin.marketing.roas")].map((h) => (
-                    <th key={h} className={`text-left px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 ${label} text-[#666] whitespace-nowrap`}>{h}</th>
+                  {[
+                    t("admin.marketing.channel"),
+                    t("admin.marketing.visitors"),
+                    t("admin.marketing.orders"),
+                    t("admin.marketing.convRate"),
+                    t("admin.marketing.adSpend"),
+                    t("admin.marketing.roas"),
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className={`text-left px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 ${label} text-[#666] whitespace-nowrap`}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {trafficSources.map(s => (
+                {trafficSources.map((s) => (
                   <tr key={s.channel} className="hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10">
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 text-sm font-bold">{s.channel}</td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">{s.visitors.toLocaleString()}</td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">{s.orders}</td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5">
-                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4E6] text-[#2D6A2D] border-2 border-[#2D6A2D]">{s.conv}%</span>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 text-sm font-bold">
+                      {s.channel}
                     </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">{s.spend ? `$${s.spend}` : <span className="text-[#999]">{t("common.dash")}</span>}</td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">{s.roas ? `${s.roas}x` : <span className="text-[#999]">{t("admin.marketing.organic")}</span>}</td>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                      {s.visitors.toLocaleString()}
+                    </td>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                      {s.orders}
+                    </td>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5">
+                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4E6] text-[#2D6A2D] border-2 border-[#2D6A2D]">
+                        {s.conv}%
+                      </span>
+                    </td>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                      {s.spend ? `$${s.spend}` : <span className="text-[#999]">{t("common.dash")}</span>}
+                    </td>
+                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                      {s.roas ? `${s.roas}x` : <span className="text-[#999]">{t("admin.marketing.organic")}</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

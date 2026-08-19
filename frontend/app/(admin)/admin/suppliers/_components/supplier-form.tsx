@@ -13,31 +13,43 @@ import { OptionPanel } from "./option-editor";
 import { Save } from "lucide-react";
 
 type Form = {
-  name: string; contact: string; email: string; status: string;
-  bankName: string; bankAccountNumber: string; bankAccountName: string;
+  name: string;
+  contact: string;
+  email: string;
+  status: string;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
 };
 
 type FullForm = Form & {
-  paperSizeOptions: SupplierOption[]; paperOptions: SupplierOption[]; coverOptions: SupplierOption[];
+  paperSizeOptions: SupplierOption[];
+  paperOptions: SupplierOption[];
+  coverOptions: SupplierOption[];
 };
 
 function emptyForm(): Form {
   return {
-    name: "", contact: "", email: "", status: "active",
-    bankName: "", bankAccountNumber: "", bankAccountName: "",
+    name: "",
+    contact: "",
+    email: "",
+    status: "active",
+    bankName: "",
+    bankAccountNumber: "",
+    bankAccountName: "",
   };
 }
 
 function emptyFullForm(): FullForm {
   return {
     ...emptyForm(),
-    paperSizeOptions: [], paperOptions: [], coverOptions: [],
+    paperSizeOptions: [],
+    paperOptions: [],
+    coverOptions: [],
   };
 }
 
-function Field({ label, value, onChange }: {
-  label: string; value: string; onChange: (v: string) => void;
-}) {
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
       <p className={`${label} text-xs text-[#666] mb-1`}>{label}</p>
@@ -63,8 +75,13 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
     apiFetch<Supplier>(`/api/admin/suppliers/${supplierId}`, token)
       .then((data) => {
         const f: Form = {
-          name: data.name, contact: data.contact, email: data.email, status: data.banned ? "banned" : "active",
-          bankName: data.bankName ?? "", bankAccountNumber: data.bankAccountNumber ?? "", bankAccountName: data.bankAccountName ?? "",
+          name: data.name,
+          contact: data.contact,
+          email: data.email,
+          status: data.banned ? "banned" : "active",
+          bankName: data.bankName ?? "",
+          bankAccountNumber: data.bankAccountNumber ?? "",
+          bankAccountName: data.bankAccountName ?? "",
         };
         const fullF: FullForm = {
           ...f,
@@ -106,9 +123,10 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
       }
     } catch (e: any) {
       showToast(e.message || (creating ? t("admin.suppliers.createFailed") : t("admin.suppliers.saveFailed")), "error");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
-
 
   const handleSaveOptions = async (type: "paperSizeOptions" | "paperOptions" | "coverOptions") => {
     if (!token || savingOptions) return;
@@ -117,19 +135,23 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
       const body = JSON.stringify({
         [type]: displayForm[type],
       });
-      
+
       await apiFetch(`/api/admin/suppliers/${supplierId}/options`, token, { method: "PATCH", body });
       showToast("Cập nhật thành công", "success");
       router.refresh();
     } catch (e: any) {
       showToast(e.message || "Cập nhật thất bại", "error");
-    } finally { setSavingOptions(null); }
+    } finally {
+      setSavingOptions(null);
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p suppressHydrationWarning className="font-mono text-[10px] font-bold">{t("common.loading")}</p>
+        <p suppressHydrationWarning className="font-mono text-[10px] font-bold">
+          {t("common.loading")}
+        </p>
       </div>
     );
   }
@@ -148,15 +170,21 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
       <header className="px-8 py-6 border-b-[3px] border-[#222] flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className={`${label} mb-1 text-[#666]`}>
-            <Link href="/admin/suppliers" className="hover:underline">← {t("admin.suppliers.back")}</Link> ·{" "}
-            {creating ? t("admin.suppliers.createTitle") : t("admin.suppliers.detailLabel")}</p>
+            <Link href="/admin/suppliers" className="hover:underline">
+              ← {t("admin.suppliers.back")}
+            </Link>{" "}
+            · {creating ? t("admin.suppliers.createTitle") : t("admin.suppliers.detailLabel")}
+          </p>
           <h1 className="text-3xl font-bold">
-            {form.name?.trim() ? form.name : (creating ? t("admin.suppliers.createTitle") : "—")}
+            {form.name?.trim() ? form.name : creating ? t("admin.suppliers.createTitle") : "—"}
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleSaveInfo} disabled={saving}
-            className={`${neoBtnPrimary} flex items-center gap-2 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 disabled:opacity-40 cursor-pointer`}>
+          <button
+            onClick={handleSaveInfo}
+            disabled={saving}
+            className={`${neoBtnPrimary} flex items-center gap-2 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 disabled:opacity-40 cursor-pointer`}
+          >
             <Save size={14} /> {saving ? `${t("common.save")}…` : t("common.save")}
           </button>
         </div>
@@ -173,9 +201,21 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
               <Field label={t("admin.suppliers.email")} value={form.email} onChange={(v) => set({ email: v })} />
             </div>
             <div className="space-y-4">
-              <Field label={t("admin.suppliers.bankName")} value={form.bankName} onChange={(v) => set({ bankName: v })} />
-              <Field label={t("admin.suppliers.bankAccountName")} value={form.bankAccountName} onChange={(v) => set({ bankAccountName: v })} />
-              <Field label={t("admin.suppliers.bankAccountNumber")} value={form.bankAccountNumber} onChange={(v) => set({ bankAccountNumber: v })} />
+              <Field
+                label={t("admin.suppliers.bankName")}
+                value={form.bankName}
+                onChange={(v) => set({ bankName: v })}
+              />
+              <Field
+                label={t("admin.suppliers.bankAccountName")}
+                value={form.bankAccountName}
+                onChange={(v) => set({ bankAccountName: v })}
+              />
+              <Field
+                label={t("admin.suppliers.bankAccountNumber")}
+                value={form.bankAccountNumber}
+                onChange={(v) => set({ bankAccountNumber: v })}
+              />
             </div>
             {creating ? null : (
               <div>
@@ -183,13 +223,19 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
                 <div className="flex gap-2">
                   {(["active", "banned"] as const).map((s) => {
                     const active = form.status === s;
-                    const meta = s === "active" ? { bg: "#D4EDDA", text: "#155724" } : { bg: "#F8D7DA", text: "#721C24" };
+                    const meta =
+                      s === "active" ? { bg: "#D4EDDA", text: "#155724" } : { bg: "#F8D7DA", text: "#721C24" };
                     return (
-                      <button key={s} onClick={() => set({ status: s })}
+                      <button
+                        key={s}
+                        onClick={() => set({ status: s })}
                         className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none rounded-[6px] px-2.5 py-1.5 border-2 transition-[opacity,border-color] cursor-pointer ${
-                          active ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100" : "border-transparent opacity-40 hover:opacity-70"
+                          active
+                            ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100"
+                            : "border-transparent opacity-40 hover:opacity-70"
                         }`}
-                        style={{ background: meta.bg, color: meta.text }}>
+                        style={{ background: meta.bg, color: meta.text }}
+                      >
                         {s}
                       </button>
                     );
@@ -201,10 +247,10 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
         </section>
 
         {/* Paper Size Options */}
-        <OptionPanel 
-          title={t("admin.suppliers.paperSizeOptions")} 
-          options={displayForm.paperSizeOptions} 
-          onChange={(o) => setDisplayOnly({ paperSizeOptions: o })} 
+        <OptionPanel
+          title={t("admin.suppliers.paperSizeOptions")}
+          options={displayForm.paperSizeOptions}
+          onChange={(o) => setDisplayOnly({ paperSizeOptions: o })}
           onSave={() => handleSaveOptions("paperSizeOptions")}
           saving={savingOptions === "paperSizeOptions"}
           optionType="paperSize"
@@ -212,9 +258,9 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
         />
 
         {/* Paper Options */}
-        <OptionPanel 
-          title={t("admin.suppliers.paperOptions")} 
-          options={displayForm.paperOptions} 
+        <OptionPanel
+          title={t("admin.suppliers.paperOptions")}
+          options={displayForm.paperOptions}
           onChange={(o) => setDisplayOnly({ paperOptions: o })}
           onSave={() => handleSaveOptions("paperOptions")}
           saving={savingOptions === "paperOptions"}
@@ -222,9 +268,9 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
         />
 
         {/* Cover Options */}
-        <OptionPanel 
-          title={t("admin.suppliers.coverOptions")} 
-          options={displayForm.coverOptions} 
+        <OptionPanel
+          title={t("admin.suppliers.coverOptions")}
+          options={displayForm.coverOptions}
           onChange={(o) => setDisplayOnly({ coverOptions: o })}
           onSave={() => handleSaveOptions("coverOptions")}
           saving={savingOptions === "coverOptions"}

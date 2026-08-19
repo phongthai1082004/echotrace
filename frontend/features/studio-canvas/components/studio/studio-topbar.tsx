@@ -11,8 +11,17 @@ import { usePageManager } from "../../hooks/usePageManager";
 import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
-import { ZOOM_LEVELS, FONTS} from "../../types";
-import { applyUndo, applyRedo, isFrameObject, serializeCanvasState, enforceZLayers, placePhotoInFrame, applyFrameClip } from "../../lib/layout-engine";
+import { fetchPrintCatalog, priceForCode } from "@/lib/print-catalog";
+import { ZOOM_LEVELS, FONTS } from "../../types";
+import {
+  applyUndo,
+  applyRedo,
+  isFrameObject,
+  serializeCanvasState,
+  enforceZLayers,
+  placePhotoInFrame,
+  applyFrameClip,
+} from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
 function useTextPresets(t: any) {
@@ -28,7 +37,12 @@ function useTextPresets(t: any) {
 function ToolBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <div className="relative group">
-      <button onClick={onClick} className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">{icon}</button>
+      <button
+        onClick={onClick}
+        className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]"
+      >
+        {icon}
+      </button>
       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
         <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md whitespace-nowrap">
           {label}
@@ -41,7 +55,12 @@ function ToolBtn({ icon, label, onClick }: { icon: React.ReactNode; label: strin
 function DelBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <div className="relative group">
-      <button onClick={onClick} className="p-1.5 hover:bg-[#B54843]/10 hover:text-[#B54843] rounded-[6px] border-2 border-transparent hover:border-[#B54843] transition-all">{icon}</button>
+      <button
+        onClick={onClick}
+        className="p-1.5 hover:bg-[#B54843]/10 hover:text-[#B54843] rounded-[6px] border-2 border-transparent hover:border-[#B54843] transition-all"
+      >
+        {icon}
+      </button>
       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
         <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md whitespace-nowrap">
           {label}
@@ -100,13 +119,37 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   const handleUndo = () => {
     if (!canvas || undoStack.length === 0) return;
     const s = useCanvasStore.getState();
-    applyUndo(canvas, s.popUndo, s.pushRedo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length);
+    applyUndo(
+      canvas,
+      s.popUndo,
+      s.pushRedo,
+      s.pushUndoPages,
+      { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode },
+      s.setPage,
+      s.setPages,
+      s.setActivePageIndex,
+      s.setActiveLayout,
+      s.setViewMode,
+      s.pages.length,
+    );
   };
 
   const handleRedo = () => {
     if (!canvas || redoStack.length === 0) return;
     const s = useCanvasStore.getState();
-    applyRedo(canvas, s.popRedo, s.pushUndo, s.pushUndoPages, { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode }, s.setPage, s.setPages, s.setActivePageIndex, s.setActiveLayout, s.setViewMode, s.pages.length);
+    applyRedo(
+      canvas,
+      s.popRedo,
+      s.pushUndo,
+      s.pushUndoPages,
+      { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode },
+      s.setPage,
+      s.setPages,
+      s.setActivePageIndex,
+      s.setActiveLayout,
+      s.setViewMode,
+      s.pages.length,
+    );
   };
 
   const handleDelete = () => {
@@ -126,7 +169,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
     setZoomIndex(idx);
   };
 
-  const handleAddText = (preset?: typeof TEXT_PRESETS[number]) => {
+  const handleAddText = (preset?: (typeof TEXT_PRESETS)[number]) => {
     if (!canvas) return;
     pushUndo();
     const id = `text-${Date.now()}`;
@@ -154,7 +197,10 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       active.setCoords();
       if (isFrameObject(active)) {
         const photo = canvas.getObjects().find((p: any) => p.customProperties?.frameId === (active as any)._selId);
-        if (photo) { photo.set("flipX", !(photo as any).flipX); photo.setCoords(); }
+        if (photo) {
+          photo.set("flipX", !(photo as any).flipX);
+          photo.setCoords();
+        }
       }
       canvas.renderAll();
       clearRedo();
@@ -170,7 +216,10 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       active.setCoords();
       if (isFrameObject(active)) {
         const photo = canvas.getObjects().find((p: any) => p.customProperties?.frameId === (active as any)._selId);
-        if (photo) { photo.set("flipY", !(photo as any).flipY); photo.setCoords(); }
+        if (photo) {
+          photo.set("flipY", !(photo as any).flipY);
+          photo.setCoords();
+        }
       }
       canvas.renderAll();
       clearRedo();
@@ -179,9 +228,14 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
 
   const handleAutoFill = async () => {
     const c = useCanvasStore.getState().canvas;
-    if (!c || !token) { showToast("No canvas or auth", "error"); return; }
+    if (!c || !token) {
+      showToast("No canvas or auth", "error");
+      return;
+    }
     // Save current page's live state into store
-    useCanvasStore.getState().setPage(useCanvasStore.getState().activePageIndex, { canvasJson: serializeCanvasState(c) });
+    useCanvasStore
+      .getState()
+      .setPage(useCanvasStore.getState().activePageIndex, { canvasJson: serializeCanvasState(c) });
     // Re-read state (setPage creates new object ref) and save for undo
     const s = useCanvasStore.getState();
     s.pushUndoPages();
@@ -189,8 +243,11 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
     // 2. Fetch user gallery images
     let galleryPhotos: { id: number; url: string }[];
     try {
-      galleryPhotos = await apiFetch<any[]>("/api/uploads/images", token, { cache: "no-cache" }) || [];
-    } catch { showToast("Failed to fetch gallery", "error"); return; }
+      galleryPhotos = (await apiFetch<any[]>("/api/uploads/images", token, { cache: "no-cache" })) || [];
+    } catch {
+      showToast("Failed to fetch gallery", "error");
+      return;
+    }
 
     // 3. Scan all pages for used photo URLs + empty frames
     const usedUrls = new Set<string>();
@@ -200,7 +257,11 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       const pgJson = s.pages[i].canvasJson;
       if (!pgJson) continue;
       let objects: any[];
-      try { objects = JSON.parse(pgJson).objects || []; } catch { continue; }
+      try {
+        objects = JSON.parse(pgJson).objects || [];
+      } catch {
+        continue;
+      }
 
       objects.forEach((obj: any) => {
         if (obj.customProperties?.layer === "photo" && obj.src) usedUrls.add(obj.src);
@@ -209,7 +270,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       objects.forEach((obj: any, idx: number) => {
         if (obj.customProperties?.layer === "frame") {
           const hasPhoto = objects.some(
-            (o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === obj._selId
+            (o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === obj._selId,
           );
           if (!hasPhoto) pageEmptyFrames.push({ pageIdx: i, frameIdx: idx, frameSelId: obj._selId });
         }
@@ -218,12 +279,19 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
 
     // 4. Filter unused photos
     const unused = galleryPhotos.filter((p) => !usedUrls.has(p.url));
-    if (unused.length === 0) { showToast("No unused photos available", "info"); return; }
-    if (pageEmptyFrames.length === 0) { showToast("No empty frames found", "info"); return; }
+    if (unused.length === 0) {
+      showToast("No unused photos available", "info");
+      return;
+    }
+    if (pageEmptyFrames.length === 0) {
+      showToast("No empty frames found", "info");
+      return;
+    }
 
     // 5. Process pages using an offscreen fabric canvas
     const offEl = document.createElement("canvas");
-    offEl.width = 2000; offEl.height = 2000;
+    offEl.width = 2000;
+    offEl.height = 2000;
     const tc = new fabric.Canvas(offEl);
     const updatedPages = [...s.pages];
     let photoIdx = 0;
@@ -233,9 +301,15 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       const pgStr = updatedPages[task.pageIdx].canvasJson;
       if (!pgStr) continue;
       let parsed: any;
-      try { parsed = JSON.parse(pgStr); } catch { continue; }
+      try {
+        parsed = JSON.parse(pgStr);
+      } catch {
+        continue;
+      }
 
-      await tc.loadFromJSON(parsed).then(() => { tc.renderAll(); });
+      await tc.loadFromJSON(parsed).then(() => {
+        tc.renderAll();
+      });
       // rehydrate custom properties (fabric drops them on loadFromJSON)
       const pgObjs = parsed.objects || [];
       tc.getObjects().forEach((live: any, i: number) => {
@@ -247,7 +321,10 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
 
       // Find the frame on the temp canvas by _selId
       const frame = tc.getObjects().find((o: any) => o._selId === task.frameSelId);
-      if (!frame) { tc.clear(); continue; }
+      if (!frame) {
+        tc.clear();
+        continue;
+      }
 
       try {
         const img = await fabric.FabricImage.fromURL(unused[photoIdx].url, { crossOrigin: "anonymous" });
@@ -259,7 +336,9 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
         const newJson = serializeCanvasState(tc);
         updatedPages[task.pageIdx] = { ...updatedPages[task.pageIdx], canvasJson: newJson };
         photoIdx++;
-      } catch { /* skip this photo on error */ }
+      } catch {
+        /* skip this photo on error */
+      }
       tc.clear();
     }
 
@@ -272,12 +351,27 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   return (
     <div className="h-12 flex items-center px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222]">
       {editingTitle ? (
-        <input ref={titleRef} value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)}
-          onBlur={commitTitle} onKeyDown={(e) => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-          className="font-bold text-sm bg-transparent border-b-2 border-[#222] outline-none w-40" />
+        <input
+          ref={titleRef}
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={commitTitle}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitTitle();
+            if (e.key === "Escape") setEditingTitle(false);
+          }}
+          className="font-bold text-sm bg-transparent border-b-2 border-[#222] outline-none w-40"
+        />
       ) : (
-        <span onClick={() => { setTitleDraft(bookMeta.title); setEditingTitle(true); }}
-          className="font-bold text-sm mr-2 cursor-pointer hover:opacity-60 transition-opacity">{bookMeta.title}</span>
+        <span
+          onClick={() => {
+            setTitleDraft(bookMeta.title);
+            setEditingTitle(true);
+          }}
+          className="font-bold text-sm mr-2 cursor-pointer hover:opacity-60 transition-opacity"
+        >
+          {bookMeta.title}
+        </span>
       )}
 
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
@@ -285,7 +379,10 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       <ToolBtn icon={<Redo2 size={iconSize} />} label={t("customer.studio.redo")} onClick={handleRedo} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <div className="relative group">
-        <button onClick={() => handleAddText()} className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">
+        <button
+          onClick={() => handleAddText()}
+          className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]"
+        >
           <Type size={iconSize} />
         </button>
         <div className="absolute top-full left-0 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto">
@@ -296,9 +393,19 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 onClick={() => handleAddText(preset)}
                 className={`w-full px-4 py-2.5 text-left hover:bg-[#e8e6e0] transition-colors flex items-center gap-3 ${i < TEXT_PRESETS.length - 1 ? "border-b border-[#222]/10" : ""}`}
               >
-                <span style={{ fontFamily: preset.fontFamily, fontSize: Math.min(preset.fontSize / 3, 14), fontWeight: preset.fontWeight as any }}
-                  className="text-[#222]">{preset.label}</span>
-                <span className="font-mono text-[8px] font-bold tracking-widest text-[#999] ml-auto">{preset.fontSize}px</span>
+                <span
+                  style={{
+                    fontFamily: preset.fontFamily,
+                    fontSize: Math.min(preset.fontSize / 3, 14),
+                    fontWeight: preset.fontWeight as any,
+                  }}
+                  className="text-[#222]"
+                >
+                  {preset.label}
+                </span>
+                <span className="font-mono text-[8px] font-bold tracking-widest text-[#999] ml-auto">
+                  {preset.fontSize}px
+                </span>
               </button>
             ))}
           </div>
@@ -307,53 +414,152 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <DelBtn icon={<Trash2 size={iconSize} />} label={t("customer.studio.deleteBtn")} onClick={handleDelete} />
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
-      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20v2"/><path d="M12 14v-4"/><path d="M12 8V6"/><path d="M9 13l3-3 3 3"/><path d="M9 11l3 3 3-3"/></svg>} label={t("customer.studio.flipH")} onClick={handleFlipH} />
-      <ToolBtn icon={<svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 22v-4"/><path d="M12 10V6"/><path d="M9 13l3-3 3 3"/><path d="M9 15l3 3 3-3"/></svg>} label={t("customer.studio.flipV")} onClick={handleFlipV} />
+      <ToolBtn
+        icon={
+          <svg
+            width={iconSize}
+            height={iconSize}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3" />
+            <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" />
+            <path d="M12 20v2" />
+            <path d="M12 14v-4" />
+            <path d="M12 8V6" />
+            <path d="M9 13l3-3 3 3" />
+            <path d="M9 11l3 3 3-3" />
+          </svg>
+        }
+        label={t("customer.studio.flipH")}
+        onClick={handleFlipH}
+      />
+      <ToolBtn
+        icon={
+          <svg
+            width={iconSize}
+            height={iconSize}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <path d="M12 22v-4" />
+            <path d="M12 10V6" />
+            <path d="M9 13l3-3 3 3" />
+            <path d="M9 15l3 3 3-3" />
+          </svg>
+        }
+        label={t("customer.studio.flipV")}
+        onClick={handleFlipV}
+      />
       <div className="ml-auto flex items-center gap-2">
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           {(["left", "spread", "right"] as const).map((v) => (
-            <button key={v} onClick={() => {
-              const s = useCanvasStore.getState();
-              saveCurrentPage();
-              s.setViewMode(v);
-              const spread = v === "spread" && !isCoverPage(s.activePageIndex, s.pages.length);
-              const target = spread
-                ? s.pages[s.activePageIndex]?.spreadLayout ?? null
-                : v === "right"
-                  ? s.pages[Math.min(s.activePageIndex + 1, s.pages.length - 1)]?.layout ?? null
-                  : s.pages[s.activePageIndex]?.layout ?? null;
-              useCanvasStore.setState({ activeLayout: target });
-            }}
-              disabled={useCanvasStore.getState().pages.length <= 2 || useCanvasStore.getState().activePageIndex === 0 || useCanvasStore.getState().activePageIndex === useCanvasStore.getState().pages.length - 1}
-              className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${viewMode === v ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${v === "right" ? "" : "border-r-2 border-[#222]"} disabled:opacity-30 disabled:cursor-not-allowed`}>{v === "left" ? "L" : v === "right" ? "R" : "2P"}</button>
+            <button
+              key={v}
+              onClick={() => {
+                const s = useCanvasStore.getState();
+                saveCurrentPage();
+                s.setViewMode(v);
+                const spread = v === "spread" && !isCoverPage(s.activePageIndex, s.pages.length);
+                const target = spread
+                  ? (s.pages[s.activePageIndex]?.spreadLayout ?? null)
+                  : v === "right"
+                    ? (s.pages[Math.min(s.activePageIndex + 1, s.pages.length - 1)]?.layout ?? null)
+                    : (s.pages[s.activePageIndex]?.layout ?? null);
+                useCanvasStore.setState({ activeLayout: target });
+              }}
+              disabled={
+                useCanvasStore.getState().pages.length <= 2 ||
+                useCanvasStore.getState().activePageIndex === 0 ||
+                useCanvasStore.getState().activePageIndex === useCanvasStore.getState().pages.length - 1
+              }
+              className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${viewMode === v ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${v === "right" ? "" : "border-r-2 border-[#222]"} disabled:opacity-30 disabled:cursor-not-allowed`}
+            >
+              {v === "left" ? "L" : v === "right" ? "R" : "2P"}
+            </button>
           ))}
         </div>
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
-          <button onClick={() => handleZoom(-1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">−</button>
+          <button
+            onClick={() => handleZoom(-1)}
+            className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors"
+          >
+            −
+          </button>
           <button className="px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest border-x-[2px] border-[#222] flex items-center gap-1 hover:bg-[#e8e6e0] transition-colors">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             {Math.round(ZOOM_LEVELS[zoomIndex] * 100)}%
           </button>
-          <button onClick={() => handleZoom(1)} className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors">+</button>
+          <button
+            onClick={() => handleZoom(1)}
+            className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors"
+          >
+            +
+          </button>
         </div>
         {isAdmin && (
-          <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden" title={t("customer.studio.kindLabel")}>
+          <div
+            className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden"
+            title={t("customer.studio.kindLabel")}
+          >
             {(["TEMPLATE", "ALBUM"] as const).map((k) => (
               <button
                 key={k}
                 onClick={() => setBookMeta({ kind: k })}
-                className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${bookMeta.kind === k ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${k === "TEMPLATE" ? "border-r-2 border-[#222]" : ""}`}>
+                className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${bookMeta.kind === k ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${k === "TEMPLATE" ? "border-r-2 border-[#222]" : ""}`}
+              >
                 {t(`customer.studio.${k === "TEMPLATE" ? "kindTemplate" : "kindAlbum"}`)}
               </button>
             ))}
           </div>
         )}
-        <button disabled onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"><Eye size={11} /> {t("customer.studio.preview")}</button>
-        <button onClick={handleAutoFill} className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+        <button
+          disabled
+          onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)}
+          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Eye size={11} /> {t("customer.studio.preview")}
+        </button>
+        <button
+          onClick={handleAutoFill}
+          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
           {t("customer.studio.autoFill")}
         </button>
-        <button onClick={async () => {
+        <button
+          onClick={async () => {
             if (editingTitle) commitTitle();
             const r = await saveFull(token);
             if (r.ok && r.id && token) {
@@ -373,30 +579,57 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                       paperSize: meta.format,
                       paper: meta.paper,
                     };
-await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items: existingItems }) });
+                    await apiFetch("/api/cart", token, {
+                      method: "PUT",
+                      body: JSON.stringify({ items: existingItems }),
+                    });
                   }
                 }
               } catch {}
             }
-            showToast(r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`, r.ok ? "success" : "error");
+            showToast(
+              r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`,
+              r.ok ? "success" : "error",
+            );
           }}
-          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">{t("customer.studio.save")} Journal</button>
+          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+        >
+          {t("customer.studio.save")} Journal
+        </button>
         {!hideOrder && (
-          <button onClick={async () => {
+          <button
+            onClick={async () => {
               try {
                 if (editingTitle) commitTitle();
-                if (!token) { showToast("Not authenticated", "error"); return; }
+                if (!token) {
+                  showToast("Not authenticated", "error");
+                  return;
+                }
                 const c = useCanvasStore.getState().canvas;
-                if (!c) { showToast("No canvas", "error"); return; }
+                if (!c) {
+                  showToast("No canvas", "error");
+                  return;
+                }
                 const activeIdx = useCanvasStore.getState().activePageIndex;
                 useCanvasStore.getState().setPage(activeIdx, { canvasJson: serializeCanvasState(c) });
                 let thumb: string | null = null;
-                try { thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 }); } catch {}
+                try {
+                  thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
+                } catch {}
                 if (thumb) useCanvasStore.getState().setPage(activeIdx, { thumbnailUrl: thumb });
                 const s = useCanvasStore.getState();
                 const meta = s.bookMeta;
                 const totalPages = s.pages.length;
                 const coverUrl = null;
+
+                // ponytail: giá lấy từ catalog global PrintOption; fallback 50k cũ khi fetch lỗi/chưa có code.
+                let coverPrice = 0;
+                let paperPrice = 0;
+                try {
+                  const cat = await fetchPrintCatalog(token);
+                  coverPrice = priceForCode(cat.covers, "softcover") ?? 0;
+                  paperPrice = priceForCode(cat.papers, meta.paper || "matte") ?? 0;
+                } catch {}
 
                 const item = {
                   bookId: meta.id,
@@ -405,14 +638,14 @@ await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items
                   style: "PHOTOBOOK",
                   font: "Inter",
                   cover: "softcover",
-                  coverPrice: 0,
+                  coverPrice,
                   paperSize: meta.format,
                   paper: meta.paper || "matte",
-                  paperPrice: 0,
+                  paperPrice,
                   pages: totalPages,
                   coverUrl,
                   pdfUrl: null,
-                  price: 0,
+                  price: coverPrice + paperPrice || 50000,
                   quantity: 1,
                 };
 
@@ -420,18 +653,39 @@ await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items
                 try {
                   const cartData = await apiFetch<any>("/api/cart", token);
                   existingItems = Array.isArray(cartData?.items) ? cartData.items : [];
-                } catch { showToast("Failed to fetch cart", "error"); return; }
+                } catch {
+                  showToast("Failed to fetch cart", "error");
+                  return;
+                }
                 const idx = existingItems.findIndex((i: any) => i.bookId === meta.id);
-                if (idx >= 0) { item.quantity = (existingItems[idx].quantity || 1) + 1; existingItems[idx] = { ...existingItems[idx], ...item, _id: existingItems[idx]._id, id: existingItems[idx].id }; }
-                else { existingItems.push(item); }
+                if (idx >= 0) {
+                  item.quantity = (existingItems[idx].quantity || 1) + 1;
+                  existingItems[idx] = {
+                    ...existingItems[idx],
+                    ...item,
+                    _id: existingItems[idx]._id,
+                    id: existingItems[idx].id,
+                  };
+                } else {
+                  existingItems.push(item);
+                }
 
                 try {
-                  await apiFetch("/api/cart", token, { method: "PUT", body: JSON.stringify({ items: JSON.stringify(existingItems) }) });
+                  await apiFetch("/api/cart", token, {
+                    method: "PUT",
+                    body: JSON.stringify({ items: JSON.stringify(existingItems) }),
+                  });
                   showToast(t("customer.studio.addedToCart") || "Added to cart", "success");
-                } catch { showToast("Failed to add to cart", "error"); }
-              } catch (e) { console.error("[addToCart]", e); showToast("Failed to add to cart", "error"); }
+                } catch {
+                  showToast("Failed to add to cart", "error");
+                }
+              } catch (e) {
+                console.error("[addToCart]", e);
+                showToast("Failed to add to cart", "error");
+              }
             }}
-            className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all">
+            className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+          >
             {t("customer.studio.orderPrint")}
           </button>
         )}

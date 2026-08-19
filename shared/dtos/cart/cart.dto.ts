@@ -4,12 +4,14 @@ export interface CartItem {
   title: string;
   content: string | null;
   style: string;
-  font: string;
+  font: string; // ???
   cover: string;
   paper: string;
   paperHeight: number;
   paperWidth: number;
   pages: number;
+  paperSize?: string | null;
+  price?: number | null;
   // Display info
   coverUrl: string | null;
   pdfUrl?: string | null;
@@ -35,6 +37,18 @@ export interface UpdateCartDTO {
   items: CartItem[];
 }
 
+// ponytail: cart list only needs the first page (thumbnail) — never ship all pages' data.
+function firstPageContent(content: string | null): string | null {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content);
+    if (!parsed?.pages) return null;
+    return JSON.stringify({ ...parsed, pages: [parsed.pages[0]] });
+  } catch {
+    return null;
+  }
+}
+
 export function parseCartItems(raw: any): CartItem[] {
   if (!raw) return [];
   let arr: any;
@@ -42,10 +56,11 @@ export function parseCartItems(raw: any): CartItem[] {
   if (!Array.isArray(arr)) return [];
   return arr.map((item) => {
     let thumb: string | null = item.coverUrl ?? null;
-    if (item.content) {
-      try { thumb = JSON.parse(item.content).pages?.[0]?.thumbnailUrl ?? thumb; } catch {}
+    const content = firstPageContent(item.content);
+    if (content) {
+      try { thumb = JSON.parse(content).pages?.[0]?.thumbnailUrl ?? thumb; } catch {}
     }
-    return { ...item, thumbnailUrl: thumb };
+    return { ...item, content, thumbnailUrl: thumb };
   });
 }
 

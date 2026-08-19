@@ -46,7 +46,8 @@ export function LayoutsPanel() {
   const activeLayout = useCanvasStore((s) => s.activeLayout);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
   const spreadMode = useCanvasStore((s) => {
-    const n = s.pages.length; const idx = s.activePageIndex;
+    const n = s.pages.length;
+    const idx = s.activePageIndex;
     return s.viewMode === "spread" && idx !== 0 && idx !== n - 1 && n > 2;
   });
   const viewMode = useCanvasStore((s) => s.viewMode);
@@ -62,7 +63,7 @@ export function LayoutsPanel() {
     const kind = layout.kind;
     const isSingleSide = kind === "single" && viewMode !== "spread";
     // one page's pixel width in the current format (cover canvas is a single page wide)
-    const pageWidth = spreadMode ? pageW : (viewMode === "spread" ? (canvas.getWidth() ?? 840) : pageW);
+    const pageWidth = spreadMode ? pageW : viewMode === "spread" ? (canvas.getWidth() ?? 840) : pageW;
     const onSide = (o: any) => {
       if (!isSingleSide) return true;
       return viewMode === "left" ? (o.left || 0) < pageW : (o.left || 0) >= pageW;
@@ -82,7 +83,8 @@ export function LayoutsPanel() {
     // Set new layout on target page(s)
     if (kind === "spread") {
       useCanvasStore.getState().setPage(targetIdx, { spreadLayout: layout, layout: null });
-      if (targetIdx + 1 < pages.length) useCanvasStore.getState().setPage(targetIdx + 1, { spreadLayout: layout, layout: null });
+      if (targetIdx + 1 < pages.length)
+        useCanvasStore.getState().setPage(targetIdx + 1, { spreadLayout: layout, layout: null });
     } else {
       useCanvasStore.getState().setPage(targetIdx, { layout, spreadLayout: null });
       // a single layout replaces any leftover spread on the page pair
@@ -105,7 +107,7 @@ export function LayoutsPanel() {
 
     pushUndo();
     const pages = useCanvasStore.getState().pages;
-    
+
     // Clear ALL layout frames from canvas
     clearLayoutFrames(canvas);
 
@@ -120,7 +122,9 @@ export function LayoutsPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.layouts")}</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
+        {t("customer.studio.layouts")}
+      </p>
       <div className="flex flex-col gap-3">
         {layouts.map((layout: AnyLayout) => (
           <button

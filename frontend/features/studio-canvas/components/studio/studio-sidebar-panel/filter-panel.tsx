@@ -8,12 +8,12 @@ import exampleImg from "@/assets/images/example.jpg";
 import { FILTER_PRESETS, parseFilterSliders } from "../../../lib/filters";
 
 function filtersToJSON(filters: fabric.filters.BaseFilter<any, any, any>[]): Record<string, any>[] {
-  return filters.map(f => f.toObject());
+  return filters.map((f) => f.toObject());
 }
 
 function injectFiltersToAllPages(filterData: Record<string, any>[]) {
   const s = useCanvasStore.getState();
-  const updatedPages = s.pages.map(pg => {
+  const updatedPages = s.pages.map((pg) => {
     if (!pg.canvasJson) return pg;
     try {
       const parsed = JSON.parse(pg.canvasJson);
@@ -23,7 +23,9 @@ function injectFiltersToAllPages(filterData: Record<string, any>[]) {
         }
       });
       return { ...pg, canvasJson: JSON.stringify(parsed) };
-    } catch { return pg; }
+    } catch {
+      return pg;
+    }
   });
   s.setPages(updatedPages);
 }
@@ -57,11 +59,13 @@ export function FilterPanel() {
   const pushUndo = useCanvasStore((s) => s.pushUndo);
   const incrementFilterVersion = useCanvasStore((s) => s.incrementFilterVersion);
   const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
-  const [confirm, setConfirm] = useState<typeof FILTER_PRESETS[number] | null>(null);
+  const [confirm, setConfirm] = useState<(typeof FILTER_PRESETS)[number] | null>(null);
 
-  const handleApply = (f: typeof FILTER_PRESETS[number]) => { if (canvas) setConfirm(f); };
+  const handleApply = (f: (typeof FILTER_PRESETS)[number]) => {
+    if (canvas) setConfirm(f);
+  };
 
-  const doApply = (f: typeof FILTER_PRESETS[number]) => {
+  const doApply = (f: (typeof FILTER_PRESETS)[number]) => {
     if (!canvas) return;
     pushUndo();
     applyToAllPhotos(canvas, f.apply());
@@ -83,26 +87,48 @@ export function FilterPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.smartFilters")}</p>
-      <button onClick={handleReset}
-        className="w-full flex items-center gap-3 px-3 py-2.5 mb-3 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] text-left">
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
+        {t("customer.studio.smartFilters")}
+      </p>
+      <button
+        onClick={handleReset}
+        className="w-full flex items-center gap-3 px-3 py-2.5 mb-3 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] text-left"
+      >
         <div className="w-9 h-9 rounded-[4px] border-2 border-[#222] bg-white flex items-center justify-center shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="2" strokeLinecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#222"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
         </div>
         <div>
           <p className="font-mono text-[10px] font-bold">{t("customer.studio.resetAll")}</p>
-          <p className="font-mono text-[7px] tracking-widest uppercase text-[#999]">{t("customer.studio.clearFilters")}</p>
+          <p className="font-mono text-[7px] tracking-widest uppercase text-[#999]">
+            {t("customer.studio.clearFilters")}
+          </p>
         </div>
       </button>
       <div className="grid grid-cols-2 gap-2">
         {FILTER_PRESETS.map((f) => (
-          <button key={f.name} onClick={() => handleApply(f)}
-            className="flex flex-col items-center gap-1.5 px-2 py-2 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]">
+          <button
+            key={f.name}
+            onClick={() => handleApply(f)}
+            className="flex flex-col items-center gap-1.5 px-2 py-2 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]"
+          >
             <div className="w-full h-12 rounded-[3px] border-[2px] border-[#222] overflow-hidden relative">
               <img src={exampleImg.src} alt="" className="absolute inset-0 w-full h-full object-cover" />
               <div className={`absolute inset-0 bg-gradient-to-br ${f.gradient}`} />
             </div>
-            <span className="font-mono text-[7px] font-bold tracking-widest uppercase text-center leading-tight">{f.name}</span>
+            <span className="font-mono text-[7px] font-bold tracking-widest uppercase text-center leading-tight">
+              {f.name}
+            </span>
           </button>
         ))}
       </div>
@@ -115,12 +141,16 @@ export function FilterPanel() {
               {t("customer.studio.applyFilterConfirm", { name: confirm.name })}
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirm(null)}
-                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white">
+              <button
+                onClick={() => setConfirm(null)}
+                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white"
+              >
                 {t("common.cancel")}
               </button>
-              <button onClick={() => doApply(confirm)}
-                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-[#222] text-white">
+              <button
+                onClick={() => doApply(confirm)}
+                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-[#222] text-white"
+              >
                 {t("customer.studio.apply")}
               </button>
             </div>

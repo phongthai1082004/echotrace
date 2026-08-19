@@ -5,7 +5,7 @@ import { AdminHeader } from "@/components/admin-header";
 
 export default function AdminAccountPage() {
   const { t } = useTranslation();
-  
+
   return (
     <div>
       <AdminHeader label={t("admin.adminAccount.label")} title={t("admin.adminAccount.title")} />

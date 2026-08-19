@@ -1,14 +1,16 @@
 // ==========================================
 // I. CÁC LOẠI BÌA (COVER TYPES)
 // ==========================================
-export enum CoverType {
-  HARDCOVER = 'HARDCOVER',       // Bìa cứng in hình
-  SOFTCOVER = 'SOFTCOVER',       // Bìa mềm
-  LEATHER = 'LEATHER',           // Bìa da Simili / PU
-  LINEN = 'LINEN',               // Bìa vải Linen / Canvas
-  ACRYLIC = 'ACRYLIC',           // Bìa Mica / Acrylic
-  WOODEN = 'WOODEN',             // Bìa gỗ
-}
+export const CoverType = {
+  HARDCOVER: 'HARDCOVER',       // Bìa cứng in hình
+  SOFTCOVER: 'SOFTCOVER',       // Bìa mềm
+  LEATHER: 'LEATHER',           // Bìa da Simili / PU
+  LINEN: 'LINEN',               // Bìa vải Linen / Canvas
+  ACRYLIC: 'ACRYLIC',           // Bìa Mica / Acrylic
+  WOODEN: 'WOODEN',             // Bìa gỗ
+} as const;
+
+export type CoverType = typeof CoverType[keyof typeof CoverType];
 
 export const COVER_TYPE_METADATA: Record<CoverType, { label: string; description: string }> = {
   [CoverType.HARDCOVER]: {
@@ -37,15 +39,17 @@ export const COVER_TYPE_METADATA: Record<CoverType, { label: string; description
   },
 };
 
-export enum PaperType {
-  LUSTRE = 'LUSTRE',             // Giấy lụa / bán bóng
-  COUCHE = 'COUCHE',             // Giấy Couche / Magno
-  GLOSSY = 'GLOSSY',             // Giấy ảnh bóng
-  MATTE = 'MATTE',               // Giấy mờ
-  FINE_ART = 'FINE_ART',         // Giấy Mỹ thuật
-  METALLIC = 'METALLIC',         // Giấy Ánh kim
-  CANVAS = 'CANVAS',             // Giấy vân Vải Canvas
-}
+export const PaperType = {
+  LUSTRE: 'LUSTRE',             // Giấy lụa / bán bóng
+  COUCHE: 'COUCHE',             // Giấy Couche / Magno
+  GLOSSY: 'GLOSSY',             // Giấy ảnh bóng
+  MATTE: 'MATTE',               // Giấy mờ
+  FINE_ART: 'FINE_ART',         // Giấy Mỹ thuật
+  METALLIC: 'METALLIC',         // Giấy Ánh kim
+  CANVAS: 'CANVAS',             // Giấy vân Vải Canvas
+} as const;
+
+export type PaperType = typeof PaperType[keyof typeof PaperType];
 
 export const PAPER_TYPE_METADATA: Record<PaperType, { label: string; defaultGsm: number; description: string }> = {
   [PaperType.LUSTRE]: {
@@ -88,13 +92,15 @@ export const PAPER_TYPE_METADATA: Record<PaperType, { label: string; defaultGsm:
 // ==========================================
 // III. CÁC QUY CÁCH ĐÓNG GÁY (BINDING STYLES)
 // ==========================================
-export enum BindingStyle {
-  LAYFLAT = 'LAYFLAT',           // Mở phẳng 180 độ
-  PERFECT_BINDING = 'PERFECT_BINDING', // Keo nhiệt (Tạp chí)
-  WIRE_O = 'WIRE_O',             // Lò xo
-  SADDLE_STITCH = 'SADDLE_STITCH',     // Khâu chỉ / Đóng kim
-  SCREW_POST = 'SCREW_POST',     // Đóng đinh ốc
-}
+export const BindingStyle = {
+  LAYFLAT: 'LAYFLAT',           // Mở phẳng 180 độ
+  PERFECT_BINDING: 'PERFECT_BINDING', // Keo nhiệt (Tạp chí)
+  WIRE_O: 'WIRE_O',             // Lò xo
+  SADDLE_STITCH: 'SADDLE_STITCH',     // Khâu chỉ / Đóng kim
+  SCREW_POST: 'SCREW_POST',     // Đóng đinh ốc
+} as const;
+
+export type BindingStyle = typeof BindingStyle[keyof typeof BindingStyle];
 
 export const BINDING_STYLE_METADATA: Record<BindingStyle, { label: string; openAngle: string; description: string }> = {
   [BindingStyle.LAYFLAT]: {

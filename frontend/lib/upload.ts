@@ -2,53 +2,40 @@
 
 import { apiFetch } from "@/lib/api.fetch";
 
-interface SignatureData {
-  signature: string;
-  timestamp: number;
+interface UploadTicket {
+  token: string;
   folder: string;
-  public_id?: string;
-  api_key: string;
-  cloud_name: string;
+  expiry: number;
+  uploadUrl: string;
 }
 
 /**
- * Upload ảnh lên Cloudinary theo cơ chế Signed Upload
+ * Upload file lên Cloudflare R2 qua worker `cloudfarer2`.
  *
- * Các tham số trong signature:
- * - timestamp      : thời gian Unix (giây) — chống replay attack
- * - folder         : thư mục đích trên Cloudinary
- * - public_id      : (chỉ avatar) tên file cố định theo userId, cho phép ghi đè
- * - overwrite      : (chỉ avatar) = true → ảnh mới ghi đè ảnh cũ
- *
- * Khi upload, frontend gửi LẠI CHÍNH XÁC các tham số đã ký + file.
- * Cloudinary tính lại signature từ các params + secret, nếu khớp → hợp lệ.
+ * Giống cơ chế signed upload (token bảo vệ):
+ * - Backend ký token = HMAC(folder:expiry) qua `/api/get-upload-signature`.
+ * - Browser upload thẳng lên worker; worker tính lại token và chỉ nhận khi khớp + còn hạn.
+ * - Folder được buộc vào token nên user không thể upload lên folder khác.
  */
-export async function uploadToCloudinary(
+export async function uploadToR2(
   file: File,
   type: "avatar" | "gallery" | "sticker",
-  accessToken: string
+  accessToken: string,
 ): Promise<{ url: string; publicId: string }> {
-  // Bước A: Lấy chữ ký từ backend
-  const sigData = await apiFetch<SignatureData>(`/api/get-upload-signature?type=${type}`, accessToken);
+  const ticket = await apiFetch<UploadTicket>(`/api/get-upload-signature?type=${type}`, accessToken);
 
-  // Bước C: Upload thẳng lên Cloudinary
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("api_key", sigData.api_key);
-  formData.append("timestamp", String(sigData.timestamp));
-  formData.append("folder", sigData.folder);
-  formData.append("signature", sigData.signature);
-  if (sigData.public_id) {
-    formData.append("public_id", sigData.public_id);
-    formData.append("overwrite", "true");
-  }
+  const res = await fetch(ticket.uploadUrl, {
+    method: "POST",
+    body: file,
+    headers: {
+      "Content-Type": file.type || "application/octet-stream",
+      "X-Echotrace-Token": ticket.token,
+      "X-Echotrace-Folder": ticket.folder,
+      "X-Echotrace-Expiry": String(ticket.expiry),
+    },
+  });
+  if (!res.ok) throw new Error(`R2 upload failed: ${res.status}`);
 
-  const uploadRes = await fetch(
-    `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/image/upload`,
-    { method: "POST", body: formData }
-  );
-  if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
-
-  const uploadData = await uploadRes.json();
-  return { url: uploadData.secure_url as string, publicId: uploadData.public_id as string };
+  const data = await res.json();
+  return { url: data.url as string, publicId: data.publicId as string };
 }

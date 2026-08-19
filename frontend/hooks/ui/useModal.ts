@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export interface UseModalResult<T = any> {
   isOpen: boolean;
   data: T | null;
-  
+
   // Methods
   open: (data?: T) => void;
   close: () => void;
@@ -28,7 +28,7 @@ export function useModal<T = any>(initialData?: T): UseModalResult<T> {
   }, []);
 
   const toggle = useCallback(() => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   }, []);
 
   const setData = useCallback((newData: T) => {

@@ -167,11 +167,7 @@
       "titleLine1": "Precios Simples.",
       "titleLine2": "Sin Sorpresas.",
       "desc": "Cada plan incluye acceso gratuito al estudio, vista previa 3D y envío con seguimiento.",
-      "tierLabels": [
-        "TAPA BLANDA",
-        "TAPA DURA",
-        "CUERO"
-      ],
+      "tierLabels": ["TAPA BLANDA", "TAPA DURA", "CUERO"],
       "note": "Todos los precios en USD · IVA incluido · Garantía de satisfacción de 30 días"
     },
     "testimonial": {
@@ -179,11 +175,7 @@
       "quote": "La calidad me dejó sin palabras. Mi abuela lloró al ver la edición en cuero. Vale cada centavo y mucho más.",
       "name": "Sofía Marchetti",
       "detail": "Álbum de Boda · Tapa Dura · Milán, IT",
-      "statsLabels": [
-        "Libros Impresos",
-        "Valoración Media",
-        "Lo Recomendarían"
-      ]
+      "statsLabels": ["Libros Impresos", "Valoración Media", "Lo Recomendarían"]
     },
     "cta": {
       "section": "EMPEZAR",
@@ -202,41 +194,19 @@
       "cols": [
         {
           "title": "Producto",
-          "links": [
-            "Fotolibros",
-            "Estudio de Diseño",
-            "Materiales",
-            "Precios",
-            "Plantillas"
-          ]
+          "links": ["Fotolibros", "Estudio de Diseño", "Materiales", "Precios", "Plantillas"]
         },
         {
           "title": "Empresa",
-          "links": [
-            "Sobre Nosotros",
-            "Blog",
-            "Prensa",
-            "Empleo",
-            "Contacto"
-          ]
+          "links": ["Sobre Nosotros", "Blog", "Prensa", "Empleo", "Contacto"]
         },
         {
           "title": "Soporte",
-          "links": [
-            "Centro de Ayuda",
-            "Información de Envío",
-            "Devoluciones",
-            "Guía de Archivos",
-            "Estado"
-          ]
+          "links": ["Centro de Ayuda", "Información de Envío", "Devoluciones", "Guía de Archivos", "Estado"]
         }
       ],
       "legal": "© 2024 FOLIO PRESS LTD · TODOS LOS DERECHOS RESERVADOS",
-      "links": [
-        "Política de Privacidad",
-        "Términos del Servicio",
-        "Preferencias de Cookies"
-      ],
+      "links": ["Política de Privacidad", "Términos del Servicio", "Preferencias de Cookies"],
       "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
@@ -474,6 +444,8 @@
       "shipping": "Envío",
       "tax": "Impuestos",
       "total": "Total",
+      "discount": "Descuento",
+      "payNow": "Pagar ahora",
       "placeOrder": "Realizar pedido",
       "back": "Volver",
       "continuePayment": "Continuar al pago",
@@ -548,20 +520,7 @@
       "monthlyRevenue": "Ingresos mensuales (VND)",
       "monthlyOrders": "Pedidos mensuales",
       "revenueOverview": "Visión general de Ingresos",
-      "months": [
-        "Ene",
-        "Feb",
-        "Mar",
-        "Abr",
-        "May",
-        "Jun",
-        "Jul",
-        "Ago",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dic"
-      ]
+      "months": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
     },
     "finance": {
       "label": "Admin · Finanzas",
@@ -861,7 +820,8 @@
       "addNew": "Añadir",
       "name": "Nombre",
       "type": "Tipo",
-      "kind": "Clase",
+      "category": "Categoría",
+      "quantity": "Cant.",
       "pages": "Páginas",
       "pg": "pág",
       "status": "Estado",
@@ -869,6 +829,7 @@
       "edit": "Editar",
       "searchPlaceholder": "Buscar por nombre…",
       "allTypes": "Todos los tipos",
+      "allCategories": "Todas las categorías",
       "allKinds": "Todas las clases",
       "allStatuses": "Todos los estados",
       "published": "Publicado",

@@ -18,15 +18,20 @@ interface Sticker {
 const ALL_KEY = "___all___";
 
 function DraggableStickerImg({ url, name }: { url: string; name: string }) {
-  const [{ isDragging }, dragRef] = useDrag(() => ({
-    type: "STICKER",
-    item: { type: "STICKER", url, name },
-    collect: (m) => ({ isDragging: m.isDragging() }),
-  }), [url, name]);
+  const [{ isDragging }, dragRef] = useDrag(
+    () => ({
+      type: "STICKER",
+      item: { type: "STICKER", url, name },
+      collect: (m) => ({ isDragging: m.isDragging() }),
+    }),
+    [url, name],
+  );
 
   return (
-    <div ref={dragRef as any}
-      className={`aspect-square flex items-center justify-center cursor-grab active:cursor-grabbing transition-all rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] overflow-hidden bg-white p-1 ${isDragging ? "opacity-40" : ""}`}>
+    <div
+      ref={dragRef as any}
+      className={`aspect-square flex items-center justify-center cursor-grab active:cursor-grabbing transition-all rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] overflow-hidden bg-white p-1 ${isDragging ? "opacity-40" : ""}`}
+    >
       <img src={url} alt="" className="w-full h-full object-contain" loading="lazy" />
     </div>
   );
@@ -45,7 +50,9 @@ export function StickersPanel() {
     const params = new URLSearchParams();
     params.set("type", "sticker");
     if (categoryFilter !== ALL_KEY) params.set("category", categoryFilter);
-    apiFetch<any[]>("/api/admin/stickers?" + params.toString(), token).then((d) => setStickers(d || [])).catch(() => {});
+    apiFetch<any[]>("/api/admin/stickers?" + params.toString(), token)
+      .then((d) => setStickers(d || []))
+      .catch(() => {});
   }, [token, categoryFilter]);
 
   const filtered = stickers.filter((s) => {
@@ -55,38 +62,63 @@ export function StickersPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">{t("customer.studio.sticker")}</p>
+      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
+        {t("customer.studio.sticker")}
+      </p>
       <div className="flex items-center gap-1 bg-white rounded border-2 border-[#222] px-2 mb-2">
         <Search size={11} className="text-[#999] shrink-0" />
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder={t("customer.studio.searchStickers")}
-          className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent" />
-        {search && <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70"><X size={10} /></button>}
+          className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70">
+            <X size={10} />
+          </button>
+        )}
       </div>
       <div className="flex flex-wrap gap-1 mb-3">
-        <button onClick={() => setCategoryFilter(ALL_KEY)}
+        <button
+          onClick={() => setCategoryFilter(ALL_KEY)}
           className={`font-mono text-[7px] font-bold tracking-wider uppercase px-2 py-1 rounded border-2 transition-[background-color,color] ${
-            categoryFilter === ALL_KEY ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
-          }`}>
+            categoryFilter === ALL_KEY
+              ? "bg-[#222] text-white border-[#222]"
+              : "border-transparent text-[#999] hover:text-[#222]"
+          }`}
+        >
           {t("customer.studio.all")}
         </button>
         {ASSET_CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setCategoryFilter(c)}
+          <button
+            key={c}
+            onClick={() => setCategoryFilter(c)}
             className={`font-mono text-[7px] font-bold tracking-wider uppercase px-2 py-1 rounded border-2 transition-[background-color,color] ${
-              categoryFilter === c ? "bg-[#222] text-white border-[#222]" : "border-transparent text-[#999] hover:text-[#222]"
-            }`}>
+              categoryFilter === c
+                ? "bg-[#222] text-white border-[#222]"
+                : "border-transparent text-[#999] hover:text-[#222]"
+            }`}
+          >
             {CATEGORY_LABELS[c]}
           </button>
         ))}
       </div>
       {filtered.length === 0 ? (
-        <p className="text-[10px] text-[#999]">{search ? t("customer.studio.noMatch") : t("customer.studio.noStickers")}</p>
+        <p className="text-[10px] text-[#999]">
+          {search ? t("customer.studio.noMatch") : t("customer.studio.noStickers")}
+        </p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {filtered.map((s) => (
             <div key={s.id}>
               <DraggableStickerImg url={s.url} name={s.name} />
-              {s.name && <p className="font-mono text-[7px] font-bold tracking-wider uppercase text-[#666] text-center mt-1.5 leading-tight">{s.name}</p>}
+              {s.name && (
+                <p className="font-mono text-[7px] font-bold tracking-wider uppercase text-[#666] text-center mt-1.5 leading-tight">
+                  {s.name}
+                </p>
+              )}
             </div>
           ))}
         </div>

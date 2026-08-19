@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useDebounce } from './useDebounce';
-import { useApiQuery, UseApiQueryOptions } from '../api/useApiQuery';
+import { useState, useCallback, useEffect } from "react";
+import { useDebounce } from "./useDebounce";
+import { useApiQuery, UseApiQueryOptions } from "../api/useApiQuery";
 
 export interface UseDebouncedSearchOptions<T> extends UseApiQueryOptions<T> {
   minSearchLength?: number;
@@ -24,12 +24,12 @@ export interface UseDebouncedSearchResult<T> {
  * @param token - Authentication token
  * @param options - Configuration options
  * @returns Object with search input state and API query results
- * 
+ *
  * @example
  * ```tsx
- * const { 
- *   search, 
- *   setSearch, 
+ * const {
+ *   search,
+ *   setSearch,
  *   data: results,
  *   loading,
  *   error,
@@ -42,7 +42,7 @@ export interface UseDebouncedSearchResult<T> {
  *     searchParam: 'q',
  *   }
  * );
- * 
+ *
  * return (
  *   <>
  *     <input
@@ -61,35 +61,25 @@ export interface UseDebouncedSearchResult<T> {
 export function useDebouncedSearch<T = any>(
   baseUrl: string,
   token?: string,
-  options: UseDebouncedSearchOptions<T> = {}
+  options: UseDebouncedSearchOptions<T> = {},
 ): UseDebouncedSearchResult<T> {
-  const {
-    minSearchLength = 1,
-    searchDelay = 500,
-    searchParam = 'q',
-    enabled = true,
-    onSuccess,
-    onError,
-  } = options;
+  const { minSearchLength = 1, searchDelay = 500, searchParam = "q", enabled = true, onSuccess, onError } = options;
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, searchDelay);
 
   // Build URL with search parameter
-  const searchUrl = debouncedSearch && debouncedSearch.length >= minSearchLength
-    ? `${baseUrl}?${searchParam}=${encodeURIComponent(debouncedSearch)}`
-    : null;
+  const searchUrl =
+    debouncedSearch && debouncedSearch.length >= minSearchLength
+      ? `${baseUrl}?${searchParam}=${encodeURIComponent(debouncedSearch)}`
+      : null;
 
   // Fetch data when debounced search changes
-  const { data, loading, error, refetch } = useApiQuery<T>(
-    (searchUrl || '') as string,
-    token,
-    {
-      enabled: enabled && !!searchUrl,
-      onSuccess,
-      onError,
-    }
-  );
+  const { data, loading, error, refetch } = useApiQuery<T>((searchUrl || "") as string, token, {
+    enabled: enabled && !!searchUrl,
+    onSuccess,
+    onError,
+  });
 
   return {
     search,

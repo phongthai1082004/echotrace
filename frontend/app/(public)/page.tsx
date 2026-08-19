@@ -19,11 +19,13 @@ export default function HomePage() {
     const style = document.createElement("style");
     style.textContent = LANDING_CSS;
     document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   return (
-    <div style={{ background:"#F8F2E5", minHeight:"92vh", overflowX:"hidden", paddingTop:60 }}>
+    <div style={{ background: "#F8F2E5", minHeight: "92vh", overflowX: "hidden", paddingTop: 60 }}>
       <HeroSection />
       <Marquee />
       <HowItWorksSection />

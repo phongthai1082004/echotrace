@@ -1,22 +1,22 @@
-import { renderHook, act } from '@testing-library/react';
-import { useModal } from './useModal';
+import { renderHook, act } from "@testing-library/react";
+import { useModal } from "./useModal";
 
-describe('useModal', () => {
+describe("useModal", () => {
   interface TestData {
     id: number;
     name: string;
   }
 
-  it('should initialize with closed state', () => {
+  it("should initialize with closed state", () => {
     const { result } = renderHook(() => useModal<TestData>());
 
     expect(result.current.isOpen).toBe(false);
     expect(result.current.data).toBeNull();
   });
 
-  it('should open modal with data', () => {
+  it("should open modal with data", () => {
     const { result } = renderHook(() => useModal<TestData>());
-    const testData: TestData = { id: 1, name: 'Test' };
+    const testData: TestData = { id: 1, name: "Test" };
 
     act(() => {
       result.current.open(testData);
@@ -26,8 +26,8 @@ describe('useModal', () => {
     expect(result.current.data).toEqual(testData);
   });
 
-  it('should open modal without data', () => {
-    const initialData: TestData = { id: 0, name: 'Initial' };
+  it("should open modal without data", () => {
+    const initialData: TestData = { id: 0, name: "Initial" };
     const { result } = renderHook(() => useModal(initialData));
 
     act(() => {
@@ -38,8 +38,8 @@ describe('useModal', () => {
     expect(result.current.data).toEqual(initialData); // Keeps previous data
   });
 
-  it('should close modal', () => {
-    const testData: TestData = { id: 1, name: 'Test' };
+  it("should close modal", () => {
+    const testData: TestData = { id: 1, name: "Test" };
     const { result } = renderHook(() => useModal<TestData>(testData));
 
     act(() => {
@@ -55,7 +55,7 @@ describe('useModal', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
-  it('should toggle modal', () => {
+  it("should toggle modal", () => {
     const { result } = renderHook(() => useModal<TestData>());
 
     expect(result.current.isOpen).toBe(false);
@@ -73,9 +73,9 @@ describe('useModal', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
-  it('should set data', () => {
+  it("should set data", () => {
     const { result } = renderHook(() => useModal<TestData>());
-    const testData: TestData = { id: 1, name: 'Test' };
+    const testData: TestData = { id: 1, name: "Test" };
 
     act(() => {
       result.current.setData(testData);
@@ -85,12 +85,12 @@ describe('useModal', () => {
     expect(result.current.isOpen).toBe(false); // Still closed
   });
 
-  it('should reset modal', () => {
-    const initialData: TestData = { id: 0, name: 'Initial' };
+  it("should reset modal", () => {
+    const initialData: TestData = { id: 0, name: "Initial" };
     const { result } = renderHook(() => useModal(initialData));
 
     act(() => {
-      result.current.open({ id: 2, name: 'Other' });
+      result.current.open({ id: 2, name: "Other" });
     });
 
     expect(result.current.isOpen).toBe(true);
@@ -104,11 +104,11 @@ describe('useModal', () => {
     expect(result.current.data).toEqual(initialData);
   });
 
-  it('should reset modal without initial data', () => {
+  it("should reset modal without initial data", () => {
     const { result } = renderHook(() => useModal<TestData>());
 
     act(() => {
-      result.current.open({ id: 1, name: 'Test' });
+      result.current.open({ id: 1, name: "Test" });
     });
 
     expect(result.current.isOpen).toBe(true);
@@ -121,9 +121,9 @@ describe('useModal', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('should maintain data when closed', () => {
+  it("should maintain data when closed", () => {
     const { result } = renderHook(() => useModal<TestData>());
-    const testData: TestData = { id: 1, name: 'Test' };
+    const testData: TestData = { id: 1, name: "Test" };
 
     act(() => {
       result.current.open(testData);
@@ -137,10 +137,10 @@ describe('useModal', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
-  it('should update data while open', () => {
+  it("should update data while open", () => {
     const { result } = renderHook(() => useModal<TestData>());
-    const testData1: TestData = { id: 1, name: 'Test 1' };
-    const testData2: TestData = { id: 2, name: 'Test 2' };
+    const testData1: TestData = { id: 1, name: "Test 1" };
+    const testData2: TestData = { id: 2, name: "Test 2" };
 
     act(() => {
       result.current.open(testData1);
@@ -156,7 +156,7 @@ describe('useModal', () => {
     expect(result.current.isOpen).toBe(true); // Still open
   });
 
-  it('should work with different data types', () => {
+  it("should work with different data types", () => {
     interface StringData {
       value: string;
     }
@@ -164,13 +164,13 @@ describe('useModal', () => {
     const { result } = renderHook(() => useModal<StringData>());
 
     act(() => {
-      result.current.open({ value: 'test' });
+      result.current.open({ value: "test" });
     });
 
-    expect(result.current.data).toEqual({ value: 'test' });
+    expect(result.current.data).toEqual({ value: "test" });
   });
 
-  it('should have 80%+ coverage (mock-based)', () => {
+  it("should have 80%+ coverage (mock-based)", () => {
     expect(useModal).toBeDefined();
   });
 });

@@ -45,7 +45,7 @@ export default function AdminSuppliersPage() {
     isAuthenticated ? session.accessToken : undefined,
     {
       enabled: isAuthenticated && !!queryUrl,
-    }
+    },
   );
 
   const suppliers = response?.items ?? [];
@@ -55,8 +55,11 @@ export default function AdminSuppliersPage() {
       <AdminHeader label={t("admin.suppliers.label")} title={t("admin.suppliers.title")}>
         <div className="flex items-center gap-3">
           <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.suppliers.searchPlaceholder")} />
-          <Link href="/admin/suppliers/new" suppressHydrationWarning
-            className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}>
+          <Link
+            href="/admin/suppliers/new"
+            suppressHydrationWarning
+            className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}
+          >
             {t("admin.suppliers.createBtn")}
           </Link>
         </div>
@@ -84,8 +87,19 @@ export default function AdminSuppliersPage() {
             <ResponsiveTable
               header={
                 <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                  {[t("admin.suppliers.name"), t("admin.suppliers.email"), t("admin.suppliers.contact"), t("admin.suppliers.totalDebt"), t("admin.suppliers.overdueDebt"), t("admin.suppliers.monthDebt"), t("admin.suppliers.status"), t("common.action")].map((h) => (
-                    <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
+                  {[
+                    t("admin.suppliers.name"),
+                    t("admin.suppliers.email"),
+                    t("admin.suppliers.contact"),
+                    t("admin.suppliers.totalDebt"),
+                    t("admin.suppliers.overdueDebt"),
+                    t("admin.suppliers.monthDebt"),
+                    t("admin.suppliers.status"),
+                    t("common.action"),
+                  ].map((h) => (
+                    <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
+                      {h}
+                    </div>
                   ))}
                 </div>
               }
@@ -98,18 +112,31 @@ export default function AdminSuppliersPage() {
                 />
               ) : (
                 suppliers.map((s: Supplier) => (
-                  <Link key={s.id} href={`/admin/suppliers/${s.id}`}
+                  <Link
+                    key={s.id}
+                    href={`/admin/suppliers/${s.id}`}
                     className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                    style={{ gridTemplateColumns: gridCols }}>
+                    style={{ gridTemplateColumns: gridCols }}
+                  >
                     <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.name}</div>
                     <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>
                     <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">{s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}</div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#B54843] whitespace-nowrap">{s.overdueDebt ? `₫${s.overdueDebt.toLocaleString()}` : "—"}</div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">{s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}</div>
-                    <div className="px-2 whitespace-nowrap"><StatusBadge status={s.banned ? "banned" : "active"} /></div>
+                    <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
+                      {s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}
+                    </div>
+                    <div className="px-2 font-mono text-[11px] font-bold text-[#B54843] whitespace-nowrap">
+                      {s.overdueDebt ? `₫${s.overdueDebt.toLocaleString()}` : "—"}
+                    </div>
+                    <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
+                      {s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}
+                    </div>
+                    <div className="px-2 whitespace-nowrap">
+                      <StatusBadge status={s.banned ? "banned" : "active"} />
+                    </div>
                     <div className="px-2">
-                      <span className="inline-flex p-1.5 text-[#222]"><Eye size={14} /></span>
+                      <span className="inline-flex p-1.5 text-[#222]">
+                        <Eye size={14} />
+                      </span>
                     </div>
                   </Link>
                 ))

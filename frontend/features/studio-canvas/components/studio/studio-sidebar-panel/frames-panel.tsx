@@ -25,9 +25,17 @@ export function FramesPanel() {
   };
 
   const icons: Record<string, string> = {
-    Rectangle: "▭", RoundedRect: "▣", Circle: "○", Ellipse: "⬮",
-    Triangle: "△", Pentagon: "⬠", Hexagon: "⬡", Octagon: "⯃",
-    Diamond: "◇", Star: "★", Heart: "♥",
+    Rectangle: "▭",
+    RoundedRect: "▣",
+    Circle: "○",
+    Ellipse: "⬮",
+    Triangle: "△",
+    Pentagon: "⬠",
+    Hexagon: "⬡",
+    Octagon: "⯃",
+    Diamond: "◇",
+    Star: "★",
+    Heart: "♥",
   };
 
   return (
@@ -35,8 +43,11 @@ export function FramesPanel() {
       <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Frames</p>
       <div className="grid grid-cols-2 gap-2">
         {SHAPE_NAMES.map((name) => (
-          <button key={name} onClick={() => handleAdd(name)}
-            className="flex items-center justify-center py-3 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]">
+          <button
+            key={name}
+            onClick={() => handleAdd(name)}
+            className="flex items-center justify-center py-3 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]"
+          >
             <span className="text-2xl">{icons[name] || "□"}</span>
           </button>
         ))}

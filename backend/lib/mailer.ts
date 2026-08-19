@@ -21,36 +21,35 @@ const otpTemplate = (otp: string) => `
 </html>`;
 
 export async function sendOtpEmail(to: string, otp: string) {
-  console.log(`\n═══════════════════════════════`);
-  console.log(`📧 OTP for ${to}: ${otp}`);
-  console.log(`⏳ Expires in 24 hours`);
-  console.log(`═══════════════════════════════\n`);
+	console.log(`\n═══════════════════════════════`);
+	console.log(`📧 OTP for ${to}: ${otp}`);
+	console.log(`⏳ Expires in 24 hours`);
+	console.log(`═══════════════════════════════\n`);
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.log(`[Mailer] Set RESEND_API_KEY in .env to send real emails`);
-    return;
-  }
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		console.log(`[Mailer] Set RESEND_API_KEY in .env to send real emails`);
+		return;
+	}
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Cabinet Memoir <noreply@cabinetmemoir.app>",
-      to,
-      subject: "Your OTP Code — Cabinet Memoir",
-      html: otpTemplate(otp),
-    }),
-  });
+	const res = await fetch('https://api.resend.com/emails', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			from: 'Cabinet Memoir <noreply@cabinetmemoir.app>',
+			to,
+			subject: 'Your OTP Code — Cabinet Memoir',
+			html: otpTemplate(otp),
+		}),
+	});
 
-  if (res.ok) {
-    console.log(`[Mailer] Sent via Resend`);
-  } else {
-    const err = await res.text();
-    console.log(`[Mailer] Resend failed: ${err}`);
-  }
+	if (res.ok) {
+		console.log(`[Mailer] Sent via Resend`);
+	} else {
+		const err = await res.text();
+		console.log(`[Mailer] Resend failed: ${err}`);
+	}
 }
-

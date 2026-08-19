@@ -3,10 +3,22 @@
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { usePageManager } from "../../../hooks/usePageManager";
 
-function PageThumb({ thumb, idx, active, onClick }: { thumb?: string | null; idx: number; active: boolean; onClick: () => void }) {
+function PageThumb({
+  thumb,
+  idx,
+  active,
+  onClick,
+}: {
+  thumb?: string | null;
+  idx: number;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
-    <button onClick={onClick}
-      className={`w-full h-full overflow-hidden bg-white ${active ? "border-2 border-[#222] shadow-[2px_2px_0_#222]" : "border-2 border-[#222]/30 hover:border-[#222]/60"} cursor-pointer transition-all`}>
+    <button
+      onClick={onClick}
+      className={`w-full h-full overflow-hidden bg-white ${active ? "border-2 border-[#222] shadow-[2px_2px_0_#222]" : "border-2 border-[#222]/30 hover:border-[#222]/60"} cursor-pointer transition-all`}
+    >
       {thumb ? (
         <img src={thumb} alt="" className="w-full h-full object-cover" />
       ) : (
@@ -66,34 +78,73 @@ export function PagesSlider() {
             <div key={item.idx} className="shrink-0 flex flex-col items-center gap-1 group relative">
               <div className="relative" style={{ width: item.type === "spread" ? spreadW : singleW, height: h }}>
                 {item.type === "spread" ? (
-                  <div onClick={() => switchPage(item.leftIdx)} className={`w-full h-full flex overflow-hidden bg-white ${active ? "border-2 border-[#222] shadow-[2px_2px_0_#222]" : "border-2 border-[#222]/30 hover:border-[#222]/60"} cursor-pointer transition-all`}>
-                    <div className="w-1/2 h-full bg-white flex items-center justify-center overflow-hidden" style={{ borderRight: "1px dashed #222" }}>
-                      {left?.thumbnailUrl ? <img src={left.thumbnailUrl} alt="" className="w-full h-full object-cover" style={{ objectPosition: "left" }} /> : <span className="font-mono text-[7px] font-bold text-[#999]">{item.leftIdx + 1}</span>}
+                  <div
+                    onClick={() => switchPage(item.leftIdx)}
+                    className={`w-full h-full flex overflow-hidden bg-white ${active ? "border-2 border-[#222] shadow-[2px_2px_0_#222]" : "border-2 border-[#222]/30 hover:border-[#222]/60"} cursor-pointer transition-all`}
+                  >
+                    <div
+                      className="w-1/2 h-full bg-white flex items-center justify-center overflow-hidden"
+                      style={{ borderRight: "1px dashed #222" }}
+                    >
+                      {left?.thumbnailUrl ? (
+                        <img
+                          src={left.thumbnailUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: "left" }}
+                        />
+                      ) : (
+                        <span className="font-mono text-[7px] font-bold text-[#999]">{item.leftIdx + 1}</span>
+                      )}
                     </div>
                     <div className="w-1/2 h-full bg-white flex items-center justify-center overflow-hidden">
-                      {(right?.thumbnailUrl || left?.thumbnailUrl) ? <img src={right?.thumbnailUrl || left?.thumbnailUrl || ""} alt="" className="w-full h-full object-cover" style={{ objectPosition: "right" }} /> : <span className="font-mono text-[7px] font-bold text-[#999]">{item.rightIdx + 1}</span>}
+                      {right?.thumbnailUrl || left?.thumbnailUrl ? (
+                        <img
+                          src={right?.thumbnailUrl || left?.thumbnailUrl || ""}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: "right" }}
+                        />
+                      ) : (
+                        <span className="font-mono text-[7px] font-bold text-[#999]">{item.rightIdx + 1}</span>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <PageThumb thumb={left?.thumbnailUrl} idx={item.idx} active={active} onClick={() => switchPage(item.idx)} />
+                  <PageThumb
+                    thumb={left?.thumbnailUrl}
+                    idx={item.idx}
+                    active={active}
+                    onClick={() => switchPage(item.idx)}
+                  />
                 )}
                 {!item.isCover && (
-                  <button onClick={() => handleDelete(item)}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-[#B54843] text-white rounded-full text-[8px] leading-none font-bold opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110">×</button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-[#B54843] text-white rounded-full text-[8px] leading-none font-bold opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                  >
+                    ×
+                  </button>
                 )}
                 {active && <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#222]" />}
               </div>
-              <span className={`font-mono text-[7px] font-bold tracking-widest ${active ? "text-[#222]" : "text-[#999]"}`}>{item.idx + 1}{item.type === "spread" ? `/${item.rightIdx + 1}` : ""}</span>
+              <span
+                className={`font-mono text-[7px] font-bold tracking-widest ${active ? "text-[#222]" : "text-[#999]"}`}
+              >
+                {item.idx + 1}
+                {item.type === "spread" ? `/${item.rightIdx + 1}` : ""}
+              </span>
             </div>
           );
         })}
-        <button onClick={addPage}
+        <button
+          onClick={addPage}
           className="shrink-0 flex items-center justify-center border-2 border-dashed border-[#222]/40 rounded-md hover:border-[#222] hover:bg-[#e8e6e0] transition-all"
-          style={{ width: singleW, height: h }}>
+          style={{ width: singleW, height: h }}
+        >
           <span className="text-lg leading-none text-[#666]">+</span>
         </button>
       </div>
-      
     </div>
   );
 }

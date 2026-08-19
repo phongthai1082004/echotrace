@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { Component, ReactNode } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import React, { Component, ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ interface ErrorBoundaryState {
 /**
  * Error boundary component for catching React errors
  * Prevents entire app crash when component fails
- * 
+ *
  * @example
  * ```tsx
  * <ErrorBoundary
@@ -37,10 +37,7 @@ interface ErrorBoundaryState {
  * </ErrorBoundary>
  * ```
  */
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -58,8 +55,8 @@ export class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (process.env.NODE_ENV === "development") {
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
 
     // Call optional error handler (for logging services like Sentry)
@@ -90,37 +87,23 @@ export class ErrorBoundary extends Component<
 /**
  * Default error boundary fallback UI
  */
-export function DefaultErrorFallback({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
+export function DefaultErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="mb-4">
-        <AlertTriangle
-          size={48}
-          className="text-red-500 mx-auto"
-          strokeWidth={1.5}
-        />
+        <AlertTriangle size={48} className="text-red-500 mx-auto" strokeWidth={1.5} />
       </div>
 
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">
-        Something went wrong
-      </h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h2>
 
       <p className="text-sm text-gray-600 mb-4 max-w-sm text-center">
-        {error.message || 'An unexpected error occurred'}
+        {error.message || "An unexpected error occurred"}
       </p>
 
-      {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === "development" && (
         <details className="text-xs text-gray-500 mb-4 p-2 bg-gray-100 rounded max-w-lg">
           <summary className="cursor-pointer font-medium">Error details</summary>
-          <pre className="mt-2 whitespace-pre-wrap break-words">
-            {error.stack}
-          </pre>
+          <pre className="mt-2 whitespace-pre-wrap break-words">{error.stack}</pre>
         </details>
       )}
 
@@ -151,7 +134,7 @@ export class AsyncErrorBoundary extends Component<
     };
 
     // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener("unhandledrejection", (event) => {
       this.setState({
         hasError: true,
         error: event.reason,

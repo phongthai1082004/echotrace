@@ -19,7 +19,9 @@ export function useAutoSave() {
 
     const currentJson = serializeCanvasState(c);
     let currentThumb: string | null = null;
-    try { currentThumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 }); } catch {} // ponytail: skip if tainted
+    try {
+      currentThumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
+    } catch {} // ponytail: skip if tainted
     const updatedPages = [...s.pages];
     const spread = !isCoverPage(s.activePageIndex, pageCount) && s.viewMode === "spread";
     if (!isCoverPage(s.activePageIndex, pageCount) && c.getWidth() > 400) {
@@ -28,9 +30,18 @@ export function useAutoSave() {
         ? { spreadLayout: s.activeLayout, layout: null }
         : { layout: s.activeLayout, spreadLayout: null };
       updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: leftJson, ...layoutField };
-      updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)] = { ...updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)], canvasJson: rightJson, ...layoutField };
+      updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)] = {
+        ...updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)],
+        canvasJson: rightJson,
+        ...layoutField,
+      };
     } else {
-      updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: currentJson, thumbnailUrl: currentThumb, layout: s.activeLayout };
+      updatedPages[s.activePageIndex] = {
+        ...updatedPages[s.activePageIndex],
+        canvasJson: currentJson,
+        thumbnailUrl: currentThumb,
+        layout: s.activeLayout,
+      };
     }
     useCanvasStore.getState().setPages(updatedPages);
 

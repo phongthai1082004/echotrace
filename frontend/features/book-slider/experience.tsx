@@ -145,9 +145,7 @@ const Page = ({ number, front, back, page, opened, bookClosed }: PageProps) => {
 
       const insideCurveIntensity = i < 8 ? Math.sin(i * 0.2 + 0.25) : 0;
       const outsideCurveIntensity = i >= 8 ? Math.cos(i * 0.3 + 0.09) : 0;
-      let rotationAngle =
-        0.18 * insideCurveIntensity * targetRotation -
-        0.05 * outsideCurveIntensity * targetRotation;
+      let rotationAngle = 0.18 * insideCurveIntensity * targetRotation - 0.05 * outsideCurveIntensity * targetRotation;
       if (bookClosed) rotationAngle = i === 0 ? targetRotation : 0;
       target.rotation.y = rotationAngle;
       target.rotation.x = 0;
@@ -157,8 +155,14 @@ const Page = ({ number, front, back, page, opened, bookClosed }: PageProps) => {
   return (
     <group
       ref={group}
-      onPointerEnter={(e) => { e.stopPropagation(); setHighlighted(true); }}
-      onPointerLeave={(e) => { e.stopPropagation(); setHighlighted(false); }}
+      onPointerEnter={(e) => {
+        e.stopPropagation();
+        setHighlighted(true);
+      }}
+      onPointerLeave={(e) => {
+        e.stopPropagation();
+        setHighlighted(false);
+      }}
       onClick={(e) => {
         e.stopPropagation();
         turnPage(opened ? number : number + 1);
@@ -181,7 +185,8 @@ function MathUtilsDeg(n: number) {
 export const Book = (props: React.ComponentProps<"group"> & { sheets?: { front: string; back: string }[] }) => {
   const [page] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
-  const sheets = props.sheets ?? pages.map((p) => ({ front: `${TEX_ROOT}/${p.front}.jpg`, back: `${TEX_ROOT}/${p.back}.jpg` }));
+  const sheets =
+    props.sheets ?? pages.map((p) => ({ front: `${TEX_ROOT}/${p.front}.jpg`, back: `${TEX_ROOT}/${p.back}.jpg` }));
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -189,8 +194,10 @@ export const Book = (props: React.ComponentProps<"group"> & { sheets?: { front: 
       setDelayedPage((delayedPage) => {
         if (page === delayedPage) return delayedPage;
         timeout = setTimeout(
-          () => { goToPage(); },
-          Math.abs(page - delayedPage) > 2 ? 50 : 150
+          () => {
+            goToPage();
+          },
+          Math.abs(page - delayedPage) > 2 ? 50 : 150,
         );
         return page > delayedPage ? delayedPage + 1 : delayedPage - 1;
       });
@@ -219,7 +226,7 @@ export const Book = (props: React.ComponentProps<"group"> & { sheets?: { front: 
 export function Experience({ images }: { images?: BookPageImage[] }) {
   const sheets = images?.length ? buildSheets(images) : undefined;
   const aspect = images?.[0] ? images[0].width / images[0].height : PAGE_WIDTH / PAGE_HEIGHT;
-  const scale = (aspect / (PAGE_WIDTH / PAGE_HEIGHT));
+  const scale = aspect / (PAGE_WIDTH / PAGE_HEIGHT);
 
   return (
     <>

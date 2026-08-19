@@ -29,7 +29,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
               if (retry.ok) return retry;
             }
           }
-        } catch { /* fallthrough */ }
+        } catch {
+          /* fallthrough */
+        }
         setToasts((prev) => [...prev, { id: Date.now(), message: i18n.t("common.loginRequired") }]);
         setTimeout(() => signOut({ callbackUrl: "/" }), 1500);
         return res;

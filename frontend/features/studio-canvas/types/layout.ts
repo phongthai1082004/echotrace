@@ -54,9 +54,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
     layoutId: "single-center",
     name: "Single Center",
     kind: "single",
-    slots: [
-      { type: "rect", left: 25, top: 48, width: 160, height: 200 },
-    ],
+    slots: [{ type: "rect", left: 25, top: 48, width: 160, height: 200 }],
   },
   "2-stacked": {
     layoutId: "2-stacked",
@@ -125,9 +123,7 @@ export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
     layoutId: "spread-hero",
     name: "Hero Spread",
     kind: "spread",
-    slots: [
-      { type: "rect", left: 15, top: 15, width: 390, height: 267 },
-    ],
+    slots: [{ type: "rect", left: 15, top: 15, width: 390, height: 267 }],
   },
   "spread-triptych": {
     layoutId: "spread-triptych",

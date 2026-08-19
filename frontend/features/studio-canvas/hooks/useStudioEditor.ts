@@ -35,19 +35,24 @@ export function useStudioEditor(
       setLoaded(true);
       return;
     }
-    if (!canLoad) { done.current = false; return; }
+    if (!canLoad) {
+      done.current = false;
+      return;
+    }
     load(effectiveId)
       .then((data: any) => {
         const book = data.data || data;
         let content: any = {};
-        try { content = book.content || {}; } catch {}
+        try {
+          content = book.content || {};
+        } catch {}
         const paperHeight = book.paperHeight ?? null;
         const paperWidth = book.paperWidth ?? null;
         useCanvasStore.getState().setBookMeta({
           id: sampleId ? null : book.id,
           title: book.title || book.name || content.title || "Untitled",
           themeId: book.themeId || null,
-          kind: book.kind ?? "TEMPLATE",
+          kind: book.type ?? "TEMPLATE",
           format: content.paperSize || "PORTRAIT_A4",
           gsm: content.gsm || 200,
           paper: content.paper || content.paperType || "matte",
@@ -55,17 +60,24 @@ export function useStudioEditor(
           height: paperHeight ? paperHeight * 4 : (content.height ?? null),
         });
         if (Array.isArray(content.pages) && content.pages.length > 0) {
-          useCanvasStore.getState().setPages(content.pages.map((p: any, i: number) => ({
-            index: i,
-            canvasJson: p.canvasJson ?? null,
-            thumbnailUrl: p.thumbnailUrl ?? null,
-            layout: p.layout ?? null,
-            spreadLayout: p.spreadLayout ?? null,
-          })));
+          useCanvasStore.getState().setPages(
+            content.pages.map((p: any, i: number) => ({
+              index: i,
+              canvasJson: p.canvasJson ?? null,
+              thumbnailUrl: p.thumbnailUrl ?? null,
+              layout: p.layout ?? null,
+              spreadLayout: p.spreadLayout ?? null,
+            })),
+          );
         }
         setLoaded(true);
       })
-      .catch((err: Error) => { console.warn("[studio] load error:", err); setLoadError(err.message); done.current = false; setLoaded(true); });
+      .catch((err: Error) => {
+        console.warn("[studio] load error:", err);
+        setLoadError(err.message);
+        done.current = false;
+        setLoaded(true);
+      });
   }, [effectiveId, canLoad, load, paramsKey]);
 
   return { loaded, loadError };

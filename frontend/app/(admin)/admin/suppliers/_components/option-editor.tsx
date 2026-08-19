@@ -20,7 +20,14 @@ function emptyOption(): SupplierOption {
   };
 }
 
-function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionType }: {
+function OptionModal({
+  initial,
+  onCancel,
+  onSave,
+  add,
+  withDimensions,
+  optionType,
+}: {
   initial: SupplierOption;
   onCancel: () => void;
   onSave: (o: SupplierOption) => void;
@@ -52,15 +59,23 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
     setPickerOpen((open) => !open);
     // ponytail: refetch every open so the list reflects recent add/update (no component-level staleness).
     try {
-      const data = await apiFetch<{ items: SupplierOption[] }>(`/api/admin/supplier-options/catalog?type=${optionType}`, token);
+      const data = await apiFetch<{ items: SupplierOption[] }>(
+        `/api/admin/supplier-options/catalog?type=${optionType}`,
+        token,
+      );
       setCatalog(data.items ?? []);
-    } catch { /* picker stays usable with current draft */ }
+    } catch {
+      /* picker stays usable with current draft */
+    }
   };
 
   const pick = async (code: string) => {
     setPickerOpen(false);
     try {
-      const info = await apiFetch<SupplierOption>(`/api/admin/supplier-options/info?type=${optionType}&code=${encodeURIComponent(code)}`, token);
+      const info = await apiFetch<SupplierOption>(
+        `/api/admin/supplier-options/info?type=${optionType}&code=${encodeURIComponent(code)}`,
+        token,
+      );
       setDraft((d) => ({
         ...d,
         code,
@@ -68,11 +83,16 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
         description: info.description,
         price: info.price ?? d.price,
       }));
-    } catch { showToast(t("admin.suppliers.fetchFailed"), "error"); }
+    } catch {
+      showToast(t("admin.suppliers.fetchFailed"), "error");
+    }
   };
 
   const save = () => {
-    if (!draft.code.trim()) { showToast(t("admin.suppliers.optionCode") + "…", "error"); return; }
+    if (!draft.code.trim()) {
+      showToast(t("admin.suppliers.optionCode") + "…", "error");
+      return;
+    }
     onSave(draft);
   };
 
@@ -86,7 +106,9 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
           <h3 className="text-[15px] font-extrabold uppercase tracking-wide">
             {t(add ? "admin.suppliers.addOption" : "admin.suppliers.editOption")}
           </h3>
-          <button onClick={onCancel} className="cursor-pointer text-[#666] hover:text-[#222]"><X size={18} /></button>
+          <button onClick={onCancel} className="cursor-pointer text-[#666] hover:text-[#222]">
+            <X size={18} />
+          </button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-6">
@@ -115,16 +137,15 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setPickerOpen(false)} />
                       <div className="absolute z-50 right-0 mt-1 w-full bg-white border-2 border-[#222] rounded-[8px] shadow-[3px_3px_0_rgba(0,0,0,0.25)] max-h-48 overflow-y-auto">
-                        {catalog.length === 0 && (
-                          <p className="px-3 py-2 text-xs text-[#888]">{t("common.noData")}</p>
-                        )}
+                        {catalog.length === 0 && <p className="px-3 py-2 text-xs text-[#888]">{t("common.noData")}</p>}
                         {catalog.map((o) => (
                           <button
                             key={o.code}
                             onClick={() => pick(o.code)}
                             className="block w-full text-left px-3 py-2 text-xs font-mono hover:bg-[#F8F2E5] cursor-pointer border-b last:border-b-0 border-[#222]/10"
                           >
-                            {o.code}{o.name?.[lng] ? ` — ${o.name[lng]}` : o.name?.vi ? ` — ${o.name.vi}` : ""}
+                            {o.code}
+                            {o.name?.[lng] ? ` — ${o.name[lng]}` : o.name?.vi ? ` — ${o.name.vi}` : ""}
                           </button>
                         ))}
                       </div>
@@ -138,30 +159,30 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
           <div>
             <p className={`${label} text-xs text-[#666] mb-2`}>{t("admin.suppliers.optionName")}</p>
             <div className="space-y-2">
-            {LANGS.map((lng) => (
-              <input
-                key={lng}
-                className={input}
-                value={draft.name[lng]}
-                onChange={(e) => setLang("name", lng, e.target.value)}
-                placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionName")}`}
-              />
-            ))}
+              {LANGS.map((lng) => (
+                <input
+                  key={lng}
+                  className={input}
+                  value={draft.name[lng]}
+                  onChange={(e) => setLang("name", lng, e.target.value)}
+                  placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionName")}`}
+                />
+              ))}
             </div>
           </div>
 
           <div>
             <p className={`${label} text-xs text-[#666] mb-2`}>{t("admin.suppliers.optionDescription")}</p>
             <div className="space-y-2">
-            {LANGS.map((lng) => (
-              <input
-                key={lng}
-                className={input}
-                value={draft.description[lng]}
-                onChange={(e) => setLang("description", lng, e.target.value)}
-                placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionDescription")}`}
-              />
-            ))}
+              {LANGS.map((lng) => (
+                <input
+                  key={lng}
+                  className={input}
+                  value={draft.description[lng]}
+                  onChange={(e) => setLang("description", lng, e.target.value)}
+                  placeholder={`${lng.toUpperCase()} — ${t("admin.suppliers.optionDescription")}`}
+                />
+              ))}
             </div>
           </div>
 
@@ -169,35 +190,27 @@ function OptionModal({ initial, onCancel, onSave, add, withDimensions, optionTyp
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionWidth")}</p>
-                <input
-                  className={input}
-                  value={num(draft.width)}
-                  onChange={(e) => setNum("width", e.target.value)}
-                />
+                <input className={input} value={num(draft.width)} onChange={(e) => setNum("width", e.target.value)} />
               </div>
               <div>
                 <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionHeight")}</p>
-                <input
-                  className={input}
-                  value={num(draft.height)}
-                  onChange={(e) => setNum("height", e.target.value)}
-                />
+                <input className={input} value={num(draft.height)} onChange={(e) => setNum("height", e.target.value)} />
               </div>
             </div>
           )}
 
           <div>
             <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.suppliers.optionPrice")}</p>
-            <input
-              className={input}
-              value={num(draft.price)}
-              onChange={(e) => setPrice(e.target.value)}
-            />
+            <input className={input} value={num(draft.price)} onChange={(e) => setPrice(e.target.value)} />
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={onCancel} className={`${neoBtn} px-4 py-2`}>{t("common.cancel")}</button>
-            <button onClick={save} className={`${neoBtnPrimary} px-4 py-2`}>{t("common.save")}</button>
+            <button onClick={onCancel} className={`${neoBtn} px-4 py-2`}>
+              {t("common.cancel")}
+            </button>
+            <button onClick={save} className={`${neoBtnPrimary} px-4 py-2`}>
+              {t("common.save")}
+            </button>
           </div>
         </div>
       </div>
@@ -249,14 +262,20 @@ function OptionPanel({ title, options, onChange, onSave, saving, withDimensions,
             onClick={() => setModal({ option: emptyOption(), add: true })}
             className={`${neoBtn} flex items-center gap-1 cursor-pointer px-3 py-2`}
           >
-            <Plus size={13} /> <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{t("admin.suppliers.addOption")}</span>
+            <Plus size={13} />{" "}
+            <span className="font-mono text-[9px] font-bold uppercase tracking-widest">
+              {t("admin.suppliers.addOption")}
+            </span>
           </button>
           <button
             onClick={onSave}
             disabled={saving}
             className={`${neoBtnPrimary} flex items-center gap-1 cursor-pointer disabled:opacity-40 px-3 py-2`}
           >
-            <Save size={13} /> <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{saving ? `${t("common.save")}…` : t("common.save")}</span>
+            <Save size={13} />{" "}
+            <span className="font-mono text-[9px] font-bold uppercase tracking-widest">
+              {saving ? `${t("common.save")}…` : t("common.save")}
+            </span>
           </button>
         </div>
       </div>
@@ -270,10 +289,16 @@ function OptionPanel({ title, options, onChange, onSave, saving, withDimensions,
             const name = o.name?.[lng] || o.name?.vi || o.name?.en || o.name?.es || o.code;
             const desc = o.description?.[lng] || o.description?.vi || "";
             return (
-              <div key={`${o.code}-${i}`} className="flex items-center justify-between gap-2 border-b last:border-b-0 border-[#222]/10 py-1.5">
+              <div
+                key={`${o.code}-${i}`}
+                className="flex items-center justify-between gap-2 border-b last:border-b-0 border-[#222]/10 py-1.5"
+              >
                 <div className="min-w-0">
                   <p className="text-xs font-bold font-mono">{o.code}</p>
-                  <p className="text-[11px] text-[#666] truncate">{name}{desc ? ` — ${desc}` : ""}</p>
+                  <p className="text-[11px] text-[#666] truncate">
+                    {name}
+                    {desc ? ` — ${desc}` : ""}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button

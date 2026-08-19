@@ -31,13 +31,24 @@ export default function FinancePage() {
       <AdminHeader label={t("admin.finance.label")} title={t("admin.finance.title")} />
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-8 max-[1600px]:py-6 max-[1440px]:py-5 space-y-8">
         <div className="grid grid-cols-4 gap-5">
-          {kpis.map(k => {
+          {kpis.map((k) => {
             const Icon = k.icon;
             return (
               <div key={k.key} className={`p-6 ${card}`}>
-                <div className="flex items-center gap-2 mb-3"><Icon size={14} className={k.color === "#222" ? "text-[#666]" : ""} style={{ color: k.color !== "#222" ? k.color : undefined }} /><p className={`${label} text-[#666]`}>{t(`admin.finance.${k.key}`)}</p></div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon
+                    size={14}
+                    className={k.color === "#222" ? "text-[#666]" : ""}
+                    style={{ color: k.color !== "#222" ? k.color : undefined }}
+                  />
+                  <p className={`${label} text-[#666]`}>{t(`admin.finance.${k.key}`)}</p>
+                </div>
                 <p className="text-2xl font-bold">{k.value}</p>
-                <p className={`font-mono text-[9px] font-bold mt-1 ${k.change.startsWith("+") ? "text-[#2D6A2D]" : "text-[#999]"}`}>{k.change}</p>
+                <p
+                  className={`font-mono text-[9px] font-bold mt-1 ${k.change.startsWith("+") ? "text-[#2D6A2D]" : "text-[#999]"}`}
+                >
+                  {k.change}
+                </p>
               </div>
             );
           })}
@@ -47,11 +58,24 @@ export default function FinancePage() {
           <div className="flex items-center justify-between mb-4">
             <p className={`${label} text-[#666]`}>{t("admin.finance.chartTitle")}</p>
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]"><span className="w-3 h-[2px] bg-[#222] inline-block" /> {t("admin.finance.revenue")}</span>
-              <span className="flex items-center gap-1.5 font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]"><span className="w-3 h-[2px] bg-[#5A8F4A] inline-block border-0" style={{ borderTop: "2px dashed #5A8F4A", height: 0 }} /> {t("admin.finance.grossProfitLegend")}</span>
+              <span className="flex items-center gap-1.5 font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">
+                <span className="w-3 h-[2px] bg-[#222] inline-block" /> {t("admin.finance.revenue")}
+              </span>
+              <span className="flex items-center gap-1.5 font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">
+                <span
+                  className="w-3 h-[2px] bg-[#5A8F4A] inline-block border-0"
+                  style={{ borderTop: "2px dashed #5A8F4A", height: 0 }}
+                />{" "}
+                {t("admin.finance.grossProfitLegend")}
+              </span>
             </div>
           </div>
-          <DualLineChart data={chartData} labelInterval={3} formatValue1={(v) => `$${v.toLocaleString()}`} formatValue2={(v) => `$${v.toLocaleString()}`} />
+          <DualLineChart
+            data={chartData}
+            labelInterval={3}
+            formatValue1={(v) => `$${v.toLocaleString()}`}
+            formatValue2={(v) => `$${v.toLocaleString()}`}
+          />
         </div>
       </div>
     </div>

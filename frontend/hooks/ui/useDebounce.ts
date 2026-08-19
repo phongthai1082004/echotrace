@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
 
 /**
  * Hook for debouncing values
@@ -6,12 +6,12 @@ import { useEffect, useState, useRef } from 'react';
  * @param value - Value to debounce
  * @param delay - Delay in milliseconds (default: 500)
  * @returns Debounced value
- * 
+ *
  * @example
  * ```tsx
  * const [search, setSearch] = useState('');
  * const debouncedSearch = useDebounce(search, 300);
- * 
+ *
  * useEffect(() => {
  *   // This runs only after user stops typing for 300ms
  *   console.log('Searching for:', debouncedSearch);

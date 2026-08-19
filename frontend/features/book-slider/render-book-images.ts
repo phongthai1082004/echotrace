@@ -9,18 +9,24 @@ export type BookPageImage = { src: string; width: number; height: number };
 // ponytail: renders each stored single page at fmt.width×fmt.height. Covers are
 // 1 image each; interiors are already split per-page in the store (splitCanvasByMidpoint),
 // so each spread naturally becomes 2 images. Fall back to stored thumbnail on taint.
-export async function renderBookImages(
-  pages: PageState[],
-  fmt: PaperFormat,
-): Promise<BookPageImage[]> {
+export async function renderBookImages(pages: PageState[], fmt: PaperFormat): Promise<BookPageImage[]> {
   const out: BookPageImage[] = [];
   for (const p of pages) {
-    out.push({ src: await renderOne(p.canvasJson, fmt.width, fmt.height, p.thumbnailUrl), width: fmt.width, height: fmt.height });
+    out.push({
+      src: await renderOne(p.canvasJson, fmt.width, fmt.height, p.thumbnailUrl),
+      width: fmt.width,
+      height: fmt.height,
+    });
   }
   return out;
 }
 
-async function renderOne(jsonStr: string | null, width: number, height: number, fallback: string | null): Promise<string> {
+async function renderOne(
+  jsonStr: string | null,
+  width: number,
+  height: number,
+  fallback: string | null,
+): Promise<string> {
   const el = document.createElement("canvas");
   el.width = width;
   el.height = height;

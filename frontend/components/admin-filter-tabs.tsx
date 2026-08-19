@@ -19,8 +19,11 @@ export function AdminFilterTabs({ tabs, selected, onChange }: Props) {
     <div className={`${card} p-4 shrink-0`}>
       <div className="flex gap-2">
         {tabs.map((t) => (
-          <button key={t.key} onClick={() => onChange(t.key)}
-            className={`font-mono text-[8px] font-bold tracking-widest uppercase px-3 py-1.5 ${selected === t.key ? neoBtnPrimary : neoBtn}`}>
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            className={`font-mono text-[8px] font-bold tracking-widest uppercase px-3 py-1.5 ${selected === t.key ? neoBtnPrimary : neoBtn}`}
+          >
             {t.label}
           </button>
         ))}

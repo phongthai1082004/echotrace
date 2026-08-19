@@ -53,7 +53,9 @@ export function Page({ total }: { total?: number }) {
 
   const btn = (active: boolean) =>
     `font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] transition-[transform,box-shadow,background-color] shrink-0 cursor-pointer ${
-      active ? "bg-[#222] text-white" : "bg-[#FFF7D6] text-[#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+      active
+        ? "bg-[#222] text-white"
+        : "bg-[#FFF7D6] text-[#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
     }`;
   const disabled = "opacity-40 pointer-events-none";
 
@@ -62,7 +64,9 @@ export function Page({ total }: { total?: number }) {
       <div />
       <div className="w-full overflow-auto pointer-events-auto flex justify-center">
         <div className="overflow-auto flex items-center gap-4 max-w-full p-8 scrollbar-none">
-          <button className={`${btn(page === 0)}`} onClick={() => turnPage(0)}>Cover</button>
+          <button className={`${btn(page === 0)}`} onClick={() => turnPage(0)}>
+            Cover
+          </button>
           <button
             className={`${btn(false)} ${page === 0 ? disabled : ""}`}
             onClick={() => turnPage(Math.max(0, page - 1))}
@@ -78,7 +82,9 @@ export function Page({ total }: { total?: number }) {
           >
             Next
           </button>
-          <button className={btn(page === n)} onClick={() => turnPage(n)}>Back Cover</button>
+          <button className={btn(page === n)} onClick={() => turnPage(n)}>
+            Back Cover
+          </button>
         </div>
       </div>
     </div>

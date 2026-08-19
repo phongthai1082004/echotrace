@@ -14,9 +14,7 @@ export function ResponsiveTable({ header, children, gridCols }: ResponsiveTableP
       <div className="shrink-0" style={gridCols ? { gridTemplateColumns: gridCols } : undefined}>
         {header}
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar">
-        {children}
-      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar">{children}</div>
     </div>
   );
 }

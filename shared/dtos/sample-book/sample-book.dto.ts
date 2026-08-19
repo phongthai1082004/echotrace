@@ -2,9 +2,9 @@ export interface SampleBookDTO {
   id: number;
   name: string | null;
   description: string | null;
-  type: string;
-  kind: "ALBUM" | "TEMPLATE";
+  type: "ALBUM" | "TEMPLATE";
   category: string | null;
+  quantity: number | null;
   style: string;
   font: string;
   cover: string;
@@ -23,9 +23,9 @@ export interface SampleBookDTO {
 export interface CreateSampleBookDTO {
   name?: string;
   description?: string | null;
-  type?: string;
-  kind?: "ALBUM" | "TEMPLATE";
+  type?: "ALBUM" | "TEMPLATE";
   category?: string | null;
+  quantity?: number | null;
   style?: string;
   font?: string;
   cover?: string;
@@ -40,9 +40,9 @@ export interface CreateSampleBookDTO {
 export interface UpdateSampleBookDTO {
   name?: string;
   description?: string | null;
-  type?: string;
-  kind?: "ALBUM" | "TEMPLATE";
+  type?: "ALBUM" | "TEMPLATE";
   category?: string | null;
+  quantity?: number | null;
   style?: string;
   font?: string;
   cover?: string;
@@ -66,9 +66,9 @@ export class SampleBookMapper {
       id: book.id,
       name: book.name ?? null,
       description: book.description ?? null,
-      type: book.type,
-      kind: book.kind ?? "TEMPLATE",
+      type: book.type ?? "TEMPLATE",
       category: book.category ?? null,
+      quantity: book.quantity ?? null,
       style: book.style,
       font: book.font,
       cover: book.cover,
@@ -86,6 +86,11 @@ export class SampleBookMapper {
   }
 
   static toDTOList(books: any[]): SampleBookDTO[] {
-    return books.map((b) => this.toDTO(b));
+    return books.map((b) => {
+      const dto = this.toDTO(b);
+      // ponytail: list only needs the first page (thumbnail) — full content stays on detail/editor.
+      if (dto.content?.pages?.length) dto.content = { ...dto.content, pages: dto.content.pages.slice(0, 1) };
+      return dto;
+    });
   }
 }

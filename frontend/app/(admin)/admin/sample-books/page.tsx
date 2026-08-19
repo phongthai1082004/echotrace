@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Eye, Pencil, ChevronDown, X } from "lucide-react";
-import { SampleBookDTO, BookType } from "@echotrace/shared";
+import { SampleBookDTO } from "@echotrace/shared";
 import { label, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
@@ -16,11 +16,11 @@ import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
 
-const colWidths = ["2fr", "1fr", "0.8fr", "0.5fr", "1fr", "104px"];
+const colWidths = ["2fr", "0.7fr", "0.9fr", "0.5fr", "0.5fr", "0.9fr", "104px"];
 const gridCols = colWidths.join(" ");
 
-const TYPE_OPTIONS = Object.keys(BookType);
-const KIND_OPTIONS = ["TEMPLATE", "ALBUM"];
+const TYPE_OPTIONS = ["TEMPLATE", "ALBUM"];
+const CATEGORY_OPTIONS = ["NATURE", "URBAN", "CLASSIC", "MINIMAL", "ADVENTURE", "CULTURAL", "CUSTOM"];
 const STATUS_OPTIONS = ["draft", "published", "archive"];
 
 const STATUS_STYLE: Record<string, string> = {
@@ -39,7 +39,7 @@ export default function AdminSampleBooksPage() {
 
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
-  const [kind, setKind] = useState("");
+  const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [items, setItems] = useState<SampleBookDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +53,12 @@ export default function AdminSampleBooksPage() {
   const queryUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
-    if (kind) params.set("kind", kind);
+    if (category) params.set("category", category);
     if (status) params.set("status", status);
     if (search) params.set("search", search);
     if (cursor) params.set("cursor", String(cursor));
     return `/api/admin/sample-books?${params.toString()}`;
-  }, [type, kind, status, search, cursor]);
+  }, [type, category, status, search, cursor]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -80,7 +80,7 @@ export default function AdminSampleBooksPage() {
   useEffect(() => {
     setCursor(null);
     setCursorStack([]);
-  }, [type, kind, status, search]);
+  }, [type, category, status, search]);
 
   const updateStatus = async (s: SampleBookDTO, next: string) => {
     if (!accessToken || next === s.status) return;
@@ -126,21 +126,52 @@ export default function AdminSampleBooksPage() {
 
       <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-4 min-h-0 overflow-hidden">
         <div className={`${card} p-3 shrink-0 flex flex-wrap gap-2`}>
-          <select value={type} onChange={(e) => setType(e.target.value)} className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
+          >
             <option value="">{t("admin.sampleBooks.allTypes")}</option>
-            {TYPE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+            {TYPE_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {t(`admin.sampleBooks.${v === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
+              </option>
+            ))}
           </select>
-          <select value={kind} onChange={(e) => setKind(e.target.value)} className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}>
-            <option value="">{t("admin.sampleBooks.allKinds")}</option>
-            {KIND_OPTIONS.map((v) => <option key={v} value={v}>{t(`admin.sampleBooks.${v === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}</option>)}
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
+          >
+            <option value="">{t("admin.sampleBooks.allCategories")}</option>
+            {CATEGORY_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
           </select>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
+          >
             <option value="">{t("admin.sampleBooks.allStatuses")}</option>
-            {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{t(`admin.sampleBooks.${v}`)}</option>)}
+            {STATUS_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {t(`admin.sampleBooks.${v}`)}
+              </option>
+            ))}
           </select>
-          {(type || kind || status || search) && (
-            <button onClick={() => { setType(""); setKind(""); setStatus(""); setSearch(""); }}
-              className={`${neoBtn} flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5`}>
+          {(type || category || status || search) && (
+            <button
+              onClick={() => {
+                setType("");
+                setCategory("");
+                setStatus("");
+                setSearch("");
+              }}
+              className={`${neoBtn} flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5`}
+            >
               <X size={11} /> {t("common.clear")}
             </button>
           )}
@@ -158,8 +189,18 @@ export default function AdminSampleBooksPage() {
               <ResponsiveTable
                 header={
                   <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                    {[t("admin.sampleBooks.name"), t("admin.sampleBooks.type"), t("admin.sampleBooks.kind"), t("admin.sampleBooks.pages"), t("admin.sampleBooks.status"), t("common.action")].map((h) => (
-                      <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
+                    {[
+                      t("admin.sampleBooks.name"),
+                      t("admin.sampleBooks.type"),
+                      t("admin.sampleBooks.category"),
+                      t("admin.sampleBooks.quantity"),
+                      t("admin.sampleBooks.pages"),
+                      t("admin.sampleBooks.status"),
+                      t("common.action"),
+                    ].map((h) => (
+                      <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
+                        {h}
+                      </div>
                     ))}
                   </div>
                 }
@@ -171,21 +212,33 @@ export default function AdminSampleBooksPage() {
                   <EmptyStateMinimal title={t("admin.sampleBooks.noItems")} />
                 ) : (
                   items.map((s) => (
-                    <div key={s.id}
+                    <div
+                      key={s.id}
                       className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: gridCols }}>
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.name || "Untitled"}</div>
-                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">{s.type}</div>
-                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">
-                        {t(`admin.sampleBooks.${s.kind === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
+                      style={{ gridTemplateColumns: gridCols }}
+                    >
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                        {s.name || "Untitled"}
                       </div>
-                      <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">{s.pageCount} {t("admin.sampleBooks.pg")}</div>
+                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">
+                        {t(`admin.sampleBooks.${s.type === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
+                      </div>
+                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">
+                        {s.category ?? "—"}
+                      </div>
+                      <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
+                        {s.quantity ?? "—"}
+                      </div>
+                      <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
+                        {s.pageCount} {t("admin.sampleBooks.pg")}
+                      </div>
                       <div className="px-2">
                         <div className="relative inline-block">
                           <button
                             onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
                             disabled={statusBusyId === s.id}
-                            className={`flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] cursor-pointer disabled:opacity-40 ${STATUS_STYLE[s.status] ?? STATUS_STYLE.draft}`}>
+                            className={`flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] cursor-pointer disabled:opacity-40 ${STATUS_STYLE[s.status] ?? STATUS_STYLE.draft}`}
+                          >
                             {t(`admin.sampleBooks.${s.status}`)}
                             <ChevronDown size={11} />
                           </button>
@@ -194,10 +247,14 @@ export default function AdminSampleBooksPage() {
                               <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
                               <div className="absolute top-full left-0 mt-1 z-40 bg-[#F8F2E5] rounded-lg border-2 border-[#222] shadow-[3px_3px_0_#222] overflow-hidden min-w-[120px]">
                                 {STATUS_OPTIONS.map((st) => (
-                                  <button key={st}
+                                  <button
+                                    key={st}
                                     onClick={() => updateStatus(s, st)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] font-bold tracking-widest uppercase hover:bg-[#e8e6e0] transition-colors ${st === s.status ? "opacity-40" : ""}`}>
-                                    <span className={`w-2.5 h-2.5 rounded-[3px] border border-[#222] ${STATUS_STYLE[st].split(" ")[0]}`} />
+                                    className={`w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] font-bold tracking-widest uppercase hover:bg-[#e8e6e0] transition-colors ${st === s.status ? "opacity-40" : ""}`}
+                                  >
+                                    <span
+                                      className={`w-2.5 h-2.5 rounded-[3px] border border-[#222] ${STATUS_STYLE[st].split(" ")[0]}`}
+                                    />
                                     {t(`admin.sampleBooks.${st}`)}
                                   </button>
                                 ))}
@@ -207,12 +264,18 @@ export default function AdminSampleBooksPage() {
                         </div>
                       </div>
                       <div className="px-2 flex items-center gap-1.5">
-                        <button disabled title={t("admin.sampleBooks.preview")}
-                          className="p-1.5 opacity-30 cursor-not-allowed">
+                        <button
+                          disabled
+                          title={t("admin.sampleBooks.preview")}
+                          className="p-1.5 opacity-30 cursor-not-allowed"
+                        >
                           <Eye size={14} />
                         </button>
-                        <Link href={studioHref(s)} title={t("admin.sampleBooks.edit")}
-                          className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]">
+                        <Link
+                          href={studioHref(s)}
+                          title={t("admin.sampleBooks.edit")}
+                          className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]"
+                        >
                           <Pencil size={14} />
                         </Link>
                       </div>

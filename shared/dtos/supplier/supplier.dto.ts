@@ -22,8 +22,12 @@ export interface SupplierDTO {
   monthDebt: number;
   lastPaymentDate: Date | string | null;
   bankName: string | null;
+  bankBin: string | null;
   bankAccountNumber: string | null;
   bankAccountName: string | null;
+  taxCode: string | null;
+  address: string | null;
+  contactPerson: string | null;
   paperSizeOptions: SupplierOption[];
   paperOptions: SupplierOption[];
   coverOptions: SupplierOption[];
@@ -64,8 +68,12 @@ export class SupplierMapper {
       monthDebt: supplier.monthDebt,
       lastPaymentDate: supplier.lastPaymentDate ?? null,
       bankName: supplier.bankName ?? null,
+      bankBin: supplier.bankBin ?? null,
       bankAccountNumber: supplier.bankAccountNumber ?? null,
       bankAccountName: supplier.bankAccountName ?? null,
+      taxCode: supplier.taxCode ?? null,
+      address: supplier.address ?? null,
+      contactPerson: supplier.contactPerson ?? null,
       paperSizeOptions: asArray(supplier.paperSizeOptions),
       paperOptions: asArray(supplier.paperOptions),
       coverOptions: asArray(supplier.coverOptions),

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 export interface LoadingSkeletonProps {
   rows?: number;
@@ -28,7 +28,7 @@ export function LoadingSkeleton({
   itemHeight = 20,
   gap = 8,
   animated = true,
-  className = '',
+  className = "",
 }: LoadingSkeletonProps) {
   const items = Array.from({ length: rows * columns }, (_, i) => i);
 
@@ -38,7 +38,7 @@ export function LoadingSkeleton({
       <div
         className={className}
         style={{
-          display: 'grid',
+          display: "grid",
           gridTemplateColumns: `repeat(${columns}, 1fr)`,
           gap: `${gap}px`,
         }}
@@ -49,7 +49,7 @@ export function LoadingSkeleton({
             className="bg-gray-200 rounded"
             style={{
               height: `${itemHeight}px`,
-              animation: animated ? 'shimmer 2s infinite' : 'none',
+              animation: animated ? "shimmer 2s infinite" : "none",
             }}
           />
         ))}
@@ -61,13 +61,7 @@ export function LoadingSkeleton({
 /**
  * Table row skeleton for table loading states
  */
-export function TableSkeletonRow({
-  columns = 6,
-  animated = true,
-}: {
-  columns?: number;
-  animated?: boolean;
-}) {
+export function TableSkeletonRow({ columns = 6, animated = true }: { columns?: number; animated?: boolean }) {
   return (
     <>
       <style>{shimmerKeyframes}</style>
@@ -77,7 +71,7 @@ export function TableSkeletonRow({
             <div
               className="h-4 bg-gray-200 rounded"
               style={{
-                animation: animated ? 'shimmer 2s infinite' : 'none',
+                animation: animated ? "shimmer 2s infinite" : "none",
               }}
             />
           </div>
@@ -90,13 +84,7 @@ export function TableSkeletonRow({
 /**
  * Card skeleton for card-based loading states
  */
-export function CardSkeleton({
-  animated = true,
-  className = '',
-}: {
-  animated?: boolean;
-  className?: string;
-}) {
+export function CardSkeleton({ animated = true, className = "" }: { animated?: boolean; className?: string }) {
   return (
     <>
       <style>{shimmerKeyframes}</style>
@@ -104,7 +92,7 @@ export function CardSkeleton({
         <div
           className="h-6 bg-gray-200 rounded mb-4 w-3/4"
           style={{
-            animation: animated ? 'shimmer 2s infinite' : 'none',
+            animation: animated ? "shimmer 2s infinite" : "none",
           }}
         />
         {Array.from({ length: 3 }).map((_, i) => (
@@ -112,8 +100,8 @@ export function CardSkeleton({
             key={i}
             className="h-4 bg-gray-200 rounded mb-2"
             style={{
-              animation: animated ? 'shimmer 2s infinite' : 'none',
-              width: i === 2 ? '50%' : '100%',
+              animation: animated ? "shimmer 2s infinite" : "none",
+              width: i === 2 ? "50%" : "100%",
             }}
           />
         ))}

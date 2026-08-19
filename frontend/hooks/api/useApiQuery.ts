@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { apiFetch } from '@/lib/api.fetch';
+import { useEffect, useState, useCallback, useRef } from "react";
+import { apiFetch } from "@/lib/api.fetch";
 
 export interface UseApiQueryOptions<T> {
   enabled?: boolean;
@@ -21,7 +21,7 @@ export interface UseApiQueryResult<T> {
  * @param token - Authentication token
  * @param options - Configuration options
  * @returns Object with data, loading, error states and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { data, loading, error, refetch } = useApiQuery<Supplier[]>(
@@ -38,7 +38,7 @@ export interface UseApiQueryResult<T> {
 export function useApiQuery<T = any>(
   url: string,
   token?: string,
-  options: UseApiQueryOptions<T> = {}
+  options: UseApiQueryOptions<T> = {},
 ): UseApiQueryResult<T> {
   const { enabled = true, onSuccess, onError, retry = 0 } = options;
 

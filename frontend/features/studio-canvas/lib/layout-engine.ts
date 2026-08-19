@@ -12,7 +12,9 @@ function mmToPx(mm: number): number {
 
 // Layouts are authored in mm on a fixed A4-portrait design canvas (210×297 mm = 840×1188 px).
 // Map design coords onto the actual paper size: scale the content box, shrink margins on small sizes.
-const DESIGN_W = 840, DESIGN_H = 1188, DESIGN_MARGIN_PX = 60;
+const DESIGN_W = 840,
+  DESIGN_H = 1188,
+  DESIGN_MARGIN_PX = 60;
 
 function layoutMargin(pageW: number, pageH: number): number {
   const targetMin = Math.min(pageW, pageH);
@@ -42,7 +44,16 @@ export function layoutSlotTransform(
 
 const OVERLAY_KEY = "_dragOverlay";
 const DIM_OVERLAY_KEY = "_dimOverlay";
-const SERIALIZE_KEYS = ["z", "layer", "customProperties", "_selId", "selectable", "evented", "hasControls", "hasBorders"];
+const SERIALIZE_KEYS = [
+  "z",
+  "layer",
+  "customProperties",
+  "_selId",
+  "selectable",
+  "evented",
+  "hasControls",
+  "hasBorders",
+];
 
 export function isFrameObject(obj: fabric.FabricObject): boolean {
   return (obj as any).customProperties?.layer === "frame";
@@ -122,39 +133,89 @@ export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): s
     const photo = findPhotoInFrame(canvas, obj);
     if (photo) {
       const frameJson = (obj as any).toJSON(["z", "layer", "customProperties", "_selId"]);
-      const photoJson = (photo as any).toJSON(["z", "layer", "customProperties", "_selId", "clipPath", "__frameLockScaleX", "__frameLockScaleY", "__photoLockScaleX", "__photoLockScaleY", "__photoRelScaleX", "__photoRelScaleY", "__frameOffsetX", "__frameOffsetY"]);
-      return JSON.stringify({ _composite: true, frame: frameJson, photo: photoJson, frameSelId: (obj as any)._selId, photoFrameId: (photo as any).customProperties?.frameId });
+      const photoJson = (photo as any).toJSON([
+        "z",
+        "layer",
+        "customProperties",
+        "_selId",
+        "clipPath",
+        "__frameLockScaleX",
+        "__frameLockScaleY",
+        "__photoLockScaleX",
+        "__photoLockScaleY",
+        "__photoRelScaleX",
+        "__photoRelScaleY",
+        "__frameOffsetX",
+        "__frameOffsetY",
+      ]);
+      return JSON.stringify({
+        _composite: true,
+        frame: frameJson,
+        photo: photoJson,
+        frameSelId: (obj as any)._selId,
+        photoFrameId: (photo as any).customProperties?.frameId,
+      });
     }
   }
   return JSON.stringify((obj as any).toJSON(["z", "layer", "customProperties", "_selId"]));
 }
 
-export function pasteClipboard(canvas: fabric.Canvas, clipboard: string, pasteCount: number, bumpPasteCount: () => void, pushUndo: () => void) {
+export function pasteClipboard(
+  canvas: fabric.Canvas,
+  clipboard: string,
+  pasteCount: number,
+  bumpPasteCount: () => void,
+  pushUndo: () => void,
+) {
   pushUndo();
   const parsed = JSON.parse(clipboard);
   if (parsed._composite) {
     fabric.util.enlivenObjects([parsed.frame]).then((arrF: any[]) => {
       fabric.util.enlivenObjects([parsed.photo]).then((arrP: any[]) => {
-        const frame = arrF[0]; const photo = arrP[0];
+        const frame = arrF[0];
+        const photo = arrP[0];
         if (!frame || !photo) return;
         const off = 20 + pasteCount * 20;
         const selId = `frame-${Date.now()}`;
-        frame.set({ left: (frame.left || 0) + off, top: (frame.top || 0) + off, customProperties: { ...frame.customProperties, z: Date.now() } } as any);
+        frame.set({
+          left: (frame.left || 0) + off,
+          top: (frame.top || 0) + off,
+          customProperties: { ...frame.customProperties, z: Date.now() },
+        } as any);
         (frame as any)._selId = selId;
-        photo.set({ left: (photo.left || 0) + off, top: (photo.top || 0) + off, customProperties: { ...photo.customProperties, z: Date.now() - 1, frameId: selId } } as any);
+        photo.set({
+          left: (photo.left || 0) + off,
+          top: (photo.top || 0) + off,
+          customProperties: { ...photo.customProperties, z: Date.now() - 1, frameId: selId },
+        } as any);
         (photo as any)._selId = `photo-${Date.now()}`;
-        canvas.add(frame); canvas.add(photo); canvas.setActiveObject(frame); canvas.renderAll(); enforceZLayers(canvas); bumpPasteCount();
+        canvas.add(frame);
+        canvas.add(photo);
+        canvas.setActiveObject(frame);
+        canvas.renderAll();
+        enforceZLayers(canvas);
+        bumpPasteCount();
       });
     });
   } else {
-    const savedCp = parsed.customProperties, savedSelId = parsed._selId;
+    const savedCp = parsed.customProperties,
+      savedSelId = parsed._selId;
     fabric.util.enlivenObjects([parsed]).then((arr: any[]) => {
-      const obj = arr[0]; if (!obj) return;
+      const obj = arr[0];
+      if (!obj) return;
       const off = 20 + pasteCount * 20;
-      obj.set({ left: (obj.left || 0) + off, top: (obj.top || 0) + off, customProperties: savedCp || { z: Date.now(), layer: "element" } } as any);
+      obj.set({
+        left: (obj.left || 0) + off,
+        top: (obj.top || 0) + off,
+        customProperties: savedCp || { z: Date.now(), layer: "element" },
+      } as any);
       if (savedSelId) (obj as any)._selId = savedSelId;
       (obj as any)._selId = `paste-${Date.now()}`;
-      canvas.add(obj); canvas.setActiveObject(obj); canvas.renderAll(); enforceZLayers(canvas); bumpPasteCount();
+      canvas.add(obj);
+      canvas.setActiveObject(obj);
+      canvas.renderAll();
+      enforceZLayers(canvas);
+      bumpPasteCount();
     });
   }
 }
@@ -184,11 +245,20 @@ function createRectPath(w: number, h: number): fabric.Rect {
 
 function makeOverlayRect(left: number, top: number, w: number, h: number, angle: number = 0): fabric.Rect {
   const r = new fabric.Rect({
-    left, top, width: w, height: h,
-    originX: "left", originY: "top",
+    left,
+    top,
+    width: w,
+    height: h,
+    originX: "left",
+    originY: "top",
     fill: "rgba(200, 200, 200, 0.45)",
-    stroke: "#aaa", strokeWidth: 1, strokeDashArray: [5, 4],
-    selectable: false, evented: false, hasControls: false, hasBorders: false,
+    stroke: "#aaa",
+    strokeWidth: 1,
+    strokeDashArray: [5, 4],
+    selectable: false,
+    evented: false,
+    hasControls: false,
+    hasBorders: false,
     excludeFromExport: true,
     angle,
   });
@@ -199,10 +269,17 @@ function makeOverlayRect(left: number, top: number, w: number, h: number, angle:
 
 function makeOverlayPlus(cx: number, cy: number): fabric.FabricText {
   const t = new fabric.FabricText("+", {
-    left: cx, top: cy,
-    fontSize: 26, fontFamily: "Inter, sans-serif", fill: "#888",
-    originX: "center", originY: "center",
-    selectable: false, evented: false, hasControls: false, hasBorders: false,
+    left: cx,
+    top: cy,
+    fontSize: 26,
+    fontFamily: "Inter, sans-serif",
+    fill: "#888",
+    originX: "center",
+    originY: "center",
+    selectable: false,
+    evented: false,
+    hasControls: false,
+    hasBorders: false,
     excludeFromExport: true,
   });
   (t as any)[OVERLAY_KEY] = true;
@@ -212,10 +289,17 @@ function makeOverlayPlus(cx: number, cy: number): fabric.FabricText {
 
 function makeOverlayLabel(cx: number, cy: number): fabric.FabricText {
   const t = new fabric.FabricText("Add a picture", {
-    left: cx, top: cy + 14,
-    fontSize: 9, fontFamily: "JetBrains Mono, monospace", fill: "#999",
-    originX: "center", originY: "center",
-    selectable: false, evented: false, hasControls: false, hasBorders: false,
+    left: cx,
+    top: cy + 14,
+    fontSize: 9,
+    fontFamily: "JetBrains Mono, monospace",
+    fill: "#999",
+    originX: "center",
+    originY: "center",
+    selectable: false,
+    evented: false,
+    hasControls: false,
+    hasBorders: false,
     excludeFromExport: true,
   });
   (t as any)[OVERLAY_KEY] = true;
@@ -224,22 +308,33 @@ function makeOverlayLabel(cx: number, cy: number): fabric.FabricText {
 }
 
 export function removeDragOverlays(canvas: fabric.Canvas) {
-  canvas.getObjects().filter((o: any) => o[OVERLAY_KEY] === true).forEach((o) => canvas.remove(o));
+  canvas
+    .getObjects()
+    .filter((o: any) => o[OVERLAY_KEY] === true)
+    .forEach((o) => canvas.remove(o));
   canvas.renderAll();
 }
 
 export function addFrameDragOverlays(canvas: fabric.Canvas) {
   // ponytail: inline removal to batch into single renderAll instead of two
-  canvas.getObjects().filter((o: any) => o[OVERLAY_KEY] === true).forEach((o) => canvas.remove(o));
+  canvas
+    .getObjects()
+    .filter((o: any) => o[OVERLAY_KEY] === true)
+    .forEach((o) => canvas.remove(o));
   canvas.getObjects().forEach((obj: any) => {
     if (obj.customProperties?.layer !== "frame") return;
-    if (canvas.getObjects().some((o: any) => {
-      if (o.customProperties?.layer !== "photo" || (o as any).hasControls) return false;
-      // center origin: left/top are center
-      return obj.containsPoint(new fabric.Point(o.left || 0, o.top || 0));
-    })) return;
-    const left = obj.left ?? 0, top = obj.top ?? 0;
-    const w = (obj.width ?? 100) * (obj.scaleX ?? 1), h = (obj.height ?? 100) * (obj.scaleY ?? 1);
+    if (
+      canvas.getObjects().some((o: any) => {
+        if (o.customProperties?.layer !== "photo" || (o as any).hasControls) return false;
+        // center origin: left/top are center
+        return obj.containsPoint(new fabric.Point(o.left || 0, o.top || 0));
+      })
+    )
+      return;
+    const left = obj.left ?? 0,
+      top = obj.top ?? 0;
+    const w = (obj.width ?? 100) * (obj.scaleX ?? 1),
+      h = (obj.height ?? 100) * (obj.scaleY ?? 1);
     const angle = obj.angle || 0;
     const center = obj.getCenterPoint();
     canvas.add(makeOverlayRect(left, top, w, h, angle));
@@ -267,17 +362,35 @@ export function clearLayoutFrames(canvas: fabric.Canvas, predicate?: (o: any) =>
   // remove photos that were locked into the cleared frames so they don't stay
   // baked onto the canvas after the layout changes
   if (removedIds.size) {
-    canvas.getObjects().filter((o: any) =>
-      o.customProperties?.layer === "photo" && !(o as any).hasControls && removedIds.has(o.customProperties?.frameId)
-    ).forEach((o) => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter(
+        (o: any) =>
+          o.customProperties?.layer === "photo" &&
+          !(o as any).hasControls &&
+          removedIds.has(o.customProperties?.frameId),
+      )
+      .forEach((o) => canvas.remove(o));
   }
 }
 
-function makeFrame(left: number, top: number, w: number, h: number, customProps: Record<string, any> = {}): fabric.Rect {
+function makeFrame(
+  left: number,
+  top: number,
+  w: number,
+  h: number,
+  customProps: Record<string, any> = {},
+): fabric.Rect {
   const obj = new fabric.Rect({ width: w, height: h, left, top, originX: "left", originY: "top" });
   obj.set({
-    fill: "rgba(0,0,0,0.01)", stroke: "#000", strokeWidth: 2, strokeDashArray: undefined,
-    selectable: true, evented: true, hasControls: true, hasBorders: true,
+    fill: "rgba(0,0,0,0.01)",
+    stroke: "#000",
+    strokeWidth: 2,
+    strokeDashArray: undefined,
+    selectable: true,
+    evented: true,
+    hasControls: true,
+    hasBorders: true,
   } as any);
   (obj as any).customProperties = { z: 0, layer: "frame", ...customProps };
   return obj;
@@ -286,8 +399,10 @@ function makeFrame(left: number, top: number, w: number, h: number, customProps:
 function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const fw = (frame.width || 100) * (frame.scaleX || 1);
   const fh = (frame.height || 100) * (frame.scaleY || 1);
-  const fl = frame.left || 0, ft = frame.top || 0;
-  const imgW = img.width || 1, imgH = img.height || 1;
+  const fl = frame.left || 0,
+    ft = frame.top || 0;
+  const imgW = img.width || 1,
+    imgH = img.height || 1;
   // ponytail: contain — image fits inside the frame so the border stays visible and
   // resizing the frame can't make the image spill over it
   const s = Math.min(fw / imgW, fh / imgH);
@@ -296,7 +411,13 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   if (shapeName) {
     const size = (frame as any).customProperties?.shapeSize || fw;
     clip = createClipPath(shapeName, size, size);
-    clip.set({ left: fl, top: ft, scaleX: frame.scaleX || 1, scaleY: frame.scaleY || 1, angle: frame.angle || 0 } as any);
+    clip.set({
+      left: fl,
+      top: ft,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
   } else {
     clip = createRectPath(fw, fh);
     clip.set({ left: fl, top: ft, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
@@ -304,11 +425,15 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   clip.setCoords();
   const fc = frame.getCenterPoint();
   img.set({
-    left: fc.x, top: fc.y,
-    originX: "center", originY: "center",
-    scaleX: s, scaleY: s,
+    left: fc.x,
+    top: fc.y,
+    originX: "center",
+    originY: "center",
+    scaleX: s,
+    scaleY: s,
     angle: frame.angle || 0,
-    flipX: frame.flipX || false, flipY: frame.flipY || false,
+    flipX: frame.flipX || false,
+    flipY: frame.flipY || false,
     clipPath: clip,
     objectCaching: false,
   } as any);
@@ -331,11 +456,21 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
   (img as any).__frameOffsetX = 0;
   (img as any).__frameOffsetY = 0;
   img.set({
-    hasControls: false, hasBorders: false,
-    lockMovementX: true, lockMovementY: true,
-    lockScalingX: true, lockScalingY: true, lockRotation: true,
-    selectable: false, evented: false,
-    customProperties: { z: frameZ - 1, layer: "photo", frameId: (frame as any)._selId, layoutKind: (frame as any).customProperties?.layoutKind ?? null },
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockScalingX: true,
+    lockScalingY: true,
+    lockRotation: true,
+    selectable: false,
+    evented: false,
+    customProperties: {
+      z: frameZ - 1,
+      layer: "photo",
+      frameId: (frame as any)._selId,
+      layoutKind: (frame as any).customProperties?.layoutKind ?? null,
+    },
   } as any);
   (img as any)._selId = `photo-frame-${Date.now()}`;
   return true;
@@ -344,12 +479,19 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
 export function applyFrameClip(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const fw = (frame.width || 100) * (frame.scaleX || 1);
   const fh = (frame.height || 100) * (frame.scaleY || 1);
-  const fl = frame.left || 0, ft = frame.top || 0;
+  const fl = frame.left || 0,
+    ft = frame.top || 0;
   const shapeName = (frame as any).customProperties?.shapeName;
   if (shapeName) {
     const size = (frame as any).customProperties?.shapeSize || fw;
     const clip = createClipPath(shapeName, size, size);
-    clip.set({ left: fl, top: ft, scaleX: frame.scaleX || 1, scaleY: frame.scaleY || 1, angle: frame.angle || 0 } as any);
+    clip.set({
+      left: fl,
+      top: ft,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
     clip.setCoords();
     img.set({ clipPath: clip } as any);
   } else {
@@ -365,9 +507,10 @@ export function applyFrameClip(frame: fabric.FabricObject, img: fabric.FabricIma
 export function findPhotoInFrame(canvas: fabric.Canvas, frame: fabric.FabricObject): fabric.FabricImage | undefined {
   const frameId = (frame as any)._selId;
   if (frameId) {
-    const photo = canvas.getObjects().find((o: any) =>
-      o.customProperties?.frameId === frameId && !(o as any).hasControls
-    ) as fabric.FabricImage | undefined;
+    const photo = canvas
+      .getObjects()
+      .find((o: any) => o.customProperties?.frameId === frameId && !(o as any).hasControls) as
+      fabric.FabricImage | undefined;
     if (photo) return photo;
   }
   // fallback: only match orphan photos (no frameId) whose center is inside this frame
@@ -383,7 +526,8 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   const fc = frame.getCenterPoint();
   const fw = (frame.width || 100) * (frame.scaleX || 1);
   const fh = (frame.height || 100) * (frame.scaleY || 1);
-  const imgW = photo.width || 1, imgH = photo.height || 1;
+  const imgW = photo.width || 1,
+    imgH = photo.height || 1;
   // ponytail: always re-contain-fit to the current frame size; user scale/offset
   // edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
   const containS = Math.min(fw / imgW, fh / imgH);
@@ -398,18 +542,40 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   if (shapeName) {
     const size = (frame as any).customProperties?.shapeSize || fw;
     clip = createClipPath(shapeName, size, size);
-    clip.set({ left: frame.left, top: frame.top, scaleX: frame.scaleX || 1, scaleY: frame.scaleY || 1, angle: frame.angle || 0 } as any);
+    clip.set({
+      left: frame.left,
+      top: frame.top,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
   } else {
     clip = createRectPath(fw, fh);
-    clip.set({ left: frame.left, top: frame.top, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
+    clip.set({
+      left: frame.left,
+      top: frame.top,
+      angle: frame.angle || 0,
+      absolutePositioned: true,
+      objectCaching: false,
+    } as any);
   }
   clip.setCoords();
-  photo.set({ left: fc.x + offX, top: fc.y + offY, scaleX: containS * relSX, scaleY: containS * relSY, angle: frame.angle || 0, clipPath: clip } as any);
+  photo.set({
+    left: fc.x + offX,
+    top: fc.y + offY,
+    scaleX: containS * relSX,
+    scaleY: containS * relSY,
+    angle: frame.angle || 0,
+    clipPath: clip,
+  } as any);
   photo.setCoords();
   photo.dirty = true;
 }
 
-export function resolveFrameForPhoto(canvas: fabric.Canvas, photo: fabric.FabricImage): fabric.FabricObject | undefined {
+export function resolveFrameForPhoto(
+  canvas: fabric.Canvas,
+  photo: fabric.FabricImage,
+): fabric.FabricObject | undefined {
   const fid = (photo as any).customProperties?.frameId;
   if (fid) {
     const frame = canvas.getObjects().find((o: any) => isFrameObject(o) && (o as any)._selId === fid);
@@ -433,11 +599,15 @@ export function unlockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricIm
   (photo as any).customProperties = { ...((photo as any).customProperties || {}), z: 998 };
   photo.set({
     clipPath: null,
-    hasControls: true, hasBorders: true,
-    lockMovementX: false, lockMovementY: false,
-    lockScalingX: false, lockScalingY: false,
+    hasControls: true,
+    hasBorders: true,
+    lockMovementX: false,
+    lockMovementY: false,
+    lockScalingX: false,
+    lockScalingY: false,
     lockRotation: false,
-    selectable: true, evented: true,
+    selectable: true,
+    evented: true,
     objectCaching: false,
   } as any);
   photo.setCoords();
@@ -464,7 +634,10 @@ export function unlockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricIm
 export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImage) {
   removePhotoDimOverlays(canvas);
   const savedZ = (photo as any).__savedZ;
-  (photo as any).customProperties = { ...((photo as any).customProperties || {}), z: savedZ !== undefined ? savedZ : 0 };
+  (photo as any).customProperties = {
+    ...((photo as any).customProperties || {}),
+    z: savedZ !== undefined ? savedZ : 0,
+  };
   delete (photo as any).__savedZ;
   // restore all objects + rubber-band selection after edit mode
   canvas.selection = true;
@@ -502,14 +675,20 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
     frame.set({
       evented: (frame as any).__savedEvented !== undefined ? (frame as any).__savedEvented : true,
       selectable: (frame as any).__savedSelectable !== undefined ? (frame as any).__savedSelectable : true,
-      hasControls: true, hasBorders: true,
+      hasControls: true,
+      hasBorders: true,
     } as any);
   }
   photo.set({
-    hasControls: false, hasBorders: false,
-    lockMovementX: true, lockMovementY: true,
-    lockScalingX: true, lockScalingY: true, lockRotation: true,
-    selectable: false, evented: false,
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockScalingX: true,
+    lockScalingY: true,
+    lockRotation: true,
+    selectable: false,
+    evented: false,
   } as any);
   photo.setCoords();
   enforceZLayers(canvas);
@@ -517,7 +696,8 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
 
 export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricObject) {
   removePhotoDimOverlays(canvas);
-  const cw = canvas.width || 1000, ch = canvas.height || 1000;
+  const cw = canvas.width || 1000,
+    ch = canvas.height || 1000;
   const frame = resolveFrameForPhoto(canvas, photo as fabric.FabricImage);
   const target = frame || photo;
   target.setCoords();
@@ -525,10 +705,13 @@ export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricO
   const hw = ((target.width || 100) * (target.scaleX || 1)) / 2;
   const hh = ((target.height || 100) * (target.scaleY || 1)) / 2;
   const rad = ((target.angle || 0) * Math.PI) / 180;
-  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const cos = Math.cos(rad),
+    sin = Math.sin(rad);
   const rel = [
-    { x: -hw, y: -hh }, { x: hw, y: -hh },
-    { x: hw, y: hh }, { x: -hw, y: hh },
+    { x: -hw, y: -hh },
+    { x: hw, y: -hh },
+    { x: hw, y: hh },
+    { x: -hw, y: hh },
   ];
   const corners = rel.map((c) => ({
     x: center.x + c.x * cos - c.y * sin,
@@ -537,8 +720,11 @@ export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricO
 
   const pathData = `M 0 0 L ${cw} 0 L ${cw} ${ch} L 0 ${ch} Z M ${corners.map((c) => `${c.x} ${c.y}`).join(" L ")} Z`;
   const overlay = new fabric.Path(pathData, {
-    fill: "rgba(128,128,128,0.55)", fillRule: "evenodd",
-    selectable: false, evented: false, excludeFromExport: true,
+    fill: "rgba(128,128,128,0.55)",
+    fillRule: "evenodd",
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
   } as any);
   (overlay as any)[DIM_OVERLAY_KEY] = true;
   (overlay as any).customProperties = { z: 999, layer: "dimOverlay" };
@@ -547,10 +733,20 @@ export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricO
 }
 
 export function removePhotoDimOverlays(canvas: fabric.Canvas) {
-  canvas.getObjects().filter((o: any) => o[DIM_OVERLAY_KEY] === true).forEach((o) => canvas.remove(o));
+  canvas
+    .getObjects()
+    .filter((o: any) => o[DIM_OVERLAY_KEY] === true)
+    .forEach((o) => canvas.remove(o));
 }
 
-export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX = 0, clearPredicate?: (o: any) => boolean, kind?: "single" | "spread", pageWidth?: number) {
+export function showGuides(
+  canvas: fabric.Canvas,
+  layout: LayoutConfig,
+  offsetX = 0,
+  clearPredicate?: (o: any) => boolean,
+  kind?: "single" | "spread",
+  pageWidth?: number,
+) {
   clearLayoutFrames(canvas, clearPredicate, kind);
   const cw = canvas.width || DESIGN_W;
   const ch = canvas.height || DESIGN_H;
@@ -558,7 +754,10 @@ export function showGuides(canvas: fabric.Canvas, layout: LayoutConfig, offsetX 
   const pw = pageWidth || (spread ? cw / 2 : cw);
   layout.slots.forEach((slot) => {
     const r = layoutSlotTransform(slot, { pageWidth: pw, pageHeight: ch, kind, offsetX });
-    const frame = makeFrame(r.left, r.top, r.width, r.height, { layoutFrame: true, ...(kind ? { layoutKind: kind } : {}) });
+    const frame = makeFrame(r.left, r.top, r.width, r.height, {
+      layoutFrame: true,
+      ...(kind ? { layoutKind: kind } : {}),
+    });
     (frame as any)._selId = `layout-frame-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     (frame as any).customProperties.z = nextFrameZ(canvas);
     canvas.add(frame);
@@ -592,7 +791,13 @@ export function rehydrateCanvas(jsonStr: string, canvas: fabric.Canvas) {
   });
 }
 
-export function applyInteractionLock(canvas: fabric.Canvas, pageW: number, isCover: boolean, viewMode: "left" | "right" | "spread", enableAll = false) {
+export function applyInteractionLock(
+  canvas: fabric.Canvas,
+  pageW: number,
+  isCover: boolean,
+  viewMode: "left" | "right" | "spread",
+  enableAll = false,
+) {
   if (isCover || viewMode === "spread") return;
   if (enableAll) {
     canvas.getObjects().forEach((o: any) => {
@@ -603,9 +808,15 @@ export function applyInteractionLock(canvas: fabric.Canvas, pageW: number, isCov
     });
   }
   if (viewMode === "left") {
-    canvas.getObjects().forEach((o: any) => { if ((o.left || 0) >= pageW) o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any); });
+    canvas.getObjects().forEach((o: any) => {
+      if ((o.left || 0) >= pageW)
+        o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+    });
   } else {
-    canvas.getObjects().forEach((o: any) => { if ((o.left || 0) < pageW) o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any); });
+    canvas.getObjects().forEach((o: any) => {
+      if ((o.left || 0) < pageW)
+        o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+    });
   }
 }
 
@@ -615,9 +826,15 @@ export function isCoverPage(index: number, total: number): boolean {
 
 export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { leftJson: string; rightJson: string } {
   const parsed = JSON.parse(jsonStr);
-  const leftObjs: any[] = [], rightObjs: any[] = [];
+  const leftObjs: any[] = [],
+    rightObjs: any[] = [];
   parsed.objects?.forEach((o: any) => {
-    if ((o.left || 0) < midpoint) { leftObjs.push(o); } else { o.left = (o.left || 0) - midpoint; rightObjs.push(o); }
+    if ((o.left || 0) < midpoint) {
+      leftObjs.push(o);
+    } else {
+      o.left = (o.left || 0) - midpoint;
+      rightObjs.push(o);
+    }
   });
   const mkJson = (objs: any[]) => JSON.stringify({ ...parsed, objects: objs });
   return { leftJson: mkJson(leftObjs), rightJson: mkJson(rightObjs) };
@@ -644,7 +861,12 @@ export function applyUndo(
   popUndo: () => UndoEntry | undefined,
   pushRedoForCanvas: (entry: UndoEntry) => void,
   pushUndoPages: () => void,
-  stateSnapshot: { pages: PageState[]; activePageIndex: number; activeLayout: any; viewMode: "left" | "right" | "spread" },
+  stateSnapshot: {
+    pages: PageState[];
+    activePageIndex: number;
+    activeLayout: any;
+    viewMode: "left" | "right" | "spread";
+  },
   setPage: (i: number, p: Partial<PageState>) => void,
   setPages: (p: PageState[]) => void,
   setActivePageIndex: (i: number) => void,
@@ -657,7 +879,11 @@ export function applyUndo(
 
   // Push redo entry based on type
   if (prev.type === "canvas") {
-    pushRedoForCanvas({ type: "canvas", pageIdx: stateSnapshot.activePageIndex, canvasJson: serializeCanvasState(canvas) });
+    pushRedoForCanvas({
+      type: "canvas",
+      pageIdx: stateSnapshot.activePageIndex,
+      canvasJson: serializeCanvasState(canvas),
+    });
   } else {
     pushRedoForCanvas({ type: "pages", ...stateSnapshot });
   }
@@ -687,7 +913,12 @@ export function applyRedo(
   popRedo: () => UndoEntry | undefined,
   pushUndo: () => void,
   pushUndoPages: () => void,
-  stateSnapshot: { pages: PageState[]; activePageIndex: number; activeLayout: any; viewMode: "left" | "right" | "spread" },
+  stateSnapshot: {
+    pages: PageState[];
+    activePageIndex: number;
+    activeLayout: any;
+    viewMode: "left" | "right" | "spread";
+  },
   setPage: (i: number, p: Partial<PageState>) => void,
   setPages: (p: PageState[]) => void,
   setActivePageIndex: (i: number) => void,

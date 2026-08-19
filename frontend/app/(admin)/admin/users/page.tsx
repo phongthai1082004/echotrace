@@ -60,7 +60,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
       onSuccess: (data) => {
         setNextCursor(data.nextCursor || null);
       },
-    }
+    },
   );
 
   const users = response?.users ?? [];
@@ -70,7 +70,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
   const { loading: updateLoading } = useApiMutation<any>(
     `/api/admin/users/status`,
     "PATCH",
-    isAuthenticated ? session.accessToken : undefined
+    isAuthenticated ? session.accessToken : undefined,
   );
 
   const handleNext = () => {
@@ -124,57 +124,79 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
                 <TableSkeletonRow key={i} columns={colWidths.length} animated />
               ))}
             </div>
-          ) : (<>
-          <ResponsiveTable
-            header={
-              <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                {[t("admin.users.name"), t("admin.users.email"), t("admin.users.phone"), t("admin.users.city"), t("admin.users.joined"), t("admin.users.role"), t("admin.users.status"), t("common.action")].map((h) => (
-                  <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>{h}</div>
-                ))}
-              </div>
-            }
-            gridCols={gridCols}
-          >
-            {users.length === 0 ? (
-              <EmptyStateMinimal
-                title={t("admin.users.noUsers")}
-                description={t("admin.users.createFirstUser")}
+          ) : (
+            <>
+              <ResponsiveTable
+                header={
+                  <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
+                    {[
+                      t("admin.users.name"),
+                      t("admin.users.email"),
+                      t("admin.users.phone"),
+                      t("admin.users.city"),
+                      t("admin.users.joined"),
+                      t("admin.users.role"),
+                      t("admin.users.status"),
+                      t("common.action"),
+                    ].map((h) => (
+                      <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
+                        {h}
+                      </div>
+                    ))}
+                  </div>
+                }
+                gridCols={gridCols}
+              >
+                {users.length === 0 ? (
+                  <EmptyStateMinimal title={t("admin.users.noUsers")} description={t("admin.users.createFirstUser")} />
+                ) : (
+                  users.map((user: User) => (
+                    <div
+                      key={user.id}
+                      className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
+                      style={{ gridTemplateColumns: gridCols }}
+                    >
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                        {user.phone || "—"}
+                      </div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                        {user.city || "—"}
+                      </div>
+                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                        {user.createdAt ? timeSince(user.createdAt) : "—"}
+                      </div>
+                      <div className="px-2 whitespace-nowrap">
+                        <span
+                          className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222] ${
+                            user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"
+                          }`}
+                          style={{ borderColor: "#222" }}
+                        >
+                          {user.role}
+                        </span>
+                      </div>
+                      <div className="px-2 whitespace-nowrap">
+                        <StatusBadge status={user.isDelete ? "banned" : "active"} />
+                      </div>
+                      <div className="px-2">
+                        <button onClick={() => openDetail(user)} className={`${neoBtn} p-1.5`}>
+                          <Eye size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </ResponsiveTable>
+              <AdminPagination
+                hasNext={nextCursor !== null}
+                hasPrevious={cursorStack.length > 0}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
               />
-            ) : (
-              users.map((user: User) => (
-                <div key={user.id}
-                  className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                  style={{ gridTemplateColumns: gridCols }}>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.phone || "—"}</div>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.city || "—"}</div>
-                  <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.createdAt ? timeSince(user.createdAt) : "—"}</div>
-                  <div className="px-2 whitespace-nowrap">
-                    <span className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222] ${
-                      user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"
-                    }`} style={{ borderColor: "#222" }}>
-                      {user.role}
-                    </span>
-                  </div>
-                  <div className="px-2 whitespace-nowrap"><StatusBadge status={user.isDelete ? "banned" : "active"} /></div>
-                  <div className="px-2">
-                    <button onClick={() => openDetail(user)}
-                      className={`${neoBtn} p-1.5`}>
-                      <Eye size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </ResponsiveTable>
-          <AdminPagination
-            hasNext={nextCursor !== null}
-            hasPrevious={cursorStack.length > 0}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-          </>)}
+            </>
+          )}
         </div>
       </div>
 
@@ -182,13 +204,21 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
       {selected && (
         <>
           <div className="fixed inset-0 z-40 bg-black/20" />
-          <div className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]" style={{ width: 420 }}>
+          <div
+            className="fixed top-0 right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-l-[3px] border-[#222]"
+            style={{ width: 420 }}
+          >
             <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b-[3px] border-[#222]">
               <div>
                 <p className={`${label} mb-1 text-[#666]`}>{t("admin.users.label")}</p>
                 <h2 className="text-xl font-bold truncate max-w-[300px]">{selected.name}</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"><X size={16} /></button>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"
+              >
+                <X size={16} />
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-none">
@@ -198,16 +228,22 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
                 <div className="flex gap-2">
                   {STATUS.map((s) => {
                     const active = statusForm === s;
-                    const meta = s === "active" ? { bg: "#D4EDDA", text: "#155724" } : { bg: "#F8D7DA", text: "#721C24" };
+                    const meta =
+                      s === "active" ? { bg: "#D4EDDA", text: "#155724" } : { bg: "#F8D7DA", text: "#721C24" };
                     return (
-                      <button key={s} onClick={() => {
-                        if (selected.role === "admin") return;
-                        setStatusForm(s);
-                      }}
+                      <button
+                        key={s}
+                        onClick={() => {
+                          if (selected.role === "admin") return;
+                          setStatusForm(s);
+                        }}
                         className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none rounded-[6px] px-2.5 py-1.5 border-2 transition-[opacity,border-color] ${
-                          active ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100" : "border-transparent opacity-40 hover:opacity-70"
+                          active
+                            ? "border-[#222] shadow-[2px_2px_0_#222] opacity-100"
+                            : "border-transparent opacity-40 hover:opacity-70"
                         }`}
-                        style={{ background: meta.bg, color: meta.text }}>
+                        style={{ background: meta.bg, color: meta.text }}
+                      >
                         {s}
                       </button>
                     );
@@ -241,10 +277,12 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
             </div>
 
             <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
-              <button onClick={handleSaveStatus}
+              <button
+                onClick={handleSaveStatus}
                 className={`${neoBtnPrimary} w-full flex items-center justify-center gap-2 py-3 ${
                   selected.role === "admin" || updateLoading ? "opacity-40 pointer-events-none" : ""
-                }`}>
+                }`}
+              >
                 <Save size={16} /> {t("common.save")}
               </button>
             </div>

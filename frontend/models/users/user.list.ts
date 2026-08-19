@@ -1,6 +1,6 @@
-import { User } from '@/models/users/user'
+import { User } from "@/models/users/user";
 
 export interface UserResponse {
-  users: User[]; 
+  users: User[];
   nextCursor: string | null;
 }

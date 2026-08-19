@@ -99,9 +99,9 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
           const s = S / T;
           const uv = new Float32Array(p.count * 2);
           const wrapU = (x: number, z: number) => {
-            if (z >= bb.max.z - S * 0.25) return (f * (bb.max.x - x)) / Wx;        // front
+            if (z >= bb.max.z - S * 0.25) return (f * (bb.max.x - x)) / Wx; // front
             if (z <= bb.min.z + S * 0.25) return f + s + (f * (x - bb.min.x)) / Wx; // back
-            return f + (s * (bb.max.z - z)) / S;                                    // spine
+            return f + (s * (bb.max.z - z)) / S; // spine
           };
           for (let i = 0; i < p.count; i++) {
             const z = p.getZ(i);
@@ -129,10 +129,7 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
       pivot.add(obj);
     });
 
-    const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, 10),
-      new THREE.ShadowMaterial({ opacity: 0.35 })
-    );
+    const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.ShadowMaterial({ opacity: 0.35 }));
 
     shadowPlane.rotation.x = -Math.PI / 2;
     shadowPlane.position.y = -1.3;
@@ -145,13 +142,18 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
     const yaw = { v: THREE.MathUtils.degToRad(25) };
     const TARGET = { ...yaw };
 
-    const onDown = (e: PointerEvent) => { down = true; lastX = e.clientX; };
+    const onDown = (e: PointerEvent) => {
+      down = true;
+      lastX = e.clientX;
+    };
     const onMove = (e: PointerEvent) => {
       if (!down || !obj) return;
       yaw.v += (e.clientX - lastX) * 0.008;
       lastX = e.clientX;
     };
-    const onUp = () => { down = false; };
+    const onUp = () => {
+      down = false;
+    };
 
     renderer.domElement.addEventListener("pointerdown", onDown);
     window.addEventListener("pointermove", onMove);

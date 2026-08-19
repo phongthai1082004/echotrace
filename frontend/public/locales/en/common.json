@@ -167,11 +167,7 @@
       "titleLine1": "Simple Pricing.",
       "titleLine2": "No Surprises.",
       "desc": "Every plan includes free studio access, 3D preview, and tracked shipping.",
-      "tierLabels": [
-        "SOFTCOVER",
-        "HARDCOVER",
-        "LEATHER"
-      ],
+      "tierLabels": ["SOFTCOVER", "HARDCOVER", "LEATHER"],
       "note": "All prices in USD · VAT included · 30-day satisfaction guarantee"
     },
     "testimonial": {
@@ -179,10 +175,7 @@
       "quote": "The quality knocked me out. My grandmother cried when she saw the leather edition. Worth every penny and then some.",
       "name": "Sofía Marchetti",
       "detail": "Wedding Album · Hardcover · Milan, IT",
-      "statsLabels": [
-        "Books Printed",
-        "Would Recommend"
-      ]
+      "statsLabels": ["Books Printed", "Would Recommend"]
     },
     "cta": {
       "section": "GET STARTED",
@@ -201,41 +194,19 @@
       "cols": [
         {
           "title": "Product",
-          "links": [
-            "Photo Books",
-            "Design Studio",
-            "Materials",
-            "Pricing",
-            "Templates"
-          ]
+          "links": ["Photo Books", "Design Studio", "Materials", "Pricing", "Templates"]
         },
         {
           "title": "Company",
-          "links": [
-            "About Us",
-            "Blog",
-            "Press",
-            "Careers",
-            "Contact"
-          ]
+          "links": ["About Us", "Blog", "Press", "Careers", "Contact"]
         },
         {
           "title": "Support",
-          "links": [
-            "Help Center",
-            "Shipping Info",
-            "Returns",
-            "File Guide",
-            "Status"
-          ]
+          "links": ["Help Center", "Shipping Info", "Returns", "File Guide", "Status"]
         }
       ],
       "legal": "© 2024 FOLIO PRESS LTD · ALL RIGHTS RESERVED",
-      "links": [
-        "Privacy Policy",
-        "Terms of Service",
-        "Cookie Preferences"
-      ],
+      "links": ["Privacy Policy", "Terms of Service", "Cookie Preferences"],
       "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
@@ -473,6 +444,8 @@
       "shipping": "Shipping",
       "tax": "Tax",
       "total": "Total",
+      "discount": "Discount",
+      "payNow": "Pay Now",
       "placeOrder": "Place Order",
       "back": "Back",
       "continuePayment": "Continue to Payment",
@@ -547,20 +520,7 @@
       "monthlyRevenue": "Monthly Revenue (₫)",
       "monthlyOrders": "Monthly Orders",
       "revenueOverview": "Revenue Overview",
-      "months": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ]
+      "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     },
     "finance": {
       "label": "Admin · Finance",
@@ -860,7 +820,8 @@
       "addNew": "Add New",
       "name": "Name",
       "type": "Type",
-      "kind": "Kind",
+      "category": "Category",
+      "quantity": "Qty",
       "pages": "Pages",
       "pg": "pg",
       "status": "Status",
@@ -868,6 +829,7 @@
       "edit": "Edit",
       "searchPlaceholder": "Search by name…",
       "allTypes": "All Types",
+      "allCategories": "All Categories",
       "allKinds": "All Kinds",
       "allStatuses": "All Statuses",
       "published": "Published",

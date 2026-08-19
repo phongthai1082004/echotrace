@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useApiQuery, UseApiQueryOptions } from '../api/useApiQuery';
+import { useState, useCallback, useMemo } from "react";
+import { useApiQuery, UseApiQueryOptions } from "../api/useApiQuery";
 
 export interface ServerPaginationParams {
   pageSize?: number;
@@ -9,7 +9,7 @@ export interface ServerPaginationParams {
 
 export interface UseServerPaginationOptions<T> extends UseApiQueryOptions<T> {
   pageSize?: number;
-  pagingStrategy?: 'cursor' | 'offset';
+  pagingStrategy?: "cursor" | "offset";
 }
 
 export interface UseServerPaginationResult<T> {
@@ -22,7 +22,7 @@ export interface UseServerPaginationResult<T> {
   hasPreviousPage: boolean;
   cursor: string | null;
   offset: number;
-  
+
   // Methods
   nextPage: () => void;
   previousPage: () => void;
@@ -38,7 +38,7 @@ export interface UseServerPaginationResult<T> {
  * @param token - Authentication token
  * @param options - Configuration options
  * @returns Object with paginated data and navigation methods
- * 
+ *
  * @example
  * ```tsx
  * const {
@@ -57,7 +57,7 @@ export interface UseServerPaginationResult<T> {
  *     pagingStrategy: 'cursor',
  *   }
  * );
- * 
+ *
  * return (
  *   <>
  *     {items?.map((item) => (
@@ -75,15 +75,9 @@ export interface UseServerPaginationResult<T> {
 export function useServerPagination<T = any>(
   baseUrl: string,
   token?: string,
-  options: UseServerPaginationOptions<T> = {}
+  options: UseServerPaginationOptions<T> = {},
 ): UseServerPaginationResult<T> {
-  const {
-    pageSize: initialPageSize = 10,
-    pagingStrategy = 'cursor',
-    enabled = true,
-    onSuccess,
-    onError,
-  } = options;
+  const { pageSize: initialPageSize = 10, pagingStrategy = "cursor", enabled = true, onSuccess, onError } = options;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSizeState] = useState(initialPageSize);
@@ -94,74 +88,74 @@ export function useServerPagination<T = any>(
   // Build URL with pagination parameters
   const url = useMemo(() => {
     const params = new URLSearchParams();
-    params.set('pageSize', pageSize.toString());
+    params.set("pageSize", pageSize.toString());
 
-    if (pagingStrategy === 'cursor' && cursor) {
-      params.set('cursor', cursor);
-    } else if (pagingStrategy === 'offset') {
-      params.set('offset', offset.toString());
+    if (pagingStrategy === "cursor" && cursor) {
+      params.set("cursor", cursor);
+    } else if (pagingStrategy === "offset") {
+      params.set("offset", offset.toString());
     }
 
     return `${baseUrl}?${params.toString()}`;
   }, [baseUrl, pageSize, cursor, offset, pagingStrategy]);
 
   // Fetch paginated data
-  const { data, loading, error, refetch } = useApiQuery<T>(
-    url,
-    token,
-    {
-      enabled,
-      onSuccess: (data) => {
-        // Extract hasNextCursor/hasNext from response
-        if (data && typeof data === 'object') {
-          const hasNext = ('hasNextCursor' in data || 'hasNext' in data)
-            ? (data as any).hasNextCursor ?? (data as any).hasNext ?? false
+  const { data, loading, error, refetch } = useApiQuery<T>(url, token, {
+    enabled,
+    onSuccess: (data) => {
+      // Extract hasNextCursor/hasNext from response
+      if (data && typeof data === "object") {
+        const hasNext =
+          "hasNextCursor" in data || "hasNext" in data
+            ? ((data as any).hasNextCursor ?? (data as any).hasNext ?? false)
             : true;
-          setHasNextPageState(hasNext);
-        }
-        onSuccess?.(data);
-      },
-      onError,
-    }
-  );
+        setHasNextPageState(hasNext);
+      }
+      onSuccess?.(data);
+    },
+    onError,
+  });
 
   const nextPage = useCallback(() => {
     if (hasNextPageState) {
-      if (pagingStrategy === 'cursor') {
+      if (pagingStrategy === "cursor") {
         // Extract next cursor from response
-        if (data && typeof data === 'object' && 'nextCursor' in data) {
+        if (data && typeof data === "object" && "nextCursor" in data) {
           setCursor((data as any).nextCursor);
         }
       } else {
-        setOffset(prev => prev + pageSize);
+        setOffset((prev) => prev + pageSize);
       }
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   }, [hasNextPageState, pageSize, pagingStrategy, data]);
 
   const previousPage = useCallback(() => {
     if (currentPage > 1) {
-      if (pagingStrategy === 'cursor') {
+      if (pagingStrategy === "cursor") {
         // Reset cursor for previous page (requires server support)
         setCursor(null);
       } else {
-        setOffset(prev => Math.max(0, prev - pageSize));
+        setOffset((prev) => Math.max(0, prev - pageSize));
       }
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   }, [currentPage, pageSize, pagingStrategy]);
 
-  const goToPage = useCallback((page: number) => {
-    if (page >= 1) {
-      setCurrentPage(page);
-      if (pagingStrategy === 'offset') {
-        setOffset((page - 1) * pageSize);
-      } else {
-        // Cursor-based pagination doesn't support direct page jumping
-        console.warn('Direct page navigation not supported with cursor-based pagination');
+  const goToPage = useCallback(
+    (page: number) => {
+      if (page >= 1) {
+        setCurrentPage(page);
+        if (pagingStrategy === "offset") {
+          setOffset((page - 1) * pageSize);
+        } else {
+          // Cursor-based pagination doesn't support direct page jumping
+          console.warn("Direct page navigation not supported with cursor-based pagination");
+        }
       }
-    }
-  }, [pageSize, pagingStrategy]);
+    },
+    [pageSize, pagingStrategy],
+  );
 
   const setPageSize = useCallback((size: number) => {
     if (size > 0 && size <= 1000) {

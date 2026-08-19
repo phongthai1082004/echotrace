@@ -87,7 +87,11 @@ export const authOptions = {
         return token;
       }
       if (!token.accessTokenExpires || Date.now() > token.accessTokenExpires) {
-        try { return await refreshAccessToken(token); } catch { return null; }
+        try {
+          return await refreshAccessToken(token);
+        } catch {
+          return null;
+        }
       }
       if (trigger === "update" && session?.image) token.picture = session.image;
       return token;

@@ -167,11 +167,7 @@
       "titleLine1": "Giá Đơn Giản.",
       "titleLine2": "Không Bất Ngờ.",
       "desc": "Mọi gói đều bao gồm quyền truy cập studio miễn phí, xem trước 3D và vận chuyển có theo dõi.",
-      "tierLabels": [
-        "BÌA MỀM",
-        "BÌA CỨNG",
-        "BÌA DA"
-      ],
+      "tierLabels": ["BÌA MỀM", "BÌA CỨNG", "BÌA DA"],
       "note": "Tất cả giá bằng USD · Đã gồm VAT · Cam kết hài lòng 30 ngày"
     },
     "testimonial": {
@@ -179,11 +175,7 @@
       "quote": "Chất lượng làm tôi choáng ngợp. Bà tôi đã khóc khi thấy bản bìa da. Xứng đáng từng xu và còn hơn thế.",
       "name": "Sofía Marchetti",
       "detail": "Album Cưới · Bìa Cứng · Milan, Ý",
-      "statsLabels": [
-        "Sách Đã In",
-        "Đánh Giá Trung Bình",
-        "Sẽ Giới Thiệu"
-      ]
+      "statsLabels": ["Sách Đã In", "Đánh Giá Trung Bình", "Sẽ Giới Thiệu"]
     },
     "cta": {
       "section": "BẮT ĐẦU",
@@ -202,41 +194,19 @@
       "cols": [
         {
           "title": "Sản Phẩm",
-          "links": [
-            "Sách Ảnh",
-            "Studio Thiết Kế",
-            "Chất Liệu",
-            "Bảng Giá",
-            "Mẫu"
-          ]
+          "links": ["Sách Ảnh", "Studio Thiết Kế", "Chất Liệu", "Bảng Giá", "Mẫu"]
         },
         {
           "title": "Công Ty",
-          "links": [
-            "Về Chúng Tôi",
-            "Blog",
-            "Báo Chí",
-            "Tuyển Dụng",
-            "Liên Hệ"
-          ]
+          "links": ["Về Chúng Tôi", "Blog", "Báo Chí", "Tuyển Dụng", "Liên Hệ"]
         },
         {
           "title": "Hỗ Trợ",
-          "links": [
-            "Trung Tâm Trợ Giúp",
-            "Thông Tin Giao Hàng",
-            "Đổi Trả",
-            "Hướng Dẫn Tệp",
-            "Trạng Thái"
-          ]
+          "links": ["Trung Tâm Trợ Giúp", "Thông Tin Giao Hàng", "Đổi Trả", "Hướng Dẫn Tệp", "Trạng Thái"]
         }
       ],
       "legal": "© 2024 FOLIO PRESS LTD · BẢO LƯU MỌI QUYỀN",
-      "links": [
-        "Chính Sách Bảo Mật",
-        "Điều Khoản Dịch Vụ",
-        "Tùy Chọn Cookie"
-      ],
+      "links": ["Chính Sách Bảo Mật", "Điều Khoản Dịch Vụ", "Tùy Chọn Cookie"],
       "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
@@ -474,6 +444,8 @@
       "shipping": "Phí ship",
       "tax": "Thuế",
       "total": "Tổng cộng",
+      "discount": "Giảm giá",
+      "payNow": "Thanh toán ngay",
       "placeOrder": "Đặt hàng",
       "back": "Quay lại",
       "continuePayment": "Tiếp tục thanh toán",
@@ -548,20 +520,7 @@
       "monthlyRevenue": "Doanh thu hàng tháng (VND)",
       "monthlyOrders": "Đơn hàng hàng tháng",
       "revenueOverview": "Tổng quan Doanh thu",
-      "months": [
-        "T1",
-        "T2",
-        "T3",
-        "T4",
-        "T5",
-        "T6",
-        "T7",
-        "T8",
-        "T9",
-        "T10",
-        "T11",
-        "T12"
-      ]
+      "months": ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"]
     },
     "finance": {
       "label": "Admin · Tài chính",
@@ -861,7 +820,8 @@
       "addNew": "Thêm mới",
       "name": "Tên",
       "type": "Loại",
-      "kind": "Dạng",
+      "category": "Phân loại",
+      "quantity": "SL",
       "pages": "Số trang",
       "pg": "tr",
       "status": "Trạng thái",
@@ -869,6 +829,7 @@
       "edit": "Sửa",
       "searchPlaceholder": "Tìm theo tên…",
       "allTypes": "Tất cả loại",
+      "allCategories": "Tất cả phân loại",
       "allKinds": "Tất cả dạng",
       "allStatuses": "Tất cả trạng thái",
       "published": "Đã xuất bản",

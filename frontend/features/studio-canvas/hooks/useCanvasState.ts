@@ -1,8 +1,8 @@
 "use client";
 
-import { create } from 'zustand';
-import type { Canvas as FabricCanvas } from 'fabric';
-import { navItems } from '../types/menu'
+import { create } from "zustand";
+import type { Canvas as FabricCanvas } from "fabric";
+import { navItems } from "../types/menu";
 import type { PageState, FormatKey } from "../types";
 import type { LayoutConfig } from "../types/layout";
 import { serializeCanvasState } from "../lib/layout-engine";
@@ -19,17 +19,19 @@ type BookMeta = {
   height?: number | null;
 };
 
-export type UndoEntry = {
-  type: "canvas";
-  pageIdx: number;
-  canvasJson: string;
-} | {
-  type: "pages";
-  pages: PageState[];
-  activePageIndex: number;
-  activeLayout: LayoutConfig | null;
-  viewMode: "left" | "right" | "spread";
-};
+export type UndoEntry =
+  | {
+      type: "canvas";
+      pageIdx: number;
+      canvasJson: string;
+    }
+  | {
+      type: "pages";
+      pages: PageState[];
+      activePageIndex: number;
+      activeLayout: LayoutConfig | null;
+      viewMode: "left" | "right" | "spread";
+    };
 
 interface CanvasStore {
   canvas: FabricCanvas | null;
@@ -87,7 +89,15 @@ const INITIAL_STATE: Partial<CanvasStore> = {
     { index: 0, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
     { index: 1, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },
   ],
-  bookMeta: { id: null, title: "Untitled", themeId: null, format: "PORTRAIT_A4", gsm: 200, paper: "matte", kind: "TEMPLATE" },
+  bookMeta: {
+    id: null,
+    title: "Untitled",
+    themeId: null,
+    format: "PORTRAIT_A4",
+    gsm: 200,
+    paper: "matte",
+    kind: "TEMPLATE",
+  },
   undoStack: [],
   undoVersion: 0,
   redoStack: [],
@@ -110,11 +120,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   setActiveMenu: (m) => set({ activeMenu: m }),
   setActivePageIndex: (i) => set({ activePageIndex: i }),
   setPages: (p) => set({ pages: p }),
-  setPage: (i, partial) => set((s) => {
-    const pages = [...s.pages];
-    pages[i] = { ...pages[i], ...partial };
-    return { pages };
-  }),
+  setPage: (i, partial) =>
+    set((s) => {
+      const pages = [...s.pages];
+      pages[i] = { ...pages[i], ...partial };
+      return { pages };
+    }),
   setBookMeta: (m) => set((s) => ({ bookMeta: { ...s.bookMeta, ...m } })),
   undoStack: [] as UndoEntry[],
   pushUndo: () => {
@@ -129,7 +140,13 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
   pushUndoPages: () => {
     const { pages, activePageIndex, activeLayout, viewMode, undoStack } = get();
-    const entry: UndoEntry = { type: "pages", pages: JSON.parse(JSON.stringify(pages)), activePageIndex, activeLayout, viewMode };
+    const entry: UndoEntry = {
+      type: "pages",
+      pages: JSON.parse(JSON.stringify(pages)),
+      activePageIndex,
+      activeLayout,
+      viewMode,
+    };
     const stack = [...undoStack, entry].slice(-50);
     set({ undoStack: stack });
   },

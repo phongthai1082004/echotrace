@@ -6,9 +6,5 @@ type Props = {
 };
 
 export function StudioLayout({ children, noPadding }: Props) {
-  return (
-    <div className={`h-screen flex flex-col ${noPadding ? "" : "pt-15"}`}>
-      {children}
-    </div>
-  );
+  return <div className={`h-screen flex flex-col ${noPadding ? "" : "pt-15"}`}>{children}</div>;
 }

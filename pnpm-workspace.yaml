@@ -10,6 +10,7 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+  workerd: true
 onlyBuiltDependencies:
   - prisma
   - better-sqlite3

@@ -36,10 +36,20 @@ export default function StudioRouteInner() {
   );
 
   if (loadError) {
-    return <div className="min-h-screen flex flex-col items-center justify-center gap-3"><p className="text-sm font-bold text-[#B54843]">Failed to load book: {loadError}</p></div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <p className="text-sm font-bold text-[#B54843]">Failed to load book: {loadError}</p>
+      </div>
+    );
   }
   if (!loaded) {
-    return <div className="min-h-screen flex items-center justify-center"><p suppressHydrationWarning className="font-mono text-[10px] font-bold">{t("common.loading")}</p></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p suppressHydrationWarning className="font-mono text-[10px] font-bold">
+          {t("common.loading")}
+        </p>
+      </div>
+    );
   }
   return <StudioPage api={customerAPI} backHref={sampleId ? "/explore" : "/my-journals"} />;
 }

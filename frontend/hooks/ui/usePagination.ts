@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from "react";
 
 export interface UsePaginationOptions {
   pageSize?: number;
@@ -14,7 +14,7 @@ export interface UsePaginationResult {
   hasPreviousPage: boolean;
   startIndex: number;
   endIndex: number;
-  
+
   // Methods
   goToPage: (page: number) => void;
   nextPage: () => void;
@@ -30,21 +30,21 @@ export interface UsePaginationResult {
  * @param items - Array of items to paginate
  * @param options - Configuration options
  * @returns Pagination state and methods
- * 
+ *
  * @example
  * ```tsx
- * const { 
- *   currentPage, 
- *   pageSize, 
+ * const {
+ *   currentPage,
+ *   pageSize,
  *   totalPages,
  *   startIndex,
  *   endIndex,
  *   nextPage,
  *   previousPage,
  * } = usePagination(allItems, { pageSize: 10 });
- * 
+ *
  * const pageItems = allItems.slice(startIndex, endIndex);
- * 
+ *
  * return (
  *   <>
  *     {pageItems.map((item) => (
@@ -61,10 +61,7 @@ export interface UsePaginationResult {
  * );
  * ```
  */
-export function usePagination(
-  items: any[] = [],
-  options: UsePaginationOptions = {}
-): UsePaginationResult {
+export function usePagination(items: any[] = [], options: UsePaginationOptions = {}): UsePaginationResult {
   const { pageSize: initialPageSize = 10, maxPages = 100 } = options;
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,20 +79,23 @@ export function usePagination(
   const hasNextPage = validCurrentPage < totalPages;
   const hasPreviousPage = validCurrentPage > 1;
 
-  const goToPage = useCallback((page: number) => {
-    const normalizedPage = Math.max(1, Math.min(page, Math.max(1, totalPages)));
-    setCurrentPage(normalizedPage);
-  }, [totalPages]);
+  const goToPage = useCallback(
+    (page: number) => {
+      const normalizedPage = Math.max(1, Math.min(page, Math.max(1, totalPages)));
+      setCurrentPage(normalizedPage);
+    },
+    [totalPages],
+  );
 
   const nextPage = useCallback(() => {
     if (hasNextPage) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   }, [hasNextPage]);
 
   const previousPage = useCallback(() => {
     if (hasPreviousPage) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   }, [hasPreviousPage]);
 

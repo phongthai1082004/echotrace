@@ -1,78 +1,76 @@
-import { injectable, inject } from "tsyringe";
-import { Response } from "express";
-import { AuthRequest } from "../../middleware/auth.middleware.js";
-import { ApiResponse } from "../../middleware/api.response.js";
-import { AppError } from "../../middleware/app.error.js";
-import { ErrorCode } from "@echotrace/shared";
-import { ISampleBookService } from "./sample-books.service.js";
+import { injectable, inject } from 'tsyringe';
+import { Response } from 'express';
+import { AuthRequest } from '../../middleware/auth.middleware.js';
+import { ApiResponse } from '../../middleware/api.response.js';
+import { AppError } from '../../middleware/app.error.js';
+import { ErrorCode } from '@echotrace/shared';
+import { ISampleBookService } from './sample-books.service.js';
 
 @injectable()
 export class SampleBookController {
-  constructor(
-    @inject("ISampleBookService") private readonly sampleBookService: ISampleBookService,
-  ) {}
+	constructor(@inject('ISampleBookService') private readonly sampleBookService: ISampleBookService) {}
 
-  list = async (req: AuthRequest, res: Response) => {
-    const { search, type, kind, status, order, limit, cursor } = req.query;
-    const { items, nextCursor } = await this.sampleBookService.list({
-      search: search as string | undefined,
-      type: type as string | undefined,
-      kind: kind as string | undefined,
-      status: status as string | undefined,
-      order: (order as string) || "desc",
-      limit: limit ? Number(limit) : 12,
-      cursor: cursor ? Number(cursor) : undefined,
-    });
-    res.json(ApiResponse.success({ items, nextCursor }));
-  };
+	list = async (req: AuthRequest, res: Response) => {
+		const { search, type, category, status, order, limit, cursor } = req.query;
+		const { items, nextCursor } = await this.sampleBookService.list({
+			search: search as string | undefined,
+			type: type as string | undefined,
+			category: category as string | undefined,
+			status: status as string | undefined,
+			order: (order as string) || 'desc',
+			limit: limit ? Number(limit) : 12,
+			cursor: cursor ? Number(cursor) : undefined,
+		});
+		res.json(ApiResponse.success({ items, nextCursor }));
+	};
 
-  getById = async (req: AuthRequest, res: Response) => {
-    const id = parseInt(String(req.params.id));
-    const item = await this.sampleBookService.getById(id);
-    res.json(ApiResponse.success(item));
-  };
+	getById = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		const item = await this.sampleBookService.getById(id);
+		res.json(ApiResponse.success(item));
+	};
 
-  create = async (req: AuthRequest, res: Response) => {
-    const adminId = parseInt(req.userId!);
-    const item = await this.sampleBookService.create(adminId, req.body);
-    res.status(201).json(ApiResponse.success(item));
-  };
+	create = async (req: AuthRequest, res: Response) => {
+		const adminId = parseInt(req.userId!);
+		const item = await this.sampleBookService.create(adminId, req.body);
+		res.status(201).json(ApiResponse.success(item));
+	};
 
-  update = async (req: AuthRequest, res: Response) => {
-    const id = parseInt(String(req.params.id));
-    const item = await this.sampleBookService.update(id, req.body);
-    res.json(ApiResponse.success(item));
-  };
+	update = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		const item = await this.sampleBookService.update(id, req.body);
+		res.json(ApiResponse.success(item));
+	};
 
-  updateStatus = async (req: AuthRequest, res: Response) => {
-    const id = parseInt(String(req.params.id));
-    const { status } = req.body;
-    if (!status || !["draft", "published", "archive"].includes(status)) {
-      throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);
-    }
-    const item = await this.sampleBookService.updateStatus(id, status);
-    res.json(ApiResponse.success(item));
-  };
+	updateStatus = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		const { status } = req.body;
+		if (!status || !['draft', 'published', 'archive'].includes(status)) {
+			throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);
+		}
+		const item = await this.sampleBookService.updateStatus(id, status);
+		res.json(ApiResponse.success(item));
+	};
 
-  remove = async (req: AuthRequest, res: Response) => {
-    const id = parseInt(String(req.params.id));
-    await this.sampleBookService.remove(id);
-    res.json(ApiResponse.message("Sample book deleted"));
-  };
+	remove = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		await this.sampleBookService.remove(id);
+		res.json(ApiResponse.message('Sample book deleted'));
+	};
 
-  explore = async (req: AuthRequest, res: Response) => {
-    const items = await this.sampleBookService.explore();
-    res.json(ApiResponse.success(items));
-  };
+	explore = async (req: AuthRequest, res: Response) => {
+		const items = await this.sampleBookService.explore();
+		res.json(ApiResponse.success(items));
+	};
 
-  albums = async (req: AuthRequest, res: Response) => {
-    const items = await this.sampleBookService.albums();
-    res.json(ApiResponse.success(items));
-  };
+	albums = async (req: AuthRequest, res: Response) => {
+		const items = await this.sampleBookService.albums();
+		res.json(ApiResponse.success(items));
+	};
 
-  getPublishedById = async (req: AuthRequest, res: Response) => {
-    const id = parseInt(String(req.params.id));
-    const item = await this.sampleBookService.getPublishedById(id);
-    res.json(ApiResponse.success(item));
-  };
+	getPublishedById = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		const item = await this.sampleBookService.getPublishedById(id);
+		res.json(ApiResponse.success(item));
+	};
 }
