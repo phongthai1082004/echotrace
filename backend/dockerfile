@@ -1,0 +1,54 @@
+ARG NODE_VERSION=24.18.0-alpine
+
+# Stage 1: install deps — filtered install: chỉ backend + shared, bỏ frontend
+FROM node:${NODE_VERSION} AS dependencies
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+RUN corepack enable pnpm && \
+    pnpm install --frozen-lockfile --filter backend...
+
+# Stage 2: build shared -> prisma generate -> compile backend -> prune dev deps
+FROM node:${NODE_VERSION} AS builder
+WORKDIR /app
+ENV npm_config_verify_deps_before_run=false
+
+COPY --from=dependencies /app/ ./
+COPY shared/ ./shared/
+COPY backend/ ./backend/
+
+RUN corepack enable pnpm && \
+    pnpm --filter @echotrace/shared build && \
+    pnpm --filter backend exec prisma generate && \
+    pnpm --filter backend build
+
+# Stage 3: runtime — giữ layout /app để symlink pnpm (.pnpm) còn nguyên
+FROM node:${NODE_VERSION} AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+# 1. Copy các file cấu hình root để pnpm nhận diện được workspace
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/pnpm-lock.yaml ./
+
+# 2. Copy toàn bộ node_modules (chứa các symlink .pnpm)
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/backend/node_modules ./backend/node_modules
+
+# 3. Copy source code và thư mục cần thiết
+COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=builder /app/backend/generated ./backend/generated
+COPY --from=builder /app/backend/locales ./backend/locales
+COPY --from=builder /app/backend/package.json ./backend/package.json
+COPY --from=builder /app/backend/prisma ./backend/prisma
+COPY --from=builder /app/backend/prisma.config.ts ./backend/prisma.config.ts
+
+WORKDIR /app/backend
+EXPOSE 4000
+
+# bake pnpm vào image -> lúc boot không cần tải từ registry
+RUN corepack enable pnpm && corepack prepare pnpm@11.9.0 --activate
+
+CMD ["sh", "-c", "pnpm exec prisma db push && node dist/src/server.js"]

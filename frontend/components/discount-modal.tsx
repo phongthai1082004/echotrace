@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog } from "@/components/ui/dialog";
 import { X, Check, Tag } from "lucide-react";
-import { neoBtn, neoBtnPrimary } from "@/lib/styles";
+import { neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 
 // ponytail: coupon validate + tính discount từ server — frontend không tự định giá.
 export function DiscountModal({
@@ -92,7 +92,7 @@ export function DiscountModal({
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleApply()}
                   placeholder={t("discount.enterCode")}
-                  className="flex-1 bg-white text-[13px] font-bold px-3 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
+                  className={`${input} flex-1 bg-white text-[13px]`}
                 />
                 <button
                   onClick={handleApply}

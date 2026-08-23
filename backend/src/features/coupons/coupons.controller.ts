@@ -14,19 +14,25 @@ export class CouponController {
 	};
 
 	create = async (req: AuthRequest, res: Response) => {
-		const { code, scope, discountType, discountValue, minOrderAmount, maxDiscountAmount, maxUsageCount, isActive, expiresAt } = req.body;
+		const { code, discountType, discountValue, minOrderAmount, minOrderType, maxDiscountAmount, maxUsageCount, isActive, expiresAt } = req.body;
 		const coupon = await this.service.create({
 			code,
-			scope,
 			discountType,
 			discountValue,
 			minOrderAmount,
+			minOrderType,
 			maxDiscountAmount,
 			maxUsageCount,
 			isActive,
 			expiresAt,
 		});
 		res.status(201).json(ApiResponse.success(coupon));
+	};
+
+	deactivate = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		await this.service.deactivate(id);
+		res.json(ApiResponse.message('Coupon deactivated'));
 	};
 
 	remove = async (req: AuthRequest, res: Response) => {

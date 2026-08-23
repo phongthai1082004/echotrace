@@ -62,6 +62,21 @@ function bearerToken(request: Request): string | null {
   return h.startsWith("Bearer ") ? h.slice(7) : null;
 }
 
+// WEB-002 fix: chỉ nhận ảnh thật theo magic bytes — chặn text/html/svg và mọi payload khác
+// được serve lại với origin của worker. HEIF/HEIC (iPhone) nhận diện qua brand "ftyp".
+function detectImageMime(b: Uint8Array): string | null {
+  const ascii = (start: number, len: number) => String.fromCharCode(...b.slice(start, start + len));
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b.length >= 3 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  if (b.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP") return "image/webp";
+  if (b.length >= 12 && ascii(4, 4) === "ftyp") {
+    const brand = ascii(8, 4);
+    if (/^(heic|heix|hevc|mif1|msf1)/.test(brand)) return "image/heic";
+  }
+  return null;
+}
+
 async function handleUpload(request: Request, env: Env): Promise<Response> {
   const token = request.headers.get("X-Echotrace-Token") ?? "";
   const folder = request.headers.get("X-Echotrace-Folder") ?? "";
@@ -80,9 +95,13 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   if (body.byteLength === 0) return json({ error: "empty body" }, 400);
   if (body.byteLength > MAX_UPLOAD_BYTES) return json({ error: "file too large" }, 413);
 
+  const mime = detectImageMime(new Uint8Array(body.slice(0, 12)));
+  if (!mime) return json({ error: "only image uploads are allowed" }, 415);
+
   const key = `${folder}/${crypto.randomUUID()}`;
   await env.R2.put(key, body, {
-    httpMetadata: { contentType: request.headers.get("Content-Type") ?? "application/octet-stream" },
+    // contentType từ kết quả magic-byte, KHÔNG tin header client gửi lên
+    httpMetadata: { contentType: mime },
   });
 
   const url = new URL(request.url);
@@ -117,6 +136,10 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
   object.writeHttpMetadata(headers);
   headers.set("Etag", object.httpEtag ?? "");
   headers.set("access-control-allow-origin", "*");
+  // ponytail: key là UUID không bao giờ ghi đè -> original cache vĩnh viễn an toàn,
+  // delete thi URL chet 404 (browser khong co co che xoa cache tu xa);
+  // rieng ban transform (cung key, noi dung phai sinh) moi can TTL ngang de het hanh trong ngay
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
   if (request.method === "HEAD") return new Response(null, { headers });
 
   const stream = object.body;
@@ -127,17 +150,15 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
           .transform({ width })
           .output({ format: await pickFormat(request) })
       ).response();
-      // ponytail: short TTL so deleted objects stop serving within a day;
-      // originals below keep long TTL since keys are content-addressed UUIDs.
       headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
       return new Response(transformed.body, { headers });
     } catch {
       // ponytail: fall back to original if transform fails (e.g. unsupported input)
+      // — giữ Cache-Control immutable mặc định vì đây là byte gốc
       const retry = await env.R2.get(path);
       if (retry) return new Response(retry.body, { headers });
     }
   }
-  headers.set("Cache-Control", "public, max-age=31536000, immutable");
   return new Response(stream, { headers });
 }
 

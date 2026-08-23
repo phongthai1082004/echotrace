@@ -21,7 +21,7 @@ import {
 import { pageAtom, pages, turnPage } from "./ui";
 import { buildSheets, type BookPageImage } from "./render-book-images";
 
-const TEX_ROOT = "/book-slider/textures";
+const TEX_ROOT = "/assets/book-slider/textures";
 
 const PAGE_WIDTH = 1.38;
 const PAGE_HEIGHT = 1.71;

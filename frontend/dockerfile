@@ -1,0 +1,38 @@
+ARG NODE_VERSION=24.18.0-alpine
+
+# Stage 1: install deps — filtered install: chỉ frontend + shared
+FROM node:${NODE_VERSION} AS dependencies
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+RUN corepack enable pnpm && \
+    pnpm install --frozen-lockfile --filter echotrace...
+
+# Stage 2: build shared -> next build (standalone)
+FROM node:${NODE_VERSION} AS builder
+WORKDIR /app
+ENV npm_config_verify_deps_before_run=false
+# copy cả cây /app (root + per-package node_modules của pnpm)
+COPY --from=dependencies /app/ ./
+COPY shared/ ./shared/
+COPY frontend/ ./frontend/
+# NEXT_PUBLIC_* được bake lúc build, không đọc lại lúc runtime
+ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN corepack enable pnpm && \
+    pnpm --filter @echotrace/shared build && \
+    pnpm --filter echotrace build
+
+# Stage 3: runtime — chỉ chứa output standalone của Next
+FROM node:${NODE_VERSION} AS runner
+WORKDIR /app
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /app/frontend/.next/standalone ./
+COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
+COPY --from=builder /app/frontend/public ./frontend/public
+EXPOSE 3000
+
+CMD ["node", "frontend/server.js"]

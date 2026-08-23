@@ -1,29 +1,86 @@
-import {
-	env,
-	createExecutionContext,
-	waitOnExecutionContext,
-	SELF,
-} from "cloudflare:test";
+import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
 import worker from "../src/index";
 
-// For now, you'll need to do something like this to get a correctly-typed
-// `Request` to pass to `worker.fetch()`.
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe("Hello World worker", () => {
-	it("responds with Hello World! (unit style)", async () => {
-		const request = new IncomingRequest("http://example.com");
-		// Create an empty context to pass to `worker.fetch()`.
-		const ctx = createExecutionContext();
-		const response = await worker.fetch(request, env, ctx);
-		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+// R2 object giả: body là ReadableStream + metadata như object thật
+function fakeObject(bytes: Uint8Array) {
+	return {
+		body: new Response(bytes).body,
+		httpEtag: '"etag-123"',
+		writeHttpMetadata(headers: Headers) {
+			headers.set("content-type", "image/png");
+		},
+	};
+}
+
+const ENV_BASE = {
+	R2: {
+		get: async (key: string) => (key === "echotrace/gallery/u1/abc" ? fakeObject(new Uint8Array([1, 2, 3])) : null),
+	},
+	UPLOAD_SECRET: "s",
+	ADMIN_TOKEN: "a",
+};
+
+function run(request: Request, envMock: unknown) {
+	const ctx = createExecutionContext();
+	const p = worker.fetch(request, envMock as never, ctx);
+	return { p, ctx };
+}
+
+describe("GET cache headers", () => {
+	it("original -> immutable vĩnh viễn", async () => {
+		const req = new IncomingRequest("http://x.com/echotrace/gallery/u1/abc");
+		const { p, ctx } = run(req, ENV_BASE);
+		const res = await p;
 		await waitOnExecutionContext(ctx);
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+		expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
 	});
 
-	it("responds with Hello World! (integration style)", async () => {
-		const response = await SELF.fetch("https://example.com");
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+	it("HEAD cũng mang Cache-Control", async () => {
+		const req = new IncomingRequest("http://x.com/echotrace/gallery/u1/abc", { method: "HEAD" });
+		const { p, ctx } = run(req, ENV_BASE);
+		const res = await p;
+		await waitOnExecutionContext(ctx);
+		expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
+	});
+
+	it("transform /w_N/ -> TTL ngắn để ảnh xoá hết hạn trong ngày", async () => {
+		const envMock = {
+			...ENV_BASE,
+			IMAGES: {
+				input: (_s: unknown) => ({
+					transform: () => ({
+						output: async () => ({ response: () => ({ body: new Response(new Uint8Array([9])).body }) }),
+					}),
+				}),
+			},
+		};
+		const req = new IncomingRequest("http://x.com/w_300/echotrace/gallery/u1/abc", {
+			headers: { Accept: "image/webp" },
+		});
+		const { p, ctx } = run(req, envMock);
+		const res = await p;
+		await waitOnExecutionContext(ctx);
+		expect(res.headers.get("Cache-Control")).toBe("public, max-age=86400, stale-while-revalidate=86400");
+	});
+
+	it("transform fail -> fallback original keeps immutable", async () => {
+		const envMock = {
+			...ENV_BASE,
+			IMAGES: {
+				input: () => {
+					throw new Error("boom");
+				},
+			},
+		};
+		const req = new IncomingRequest("http://x.com/w_300/echotrace/gallery/u1/abc", {
+			headers: { Accept: "image/webp" },
+		});
+		const { p, ctx } = run(req, envMock);
+		const res = await p;
+		await waitOnExecutionContext(ctx);
+		expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
 	});
 });

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.join(import.meta.dirname, ".."),
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cloudfarer2.cabinetdememoire.workers.dev" },
@@ -18,10 +20,32 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
           },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+        ],
+      },
+      {
+        source: "/api/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0, must-revalidate",
+          },
         ],
       },
     ];
   },
+  output: 'standalone',
 };
 
 export default nextConfig;

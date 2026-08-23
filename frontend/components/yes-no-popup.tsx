@@ -2,7 +2,9 @@
 
 import { useTranslation } from "react-i18next";
 import { Dialog } from "@/components/ui/dialog";
-import { neoBtn, neoBtnPrimary } from "@/lib/styles";
+import { neoBtn, neoBtnPrimary, neoBtnDanger } from "@/lib/styles";
+
+type Variant = "danger" | "primary";
 
 export function YesNoPopup({
   open,
@@ -12,6 +14,8 @@ export function YesNoPopup({
   message,
   confirmLabel,
   cancelLabel,
+  variant = "danger",
+  busy = false,
 }: {
   open: boolean;
   onConfirm: () => void;
@@ -20,29 +24,27 @@ export function YesNoPopup({
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  variant?: Variant;
+  busy?: boolean;
 }) {
   const { t } = useTranslation();
 
   return (
     <Dialog open={open} onClose={onCancel}>
-      <div className="bg-white w-full max-w-sm rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
-        <div className="px-6 py-5">
-          <p className="font-bold text-base mb-2">{title}</p>
-          <p className="font-mono text-[11px] text-[#666] mb-5">{message}</p>
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className={`${neoBtn} font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5`}
-            >
-              {cancelLabel || t("common.cancel")}
-            </button>
-            <button
-              onClick={onConfirm}
-              className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-5 py-2.5`}
-            >
-              {confirmLabel || t("common.confirm")}
-            </button>
-          </div>
+      <div className="bg-[#F8F2E5] border-[3px] border-[#222] shadow-[6px_6px_0_#222] p-6 max-w-sm w-full mx-4">
+        <h3 className="text-lg font-bold mb-2">{title}</h3>
+        <p className="text-sm text-[#666] mb-6">{message}</p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onCancel} disabled={busy} className={`${neoBtn} px-4 py-2 text-sm font-bold disabled:opacity-40`}>
+            {cancelLabel || t("common.cancel")}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className={`${variant === "danger" ? neoBtnDanger : neoBtnPrimary} px-4 py-2 text-sm font-bold disabled:opacity-40`}
+          >
+            {confirmLabel || t("common.confirm")}
+          </button>
         </div>
       </div>
     </Dialog>

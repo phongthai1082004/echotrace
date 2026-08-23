@@ -19,7 +19,7 @@ interface UploadTicket {
  */
 export async function uploadToR2(
   file: File,
-  type: "avatar" | "gallery" | "sticker",
+  type: "avatar" | "gallery" | "sticker" | "book-thumb",
   accessToken: string,
 ): Promise<{ url: string; publicId: string }> {
   const ticket = await apiFetch<UploadTicket>(`/api/get-upload-signature?type=${type}`, accessToken);

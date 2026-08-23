@@ -9,7 +9,7 @@ import { label, card, input, neoBtnPrimary } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import { Supplier, SupplierOption } from "@/models/supplier/supplier";
-import { OptionPanel } from "./option-editor";
+import { PrintOptionAssign } from "./print-option-assign";
 import { Save } from "lucide-react";
 
 type Form = {
@@ -22,12 +22,6 @@ type Form = {
   bankAccountName: string;
 };
 
-type FullForm = Form & {
-  paperSizeOptions: SupplierOption[];
-  paperOptions: SupplierOption[];
-  coverOptions: SupplierOption[];
-};
-
 function emptyForm(): Form {
   return {
     name: "",
@@ -37,15 +31,6 @@ function emptyForm(): Form {
     bankName: "",
     bankAccountNumber: "",
     bankAccountName: "",
-  };
-}
-
-function emptyFullForm(): FullForm {
-  return {
-    ...emptyForm(),
-    paperSizeOptions: [],
-    paperOptions: [],
-    coverOptions: [],
   };
 }
 
@@ -64,10 +49,13 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [form, setForm] = useState<Form>(emptyForm());
-  const [displayForm, setDisplayForm] = useState<FullForm>(emptyFullForm());
+  const [assigned, setAssigned] = useState<{
+    paperSizeOptions: SupplierOption[];
+    paperOptions: SupplierOption[];
+    coverOptions: SupplierOption[];
+  }>({ paperSizeOptions: [], paperOptions: [], coverOptions: [] });
   const [loading, setLoading] = useState(!creating);
   const [saving, setSaving] = useState(false);
-  const [savingOptions, setSavingOptions] = useState<string | null>(null);
 
   useEffect(() => {
     if (creating || !supplierId || !token) return;
@@ -83,14 +71,12 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
           bankAccountNumber: data.bankAccountNumber ?? "",
           bankAccountName: data.bankAccountName ?? "",
         };
-        const fullF: FullForm = {
-          ...f,
+        setForm(f);
+        setAssigned({
           paperSizeOptions: data.paperSizeOptions ?? [],
           paperOptions: data.paperOptions ?? [],
           coverOptions: data.coverOptions ?? [],
-        };
-        setForm(f);
-        setDisplayForm(fullF);
+        });
       })
       .catch((err) => {
         showToast(t("admin.suppliers.accountNotFound") || "Tài khoản không tồn tại", "error");
@@ -128,22 +114,8 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
     }
   };
 
-  const handleSaveOptions = async (type: "paperSizeOptions" | "paperOptions" | "coverOptions") => {
-    if (!token || savingOptions) return;
-    setSavingOptions(type);
-    try {
-      const body = JSON.stringify({
-        [type]: displayForm[type],
-      });
-
-      await apiFetch(`/api/admin/suppliers/${supplierId}/options`, token, { method: "PATCH", body });
-      showToast("Cập nhật thành công", "success");
-      router.refresh();
-    } catch (e: any) {
-      showToast(e.message || "Cập nhật thất bại", "error");
-    } finally {
-      setSavingOptions(null);
-    }
+  const set = (patch: Partial<Form>) => {
+    setForm((f) => ({ ...f, ...patch }));
   };
 
   if (loading) {
@@ -155,15 +127,6 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
       </div>
     );
   }
-
-  const set = (patch: Partial<Form>) => {
-    setForm((f) => ({ ...f, ...patch }));
-    setDisplayForm((df) => ({ ...df, ...patch }));
-  };
-
-  const setDisplayOnly = (patch: Partial<FullForm>) => {
-    setDisplayForm((df) => ({ ...df, ...patch }));
-  };
 
   return (
     <div className="min-h-screen pb-24">
@@ -246,36 +209,10 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
           </div>
         </section>
 
-        {/* Paper Size Options */}
-        <OptionPanel
-          title={t("admin.suppliers.paperSizeOptions")}
-          options={displayForm.paperSizeOptions}
-          onChange={(o) => setDisplayOnly({ paperSizeOptions: o })}
-          onSave={() => handleSaveOptions("paperSizeOptions")}
-          saving={savingOptions === "paperSizeOptions"}
-          optionType="paperSize"
-          withDimensions
-        />
-
-        {/* Paper Options */}
-        <OptionPanel
-          title={t("admin.suppliers.paperOptions")}
-          options={displayForm.paperOptions}
-          onChange={(o) => setDisplayOnly({ paperOptions: o })}
-          onSave={() => handleSaveOptions("paperOptions")}
-          saving={savingOptions === "paperOptions"}
-          optionType="paper"
-        />
-
-        {/* Cover Options */}
-        <OptionPanel
-          title={t("admin.suppliers.coverOptions")}
-          options={displayForm.coverOptions}
-          onChange={(o) => setDisplayOnly({ coverOptions: o })}
-          onSave={() => handleSaveOptions("coverOptions")}
-          saving={savingOptions === "coverOptions"}
-          optionType="cover"
-        />
+        {/* Print Options — chỉ gán các PrintOption đã có sẵn */}
+        {!creating && supplierId ? (
+          <PrintOptionAssign supplierId={supplierId} assigned={assigned} onChanged={(data) => setAssigned(data)} />
+        ) : null}
       </div>
     </div>
   );

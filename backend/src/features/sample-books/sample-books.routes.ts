@@ -2,6 +2,8 @@ import { container } from 'tsyringe';
 import { Router, Request, Response, NextFunction } from 'express';
 import { SampleBookController } from './sample-books.controller.js';
 import { authMiddleware, adminMiddleware, AuthRequest } from '../../middleware/auth.middleware.js';
+import { validateDto } from '../../middleware/validator.middleware.js';
+import { CreateSampleBookDTO, UpdateSampleBookDTO, UpdateSampleBookStatusDTO } from '../../dto/sample-book/sample-book.dto.js';
 
 const router = Router();
 const sampleBookCtrl = container.resolve(SampleBookController);
@@ -23,16 +25,19 @@ router.get(
 router.post(
 	'/admin/sample-books',
 	adminMiddleware,
+	validateDto(CreateSampleBookDTO),
 	asyncHandler((req, res) => sampleBookCtrl.create(req, res)),
 );
 router.patch(
 	'/admin/sample-books/:id',
 	adminMiddleware,
+	validateDto(UpdateSampleBookDTO),
 	asyncHandler((req, res) => sampleBookCtrl.update(req, res)),
 );
 router.patch(
 	'/admin/sample-books/:id/status',
 	adminMiddleware,
+	validateDto(UpdateSampleBookStatusDTO),
 	asyncHandler((req, res) => sampleBookCtrl.updateStatus(req, res)),
 );
 router.delete(

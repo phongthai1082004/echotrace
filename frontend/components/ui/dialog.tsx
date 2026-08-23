@@ -20,7 +20,7 @@ export function Dialog({ open, onClose, children }: { open: boolean; onClose: ()
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div onClick={(e) => e.stopPropagation()}>{children}</div>
     </div>
   );

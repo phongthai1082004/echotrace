@@ -12,13 +12,22 @@ import { ISupplierService } from './suppliers.service.js';
 export class SupplierController {
 	constructor(@inject('ISupplierService') private readonly supplierService: ISupplierService) {}
 	getSupplierList = async (req: AuthRequest, res: Response) => {
-		const { status } = req.query;
+		const { status, search, field, cursor, order, limit } = req.query;
 		const extraWhere: any = {};
 		if (status === 'banned') extraWhere.isDelete = true;
 		else if (status === 'active') extraWhere.isDelete = false;
 		else extraWhere.isDelete = undefined;
-		const result = await this.supplierService.getSupplierList(extraWhere);
-		res.json(ApiResponse.success({ items: result, nextCursor: null }));
+		const result = await this.supplierService.getSupplierList(
+			{
+				search: search as string | undefined,
+				field: field as string | undefined,
+				order: (order as string) || 'desc',
+				limit: limit ? Number(limit) : 50,
+				cursor: cursor ? Number(cursor) : undefined,
+			},
+			extraWhere,
+		);
+		res.json(ApiResponse.success(result));
 	};
 
 	getSupplierById = async (req: AuthRequest, res: Response) => {
@@ -78,8 +87,8 @@ export class SupplierController {
 
 	updateSupplierOptions = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(String(req.params.id));
-		const { paperSizeOptions, paperOptions, coverOptions } = req.body;
-		await this.supplierService.updateSupplierOptions(id, { paperSizeOptions, paperOptions, coverOptions });
+		const { optionIds } = req.body;
+		await this.supplierService.updateSupplierOptions(id, Array.isArray(optionIds) ? optionIds : []);
 		res.json(ApiResponse.success({ id, updated: true }));
 	};
 

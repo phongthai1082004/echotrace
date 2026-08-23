@@ -6,6 +6,7 @@ import { AppError } from '../../middleware/app.error.js';
 export abstract class ICouponService {
 	abstract list(): Promise<CouponDTO[]>;
 	abstract create(dto: CreateCouponDTO): Promise<CouponDTO>;
+	abstract deactivate(id: number): Promise<void>;
 	abstract remove(id: number): Promise<void>;
 }
 
@@ -17,14 +18,19 @@ export class CouponService extends ICouponService {
 	}
 
 	async create(dto: CreateCouponDTO) {
+		// Giảm trên toàn đơn (bỏ scope). Code = tên + unix timestamp để không trùng.
+		const type = (dto.discountType || '').toUpperCase();
+		if (type === 'FIXED' && dto.maxDiscountAmount) {
+			throw new AppError(ErrorCode.VALIDATION_FAILED, 400);
+		}
 		try {
 			const coupon = await prisma.coupon.create({
 				data: {
-					code: dto.code.toUpperCase(),
-					scope: dto.scope || 'ORDER',
-					discountType: dto.discountType,
+					code: `${dto.code.toUpperCase()}-${Date.now()}`,
+					discountType: type,
 					discountValue: dto.discountValue,
 					minOrderAmount: dto.minOrderAmount || 0,
+					minOrderType: (dto.minOrderType || 'VALUE').toUpperCase(),
 					maxDiscountAmount: dto.maxDiscountAmount ?? null,
 					maxUsageCount: dto.maxUsageCount || 0,
 					isActive: dto.isActive ?? true,
@@ -38,6 +44,11 @@ export class CouponService extends ICouponService {
 			}
 			throw e;
 		}
+	}
+
+	// ponytail: inactive là một chiều — không có đường reactivate.
+	async deactivate(id: number) {
+		await prisma.coupon.update({ where: { id }, data: { isActive: false } });
 	}
 
 	async remove(id: number) {

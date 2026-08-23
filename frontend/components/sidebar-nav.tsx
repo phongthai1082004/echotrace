@@ -1,5 +1,6 @@
 "use client";
 import { useTranslation } from "react-i18next";
+import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 
 interface SidebarNavItem {
   label: string;
@@ -30,10 +31,8 @@ export function SidebarNav({
           <button
             suppressHydrationWarning
             onClick={() => onSelect(null)}
-            className={`shrink-0 text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] ${
-              activeItem === null
-                ? "bg-[#222] text-white border-2 border-[#222] shadow-[2px_2px_0_#222]"
-                : "bg-[#FFF7D6] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+            className={`shrink-0 text-left text-sm font-bold px-3 py-2 rounded-lg ${
+              activeItem === null ? neoBtnPrimarySm : neoBtnSm
             }`}
           >
             {t("customer.explore.filterAll")}
@@ -44,10 +43,8 @@ export function SidebarNav({
             key={item.value}
             suppressHydrationWarning
             onClick={() => onSelect(item.value)}
-            className={`shrink-0 text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] ${
-              activeItem === item.value
-                ? "bg-[#222] text-white border-2 border-[#222] shadow-[2px_2px_0_#222]"
-                : "bg-[#FFF7D6] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+            className={`shrink-0 text-left text-sm font-bold px-3 py-2 rounded-lg ${
+              activeItem === item.value ? neoBtnPrimarySm : neoBtnSm
             }`}
           >
             {item.label}

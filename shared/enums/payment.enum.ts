@@ -1,8 +1,8 @@
 // 1. PaymentType
 export const PaymentType = {
-  DEPOSIT: 'DEPOSIT',
-  REMAINING_PAYMENT: 'REMAINING_PAYMENT',
-  FULL_PAYMENT: 'FULL_PAYMENT',
+  DEPOSIT: 'deposit',
+  REMAINING_PAYMENT: 'remaining_payment',
+  FULL_PAYMENT: 'full_payment',
 } as const;
 
 export type PaymentType = typeof PaymentType[keyof typeof PaymentType];
@@ -30,7 +30,7 @@ export type TransactionStatus = typeof TransactionStatus[keyof typeof Transactio
 
 export const PaymentDeposit = {
   FULL_PAYMENT: 'full_payment',
-  HALF_PAYMENT: 'half_Payment',
+  HALF_PAYMENT: 'half_payment',
 } as const;
 
 export type PaymentDeposit = typeof PaymentDeposit[keyof typeof PaymentDeposit];

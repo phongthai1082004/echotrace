@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslation } from "react-i18next";
+import { neoBtnSm } from "@/lib/styles";
 import Image from "next/image";
 import {
   BarChart3,
@@ -17,10 +18,11 @@ import {
   UserCircle,
   Bell,
   BookOpen,
+  Printer,
   LogOut,
-  X,
   BellDot,
 } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 
 export function AdminSidebar() {
   const { t } = useTranslation();
@@ -41,6 +43,7 @@ export function AdminSidebar() {
     { href: "/admin/marketing", label: t("admin.sidebar.marketing"), icon: TrendingUp },
     { href: "/admin/dispatch", label: t("admin.sidebar.dispatch"), icon: Package },
     { href: "/admin/suppliers", label: t("admin.sidebar.suppliers"), icon: Truck },
+    { href: "/admin/print-options", label: t("admin.sidebar.printOptions"), icon: Printer },
     { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
     { href: "/admin/stickers", label: t("admin.sidebar.assets"), icon: Sticker },
     { href: "/admin/coupons", label: t("admin.sidebar.coupons"), icon: TrendingUp },
@@ -118,7 +121,7 @@ export function AdminSidebar() {
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all text-[#B54843] bg-[#FFF7D6] hover:bg-[#B54843] hover:text-white border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+          className={`${neoBtnSm} flex items-center gap-2.5 max-[1280px]:justify-center w-full text-sm max-[1600px]:text-xs font-bold px-3 py-2.5 max-[1600px]:py-2 text-[#B54843] hover:bg-[#B54843] hover:text-white`}
         >
           <LogOut size={14} />
           <span className="max-[1280px]:hidden" suppressHydrationWarning>
@@ -140,12 +143,7 @@ export function AdminSidebar() {
                 <BellDot size={18} />
                 <h2 className="text-lg font-bold">{t("admin.sidebar.notifications")}</h2>
               </div>
-              <button
-                onClick={() => setNotifOpen(false)}
-                className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"
-              >
-                <X size={16} />
-              </button>
+              <CloseButton onClick={() => setNotifOpen(false)} />
             </div>
             <div className="flex-1 flex items-center justify-center">
               <p className="text-sm font-bold text-[#999]">{t("admin.comingSoon")}</p>

@@ -9,7 +9,7 @@ import { FILTER_PRESETS, parseFilterSliders } from "../../lib/filters";
 export function FiltersBar() {
   const canvas = useCanvasStore((s) => s.canvas);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
-  const incrementFilterVersion = useCanvasStore((s) => s.incrementFilterVersion);
+  const incrementSelectionVersion = useCanvasStore((s) => s.incrementSelectionVersion);
   const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
   useCanvasStore((s) => s.selectionVersion);
   const selected = canvas?.getActiveObject();
@@ -31,7 +31,7 @@ export function FiltersBar() {
     img.applyFilters();
     canvas.renderAll();
     setFilterSliderValues(parseFilterSliders(img.filters));
-    incrementFilterVersion();
+    incrementSelectionVersion();
   };
 
   if (!isImage || !selectedSrc) return null;

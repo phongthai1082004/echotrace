@@ -6,6 +6,7 @@ import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FONTS, resolveFormat } from "../../types";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
+import { toggleFrameBorder, setFrameBorderWidth } from "../../lib/layout-engine";
 
 const SLIDER_KEYS = ["sliderBrightness", "sliderContrast", "sliderSaturation", "sliderVibrance"] as const;
 const defaultVals = { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 };
@@ -38,8 +39,8 @@ export function StudioProperties() {
   const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
-  const filterVersion = useCanvasStore((s) => s.filterVersion);
   const selectionVersion = useCanvasStore((s) => s.selectionVersion);
+  const incrementSelectionVersion = useCanvasStore((s) => s.incrementSelectionVersion);
   const storeSliderValues = useCanvasStore((s) => s.filterSliderValues);
   const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
 
@@ -52,7 +53,7 @@ export function StudioProperties() {
     }
     const img = selected as fabric.FabricImage;
     setFilterSliderValues(parseFilterSliders(img.filters || []));
-  }, [filterVersion, selectionVersion]);
+  }, [selectionVersion]);
 
   const selected = canvas?.getActiveObject();
 
@@ -320,11 +321,44 @@ export function StudioProperties() {
             </div>
           </div>
         ) : isFrame ? (
-          <div>
+          <div className="space-y-3">
             <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
               {t("customer.studio.itemFrame")}
             </p>
             <p className="font-mono text-[10px] font-bold text-[#999]">{t("customer.studio.resizeOrRotate")}</p>
+            <button
+              onClick={() => {
+                if (selected && canvas) toggleFrameBorder(canvas, selected as fabric.FabricObject);
+                incrementSelectionVersion();
+              }}
+              className={`w-full font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1.5 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] ${(selected as any)?.customProperties?.borderHidden ? "bg-[#222] text-white" : "bg-white"}`}
+            >
+              {(selected as any)?.customProperties?.borderHidden
+                ? t("customer.studio.showFrame")
+                : t("customer.studio.hideFrame")}
+            </button>
+            <div>
+              <div className="flex justify-between mb-1">
+                <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#666]">
+                  {t("customer.studio.frameWidth")}
+                </p>
+                <p className="font-mono text-[8px] font-bold text-[#999]">
+                  {(selected as any)?.customProperties?.strokeWidth || 1}px
+                </p>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                step={1}
+                value={(selected as any)?.customProperties?.strokeWidth || 1}
+                onChange={(e) => {
+                  if (selected && canvas) setFrameBorderWidth(canvas, selected as fabric.FabricObject, Number(e.target.value));
+                  incrementSelectionVersion();
+                }}
+                className="w-full h-1.5 bg-[#e8e6e0] rounded-full border-[1.5px] border-[#222] appearance-none cursor-pointer accent-[#222]"
+              />
+            </div>
           </div>
         ) : (
           <p className="font-mono text-[10px] font-bold text-[#999]">{t("customer.studio.selectElement")}</p>

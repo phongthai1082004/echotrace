@@ -1,9 +1,10 @@
 import { Redis } from 'ioredis';
 
-// ponytail: single shared Redis connection for the option catalog & sample-book caches.
-// Values are JSON-serialized (plain DTO objects). If Redis is down each op no-ops and
-// callers fall back to the DB — never fails a request.
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+// ponytail: low-level cache — single Redis connection, JSON-serialized values.
+// Redis down => every op no-ops and callers fall back to the DB — never fails a request.
+// Key ownership lives in the domain cache services (option-catalog / sample-book), so all
+// readers + writers of the same keys share one invalidation path.
+const REDIS_URL = process.env.REDIS_URL ?? `redis://localhost:${process.env.REDIS_PORT}`;
 
 export class CacheService {
 	private client: Redis;
@@ -38,6 +39,3 @@ export class CacheService {
 		}
 	}
 }
-
-export const optionCatalogCache = new CacheService();
-export const sampleBookCache = new CacheService();

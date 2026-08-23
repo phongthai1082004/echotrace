@@ -56,8 +56,6 @@ interface CanvasStore {
   clearRedo: () => void;
   zoomIndex: number;
   setZoomIndex: (i: number) => void;
-  filterVersion: number;
-  incrementFilterVersion: () => void;
   selectionVersion: number;
   incrementSelectionVersion: () => void;
   incrementUndoVersion: () => void;
@@ -102,7 +100,6 @@ const INITIAL_STATE: Partial<CanvasStore> = {
   undoVersion: 0,
   redoStack: [],
   zoomIndex: 3,
-  filterVersion: 0,
   selectionVersion: 0,
   filterSliderValues: { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 },
   activeLayout: null,
@@ -166,7 +163,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
   clearRedo: () => set({ redoStack: [] }),
   setZoomIndex: (i) => set({ zoomIndex: i }),
-  incrementFilterVersion: () => set((s) => ({ filterVersion: s.filterVersion + 1 })),
   incrementSelectionVersion: () => set((s) => ({ selectionVersion: s.selectionVersion + 1 })),
   setFilterSliderValues: (vals) => set({ filterSliderValues: vals }),
   setActiveLayout: (l) => {

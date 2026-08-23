@@ -8,7 +8,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import Image from "next/image";
 import { SkeletonGrid } from "@/components/skeleton";
 import { apiFetch } from "@/lib/api.fetch";
-import { neoBtn, neoBtnPrimary } from "@/lib/styles";
+import { neoBtn, neoBtnPrimary, card, cardHover } from "@/lib/styles";
 
 interface SampleBook {
   id: number;
@@ -38,7 +38,7 @@ function SampleCard({ s }: { s: SampleBook }) {
   return (
     <Link
       href={`/studio?sample=${s.id}`}
-      className="group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all"
+      className={`group cursor-pointer ${card} ${cardHover} overflow-hidden`}
     >
       <div className="aspect-[3/4] bg-[#e8e6e0] overflow-hidden relative">
         {firstPageThumb(s) ? (

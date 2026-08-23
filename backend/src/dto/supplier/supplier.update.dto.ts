@@ -1,5 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsNumber, IsDateString, IsArray, Matches } from 'class-validator';
-import { SupplierOption } from '@echotrace/shared';
+import { IsString, IsEmail, IsOptional, IsNumber, IsDateString, IsArray, IsInt, Matches } from 'class-validator';
 
 export class UpdateSupplierDTO {
 	@IsString()
@@ -69,14 +68,7 @@ export class UpdateSupplierDTO {
 	status?: string;
 
 	@IsArray()
+	@IsInt({ each: true })
 	@IsOptional()
-	paperSizeOptions?: SupplierOption[];
-
-	@IsArray()
-	@IsOptional()
-	paperOptions?: SupplierOption[];
-
-	@IsArray()
-	@IsOptional()
-	coverOptions?: SupplierOption[];
+	optionIds?: number[];
 }

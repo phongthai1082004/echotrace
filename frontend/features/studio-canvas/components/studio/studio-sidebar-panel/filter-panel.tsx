@@ -6,6 +6,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import * as fabric from "fabric";
 import exampleImg from "@/assets/images/example.jpg";
 import { FILTER_PRESETS, parseFilterSliders } from "../../../lib/filters";
+import { YesNoPopup } from "@/components/yes-no-popup";
 
 function filtersToJSON(filters: fabric.filters.BaseFilter<any, any, any>[]): Record<string, any>[] {
   return filters.map((f) => f.toObject());
@@ -57,7 +58,7 @@ export function FilterPanel() {
   const { t } = useTranslation();
   const canvas = useCanvasStore((s) => s.canvas);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
-  const incrementFilterVersion = useCanvasStore((s) => s.incrementFilterVersion);
+  const incrementSelectionVersion = useCanvasStore((s) => s.incrementSelectionVersion);
   const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
   const [confirm, setConfirm] = useState<(typeof FILTER_PRESETS)[number] | null>(null);
 
@@ -73,7 +74,7 @@ export function FilterPanel() {
     if (active && active.type === "image") {
       setFilterSliderValues(parseFilterSliders((active as fabric.FabricImage).filters || []));
     }
-    incrementFilterVersion();
+    incrementSelectionVersion();
     setConfirm(null);
   };
 
@@ -82,7 +83,7 @@ export function FilterPanel() {
     pushUndo();
     clearAllPhotos(canvas);
     setFilterSliderValues({ Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 });
-    incrementFilterVersion();
+    incrementSelectionVersion();
   };
 
   return (
@@ -134,28 +135,15 @@ export function FilterPanel() {
       </div>
 
       {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] p-5 max-w-xs w-full mx-4">
-            <p className="font-mono text-[10px] font-bold mb-1">{t("customer.studio.applyFilter")}</p>
-            <p className="font-mono text-[8px] leading-relaxed text-[#666] mb-4">
-              {t("customer.studio.applyFilterConfirm", { name: confirm.name })}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setConfirm(null)}
-                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-white"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={() => doApply(confirm)}
-                className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-lg border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-[transform,box-shadow] bg-[#222] text-white"
-              >
-                {t("customer.studio.apply")}
-              </button>
-            </div>
-          </div>
-        </div>
+        <YesNoPopup
+          open
+          variant="primary"
+          onConfirm={() => doApply(confirm)}
+          onCancel={() => setConfirm(null)}
+          title={t("customer.studio.applyFilter")}
+          message={t("customer.studio.applyFilterConfirm", { name: confirm.name })}
+          confirmLabel={t("customer.studio.apply")}
+        />
       )}
     </div>
   );

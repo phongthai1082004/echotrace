@@ -1,27 +1,26 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
-import { label, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
+import { label, card, neoBtn, neoBtnPrimary, input, chip } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
 import { AdminPagination } from "@/components/admin-pagination";
-import { ResponsiveTable } from "@/components/responsive-table";
+import { AdminList } from "@/components/admin-list";
 import { UserResponse } from "@/models/users/user.list";
-import { User, UserStatus } from "@/models/users/user";
-import { TableSkeletonRow } from "@/components/ui/loading-skeleton";
+import { User } from "@/models/users/user";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
-import { Eye, X, Save } from "lucide-react";
+import { Eye, Save } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { StatusBadge } from "@/components/status-badge";
-import { timeSince } from "@echotrace/shared";
-import { useApiQuery, useApiMutation } from "@hooks";
+import { timeSince, UserStatus } from "@echotrace/shared";
+import { useApiQuery, useApiMutation, useDebounce } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
+import { detectSearchTarget } from "@/lib/search-detector";
 
-const colWidths = ["1fr", "1.5fr", "0.5fr", "1fr", "70px", "80px", "90px", "120px"];
-const gridCols = colWidths.join(" ");
-const STATUS: UserStatus[] = ["active", "banned"];
+const STATUS: UserStatus[] = [UserStatus.ACTIVE, UserStatus.BANNED];
 
 interface AdminUsersPageProps {
   initialUsers?: User[];
@@ -34,6 +33,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
   const isAuthenticated = isAuthenticatedSession(session);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 1000);
   const [filter, setFilter] = useState<UserStatus | "all">("all");
   const [cursor, setCursor] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
@@ -46,10 +46,20 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
     if (!isAuthenticated) return "";
     const params = new URLSearchParams();
     if (filter !== "all") params.set("status", filter);
-    if (search) params.set("search", search);
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+      params.set("field", detectSearchTarget(debouncedSearch));
+    }
     if (cursor) params.set("cursor", cursor);
+    params.set("limit", "20");
     return `/api/admin/users?${params.toString()}`;
-  }, [isAuthenticated, filter, search, cursor]);
+  }, [isAuthenticated, filter, debouncedSearch, cursor]);
+
+  // Reset pagination whenever search/filter changes
+  useEffect(() => {
+    setCursor(null);
+    setCursorStack([]);
+  }, [debouncedSearch, filter]);
 
   // Fetch users with useApiQuery
   const { data: response, loading } = useApiQuery<UserResponse>(
@@ -118,85 +128,60 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
         />
 
         <div className={`${card} flex-1 flex flex-col min-h-0`}>
-          {loading ? (
-            <div className="shrink-0 border-b-[3px] border-[#222]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <TableSkeletonRow key={i} columns={colWidths.length} animated />
-              ))}
-            </div>
-          ) : (
-            <>
-              <ResponsiveTable
-                header={
-                  <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                    {[
-                      t("admin.users.name"),
-                      t("admin.users.email"),
-                      t("admin.users.phone"),
-                      t("admin.users.city"),
-                      t("admin.users.joined"),
-                      t("admin.users.role"),
-                      t("admin.users.status"),
-                      t("common.action"),
-                    ].map((h) => (
-                      <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
-                        {h}
-                      </div>
-                    ))}
-                  </div>
-                }
-                gridCols={gridCols}
-              >
-                {users.length === 0 ? (
-                  <EmptyStateMinimal title={t("admin.users.noUsers")} description={t("admin.users.createFirstUser")} />
-                ) : (
-                  users.map((user: User) => (
-                    <div
-                      key={user.id}
-                      className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: gridCols }}
-                    >
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
-                        {user.phone || "—"}
-                      </div>
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
-                        {user.city || "—"}
-                      </div>
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
-                        {user.createdAt ? timeSince(user.createdAt) : "—"}
-                      </div>
-                      <div className="px-2 whitespace-nowrap">
-                        <span
-                          className={`font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222] ${
-                            user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"
-                          }`}
-                          style={{ borderColor: "#222" }}
-                        >
-                          {user.role}
-                        </span>
-                      </div>
-                      <div className="px-2 whitespace-nowrap">
-                        <StatusBadge status={user.isDelete ? "banned" : "active"} />
-                      </div>
-                      <div className="px-2">
-                        <button onClick={() => openDetail(user)} className={`${neoBtn} p-1.5`}>
-                          <Eye size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </ResponsiveTable>
+          <AdminList
+            columns={[
+              { key: "name", label: t("admin.users.name"), width: "1fr" },
+              { key: "email", label: t("admin.users.email"), width: "1.4fr" },
+              { key: "phone", label: t("admin.users.phone"), width: "1fr" },
+              { key: "city", label: t("admin.users.city"), width: "0.8fr" },
+              { key: "joined", label: t("admin.users.joined"), width: "100px" },
+              { key: "role", label: t("admin.users.role"), width: "80px" },
+              { key: "status", label: t("admin.users.status"), width: "90px", align: "center" },
+              { key: "action", label: t("common.action"), width: "80px", align: "center" },
+            ]}
+            data={users}
+            loading={loading}
+            rowKey={(user) => user.id}
+            empty={
+              <EmptyStateMinimal title={t("admin.users.noUsers")} description={t("admin.users.createFirstUser")} />
+            }
+            footer={
               <AdminPagination
                 hasNext={nextCursor !== null}
                 hasPrevious={cursorStack.length > 0}
                 onNext={handleNext}
                 onPrevious={handlePrevious}
               />
-            </>
-          )}
+            }
+            renderRow={(user: User) => (
+              <>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                  {user.phone || "—"}
+                </div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                  {user.city || "—"}
+                </div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                  {user.createdAt ? timeSince(user.createdAt) : "—"}
+                </div>
+                <div className="px-2 whitespace-nowrap">
+                  <span className={`${chip} ${user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"}`}>
+                    {user.role}
+                  </span>
+                </div>
+                <div className="px-2 flex justify-center whitespace-nowrap">
+                  <StatusBadge status={user.isDelete ? "banned" : "active"} />
+                </div>
+                <div className="px-2 flex justify-center">
+                  <button onClick={() => openDetail(user)} className={`${neoBtn} p-1.5`}>
+                    <Eye size={14} />
+                  </button>
+                </div>
+              </>
+            )}
+          />
         </div>
       </div>
 
@@ -213,12 +198,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
                 <p className={`${label} mb-1 text-[#666]`}>{t("admin.users.label")}</p>
                 <h2 className="text-xl font-bold truncate max-w-[300px]">{selected.name}</h2>
               </div>
-              <button
-                onClick={() => setSelected(null)}
-                className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"
-              >
-                <X size={16} />
-              </button>
+              <CloseButton onClick={() => setSelected(null)} />
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-none">

@@ -55,6 +55,16 @@ const SERIALIZE_KEYS = [
   "hasBorders",
 ];
 
+export function styleFrame(o: any) {
+  const cp = o.customProperties || {};
+  o.set({
+    stroke: cp.borderHidden ? "transparent" : "#000",
+    strokeWidth: cp.strokeWidth || 1,
+    strokeUniform: true,
+    strokeDashArray: undefined,
+  } as any);
+}
+
 export function isFrameObject(obj: fabric.FabricObject): boolean {
   return (obj as any).customProperties?.layer === "frame";
 }
@@ -92,7 +102,7 @@ export function syncFrameBorders(canvas: fabric.Canvas) {
   canvas.getObjects().forEach((o: any) => {
     if (o.customProperties?.layer !== "frame") return;
     // ponytail: border always visible — the photo is contain-fitted inside the frame
-    o.set({ stroke: "#000", strokeWidth: 2 } as any);
+    styleFrame(o);
   });
   canvas.requestRenderAll();
 }
@@ -105,6 +115,34 @@ export function ungroupSelectedObjects(canvas: fabric.Canvas) {
   canvas.setActiveObject(sel);
   canvas.requestRenderAll();
   enforceZLayers(canvas);
+}
+
+export function toggleFrameBorder(canvas: fabric.Canvas, frame: fabric.FabricObject) {
+  const cp = (frame as any).customProperties || {};
+  (frame as any).customProperties = { ...cp, borderHidden: !cp.borderHidden };
+  styleFrame(frame);
+  canvas.requestRenderAll();
+}
+
+export function setFrameBorderWidth(canvas: fabric.Canvas, frame: fabric.FabricObject, width: number) {
+  const cp = (frame as any).customProperties || {};
+  (frame as any).customProperties = { ...cp, strokeWidth: Math.max(1, Math.min(5, width)), borderHidden: false };
+  styleFrame(frame);
+  canvas.requestRenderAll();
+}
+
+export function setAllFramesBorder(canvas: fabric.Canvas, opts: { hidden?: boolean; width?: number }) {
+  canvas.getObjects().forEach((o: any) => {
+    if (!isFrameObject(o)) return;
+    const cp = o.customProperties || {};
+    o.customProperties = {
+      ...cp,
+      borderHidden: opts.hidden !== undefined ? opts.hidden : cp.borderHidden,
+      strokeWidth: opts.width !== undefined ? Math.max(1, Math.min(5, opts.width)) : cp.strokeWidth || 1,
+    };
+    styleFrame(o);
+  });
+  canvas.requestRenderAll();
 }
 
 export function nextFrameZ(canvas: fabric.Canvas): number {
@@ -385,14 +423,15 @@ function makeFrame(
   obj.set({
     fill: "rgba(0,0,0,0.01)",
     stroke: "#000",
-    strokeWidth: 2,
+    strokeWidth: 1,
+    strokeUniform: true,
     strokeDashArray: undefined,
     selectable: true,
     evented: true,
     hasControls: true,
     hasBorders: true,
   } as any);
-  (obj as any).customProperties = { z: 0, layer: "frame", ...customProps };
+  (obj as any).customProperties = { z: 0, layer: "frame", strokeWidth: 1, borderHidden: false, ...customProps };
   return obj;
 }
 
@@ -403,9 +442,8 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
     ft = frame.top || 0;
   const imgW = img.width || 1,
     imgH = img.height || 1;
-  // ponytail: contain — image fits inside the frame so the border stays visible and
-  // resizing the frame can't make the image spill over it
-  const s = Math.min(fw / imgW, fh / imgH);
+  // ponytail: cover — image fills the frame edge to edge; the clipPath keeps it from spilling
+  const s = Math.max(fw / imgW, fh / imgH);
   const shapeName = (frame as any).customProperties?.shapeName;
   let clip;
   if (shapeName) {
@@ -694,6 +732,30 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
   enforceZLayers(canvas);
 }
 
+// Exits photo edit mode even when the edited photo is gone (e.g. it was just deleted).
+// Without this, canvas.selection stays false and every other object stays
+// evented:false/selectable:false → nothing can be selected afterwards.
+export function resetCanvasInteractions(canvas: fabric.Canvas) {
+  removePhotoDimOverlays(canvas);
+  canvas.selection = true;
+  canvas.getObjects().forEach((o: any) => {
+    const cp = o.customProperties;
+    if (!cp || cp.__savedEvented_all === undefined) return;
+    o.set({
+      evented: cp.__savedEvented_all,
+      selectable: cp.__savedSelectable_all,
+      hasControls: cp.__savedControls_all,
+      hasBorders: cp.__savedBorders_all,
+    } as any);
+    delete cp.__savedEvented_all;
+    delete cp.__savedSelectable_all;
+    delete cp.__savedControls_all;
+    delete cp.__savedBorders_all;
+    o.customProperties = cp;
+  });
+  canvas.renderAll();
+}
+
 export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricObject) {
   removePhotoDimOverlays(canvas);
   const cw = canvas.width || 1000,
@@ -789,6 +851,20 @@ export function rehydrateCanvas(jsonStr: string, canvas: fabric.Canvas) {
     const live = canvas.getObjects()[i];
     reviveObject(objData, live, undefined);
   });
+}
+
+// Re-apply each photo's frame clip after a reload. Undo/redo snapshots can be
+// taken while a photo is in edit mode (clipPath null), and reviveObject locks
+// the photo back without restoring the clip — leaving the frame unable to mask
+// the photo overflow.
+export function reclipPhotos(canvas: fabric.Canvas) {
+  canvas.getObjects().forEach((o: any) => {
+    if (o.customProperties?.layer !== "photo") return;
+    const frame = resolveFrameForPhoto(canvas, o as fabric.FabricImage);
+    if (!frame) return;
+    applyFrameClip(frame, o as fabric.FabricImage);
+  });
+  canvas.requestRenderAll();
 }
 
 export function applyInteractionLock(

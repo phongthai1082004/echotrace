@@ -15,10 +15,15 @@ export class UploadController {
 	) {}
 
 	getSignature = async (req: AuthRequest, res: Response) => {
-		const { type } = req.query as { type: 'gallery' | 'sticker' };
+		const { type } = req.query as { type: 'gallery' | 'sticker' | 'book-thumb' };
 		const userId = req.userId!;
 
-		const folder = type === 'sticker' ? 'echotrace/stickers' : `echotrace/gallery/user_${userId}`;
+		const folder =
+			type === 'sticker'
+				? 'echotrace/stickers'
+				: type === 'book-thumb'
+					? `echotrace/books/user_${userId}`
+					: `echotrace/gallery/user_${userId}`;
 
 		const ticket = await this.r2.issueUpload(folder);
 

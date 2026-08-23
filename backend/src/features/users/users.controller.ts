@@ -28,7 +28,7 @@ export class UserController {
 	};
 
 	getUserList = async (req: AuthRequest, res: Response) => {
-		const { status, customerId, search, order, limit, cursor } = req.query;
+		const { status, customerId, search, order, limit, cursor, field } = req.query;
 		const extraWhere: any = {};
 		if (status === 'banned') extraWhere.isDelete = true;
 		else if (status === 'active') extraWhere.isDelete = false;
@@ -40,7 +40,9 @@ export class UserController {
 			limit: limit ? Number(limit) : 1000,
 			cursor: cursor ? Number(cursor) : undefined,
 		};
-		const options = { searchFields: ['name', 'email'], allowedFilterFields: [] };
+		const searchFields =
+			field === 'name' ? ['name'] : field === 'email' ? ['email'] : field === 'phone' ? ['phone'] : ['name', 'email', 'phone'];
+		const options = { searchFields, allowedFilterFields: [] };
 		const { items, nextCursor } = await this.userService.findAll(params, options, extraWhere);
 		res.json(ApiResponse.success({ users: items, nextCursor }));
 	};

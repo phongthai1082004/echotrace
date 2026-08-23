@@ -4,24 +4,22 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Eye, Pencil, ChevronDown, X } from "lucide-react";
-import { SampleBookDTO } from "@echotrace/shared";
-import { label, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
+import { Eye, Pencil, PenTool, Save } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
+import { SampleBookDTO, Category, SampleBookType, SampleBookStatus } from "@echotrace/shared";
+import { card, input, label, neoBtn, neoBtnPrimary, chip } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminPagination } from "@/components/admin-pagination";
-import { ResponsiveTable } from "@/components/responsive-table";
-import { TableSkeletonRow } from "@/components/ui/loading-skeleton";
+import { AdminList } from "@/components/admin-list";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
+import { useDebounce } from "@hooks";
 
-const colWidths = ["2fr", "0.7fr", "0.9fr", "0.5fr", "0.5fr", "0.9fr", "104px"];
-const gridCols = colWidths.join(" ");
-
-const TYPE_OPTIONS = ["TEMPLATE", "ALBUM"];
-const CATEGORY_OPTIONS = ["NATURE", "URBAN", "CLASSIC", "MINIMAL", "ADVENTURE", "CULTURAL", "CUSTOM"];
-const STATUS_OPTIONS = ["draft", "published", "archive"];
+const TYPE_OPTIONS: SampleBookDTO["type"][] = Object.values(SampleBookType);
+const CATEGORY_OPTIONS = Object.values(Category);
+const STATUS_OPTIONS = Object.values(SampleBookStatus);
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-[#e8e6e0] text-[#666]",
@@ -31,6 +29,37 @@ const STATUS_STYLE: Record<string, string> = {
 
 type ListResponse = { items: SampleBookDTO[]; nextCursor: number | null };
 
+function FilterGroup({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      {options.map((o) => {
+        const active = value === o.value;
+        return (
+          <button
+            key={o.value}
+            onClick={() => onChange(o.value)}
+            className={`px-2 py-1 rounded-md border-2 transition-colors ${
+              active
+                ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
+                : "border-transparent text-[#666] hover:text-[#222] hover:bg-[#e8e6e0]"
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AdminSampleBooksPage() {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -38,6 +67,7 @@ export default function AdminSampleBooksPage() {
   const accessToken = (session as any)?.accessToken;
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 1000);
   const [type, setType] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
@@ -47,18 +77,23 @@ export default function AdminSampleBooksPage() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<number[]>([]);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
+  const [editing, setEditing] = useState<SampleBookDTO | null>(null);
+  const [editForm, setEditForm] = useState<{ type: "ALBUM" | "TEMPLATE"; quantity: number; status: string }>({
+    type: "TEMPLATE",
+    quantity: 0,
+    status: "draft",
+  });
+  const [saving, setSaving] = useState(false);
 
   const queryUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
     if (category) params.set("category", category);
     if (status) params.set("status", status);
-    if (search) params.set("search", search);
+    if (debouncedSearch) params.set("search", debouncedSearch);
     if (cursor) params.set("cursor", String(cursor));
     return `/api/admin/sample-books?${params.toString()}`;
-  }, [type, category, status, search, cursor]);
+  }, [type, category, status, debouncedSearch, cursor]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -80,23 +115,31 @@ export default function AdminSampleBooksPage() {
   useEffect(() => {
     setCursor(null);
     setCursorStack([]);
-  }, [type, category, status, search]);
+  }, [type, category, status, debouncedSearch]);
 
-  const updateStatus = async (s: SampleBookDTO, next: string) => {
-    if (!accessToken || next === s.status) return;
-    setStatusBusyId(s.id);
-    setOpenMenuId(null);
+  const openEdit = (s: SampleBookDTO) => {
+    setEditForm({ type: s.type, quantity: s.quantity ?? 0, status: s.status });
+    setEditing(s);
+  };
+
+  const handleSave = async () => {
+    if (!editing || saving) return;
+    setSaving(true);
     try {
-      await apiFetch(`/api/admin/sample-books/${s.id}/status`, accessToken, {
+      const body: any = { type: editForm.type, status: editForm.status };
+      // only albums carry a quantity; templates always reset it
+      body.quantity = editForm.type === "ALBUM" ? editForm.quantity : null;
+      const updated = await apiFetch<SampleBookDTO>(`/api/admin/sample-books/${editing.id}`, accessToken, {
         method: "PATCH",
-        body: JSON.stringify({ status: next }),
+        body: JSON.stringify(body),
       });
-      setItems((prev) => prev.map((b) => (b.id === s.id ? { ...b, status: next } : b)));
-      showToast(t("admin.sampleBooks.statusUpdated"), "success");
+      setItems((prev) => prev.map((b) => (b.id === editing.id ? updated : b)));
+      setEditing(null);
+      showToast(t("admin.sampleBooks.updated"), "success");
     } catch {
-      showToast(t("admin.sampleBooks.statusUpdateFailed"), "error");
+      showToast(t("admin.sampleBooks.updateFailed"), "error");
     } finally {
-      setStatusBusyId(null);
+      setSaving(false);
     }
   };
 
@@ -125,174 +168,207 @@ export default function AdminSampleBooksPage() {
       </AdminHeader>
 
       <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-4 min-h-0 overflow-hidden">
-        <div className={`${card} p-3 shrink-0 flex flex-wrap gap-2`}>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
-          >
-            <option value="">{t("admin.sampleBooks.allTypes")}</option>
-            {TYPE_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {t(`admin.sampleBooks.${v === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
-              </option>
-            ))}
-          </select>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
-          >
-            <option value="">{t("admin.sampleBooks.allCategories")}</option>
-            {CATEGORY_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className={`${input} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 pr-8 cursor-pointer appearance-none`}
-          >
-            <option value="">{t("admin.sampleBooks.allStatuses")}</option>
-            {STATUS_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {t(`admin.sampleBooks.${v}`)}
-              </option>
-            ))}
-          </select>
-          {(type || category || status || search) && (
-            <button
-              onClick={() => {
-                setType("");
-                setCategory("");
-                setStatus("");
-                setSearch("");
-              }}
-              className={`${neoBtn} flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-1.5`}
-            >
-              <X size={11} /> {t("common.clear")}
-            </button>
-          )}
+        <div className={`${card} p-3 shrink-0`}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[9px] font-bold tracking-widest uppercase">
+            <FilterGroup
+              options={[
+                { value: "", label: t("admin.sampleBooks.allTypes") },
+                ...TYPE_OPTIONS.map((v) => ({
+                  value: v,
+                  label: t(`admin.sampleBooks.${v === "ALBUM" ? "kindAlbum" : "kindTemplate"}`),
+                })),
+              ]}
+              value={type}
+              onChange={setType}
+            />
+            <span className="text-[#999] select-none">|</span>
+            <FilterGroup
+              options={[
+                { value: "", label: t("admin.sampleBooks.allCategories") },
+                ...CATEGORY_OPTIONS.map((v) => ({ value: v, label: v })),
+              ]}
+              value={category}
+              onChange={setCategory}
+            />
+            <span className="text-[#999] select-none">|</span>
+            <FilterGroup
+              options={[
+                { value: "", label: t("admin.sampleBooks.allStatuses") },
+                ...STATUS_OPTIONS.map((v) => ({ value: v, label: t(`admin.sampleBooks.${v}`) })),
+              ]}
+              value={status}
+              onChange={setStatus}
+            />
+          </div>
         </div>
 
         <div className={`${card} flex-1 flex flex-col min-h-0`}>
-          {loading ? (
-            <div className="shrink-0 border-b-[3px] border-[#222]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <TableSkeletonRow key={i} columns={colWidths.length} animated />
-              ))}
-            </div>
-          ) : (
-            <>
-              <ResponsiveTable
-                header={
-                  <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                    {[
-                      t("admin.sampleBooks.name"),
-                      t("admin.sampleBooks.type"),
-                      t("admin.sampleBooks.category"),
-                      t("admin.sampleBooks.quantity"),
-                      t("admin.sampleBooks.pages"),
-                      t("admin.sampleBooks.status"),
-                      t("common.action"),
-                    ].map((h) => (
-                      <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
-                        {h}
-                      </div>
-                    ))}
-                  </div>
-                }
-                gridCols={gridCols}
-              >
-                {fetchError ? (
-                  <EmptyStateMinimal title={t("admin.sampleBooks.fetchFailed")} />
-                ) : items.length === 0 ? (
-                  <EmptyStateMinimal title={t("admin.sampleBooks.noItems")} />
-                ) : (
-                  items.map((s) => (
-                    <div
-                      key={s.id}
-                      className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: gridCols }}
-                    >
-                      <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
-                        {s.name || "Untitled"}
-                      </div>
-                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">
-                        {t(`admin.sampleBooks.${s.type === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
-                      </div>
-                      <div className="px-2 font-mono text-[9px] font-bold tracking-widest uppercase text-[#666] whitespace-nowrap">
-                        {s.category ?? "—"}
-                      </div>
-                      <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
-                        {s.quantity ?? "—"}
-                      </div>
-                      <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
-                        {s.pageCount} {t("admin.sampleBooks.pg")}
-                      </div>
-                      <div className="px-2">
-                        <div className="relative inline-block">
-                          <button
-                            onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
-                            disabled={statusBusyId === s.id}
-                            className={`flex items-center gap-1 font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] cursor-pointer disabled:opacity-40 ${STATUS_STYLE[s.status] ?? STATUS_STYLE.draft}`}
-                          >
-                            {t(`admin.sampleBooks.${s.status}`)}
-                            <ChevronDown size={11} />
-                          </button>
-                          {openMenuId === s.id && (
-                            <>
-                              <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
-                              <div className="absolute top-full left-0 mt-1 z-40 bg-[#F8F2E5] rounded-lg border-2 border-[#222] shadow-[3px_3px_0_#222] overflow-hidden min-w-[120px]">
-                                {STATUS_OPTIONS.map((st) => (
-                                  <button
-                                    key={st}
-                                    onClick={() => updateStatus(s, st)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] font-bold tracking-widest uppercase hover:bg-[#e8e6e0] transition-colors ${st === s.status ? "opacity-40" : ""}`}
-                                  >
-                                    <span
-                                      className={`w-2.5 h-2.5 rounded-[3px] border border-[#222] ${STATUS_STYLE[st].split(" ")[0]}`}
-                                    />
-                                    {t(`admin.sampleBooks.${st}`)}
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="px-2 flex items-center gap-1.5">
-                        <button
-                          disabled
-                          title={t("admin.sampleBooks.preview")}
-                          className="p-1.5 opacity-30 cursor-not-allowed"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <Link
-                          href={studioHref(s)}
-                          title={t("admin.sampleBooks.edit")}
-                          className="p-1.5 hover:bg-[#FFF7D6] rounded-[6px] border-2 border-transparent hover:border-[#222] transition-all text-[#222]"
-                        >
-                          <Pencil size={14} />
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </ResponsiveTable>
+          <AdminList
+            columns={[
+              { key: "name", label: t("admin.sampleBooks.name"), width: "2fr" },
+              { key: "type", label: t("admin.sampleBooks.type"), width: "0.7fr", align: "center" },
+              { key: "category", label: t("admin.sampleBooks.category"), width: "0.9fr", align: "center" },
+              { key: "quantity", label: t("admin.sampleBooks.quantity"), width: "0.5fr" },
+              { key: "pages", label: t("admin.sampleBooks.pages"), width: "0.5fr" },
+              { key: "status", label: t("admin.sampleBooks.status"), width: "110px", align: "center" },
+              { key: "action", label: t("common.action"), width: "140px", align: "center" },
+            ]}
+            data={items}
+            loading={loading}
+            rowKey={(s) => s.id}
+            empty={
+              fetchError ? (
+                <EmptyStateMinimal title={t("admin.sampleBooks.fetchFailed")} />
+              ) : (
+                <EmptyStateMinimal title={t("admin.sampleBooks.noItems")} />
+              )
+            }
+            footer={
               <AdminPagination
                 hasNext={nextCursor !== null}
                 hasPrevious={cursorStack.length > 0}
                 onNext={handleNext}
                 onPrevious={handlePrevious}
               />
-            </>
-          )}
+            }
+            renderRow={(s: SampleBookDTO) => (
+              <>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
+                  {s.name || "Untitled"}
+                </div>
+                <div className="px-2 flex justify-center">
+                  <span className={`${chip} ${s.type === "ALBUM" ? "bg-[#FFD93D] text-[#222]" : "bg-[#e8e6e0] text-[#444]"}`}>
+                    {t(`admin.sampleBooks.${s.type === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
+                  </span>
+                </div>
+                <div className="px-2 flex justify-center">
+                  <span className={`${chip} bg-[#FFF7D6] text-[#222]`}>
+                    {s.category ?? "—"}
+                  </span>
+                </div>
+                <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
+                  {s.quantity ?? "—"}
+                </div>
+                <div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">
+                  {s.pageCount} {t("admin.sampleBooks.pg")}
+                </div>
+                <div className="px-2 flex justify-center">
+                  <span className={`${chip} inline-flex items-center gap-1 ${STATUS_STYLE[s.status] ?? STATUS_STYLE.draft}`}>
+                    {t(`admin.sampleBooks.${s.status}`)}
+                  </span>
+                </div>
+                <div className="px-2 flex items-center justify-center gap-1.5">
+                  <Link
+                    href={studioHref(s)}
+                    title={s.status === "published" ? t("admin.sampleBooks.publishedLocked") : t("admin.sampleBooks.edit")}
+                    className={`${neoBtn} p-1.5 ${s.status === "published" ? "opacity-40 pointer-events-none" : ""}`}
+                  >
+                    <PenTool size={14} />
+                  </Link>
+                  {s.status === "published" ? (
+                    <Link href={`/studio/preview?id=${s.id}`} title={t("admin.sampleBooks.preview")} className={`${neoBtn} p-1.5`}>
+                      <Eye size={14} />
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      title={t("admin.sampleBooks.preview")}
+                      className={`${neoBtn} p-1.5 opacity-30 cursor-not-allowed`}
+                    >
+                      <Eye size={14} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => openEdit(s)}
+                    title={t("admin.sampleBooks.editInfo")}
+                    className={`${neoBtn} p-1.5`}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              </>
+            )}
+          />
         </div>
       </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+          <div className={`${card} w-96 p-5`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-sm truncate">{editing.name || "Untitled"}</p>
+              <CloseButton onClick={() => setEditing(null)} size={14} />
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className={`${label} mb-1`}>{t("admin.sampleBooks.type")}</p>
+                <div className="flex gap-2">
+                  {TYPE_OPTIONS.map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setEditForm((f) => ({ ...f, type: v as "ALBUM" | "TEMPLATE" }))}
+                      className={`flex-1 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 ${
+                        editForm.type === v ? neoBtnPrimary : neoBtn
+                      }`}
+                    >
+                      {t(`admin.sampleBooks.${v === "ALBUM" ? "kindAlbum" : "kindTemplate"}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-1`}>{t("admin.sampleBooks.quantity")}</p>
+                <input
+                  type="number"
+                  min={0}
+                  value={editForm.quantity}
+                  disabled={editForm.type !== "ALBUM"}
+                  onChange={(e) => setEditForm((f) => ({ ...f, quantity: Number(e.target.value) }))}
+                  className={`${input} disabled:opacity-40`}
+                />
+                {editForm.type !== "ALBUM" && (
+                  <p className="text-[10px] text-[#999] mt-1">{t("admin.sampleBooks.quantityAlbumOnly")}</p>
+                )}
+              </div>
+
+              <div>
+                <p className={`${label} mb-1`}>{t("admin.sampleBooks.status")}</p>
+                <div className="flex gap-2">
+                  {STATUS_OPTIONS.map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setEditForm((f) => ({ ...f, status: st }))}
+                      className={`flex-1 font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 ${
+                        editForm.status === st ? neoBtnPrimary : neoBtn
+                      }`}
+                    >
+                      {t(`admin.sampleBooks.${st}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setEditing(null)}
+                  className={`${neoBtn} font-mono text-[9px] font-bold tracking-widest uppercase flex-1 py-3`}
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase flex-1 py-3 flex items-center justify-center gap-2 disabled:opacity-40`}
+                >
+                  <Save size={16} /> {saving ? `${t("common.save")}…` : t("common.save")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

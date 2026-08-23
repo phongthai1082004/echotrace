@@ -1,0 +1,95 @@
+services:
+  database-service:
+    image: postgres:16-alpine
+    container_name: database-container
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-service:
+    image: redis:alpine
+    container_name: redis-container
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend-service:
+    build:
+      context: .
+      dockerfile: backend/dockerfile
+    container_name: backend_service
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: ${DB_HOST:-database-service}
+      DB_PORT: "5432"
+      REDIS_URL: redis://${REDIS_HOST:-redis-service}:6379
+      BACKEND_PORT: "4000"
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    restart: unless-stopped
+    depends_on:
+      database-service:
+        condition: service_healthy
+      redis-service:
+        condition: service_healthy
+
+  frontend-service:
+    build:
+      context: .
+      dockerfile: frontend/dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:${BACKEND_PORT:-4000}}
+    container_name: frontend_service
+    env_file:
+      - ./frontend/.env
+    environment:
+      BACKEND_URL: http://${BACKEND_HOST:-backend-service}:4000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    restart: unless-stopped
+    depends_on:
+      - backend-service
+
+  nginx-service:
+    build:
+      context: ./nginx
+      dockerfile: dockerfile
+    container_name: nginx-container
+    # port truyền cho nginx template là port NỘI BỘ của từng container (3000/4000),
+    # không dùng BACKEND_PORT/FRONTEND_PORT vì đó là port phía host
+    environment:
+      NGINX_PORT: ${NGINX_PORT:-80}
+      SERVER_DOMAIN: ${SERVER_DOMAIN:-localhost}
+      FRONTEND_HOST: ${FRONTEND_HOST:-frontend-service}
+      FRONTEND_PORT: "3000"
+      BACKEND_HOST: ${BACKEND_HOST:-backend-service}
+      BACKEND_PORT: "4000"
+    ports:
+      - "${NGINX_PORT}:${NGINX_PORT}"
+    restart: always
+    depends_on:
+      - frontend-service
+      - backend-service
+
+volumes:
+  pgdata:
+  redis_data:

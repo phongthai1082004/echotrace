@@ -8,6 +8,7 @@ import { Profile } from "@/models/profile";
 import { useToast } from "@/components/toast";
 import { SkeletonForm } from "@/components/skeleton";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { input, infoBox, neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 
 interface FormData {
   name: string;
@@ -130,8 +131,8 @@ export function AccountSettings() {
   };
 
   const inputClass = (field: string) =>
-    `w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 transition-[border-color,box-shadow,transform] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] placeholder:text-[#999] ${
-      fieldErrors[field] ? "border-[#B54843] shadow-[2px_2px_0_#B54843]" : "border-[#222] shadow-[2px_2px_0_#222]"
+    `${input} transition-[border-color,box-shadow,transform] ${
+      fieldErrors[field] ? "border-[#B54843] shadow-[2px_2px_0_#B54843]" : ""
     }`;
 
   return (
@@ -145,11 +146,7 @@ export function AccountSettings() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg transition-all ${
-              t.id === tab
-                ? "bg-[#222] text-white border-2 border-[#222] shadow-[2px_2px_0_#222]"
-                : "text-[#999] hover:text-[#222] cursor-pointer bg-[#FFF7D6] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
-            }`}
+            className={`shrink-0 text-sm font-bold px-4 py-2 rounded-lg ${t.id === tab ? neoBtnPrimarySm : `${neoBtnSm} text-[#999] hover:text-[#222]`}`}
           >
             {t.label}
           </button>
@@ -199,14 +196,14 @@ export function AccountSettings() {
                   {t("account.email")}
                 </label>
                 {profile?.email ? (
-                  <div className="flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
+                  <div className={`flex items-center justify-between py-2.5 px-3 ${infoBox}`}>
                     <span className="text-sm font-bold">{profile.email}</span>
                     <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">
                       {t("account.connected")}
                     </span>
                   </div>
                 ) : (
-                  <button className="w-full flex items-center justify-between py-2.5 px-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform] cursor-pointer">
+                  <button className={`w-full flex items-center justify-between py-2.5 px-3 ${infoBox} hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform] cursor-pointer`}>
                     <span className="text-sm text-[#999]">{t("account.notConnected")}</span>
                     <span className="flex items-center gap-2 font-mono text-[8px] font-bold tracking-widest uppercase px-2.5 py-1 bg-[#222] text-white rounded-md">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -295,7 +292,7 @@ export function AccountSettings() {
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                  className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]"
+                  className={input}
                 />
               </div>
             )}
@@ -307,7 +304,7 @@ export function AccountSettings() {
                 type="password"
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
-                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]"
+                className={input}
               />
             </div>
             <div>
@@ -318,7 +315,7 @@ export function AccountSettings() {
                 type="password"
                 value={passwordForm.confirmPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform]"
+                className={input}
               />
               {passwordForm.confirmPassword && passwordForm.confirmPassword !== passwordForm.newPassword && (
                 <p className="font-mono text-[9px] font-bold mt-1 text-[#B54843]">{t("account.passwordMismatch")}</p>

@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
+import { card, cardHover, infoBox } from "@/lib/styles";
 
 interface OrderItem {
   id: number;
@@ -244,7 +245,7 @@ export default function OrdersPage() {
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className="shrink-0 w-72 group cursor-pointer bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all"
+                    className={`shrink-0 w-72 group cursor-pointer ${card} ${cardHover} overflow-hidden`}
                   >
                     <div className="aspect-[4/3] bg-[#e8e6e0] overflow-hidden relative">
                       <div className="grid grid-cols-2 h-full">
@@ -361,7 +362,7 @@ export default function OrdersPage() {
                   {selectedOrder.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex gap-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]"
+                      className={`flex gap-3 p-3 ${infoBox}`}
                     >
                       <div className="w-14 h-18 rounded-md overflow-hidden bg-[#e8e6e0] shrink-0">
                         <Image
@@ -466,7 +467,7 @@ export default function OrdersPage() {
                     </div>
                   ))}
                   {selectedOrder.note && (
-                    <div className="mt-3 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
+                    <div className={`mt-3 p-3 ${infoBox}`}>
                       <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">{t("customer.orders.note")}</p>
                       <p className="text-sm font-bold">{selectedOrder.note}</p>
                     </div>

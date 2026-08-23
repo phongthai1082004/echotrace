@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { chip } from "@/lib/styles";
 
 type BadgeVariant =
   | "collected"
@@ -50,7 +51,7 @@ export function StatusBadge({ status, label }: { status: BadgeVariant | string; 
 
   return (
     <span
-      className="font-mono text-[9px] font-bold tracking-widest uppercase leading-none px-2.5 py-1.5 rounded-[6px] border-2 inline-block whitespace-nowrap shadow-[2px_2px_0_#222]"
+      className={`${chip} leading-none`}
       style={{ background: v.bg, color: v.text, borderColor: "#222" }}
     >
       {label ?? defaultLabel}

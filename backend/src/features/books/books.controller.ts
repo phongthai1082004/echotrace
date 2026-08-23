@@ -12,7 +12,8 @@ export class BookController {
 
 	getById = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(req.params.id as string);
-		const book = await this.bookService.getById(id);
+		const userId = parseInt(req.userId!);
+		const book = await this.bookService.getById(id, userId);
 		res.json(ApiResponse.success(book));
 	};
 
@@ -46,6 +47,7 @@ export class BookController {
 
 	updatePages = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(req.params.id as string);
+		const userId = parseInt(req.userId!);
 		const { content, title, paperHeight, paperWidth } = req.body;
 		const updateData: any = {};
 		if (content) {
@@ -54,7 +56,7 @@ export class BookController {
 		if (title !== undefined) updateData.title = title;
 		if (paperHeight !== undefined) updateData.paperHeight = toNumOrNull(paperHeight);
 		if (paperWidth !== undefined) updateData.paperWidth = toNumOrNull(paperWidth);
-		await this.bookService.updatePages(id, updateData);
+		await this.bookService.updatePages(id, userId, updateData);
 		res.json(ApiResponse.success({ id }));
 	};
 }

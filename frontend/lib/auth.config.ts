@@ -1,6 +1,8 @@
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+// ponytail: BACKEND_URL = biến nội bộ docker (server-side fetch trong container);
+// NEXT_PUBLIC_* chỉ dành cho browser, bake lúc build
+const BACKEND = process.env.BACKEND_URL ?? (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001");
 
 async function refreshAccessToken(token: any) {
   const res = await fetch(`${BACKEND}/api/auth/refresh`, {

@@ -1,13 +1,13 @@
 export interface CouponDTO {
   id: number;
   code: string;
-  scope: string;
   discountType: string;
   discountValue: number;
   minOrderAmount: number;
   maxDiscountAmount: number | null;
   maxUsageCount: number;
   usedCount: number;
+  minOrderType: string;
   isActive: boolean;
   expiresAt: string | null;
   createdAt: string;
@@ -15,10 +15,10 @@ export interface CouponDTO {
 
 export interface CreateCouponDTO {
   code: string;
-  scope?: string;
   discountType: string;
   discountValue: number;
   minOrderAmount?: number;
+  minOrderType?: string;
   maxDiscountAmount?: number;
   maxUsageCount?: number;
   isActive?: boolean;
@@ -30,10 +30,10 @@ export class CouponMapper {
     return {
       id: c.id,
       code: c.code,
-      scope: c.scope,
       discountType: c.discountType,
       discountValue: c.discountValue,
       minOrderAmount: c.minOrderAmount,
+      minOrderType: c.minOrderType,
       maxDiscountAmount: c.maxDiscountAmount,
       maxUsageCount: c.maxUsageCount,
       usedCount: c.usedCount,

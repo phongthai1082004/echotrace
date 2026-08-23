@@ -9,6 +9,7 @@ import { usePageManager } from "../../../hooks/usePageManager";
 import { FORMATS, ZOOM_LEVELS, resolveFormat } from "../../../types";
 import {
   isFrameObject,
+  styleFrame,
   hitTestFrame,
   enforceZLayers,
   removeDragOverlays,
@@ -17,10 +18,11 @@ import {
   movePhotoWithFrame,
   unlockPhotoInFrame,
   lockPhotoInFrame,
-  removePhotoDimOverlays,
   addPhotoDimOverlays,
   resolveFrameForPhoto,
   findPhotoInFrame,
+  resetCanvasInteractions,
+  reclipPhotos,
   applyUndo,
   applyRedo,
   reviveObject,
@@ -199,6 +201,7 @@ export function StudioWorkspace() {
             .then(() => {
               if (destroyedRef.current || epochRef.current !== epoch) return;
               c.backgroundColor = "#fff";
+              reclipPhotos(c);
               c.renderAll();
             })
             .catch(() => {
@@ -251,6 +254,7 @@ export function StudioWorkspace() {
               c.selection = true;
               applyInteractionLock(c, pageW, isCover, effectiveView);
               syncViewVisibility(c, effectiveView === "spread" ? "spread" : "single");
+              reclipPhotos(c);
               c.renderAll();
             })
             .catch(() => {
@@ -297,8 +301,7 @@ export function StudioWorkspace() {
         if (o.controls.tr) o.controls.tr.cursorStyle = "nesw-resize";
         if (o.controls.bl) o.controls.bl.cursorStyle = "nesw-resize";
       }
-      if ((o as any).customProperties?.layer === "frame")
-        o.set({ stroke: "#000", strokeWidth: 2, strokeDashArray: undefined } as any);
+      if ((o as any).customProperties?.layer === "frame") styleFrame(o);
     }
     c.getObjects().forEach(applyStyle);
     let dragUndoPushed = false;
@@ -441,7 +444,9 @@ export function StudioWorkspace() {
               .forEach((photo: any) => c.remove(photo));
           }
           if (a.customProperties?.layer === "photo") {
-            removePhotoDimOverlays(c);
+            // edit mode: the deleted photo is the only interactive object — restore
+            // the rest of the canvas or nothing can be selected afterwards
+            resetCanvasInteractions(c);
             const fr: any = resolveFrameForPhoto(c, a);
             if (fr) {
               (fr as any).__savedEvented = undefined;
@@ -515,6 +520,7 @@ export function StudioWorkspace() {
               .filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === fid)
               .forEach((p) => c.remove(p));
           }
+          if ((a2 as any).customProperties?.layer === "photo") resetCanvasInteractions(c);
           c.remove(a2);
           c.discardActiveObject();
           c.renderAll();

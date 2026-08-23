@@ -20,6 +20,15 @@ const authLimiter = rateLimit({
 	message: { success: false, message: ErrorCode.TOO_MANY_REQUEST },
 });
 
+// WEB-005 fix: verify-otp bị siết riêng — dò OTP 6 số trở nên bất khả thi
+const otpLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 5,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { success: false, message: ErrorCode.TOO_MANY_REQUEST },
+});
+
 router.post(
 	'/google',
 	authLimiter,
@@ -32,7 +41,7 @@ router.post(
 );
 router.post(
 	'/verify-otp',
-	authLimiter,
+	otpLimiter,
 	asyncHandler((req, res) => auth.verifyOtp(req, res)),
 );
 router.post(

@@ -11,6 +11,19 @@ export interface SupplierOption {
   price?: number | null;
 }
 
+export interface PrintOptionDTO {
+  id: number;
+  type: string;
+  code: string;
+  name: L10NText;
+  description: L10NText;
+  width?: number | null;
+  height?: number | null;
+  price?: number | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
 export interface SupplierDTO {
   id: number;
   name: string;
@@ -53,6 +66,27 @@ export interface PriceOptionsResponse {
 
 function asArray(v: unknown): any[] {
   return Array.isArray(v) ? v : [];
+}
+
+export class PrintOptionMapper {
+	static toDTO(r: any): PrintOptionDTO {
+		return {
+			id: r.id,
+			type: r.type,
+			code: r.code,
+			name: r.name ?? { vi: r.code, en: r.code, es: r.code },
+			description: r.description ?? { vi: '', en: '', es: '' },
+			width: r.width ?? null,
+			height: r.height ?? null,
+			price: r.price ?? null,
+			createdAt: r.createdAt,
+			updatedAt: r.updatedAt,
+		};
+	}
+
+	static toDTOList(rows: any[]): PrintOptionDTO[] {
+		return rows.map((r) => this.toDTO(r));
+	}
 }
 
 export class SupplierMapper {

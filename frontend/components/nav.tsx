@@ -7,6 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import { apiFetch } from "@/lib/api.fetch";
+import { neoBtnSm } from "@/lib/styles";
 
 function itemThumb(item: any): string | null {
   return item.thumbnailUrl ?? item.coverUrl ?? null;
@@ -370,7 +371,7 @@ export function Nav({ user }: NavProps) {
             <Link
               href="/auth"
               suppressHydrationWarning
-              className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow]"
+              className={`${neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2`}
             >
               {t("nav.signIn")}
             </Link>

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import type { ComponentType } from "react";
-import { X } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import type { StudioAPI } from "@/features/studio-canvas/api/studio-api";
 import { sampleBookAPI } from "@/features/studio-canvas/api/sample-book-api";
 import { useStudioEditor } from "@/features/studio-canvas/hooks/useStudioEditor";
@@ -60,12 +60,7 @@ export default function AdminSampleStudioPage() {
             <p suppressHydrationWarning className="font-bold text-lg">
               {t("customer.myJournals.chooseSize")}
             </p>
-            <button
-              onClick={() => router.push("/admin/sample-books")}
-              className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222]"
-            >
-              <X size={16} />
-            </button>
+            <CloseButton onClick={() => router.push("/admin/sample-books")} />
           </div>
           <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
             {sizesLoading ? (

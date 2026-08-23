@@ -389,10 +389,10 @@ model SupplierPrintOption {
 model Coupon {
   id                Int       @id @default(autoincrement())
   code              String    @unique
-  scope             String    @default("ORDER")   // ORDER (toàn đơn) | ITEM (theo từng quyển)
   discountType      String
   discountValue     Float
-  minOrderAmount    Float     @default(0)
+  minOrderAmount     Float     @default(0)
+  minOrderType       String    @default("VALUE") // VALUE (tính theo giá) | QUANTITY (tính theo số quyển)
   maxDiscountAmount Float?
   maxUsageCount     Int       @default(0)
   usedCount         Int       @default(0)

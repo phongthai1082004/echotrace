@@ -9,7 +9,8 @@ import { Trash2, X } from "lucide-react";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
 import { apiFetch } from "@/lib/api.fetch";
-import { neoBtn, neoBtnPrimary } from "@/lib/styles";
+import { neoBtnPrimary, card, cardHover } from "@/lib/styles";
+import { YesNoPopup } from "@/components/yes-no-popup";
 
 interface JournalBook {
   id: number;
@@ -142,7 +143,7 @@ export default function MyJournalsPage() {
               {journals.map((j) => (
                 <div
                   key={j.id}
-                  className="shrink-0 w-64 group bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#222] transition-all"
+                  className={`shrink-0 w-64 group ${card} ${cardHover} overflow-hidden`}
                 >
                   <Link href={`/studio?id=${j.id}`} className="block">
                     <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
@@ -259,38 +260,15 @@ export default function MyJournalsPage() {
       )}
 
       {deleteTarget && (
-        <div
-          className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center"
-          onClick={() => !deleting && setDeleteTarget(null)}
-        >
-          <div
-            className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] w-80 p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p suppressHydrationWarning className="font-bold text-lg mb-1">
-              {t("customer.myJournals.deleteTitle")}
-            </p>
-            <p suppressHydrationWarning className="text-sm text-[#666] mb-5">
-              {t("customer.myJournals.deleteConfirm", { title: deleteTarget.title })}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-                className={`${neoBtn} flex-1 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 disabled:opacity-40`}
-              >
-                {t("customer.myJournals.cancel")}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className={`${neoBtnPrimary} flex-1 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 bg-[#B54843] border-[#B54843] shadow-[2px_2px_0_#B54843] disabled:opacity-40`}
-              >
-                {deleting ? t("customer.myJournals.deleting") : t("customer.myJournals.delete")}
-              </button>
-            </div>
-          </div>
-        </div>
+        <YesNoPopup
+          open
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+          title={t("customer.myJournals.deleteTitle")}
+          message={t("customer.myJournals.deleteConfirm", { title: deleteTarget.title })}
+          confirmLabel={deleting ? t("customer.myJournals.deleting") : t("customer.myJournals.delete")}
+        />
       )}
     </div>
   );

@@ -1,4 +1,9 @@
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+// ponytail: server-side (route handler trong container) dùng BACKEND_URL nội bộ,
+// browser dùng NEXT_PUBLIC_BACKEND_URL đã bake lúc build
+const BASE =
+	typeof window === "undefined"
+		? process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
+		: process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function apiFetch<T = any>(
   path: string,

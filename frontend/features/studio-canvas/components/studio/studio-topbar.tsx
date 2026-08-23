@@ -11,6 +11,7 @@ import { usePageManager } from "../../hooks/usePageManager";
 import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
+import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 import { fetchPrintCatalog, priceForCode } from "@/lib/print-catalog";
 import { ZOOM_LEVELS, FONTS } from "../../types";
 import {
@@ -21,6 +22,7 @@ import {
   enforceZLayers,
   placePhotoInFrame,
   applyFrameClip,
+  setAllFramesBorder,
 } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
@@ -91,6 +93,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   const zoomIndex = useCanvasStore((s) => s.zoomIndex);
   const setZoomIndex = useCanvasStore((s) => s.setZoomIndex);
   const viewMode = useCanvasStore((s) => s.viewMode);
+  useCanvasStore((s) => s.selectionVersion);
   const { saveFull } = useAutoSave();
   const { saveCurrentPage } = usePageManager();
   const { showToast } = useToast();
@@ -115,6 +118,20 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   };
 
   const iconSize = 14;
+
+  const activeObj = canvas?.getActiveObject() as any;
+  const frameToolsOn =
+    !!activeObj &&
+    (isFrameObject(activeObj) ||
+      (activeObj.type === "activeselection" && activeObj.getObjects().some((o: any) => isFrameObject(o))));
+  const selectedFrame = frameToolsOn
+    ? activeObj.type === "activeselection"
+      ? activeObj.getObjects().find((o: any) => isFrameObject(o))
+      : activeObj
+    : null;
+  const frames = canvas ? canvas.getObjects().filter((o: any) => isFrameObject(o)) : [];
+  const allFramesHidden = frames.length > 0 && frames.every((f: any) => f.customProperties?.borderHidden);
+  const frameWidth = selectedFrame?.customProperties?.strokeWidth || 1;
 
   const handleUndo = () => {
     if (!canvas || undoStack.length === 0) return;
@@ -460,6 +477,35 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
         label={t("customer.studio.flipV")}
         onClick={handleFlipV}
       />
+      {frameToolsOn && (
+        <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
+          <button
+            onClick={() => {
+              pushUndo();
+              if (canvas) setAllFramesBorder(canvas, { hidden: !allFramesHidden });
+              useCanvasStore.getState().incrementSelectionVersion();
+            }}
+            className="px-2.5 py-1.5 font-mono text-[9px] font-bold tracking-widest uppercase bg-white hover:bg-[#e8e6e0] transition-colors border-r-2 border-[#222]"
+          >
+            {allFramesHidden ? t("customer.studio.showAllFrames") : t("customer.studio.hideAllFrames")}
+          </button>
+          <div className="flex items-center">
+            {[1, 2, 3, 4, 5].map((w) => (
+              <button
+                key={w}
+                onClick={() => {
+                  pushUndo();
+                  if (canvas) setAllFramesBorder(canvas, { width: w });
+                  useCanvasStore.getState().incrementSelectionVersion();
+                }}
+                className={`px-1.5 py-1.5 font-mono text-[9px] font-bold transition-colors ${w < 5 ? "border-r border-[#222]/30" : ""} ${frameWidth === w ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"}`}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="ml-auto flex items-center gap-2">
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           {(["left", "spread", "right"] as const).map((v) => (
@@ -517,32 +563,16 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
             +
           </button>
         </div>
-        {isAdmin && (
-          <div
-            className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden"
-            title={t("customer.studio.kindLabel")}
-          >
-            {(["TEMPLATE", "ALBUM"] as const).map((k) => (
-              <button
-                key={k}
-                onClick={() => setBookMeta({ kind: k })}
-                className={`px-2 py-1.5 font-mono text-[10px] font-bold tracking-widest transition-colors ${bookMeta.kind === k ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"} ${k === "TEMPLATE" ? "border-r-2 border-[#222]" : ""}`}
-              >
-                {t(`customer.studio.${k === "TEMPLATE" ? "kindTemplate" : "kindAlbum"}`)}
-              </button>
-            ))}
-          </div>
-        )}
         <button
           disabled
           onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)}
-          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#FFF7D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className={`${neoBtnSm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed`}
         >
           <Eye size={11} /> {t("customer.studio.preview")}
         </button>
         <button
           onClick={handleAutoFill}
-          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#222] text-white hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+          className={`${neoBtnPrimarySm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5`}
         >
           <svg
             width="12"
@@ -592,7 +622,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
               r.ok ? "success" : "error",
             );
           }}
-          className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase bg-[#222] text-white px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+          className={`${neoBtnPrimarySm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5`}
         >
           {t("customer.studio.save")} Journal
         </button>
@@ -684,7 +714,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 showToast("Failed to add to cart", "error");
               }
             }}
-            className="flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] bg-[#D4A574] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-all"
+            className={`${neoBtnSm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 !bg-[#D4A574]`}
           >
             {t("customer.studio.orderPrint")}
           </button>

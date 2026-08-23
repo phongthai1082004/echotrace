@@ -1,6 +1,7 @@
 "use client";
 
 import { atom, getDefaultStore, useAtom } from "jotai";
+import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 
 export type BookPage = { front: string; back: string };
 
@@ -52,11 +53,7 @@ export function Page({ total }: { total?: number }) {
   const n = total && total > 0 ? total : pages.length;
 
   const btn = (active: boolean) =>
-    `font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2.5 rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] transition-[transform,box-shadow,background-color] shrink-0 cursor-pointer ${
-      active
-        ? "bg-[#222] text-white"
-        : "bg-[#FFF7D6] text-[#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
-    }`;
+    `${active ? neoBtnPrimarySm : neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0 cursor-pointer`;
   const disabled = "opacity-40 pointer-events-none";
 
   return (

@@ -7,7 +7,7 @@ import {
   isFrameObject,
   enforceZLayers,
   resolveFrameForPhoto,
-  removePhotoDimOverlays,
+  resetCanvasInteractions,
   serializeSel,
   groupSelectedObjects,
   ungroupSelectedObjects,
@@ -238,7 +238,8 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
                     .forEach((p) => canvas.remove(p));
                 }
                 if (cp(o).layer === "photo") {
-                  removePhotoDimOverlays(canvas);
+                  // edit mode — restore canvas interactivity or nothing is selectable afterwards
+                  resetCanvasInteractions(canvas);
                   const fr = resolveFrameForPhoto(canvas, o as any);
                   if (fr) {
                     fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);
@@ -264,7 +265,8 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
                     .forEach((p) => canvas.remove(p));
                 }
                 if (cp(o).layer === "photo") {
-                  removePhotoDimOverlays(canvas);
+                  // edit mode — restore canvas interactivity or nothing is selectable afterwards
+                  resetCanvasInteractions(canvas);
                   const fr = resolveFrameForPhoto(canvas, o as any);
                   if (fr) {
                     fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);

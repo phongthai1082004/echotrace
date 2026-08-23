@@ -1,0 +1,89 @@
+# =========================================================================
+# UPSTREAM CONFIGURATIONS
+# Define backend server pools using environment variables
+# =========================================================================
+
+upstream frontend_upstream {
+    server ${FRONTEND_HOST}:${FRONTEND_PORT};
+    keepalive 32; 
+}
+
+upstream backend_upstream {
+    server ${BACKEND_HOST}:${BACKEND_PORT};
+    keepalive 32; 
+}
+
+# =========================================================================
+# MAIN SERVER BLOCK
+# =========================================================================
+server {
+    listen ${NGINX_PORT};
+    server_name ${SERVER_DOMAIN};
+
+    # Allow large file uploads (Crucial for photobook user image uploads)
+    client_max_body_size 50M;
+
+    # Define the root directory for serving custom error pages if needed
+    root /usr/share/nginx/html;
+
+    # =====================================================================
+    # GZIP COMPRESSION
+    # =====================================================================
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json image/svg+xml;
+
+    # =====================================================================
+    # CUSTOM 404 ERROR HANDLING
+    # Intercept 404 errors and serve a custom static file from Nginx
+    # =====================================================================
+    error_page 404 /404.html;
+    location = /404.html {
+        internal;
+        root /usr/share/nginx/html; 
+    }
+
+    # =====================================================================
+    # ROUTE 1: API REQUESTS -> BACKEND
+    # =====================================================================
+    location /api/ {
+        proxy_pass http://backend_upstream;
+        
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # =====================================================================
+    # ROUTE 2: STATIC ASSETS CACHING -> FRONTEND
+    # =====================================================================
+    location /_next/static/ {
+        proxy_pass http://frontend_upstream;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    # =====================================================================
+    # ROUTE 3: GENERAL TRAFFIC -> FRONTEND
+    # =====================================================================
+    location / {
+        proxy_pass http://frontend_upstream;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # 404 từ Next (route không tồn tại) -> thay body bằng 404.html tĩnh.
+        # KHÔNG bật ở /api/ để giữ nguyên JSON error của backend.
+        proxy_intercept_errors on;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

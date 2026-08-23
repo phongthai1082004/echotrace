@@ -3,13 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, X, Search } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { NeoSelect } from "@/components/neo-select";
 import { useSession } from "next-auth/react";
 import { uploadToR2 } from "@/lib/upload";
-import { label, card, input, neoBtnPrimary } from "@/lib/styles";
+import { label, card, input, neoBtnPrimary, neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { apiFetch } from "@/lib/api.fetch";
 import { SkeletonGrid } from "@/components/skeleton";
+import { useDebounce } from "@hooks";
 import { ASSET_CATEGORIES, CATEGORY_COLORS, AssetCategory } from "@echotrace/shared";
 
 type AssetType = "sticker";
@@ -38,6 +40,7 @@ export default function AdminAssetsPage() {
   const [showForm, setShowForm] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<"all" | AssetCategory>("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 1000);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<AssetCategory | "">("");
   const fileRef = useRef<File | null>(null);
@@ -101,7 +104,7 @@ export default function AdminAssetsPage() {
   };
 
   const filtered = assets.filter((a) => {
-    const q = search.toLowerCase();
+    const q = debouncedSearch.toLowerCase();
     return (!q || a.name.toLowerCase().includes(q)) && (categoryFilter === "all" || a.category === categoryFilter);
   });
 
@@ -129,10 +132,8 @@ export default function AdminAssetsPage() {
           <div className="flex flex-col gap-1">
             <button
               onClick={() => setCategoryFilter("all")}
-              className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] border-2 ${
-                categoryFilter === "all"
-                  ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
-                  : "bg-[#FFF7D6] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+              className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg ${
+                categoryFilter === "all" ? neoBtnPrimarySm : neoBtnSm
               }`}
             >
               {t("admin.stickers.all")}
@@ -141,10 +142,8 @@ export default function AdminAssetsPage() {
               <button
                 key={c}
                 onClick={() => setCategoryFilter(c)}
-                className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg transition-[background-color,color] border-2 ${
-                  categoryFilter === c
-                    ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
-                    : "bg-[#FFF7D6] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222]"
+                className={`w-full text-left text-sm font-bold px-3 py-2 rounded-lg ${
+                  categoryFilter === c ? neoBtnPrimarySm : neoBtnSm
                 }`}
               >
                 {catLabels[c]}
@@ -223,9 +222,7 @@ export default function AdminAssetsPage() {
           <div className={`${card} w-80 p-5`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-sm">{t("admin.stickers.uploadModal")}</p>
-              <button onClick={() => !uploading && setShowForm(false)} className="p-1 hover:opacity-60">
-                <X size={14} />
-              </button>
+              <CloseButton onClick={() => !uploading && setShowForm(false)} size={14} />
             </div>
             <div className="space-y-3">
               <div>
@@ -253,7 +250,7 @@ export default function AdminAssetsPage() {
                   <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 rounded-[8px] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6] shrink-0"
+                    className={`${neoBtnSm} font-mono text-[9px] font-bold tracking-widest uppercase px-3 py-2 shrink-0`}
                   >
                     {t("admin.stickers.chooseFile")}
                   </button>

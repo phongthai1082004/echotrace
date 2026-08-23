@@ -5,5 +5,6 @@ export * from './idempotency.type.enum.js';
 export * from './order.enum.js';
 export * from './payment.enum.js';
 export * from './print.option.enum.js';
+export * from './sample-book.enum.js';
 export * from './token.type.js';
 export * from './user.enum.js';

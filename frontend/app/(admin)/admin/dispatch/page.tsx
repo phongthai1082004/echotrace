@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, ArrowUpDown, Check, ChevronRight, Eye } from "lucide-react";
+import { Search, ArrowUpDown, Check, ChevronRight, Eye } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { useTranslation } from "react-i18next";
-import { label, labelSm, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
+import { label, labelSm, card, neoBtn, neoBtnPrimary, input, infoBox } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminPagination } from "@/components/admin-pagination";
-import { ResponsiveTable } from "@/components/responsive-table";
+import { AdminList } from "@/components/admin-list";
 import { StatusBadge } from "@/components/status-badge";
 import type { OrderStatus, Order } from "@/lib/mock-dispatch";
 import { dispatchSuppliers, allOrders, unassignedOrders } from "@/lib/mock-dispatch";
@@ -218,66 +219,53 @@ export default function DispatchPage() {
           {/* Orders table */}
           <div className="flex-1 mx-6 mb-4 min-h-0 flex flex-col">
             <div className={`${card} flex-1 flex flex-col min-h-0 overflow-hidden`}>
-              <ResponsiveTable
-                header={
-                  <div
-                    className="grid shrink-0 border-b-[3px] border-[#222]"
-                    style={{ gridTemplateColumns: "110px 0.5fr 1fr 100px 120px 150px 120px" }}
-                  >
-                    {[
-                      t("admin.dispatch.orderId"),
-                      t("admin.dispatch.customer"),
-                      t("admin.dispatch.product"),
-                      t("admin.dispatch.amount"),
-                      t("admin.dispatch.status"),
-                      t("admin.dispatch.date"),
-                      t("common.action"),
-                    ].map((h) => (
-                      <div key={h} className={`px-3 py-3 ${label} text-[#666] whitespace-nowrap`}>
-                        {h}
-                      </div>
-                    ))}
-                  </div>
-                }
-                gridCols={"110px 1fr 1fr 100px 120px 150px 80px"}
-              >
-                {paged.length === 0 ? (
+              <AdminList
+                columns={[
+                  { key: "orderId", label: t("admin.dispatch.orderId"), width: "110px" },
+                  { key: "customer", label: t("admin.dispatch.customer"), width: "1fr" },
+                  { key: "product", label: t("admin.dispatch.product"), width: "1fr" },
+                  { key: "amount", label: t("admin.dispatch.amount"), width: "100px" },
+                  { key: "status", label: t("admin.dispatch.status"), width: "110px", align: "center" },
+                  { key: "date", label: t("admin.dispatch.date"), width: "130px" },
+                  { key: "action", label: t("common.action"), width: "80px", align: "center" },
+                ]}
+                data={paged}
+                rowKey={(o) => o.id}
+                rowClassName="hover:bg-[#FFF7D6]/60"
+                empty={
                   <div className="flex items-center justify-center py-10">
                     <p className="font-bold text-[#999]">{t("admin.dispatch.noOrders")}</p>
                   </div>
-                ) : (
-                  paged.map((order) => (
-                    <div
-                      key={order.id}
-                      className="grid hover:bg-[#FFF7D6]/60 transition-colors border-b-2 border-[#222]/10 items-center py-3"
-                      style={{ gridTemplateColumns: "110px 0.5fr 1fr 100px 120px 150px 120px" }}
-                    >
-                      <div className="px-3 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">
-                        {order.id}
-                      </div>
-                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.customer}</div>
-                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.product}</div>
-                      <div className="px-3 font-mono text-[10px] font-bold whitespace-nowrap">
-                        {formatCurrency(order.amount)}
-                      </div>
-                      <div className="px-3">
-                        <StatusBadge status={order.status} />
-                      </div>
-                      <div className="px-3 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.date}</div>
-                      <div className="px-2">
-                        <button onClick={() => setSelectedOrder(order)} className={`${neoBtn} p-1.5`}>
-                          <Eye size={14} />
-                        </button>
-                      </div>
+                }
+                footer={
+                  <AdminPagination
+                    hasNext={page < totalPages - 1}
+                    hasPrevious={page > 0}
+                    onNext={() => setPage((p) => p + 1)}
+                    onPrevious={() => setPage((p) => p - 1)}
+                  />
+                }
+                renderRow={(order: Order) => (
+                  <>
+                    <div className="px-2 font-mono text-[10px] font-bold text-[#3B82F6] whitespace-nowrap">
+                      {order.id}
                     </div>
-                  ))
+                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.customer}</div>
+                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.product}</div>
+                    <div className="px-2 font-mono text-[10px] font-bold whitespace-nowrap">
+                      {formatCurrency(order.amount)}
+                    </div>
+                    <div className="px-2 flex justify-center">
+                      <StatusBadge status={order.status} />
+                    </div>
+                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{order.date}</div>
+                    <div className="px-2 flex justify-center">
+                      <button onClick={() => setSelectedOrder(order)} className={`${neoBtn} p-1.5`}>
+                        <Eye size={14} />
+                      </button>
+                    </div>
+                  </>
                 )}
-              </ResponsiveTable>
-              <AdminPagination
-                hasNext={page < totalPages - 1}
-                hasPrevious={page > 0}
-                onNext={() => setPage((p) => p + 1)}
-                onPrevious={() => setPage((p) => p - 1)}
               />
             </div>
           </div>
@@ -297,12 +285,7 @@ export default function DispatchPage() {
                 <p className={`${label} mb-1 text-[#666]`}>{selectedOrder.id}</p>
                 <h2 className="text-xl font-bold truncate max-w-[280px]">{selectedOrder.product}</h2>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222] hover:translate-x-px hover:translate-y-[1px] transition-[transform,background-color]"
-              >
-                <X size={16} />
-              </button>
+              <CloseButton onClick={() => setSelectedOrder(null)} />
             </div>
 
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
@@ -367,7 +350,7 @@ export default function DispatchPage() {
                   ))}
                 </div>
                 {selectedOrder.notes && (
-                  <div className="mt-4 p-3 bg-[#FFF7D6] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222]">
+                  <div className={`mt-4 p-3 ${infoBox}`}>
                     <p className="font-mono text-[9px] font-bold mb-1 text-[#999]">{t("admin.dispatch.note")}</p>
                     <p className="text-sm font-bold">{selectedOrder.notes}</p>
                   </div>
@@ -424,9 +407,7 @@ export default function DispatchPage() {
                   {assignChecked.size} {t("admin.dispatch.selected", { count: assignChecked.size })}
                 </p>
               </div>
-              <button onClick={() => setShowAssignModal(false)} className="p-1 hover:opacity-60">
-                <X size={16} />
-              </button>
+              <CloseButton onClick={() => setShowAssignModal(false)} />
             </div>
             <div className="px-6 py-3 border-b-2 border-[#222]/10">
               <div className="relative">

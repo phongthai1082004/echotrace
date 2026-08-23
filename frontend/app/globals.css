@@ -200,6 +200,44 @@
     box-shadow: 2px 2px 0 var(--border);
   }
 
+  .neo-btn-sm {
+    background-color: var(--card);
+    border-radius: 0.5rem;
+    border: 2px solid var(--border);
+    box-shadow: 2px 2px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms, background-color 150ms, color 150ms;
+  }
+  .neo-btn-sm:hover {
+    translate: 1px 1px;
+    box-shadow: 1px 1px 0 var(--border);
+  }
+
+  .neo-btn-primary-sm {
+    background-color: var(--foreground);
+    color: white;
+    border-radius: 0.5rem;
+    border: 2px solid var(--border);
+    box-shadow: 2px 2px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-btn-primary-sm:hover {
+    translate: 1px 1px;
+    box-shadow: 1px 1px 0 var(--border);
+  }
+
+  .neo-btn-danger {
+    background-color: #b54843;
+    color: white;
+    border-radius: 10px;
+    border: 3px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  .neo-btn-danger:hover {
+    translate: 2px 2px;
+    box-shadow: 2px 2px 0 var(--border);
+  }
+
   .neo-input {
     width: 100%;
     background-color: var(--card);

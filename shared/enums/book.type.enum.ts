@@ -1,14 +1,3 @@
-export const BookType = {
-  TRAVEL: 'travel',
-  YEARBOOK: 'yearbook',
-  WEDDING: 'wedding',
-  FAMILY: 'family',
-  BABY: 'baby',
-  CUSTOM: 'custom',
-} as const;
-
-export type BookType = typeof BookType[keyof typeof BookType];
-
 export const Category = {
   NATURE: 'nature',
   URBAN: 'urban',

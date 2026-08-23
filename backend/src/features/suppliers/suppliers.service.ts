@@ -3,17 +3,18 @@ import { BaseService } from '../../utils/base.service.js';
 import { SupplierDTO, SupplierMapper, SupplierOption, AggregatedOptionsResponse, CatalogSize } from '@echotrace/shared';
 import { CreateSupplierDTO } from '../../dto/supplier/supplier.create.dto.js';
 import { UpdateSupplierDTO } from '../../dto/supplier/supplier.update.dto.js';
-import { optionCatalogCache } from '../../infrastructure/cache/cache.service.js';
+import { OptionCatalogCacheService } from '../../infrastructure/cache/option-catalog.cache.service.js';
 import { prisma } from '../../../lib/prisma.js';
 
-type OptionGroups = { paperSizeOptions: any[]; paperOptions: any[]; coverOptions: any[] };
-
 export abstract class ISupplierService {
-	abstract getSupplierList(extraWhere?: any): Promise<SupplierDTO[]>;
+	abstract getSupplierList(
+		params: { search?: string; field?: string; order?: string; limit?: number; cursor?: number },
+		extraWhere?: any,
+	): Promise<{ items: SupplierDTO[]; nextCursor: number | null }>;
 	abstract getSupplierById(id: number): Promise<SupplierDTO>;
 	abstract createSupplier(dto: CreateSupplierDTO): Promise<SupplierDTO>;
 	abstract updateSupplier(id: number, dto: UpdateSupplierDTO): Promise<void>;
-	abstract updateSupplierOptions(id: number, data: Partial<OptionGroups>): Promise<void>;
+	abstract updateSupplierOptions(id: number, optionIds: number[]): Promise<void>;
 	abstract deleteSupplier(id: number): Promise<void>;
 	abstract getAggregatedOptions(): Promise<AggregatedOptionsResponse>;
 	abstract getOptionCatalog(type: string): Promise<SupplierOption[]>;
@@ -26,14 +27,30 @@ export class SupplierService extends ISupplierService {
 		@inject('SupplierBaseService') private readonly supplierBase: BaseService<any>,
 		@inject('PrintOptionBaseService') private readonly optionBase: BaseService<any>,
 		@inject('SupplierPrintOptionBaseService') private readonly linkBase: BaseService<any>,
+		@inject('IOptionCatalogCacheService') private readonly optionCache: OptionCatalogCacheService,
 	) {
 		super();
 	}
 
-	async getSupplierList(extraWhere: any = { isDelete: undefined }) {
-		const { items } = await this.supplierBase.findAll({ limit: 1000, order: 'desc' }, { allowedFilterFields: [] }, extraWhere);
+	async getSupplierList(
+		params: { search?: string; field?: string; order?: string; limit?: number; cursor?: number } = {},
+		extraWhere: any = { isDelete: undefined },
+	) {
+		const searchFields =
+			params.field === 'name'
+				? ['name']
+				: params.field === 'email'
+					? ['email']
+					: params.field === 'contact'
+						? ['contact']
+						: ['name', 'email', 'contact'];
+		const { items, nextCursor } = await this.supplierBase.findAll(
+			{ search: params.search, order: params.order || 'desc', limit: params.limit || 50, cursor: params.cursor },
+			{ searchFields, allowedFilterFields: [] },
+			extraWhere,
+		);
 		await this.attachOptions(items);
-		return SupplierMapper.toDTOList(items);
+		return { items: SupplierMapper.toDTOList(items), nextCursor };
 	}
 
 	async getSupplierById(id: number) {
@@ -43,16 +60,16 @@ export class SupplierService extends ISupplierService {
 	}
 
 	async createSupplier(dto: CreateSupplierDTO) {
-		const { paperSizeOptions, paperOptions, coverOptions, ...rest } = dto as any;
+		const { optionIds, ...rest } = dto as any;
 		const supplier = await this.supplierBase.create({ ...rest });
-		if (paperSizeOptions || paperOptions || coverOptions) {
-			await this.updateSupplierOptions(supplier.id, { paperSizeOptions, paperOptions, coverOptions });
+		if (Array.isArray(optionIds) && optionIds.length) {
+			await this.updateSupplierOptions(supplier.id, optionIds);
 		}
 		return SupplierMapper.toDTO(await this.getSupplierById(supplier.id));
 	}
 
 	async updateSupplier(id: number, dto: UpdateSupplierDTO) {
-		const { status, paperSizeOptions, paperOptions, coverOptions, ...rest } = dto;
+		const { status, optionIds, ...rest } = dto;
 		const data: any = { ...rest };
 
 		// Convert status to banned/isDelete fields
@@ -68,20 +85,39 @@ export class SupplierService extends ISupplierService {
 		});
 
 		const result = await this.supplierBase.update(id, cleanData, { isDelete: undefined });
+		if (Array.isArray(optionIds)) {
+			await this.updateSupplierOptions(id, optionIds);
+		}
 		return result;
 	}
 
-	async updateSupplierOptions(id: number, data: Partial<OptionGroups>) {
-		const typesToReplace: { type: string; options: any[] }[] = [];
-		if (data.paperSizeOptions !== undefined) typesToReplace.push({ type: 'paperSize', options: data.paperSizeOptions });
-		if (data.paperOptions !== undefined) typesToReplace.push({ type: 'paper', options: data.paperOptions });
-		if (data.coverOptions !== undefined) typesToReplace.push({ type: 'cover', options: data.coverOptions });
-		if (!typesToReplace.length) return;
-
-		for (const t of typesToReplace) {
-			await this.replaceOptionsForType(id, t.type, t.options);
-			await optionCatalogCache.delete(`catalog:${t.type}`);
-		}
+	// Supplier chỉ gán PrintOption có sẵn (theo id) — không tạo mới ở đây nữa.
+	// Cache-aside: write DB trước, invalidate catalog cache sau để lần đọc tiếp fresh.
+	async updateSupplierOptions(id: number, optionIds: number[] = []) {
+		const wanted = new Set(optionIds.map(Number).filter(Boolean));
+		await prisma.$transaction(async (tx) => {
+			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
+			const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
+			for (const l of existing) {
+				if (wanted.has(l.printOptionId)) continue;
+				if (l.isDelete) continue;
+				await tx.supplierPrintOption.updateMany({
+					where: { id: l.id },
+					data: { isDelete: true, deletedAt: new Date() },
+				});
+			}
+			for (const poId of wanted) {
+				const row = existingById.get(poId);
+				if (row) {
+					if (row.isDelete) {
+						await tx.supplierPrintOption.updateMany({ where: { id: row.id }, data: { isDelete: false, deletedAt: null } });
+					}
+					continue;
+				}
+				await tx.supplierPrintOption.create({ data: { supplierId: id, printOptionId: poId } });
+			}
+		});
+		await this.optionCache.invalidateCatalogForTypes('paperSize', 'paper', 'cover');
 	}
 
 	async deleteSupplier(id: number) {
@@ -123,55 +159,6 @@ export class SupplierService extends ISupplierService {
 		}
 	}
 
-	// ponytail: options giờ là danh mục GLOBAL — upsert PrintOption theo (type,code) rồi relink supplier qua SupplierPrintOption. Giá nằm trên PrintOption, không còn per-supplier.
-	private async replaceOptionsForType(supplierId: number, type: string, options: any[]) {
-		const want = new Map<string, any>();
-		for (const o of options ?? []) {
-			want.set(String(o.code), {
-				name: o.name ?? { vi: o.code, en: o.code, es: o.code },
-				description: o.description ?? { vi: '', en: '', es: '' },
-				width: o.width ?? null,
-				height: o.height ?? null,
-				price: o.price ?? null,
-			});
-		}
-
-		await prisma.$transaction(async (tx) => {
-			// Upsert global catalog rows
-			const poByCode = new Map<string, number>();
-			for (const [code, fields] of want) {
-				let row = await tx.printOption.findFirst({ where: { type, code } });
-				if (!row) {
-					row = await tx.printOption.create({ data: { type, code, ...fields } });
-				} else {
-					await tx.printOption.updateMany({ where: { id: row.id }, data: { ...fields, isDelete: false, deletedAt: null } });
-				}
-				poByCode.set(code, row.id);
-			}
-
-			// Relink supplier: diff current links vs wanted codes (kể cả đã soft-delete để revive, @@unique supplierId+printOptionId)
-			const typePoIds = new Set((await tx.printOption.findMany({ where: { type } })).map((r: any) => r.id));
-			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId } });
-			const existingByPo = new Map(existing.map((l: any) => [l.printOptionId, l]));
-			const wantedIds = new Set([...poByCode.values()]);
-
-			for (const l of existing) {
-				if (!typePoIds.has(l.printOptionId)) continue;
-				if (wantedIds.has(l.printOptionId)) continue;
-				if (l.isDelete) continue;
-				await tx.supplierPrintOption.updateMany({ where: { id: l.id }, data: { isDelete: true, deletedAt: new Date() } });
-			}
-			for (const id of wantedIds) {
-				const row = existingByPo.get(id);
-				if (row) {
-					if (row.isDelete) await tx.supplierPrintOption.updateMany({ where: { id: row.id }, data: { isDelete: false, deletedAt: null } });
-					continue;
-				}
-				await tx.supplierPrintOption.create({ data: { supplierId, printOptionId: id } });
-			}
-		});
-	}
-
 	private uniqOptions(opts: SupplierOption[]): SupplierOption[] {
 		return [...new Map(opts.map((o) => [o.code, o])).values()];
 	}
@@ -199,10 +186,9 @@ export class SupplierService extends ISupplierService {
 		return { sizes, papers: this.uniqOptions(papers), covers: this.uniqOptions(covers) };
 	}
 
-	// Lazy catalog/info: đọc thẳng danh mục global, LRU-cached.
+	// Lazy catalog/info: đọc thẳng danh mục global, cache-aside (miss -> DB -> set).
 	async getOptionCatalog(type: string): Promise<SupplierOption[]> {
-		const cacheKey = `catalog:${type}`;
-		const cached = await optionCatalogCache.get<SupplierOption[]>(cacheKey);
+		const cached = await this.optionCache.getCatalog<SupplierOption[]>(type);
 		if (cached) return cached;
 		const rows: any[] = await this.optionBase.delegate.findMany({
 			where: { type, isDelete: false },
@@ -216,13 +202,12 @@ export class SupplierService extends ISupplierService {
 			height: r.height ?? null,
 			price: r.price ?? null,
 		}));
-		await optionCatalogCache.set(cacheKey, list);
+		await this.optionCache.setCatalog(type, list);
 		return list;
 	}
 
 	async getOptionInfo(type: string, code: string): Promise<SupplierOption | null> {
-		const cacheKey = `info:${type}:${code}`;
-		const cached = await optionCatalogCache.get<SupplierOption>(cacheKey);
+		const cached = await this.optionCache.getInfo<SupplierOption>(type, code);
 		if (cached) return cached;
 		const row = await this.optionBase.delegate.findFirst({ where: { type, code, isDelete: false } });
 		if (!row) return null;
@@ -234,7 +219,7 @@ export class SupplierService extends ISupplierService {
 			height: row.height ?? null,
 			price: row.price ?? null,
 		};
-		await optionCatalogCache.set(cacheKey, info);
+		await this.optionCache.setInfo(type, code, info);
 		return info;
 	}
 }

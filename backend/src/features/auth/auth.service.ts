@@ -11,6 +11,11 @@ import { AuthResponseDTO, AuthMapper } from '@echotrace/shared';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// WEB-005 fix: đếm lần sai theo token record — sai 5 lần thì revoke OTP.
+// ponytail: in-memory, restart là reset — rate limiter ở route vẫn chặn tầng ngoài.
+const otpFailCounts = new Map<number, number>();
+const MAX_OTP_ATTEMPTS = 5;
+
 export abstract class IAuthService {
 	abstract loginWithGoogle(idToken: string): Promise<AuthResponseDTO>;
 	abstract sendOtp(email: string): Promise<void>;
@@ -52,7 +57,8 @@ export class AuthService extends IAuthService {
 		const existing = await prisma.user.findFirst({
 			where: { email, isDelete: false },
 		});
-		if (existing) throw new AppError(ErrorCode.AUTH_EMAIL_EXISTS, 409);
+		// WEB-003 fix: im lặng thay vì 409 — không lộ email nào đã đăng ký
+		if (existing) return;
 
 		const otp = String(Math.floor(100000 + Math.random() * 900000));
 		const hashed = await bcrypt.hash(otp, 10);
@@ -79,7 +85,17 @@ export class AuthService extends IAuthService {
 		if (Date.now() > record.expiresAt.getTime()) throw new AppError(ErrorCode.AUTH_OTP_EXPIRED, 400);
 
 		const valid = await bcrypt.compare(otp, record.refreshToken);
-		if (!valid) throw new AppError(ErrorCode.AUTH_INVALID_OTP, 400);
+		if (!valid) {
+			const fails = (otpFailCounts.get(record.id) ?? 0) + 1;
+			if (fails >= MAX_OTP_ATTEMPTS) {
+				await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
+				otpFailCounts.delete(record.id);
+			} else {
+				otpFailCounts.set(record.id, fails);
+			}
+			throw new AppError(ErrorCode.AUTH_INVALID_OTP, 400);
+		}
+		otpFailCounts.delete(record.id);
 
 		await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
 

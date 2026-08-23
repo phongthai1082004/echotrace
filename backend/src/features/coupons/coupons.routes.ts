@@ -28,5 +28,10 @@ router.delete(
 	adminMiddleware,
 	asyncHandler((req, res) => couponCtrl.remove(req, res)),
 );
+router.patch(
+	'/admin/coupons/:id/deactivate',
+	adminMiddleware,
+	asyncHandler((req, res) => couponCtrl.deactivate(req, res)),
+);
 
 export default router;

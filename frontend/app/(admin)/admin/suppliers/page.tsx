@@ -1,43 +1,49 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { label, card, neoBtnPrimary } from "@/lib/styles";
+import { card, neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
-import { ResponsiveTable } from "@/components/responsive-table";
+import { AdminPagination } from "@/components/admin-pagination";
+import { AdminList } from "@/components/admin-list";
 import { Supplier } from "@/models/supplier/supplier";
 import { SupplierResponse } from "@/models/supplier/supplier.list";
-import { TableSkeletonRow } from "@/components/ui/loading-skeleton";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { Eye } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { useApiQuery } from "@hooks";
+import { useApiQuery, useDebounce } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
-
-const colWidths = ["1.75fr", "1.25fr", "1fr", "100px", "100px", "100px", "80px", "120px"];
-const gridCols = colWidths.join(" ");
+import { detectSearchTarget } from "@/lib/search-detector";
 
 export default function AdminSuppliersPage() {
   const { t } = useTranslation();
   const { data: session } = useSession();
   const isAuthenticated = isAuthenticatedSession(session);
 
-  // Use state for search and filter with useState-like hook management
-  const [search, setSearch] = React.useState("");
-  const [filter, setFilter] = React.useState<string>("all");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 1000);
+  const [filter, setFilter] = useState<string>("all");
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [cursorStack, setCursorStack] = useState<number[]>([]);
 
   // Build URL with query parameters
   const queryUrl = useMemo(() => {
     if (!isAuthenticated) return "";
     const params = new URLSearchParams();
     if (filter !== "all") params.set("status", filter);
-    if (search) params.set("search", search);
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+      params.set("field", detectSearchTarget(debouncedSearch));
+    }
+    if (cursor) params.set("cursor", String(cursor));
+    params.set("limit", "20");
     return `/api/admin/suppliers?${params.toString()}`;
-  }, [isAuthenticated, filter, search]);
+  }, [isAuthenticated, filter, debouncedSearch, cursor]);
 
   // Fetch suppliers with useApiQuery
   const { data: response, loading } = useApiQuery<SupplierResponse>(
@@ -45,10 +51,30 @@ export default function AdminSuppliersPage() {
     isAuthenticated ? session.accessToken : undefined,
     {
       enabled: isAuthenticated && !!queryUrl,
+      onSuccess: (data) => setNextCursor(data.nextCursor ?? null),
     },
   );
 
+  // Reset pagination whenever search/filter changes
+  useEffect(() => {
+    setCursor(null);
+    setCursorStack([]);
+  }, [debouncedSearch, filter]);
+
   const suppliers = response?.items ?? [];
+
+  const handleNext = () => {
+    if (!nextCursor) return;
+    setCursorStack((prev) => (cursor ? [...prev, cursor] : prev));
+    setCursor(nextCursor);
+  };
+
+  const handlePrevious = () => {
+    const stack = [...cursorStack];
+    const prevCursor = stack.pop() ?? null;
+    setCursor(prevCursor);
+    setCursorStack(stack);
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -77,72 +103,60 @@ export default function AdminSuppliersPage() {
         />
 
         <div className={`${card} flex-1 flex flex-col min-h-0`}>
-          {loading ? (
-            <div className="shrink-0 border-b-[3px] border-[#222]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <TableSkeletonRow key={i} columns={colWidths.length} animated />
-              ))}
-            </div>
-          ) : (
-            <ResponsiveTable
-              header={
-                <div className="grid shrink-0 border-b-[3px] border-[#222]" style={{ gridTemplateColumns: gridCols }}>
-                  {[
-                    t("admin.suppliers.name"),
-                    t("admin.suppliers.email"),
-                    t("admin.suppliers.contact"),
-                    t("admin.suppliers.totalDebt"),
-                    t("admin.suppliers.overdueDebt"),
-                    t("admin.suppliers.monthDebt"),
-                    t("admin.suppliers.status"),
-                    t("common.action"),
-                  ].map((h) => (
-                    <div key={h} className={`px-2 py-3 ${label} text-[#666] whitespace-nowrap`}>
-                      {h}
-                    </div>
-                  ))}
+          <AdminList
+            columns={[
+              { key: "name", label: t("admin.suppliers.name"), width: "1.5fr" },
+              { key: "email", label: t("admin.suppliers.email"), width: "1fr" },
+              { key: "contact", label: t("admin.suppliers.contact"), width: "0.8fr" },
+              { key: "totalDebt", label: t("admin.suppliers.totalDebt"), width: "110px" },
+              { key: "overdueDebt", label: t("admin.suppliers.overdueDebt"), width: "110px" },
+              { key: "monthDebt", label: t("admin.suppliers.monthDebt"), width: "110px" },
+              { key: "status", label: t("admin.suppliers.status"), width: "90px", align: "center" },
+              { key: "action", label: t("common.action"), width: "80px", align: "center" },
+            ]}
+            data={suppliers}
+            loading={loading}
+            rowKey={(s) => s.id}
+            rowHref={(s) => `/admin/suppliers/${s.id}`}
+            empty={
+              <EmptyStateMinimal
+                title={t("admin.suppliers.noSuppliers")}
+                description={t("admin.suppliers.createFirstSupplier")}
+              />
+            }
+            footer={
+              <AdminPagination
+                hasNext={nextCursor !== null}
+                hasPrevious={cursorStack.length > 0}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+              />
+            }
+            renderRow={(s: Supplier) => (
+              <>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.name}</div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>
+                <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
+                <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
+                  {s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}
                 </div>
-              }
-              gridCols={gridCols}
-            >
-              {suppliers.length === 0 ? (
-                <EmptyStateMinimal
-                  title={t("admin.suppliers.noSuppliers")}
-                  description={t("admin.suppliers.createFirstSupplier")}
-                />
-              ) : (
-                suppliers.map((s: Supplier) => (
-                  <Link
-                    key={s.id}
-                    href={`/admin/suppliers/${s.id}`}
-                    className="grid hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10 items-center py-3"
-                    style={{ gridTemplateColumns: gridCols }}
-                  >
-                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.name}</div>
-                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>
-                    <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
-                      {s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}
-                    </div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#B54843] whitespace-nowrap">
-                      {s.overdueDebt ? `₫${s.overdueDebt.toLocaleString()}` : "—"}
-                    </div>
-                    <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
-                      {s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}
-                    </div>
-                    <div className="px-2 whitespace-nowrap">
-                      <StatusBadge status={s.banned ? "banned" : "active"} />
-                    </div>
-                    <div className="px-2">
-                      <span className="inline-flex p-1.5 text-[#222]">
-                        <Eye size={14} />
-                      </span>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </ResponsiveTable>
-          )}
+                <div className="px-2 font-mono text-[11px] font-bold text-[#B54843] whitespace-nowrap">
+                  {s.overdueDebt ? `₫${s.overdueDebt.toLocaleString()}` : "—"}
+                </div>
+                <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
+                  {s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}
+                </div>
+                <div className="px-2 flex justify-center whitespace-nowrap">
+                  <StatusBadge status={s.banned ? "banned" : "active"} />
+                </div>
+                <div className="px-2 flex justify-center">
+                  <button className={`${neoBtn} p-1.5`}>
+                    <Eye size={14} />
+                  </button>
+                </div>
+              </>
+            )}
+          />
         </div>
       </div>
     </div>

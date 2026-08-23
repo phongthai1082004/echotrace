@@ -65,7 +65,7 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
     const disposables: Array<{ dispose: () => void }> = [];
     const track = (d: { dispose: () => void }) => disposables.push(d);
 
-    new GLTFLoader().load("/assets/model/book.glb", (g) => {
+    new GLTFLoader().load("/assets/models/book.glb", (g) => {
       obj = g.scene;
       obj.traverse((c) => {
         if ((c as THREE.Mesh).isMesh) {

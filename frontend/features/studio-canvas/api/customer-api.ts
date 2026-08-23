@@ -13,7 +13,7 @@ export function makeBookSave(
       const body: Record<string, unknown> = { content, [titleField]: title };
       if (paperHeight !== undefined && paperHeight !== null) body.paperHeight = paperHeight;
       if (paperWidth !== undefined && paperWidth !== null) body.paperWidth = paperWidth;
-      if (opts?.includeKind && kind !== undefined) body.kind = kind;
+      if (opts?.includeKind && kind !== undefined) body.type = kind;
       const res = await apiFetch<Response>(bookId ? `${base}/${bookId}${updateSuffix}` : base, token, {
         method: bookId ? "PATCH" : "POST",
         body: JSON.stringify(body),

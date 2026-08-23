@@ -1,9 +1,10 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { SampleBookDTO, CreateSampleBookDTO, UpdateSampleBookDTO, SampleBookMapper } from '@echotrace/shared';
-import { sampleBookCache } from '../../infrastructure/cache/cache.service.js';
+import { SampleBookCacheService } from '../../infrastructure/cache/sample-book.cache.service.js';
+import { resolveContent } from '../../lib/merge-book-content.js';
 
 export abstract class ISampleBookService {
 	abstract list(params: {
@@ -27,6 +28,10 @@ export abstract class ISampleBookService {
 
 @injectable()
 export class SampleBookService extends ISampleBookService {
+	constructor(@inject('ISampleBookCacheService') private readonly sampleCache: SampleBookCacheService) {
+		super();
+	}
+
 	// ponytail: admin list is client-filtered + paginated, so no caching here — fresh rows every page.
 	async list(
 		params: { search?: string; type?: string; category?: string; status?: string; order?: string; limit?: number; cursor?: number } = {},
@@ -48,12 +53,12 @@ export class SampleBookService extends ISampleBookService {
 	}
 
 	async getById(id: number) {
-		const cached = await sampleBookCache.get<SampleBookDTO>(`sample:${id}`);
+		const cached = await this.sampleCache.getSample<SampleBookDTO>(id);
 		if (cached) return cached;
 		const book = await prisma.sampleBook.findUnique({ where: { id } });
 		if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		const dto = SampleBookMapper.toDTO(book);
-		await sampleBookCache.set(`sample:${id}`, dto);
+		await this.sampleCache.setSample(id, dto);
 		return dto;
 	}
 
@@ -79,22 +84,30 @@ export class SampleBookService extends ISampleBookService {
 			},
 		});
 		const dto = SampleBookMapper.toDTO(book);
-		await sampleBookCache.set(`sample:${dto.id}`, dto);
-		await sampleBookCache.delete('samples:explore', 'samples:albums');
+		await this.sampleCache.setSample(dto.id, dto);
+		await this.sampleCache.invalidateSamples();
 		return dto;
 	}
 
 	async update(id: number, data: UpdateSampleBookDTO) {
 		const updateData: any = { ...data };
 		if ('name' in data) updateData.name = data.name;
-		if ('content' in data) updateData.content = data.content;
+		if ('content' in data) {
+			const incoming = data.content as any;
+			if (incoming?.changedPages) {
+				const current = await prisma.sampleBook.findUnique({ where: { id }, select: { content: true } });
+				updateData.content = resolveContent(current?.content, incoming);
+			} else {
+				updateData.content = data.content;
+			}
+		}
 		// ponytail: status drives visibility — archive hides from explore, everything else shows
 		if ('status' in data && !('isActive' in data)) updateData.isActive = data.status !== 'archive';
 		const book = await prisma.sampleBook.update({ where: { id }, data: updateData });
 		const dto = SampleBookMapper.toDTO(book);
 		// ponytail: write-through so status/size changes are visible immediately.
-		await sampleBookCache.set(`sample:${id}`, dto);
-		await sampleBookCache.delete('samples:explore', 'samples:albums');
+		await this.sampleCache.setSample(id, dto);
+		await this.sampleCache.invalidateSamples();
 		return dto;
 	}
 
@@ -105,8 +118,8 @@ export class SampleBookService extends ISampleBookService {
 		});
 		const dto = SampleBookMapper.toDTO(book);
 		// ponytail: status drives explore visibility — write-through so it applies immediately.
-		await sampleBookCache.set(`sample:${id}`, dto);
-		await sampleBookCache.delete('samples:explore', 'samples:albums');
+		await this.sampleCache.setSample(id, dto);
+		await this.sampleCache.invalidateSamples();
 		return dto;
 	}
 
@@ -117,14 +130,15 @@ export class SampleBookService extends ISampleBookService {
 			data: { status: 'archive', isActive: false },
 		});
 		if (res.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
-		await sampleBookCache.delete(`sample:${id}`, 'samples:explore', 'samples:albums');
+		await this.sampleCache.invalidateSample(id);
+		await this.sampleCache.invalidateSamples();
 	}
 
 	// statuses that are public in the customer explore grid
 	private visibleStatuses = ['published', 'active'];
 
 	async explore() {
-		const cached = await sampleBookCache.get<SampleBookDTO[]>('samples:explore');
+		const cached = await this.sampleCache.getList<SampleBookDTO[]>('explore');
 		if (cached) return cached;
 		const books = await prisma.sampleBook.findMany({
 			where: { isDelete: false, isActive: true, status: { in: this.visibleStatuses }, type: 'TEMPLATE' },
@@ -132,12 +146,12 @@ export class SampleBookService extends ISampleBookService {
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
 		// ponytail: published list cached for the customer explore grid; invalidated on write.
-		await sampleBookCache.set('samples:explore', dtos);
+		await this.sampleCache.setList('explore', dtos);
 		return dtos;
 	}
 
 	async albums() {
-		const cached = await sampleBookCache.get<SampleBookDTO[]>('samples:albums');
+		const cached = await this.sampleCache.getList<SampleBookDTO[]>('albums');
 		if (cached) return cached;
 		const books = await prisma.sampleBook.findMany({
 			where: { isDelete: false, isActive: true, status: { in: this.visibleStatuses }, type: 'ALBUM' },
@@ -145,19 +159,19 @@ export class SampleBookService extends ISampleBookService {
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
 		// ponytail: same caching contract as explore.
-		await sampleBookCache.set('samples:albums', dtos);
+		await this.sampleCache.setList('albums', dtos);
 		return dtos;
 	}
 
 	async getPublishedById(id: number) {
-		const cached = await sampleBookCache.get<SampleBookDTO>(`sample:${id}`);
+		const cached = await this.sampleCache.getSample<SampleBookDTO>(id);
 		if (cached && this.visibleStatuses.includes(cached.status) && cached.isActive) return cached;
 		const book = await prisma.sampleBook.findFirst({
 			where: { id, isDelete: false, isActive: true, status: { in: this.visibleStatuses } },
 		});
 		if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		const dto = SampleBookMapper.toDTO(book);
-		await sampleBookCache.set(`sample:${id}`, dto);
+		await this.sampleCache.setSample(id, dto);
 		return dto;
 	}
 }

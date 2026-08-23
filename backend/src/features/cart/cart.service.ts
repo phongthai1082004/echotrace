@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
 import { Prisma } from '../../../generated/prisma/client.js';
-import { CartDTO, UpdateCartDTO, CartMapper, CartItem, parseCartItems } from '@echotrace/shared';
+import { CartDTO, UpdateCartDTO, CartMapper, CartItem, parseCartItems, DiscountType, MinOrderType } from '@echotrace/shared';
 
 export interface CartQuote {
 	items: CartItem[];
@@ -45,9 +45,9 @@ export class CartService extends ICartService {
 
 	async calculateCart(userId: number, paymentMethod?: string | null, couponCode?: string | null): Promise<CartQuote> {
 		// ponytail: một transaction: đọc cart + coupon + catalog, tính giá, lưu snapshot giá vào cart.
-		const { Cart, Coupon, Options, Priced } = await prisma.$transaction(async (tx) => {
+		const { Coupon, Priced } = await prisma.$transaction(async (tx) => {
 			const cart = await tx.cart.findUnique({ where: { userId } });
-			const coupon = couponCode ? await tx.coupon.findUnique({ where: { code: couponCode } }) : null;
+			const coupon = await this.findCoupon(tx, couponCode);
 			const options = await tx.printOption.findMany({ where: { isDelete: false } });
 
 			const priceByKey = new Map<string, number>();
@@ -74,15 +74,14 @@ export class CartService extends ICartService {
 				create: { userId, items: priced as unknown as Prisma.InputJsonValue },
 			});
 
-			return { Cart: cart, Coupon: coupon, Options: options, Priced: priced };
+			return { Coupon: coupon, Priced: priced };
 		});
 
 		// ponytail: parseCartItems chỉ cắt content (ảnh thumb) cho hiển thị; price được giữ nguyên.
 		const items = parseCartItems(Priced);
 
 		const subtotal = items.reduce((s, i) => s + (i.price ?? 0) * (i.quantity || 1), 0);
-		const coupon = Coupon && subtotal >= (Coupon.minOrderAmount ?? 0) ? this.couponAmount(Coupon, subtotal) : 0;
-		const discount = coupon;
+		const discount = this.couponDiscount(Coupon, subtotal, items);
 		const total = Math.max(0, subtotal - discount);
 		const payNow = total == null ? 0 : paymentMethod === 'half' ? Math.round((total * 50) / 100) : total;
 		const payLater = total - payNow;
@@ -93,15 +92,43 @@ export class CartService extends ICartService {
 			total,
 			payNow,
 			payLater,
-			coupon: coupon ? { code: couponCode!, amount: discount } : null,
+			coupon: discount > 0 && Coupon ? { code: Coupon.code, amount: discount } : null,
 		};
 	}
 
-	// ponytail: same math as the frontend DiscountModal — keep in sync.
-	private couponAmount(coupon: any, subtotal: number): number {
-		if (!coupon?.discountType) return 0;
-		const raw = coupon.discountType === 'PERCENTAGE' ? subtotal * (coupon.discountValue ?? 0) / 100 : coupon.discountValue ?? 0;
-		const capped = coupon.maxDiscountAmount != null ? Math.min(raw, coupon.maxDiscountAmount) : raw;
-		return Math.max(0, capped);
+	// Coupon mới: code lưu dạng "CODE-<timestamp>" để không trùng khi tạo. Người dùng nhập CODE trần,
+	// nên lookup theo prefix (fallback exact cho coupon seed cũ). Lấy bản mới nhất nếu trùng code.
+	private async findCoupon(tx: any, code: string | null | undefined) {
+		if (!code) return null;
+		const upper = code.trim().toUpperCase();
+		return tx.coupon.findFirst({
+			where: { isDelete: false, OR: [{ code: upper }, { code: { startsWith: `${upper}-` } }] },
+			orderBy: { id: 'desc' },
+		});
 	}
+
+	// ponytail: same math as the frontend DiscountModal — keep in sync.
+	private couponDiscount(coupon: any, subtotal: number, items: CartItem[]): number {
+		return computeCouponDiscount(coupon, subtotal, items);
+	}
+}
+
+// Pure — unit-testable without DB.
+export function computeCouponDiscount(coupon: any, subtotal: number, items: CartItem[]): number {
+	if (!coupon) return 0;
+	if (!coupon.isActive) return 0;
+	if (coupon.expiresAt && new Date(coupon.expiresAt).getTime() < Date.now()) return 0;
+	if (coupon.maxUsageCount > 0 && (coupon.usedCount ?? 0) >= coupon.maxUsageCount) return 0;
+	// minOrderType: VALUE = theo giá (subtotal), QUANTITY = theo số quyển.
+	const orderQty = items.reduce((s, i) => s + (i.quantity || 1), 0);
+	const meetsMin =
+		(coupon.minOrderType || 'VALUE').toLowerCase() === MinOrderType.QUANTITY
+			? orderQty >= (coupon.minOrderAmount ?? 0)
+			: subtotal >= (coupon.minOrderAmount ?? 0);
+	if (!meetsMin) return 0;
+	const type = (coupon.discountType || '').toLowerCase();
+	const raw = type === DiscountType.PERCENTAGE ? (subtotal * (coupon.discountValue ?? 0)) / 100 : coupon.discountValue ?? 0;
+	// maxDiscountAmount = 0/null = không giới hạn.
+	const capped = coupon.maxDiscountAmount ? Math.min(raw, coupon.maxDiscountAmount) : raw;
+	return Math.max(0, capped);
 }

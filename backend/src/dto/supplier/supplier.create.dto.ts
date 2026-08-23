@@ -1,5 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional, Matches, IsArray } from 'class-validator';
-import { SupplierOption } from '@echotrace/shared';
+import { IsString, IsNotEmpty, IsEmail, IsOptional, Matches, IsArray, IsInt } from 'class-validator';
 
 export class CreateSupplierDTO {
 	@IsString()
@@ -48,14 +47,7 @@ export class CreateSupplierDTO {
 	contactPerson?: string;
 
 	@IsArray()
+	@IsInt({ each: true })
 	@IsOptional()
-	paperSizeOptions?: SupplierOption[];
-
-	@IsArray()
-	@IsOptional()
-	paperOptions?: SupplierOption[];
-
-	@IsArray()
-	@IsOptional()
-	coverOptions?: SupplierOption[];
+	optionIds?: number[];
 }

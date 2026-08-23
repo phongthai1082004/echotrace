@@ -9,7 +9,7 @@ import { useToast } from "@/components/toast";
 import { Tag } from "lucide-react";
 import { apiFetch } from "@/lib/api.fetch";
 import { fetchPrintCatalog, PrintCatalog } from "@/lib/print-catalog";
-import { label, labelSm, card, neoBtnPrimary, neoBtn } from "@/lib/styles";
+import { label, labelSm, card, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 import { paperSizeLabel } from "@/features/studio-canvas/types";
 
 function itemThumb(item: any): string | null {
@@ -228,7 +228,7 @@ export default function CheckoutPage() {
         value={form[key]}
         onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
         placeholder={t(placeholderKey)}
-        className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all"
+        className={input}
       />
     </div>
   );
@@ -443,7 +443,7 @@ export default function CheckoutPage() {
                           value={form.note}
                           onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                           placeholder={t("customer.checkout.notePlaceholder")}
-                          className="w-full bg-[#FFF7D6] text-sm font-bold rounded-lg px-3 py-2.5 border-2 border-[#222] shadow-[2px_2px_0_#222] placeholder:text-[#999] focus:outline-none focus:translate-x-px focus:translate-y-px focus:shadow-[1px_1px_0_#222] transition-all resize-none h-24"
+                          className={`${input} resize-none h-24`}
                         />
                       </div>
                     </div>
