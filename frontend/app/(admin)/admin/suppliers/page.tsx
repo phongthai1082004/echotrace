@@ -15,9 +15,10 @@ import { SupplierResponse } from "@/models/supplier/supplier.list";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { Eye } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { useApiQuery, useDebounce } from "@hooks";
+import { useDebounce } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
 import { detectSearchTarget } from "@/lib/search-detector";
+import { apiFetch } from "@/lib/api.fetch";
 
 export default function AdminSuppliersPage() {
   const { t } = useTranslation();
@@ -30,6 +31,9 @@ export default function AdminSuppliersPage() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<number[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const token = isAuthenticated ? session.accessToken : undefined;
 
   // Build URL with query parameters
   const queryUrl = useMemo(() => {
@@ -45,23 +49,25 @@ export default function AdminSuppliersPage() {
     return `/api/admin/suppliers?${params.toString()}`;
   }, [isAuthenticated, filter, debouncedSearch, cursor]);
 
-  // Fetch suppliers with useApiQuery
-  const { data: response, loading } = useApiQuery<SupplierResponse>(
-    queryUrl,
-    isAuthenticated ? session.accessToken : undefined,
-    {
-      enabled: isAuthenticated && !!queryUrl,
-      onSuccess: (data) => setNextCursor(data.nextCursor ?? null),
-    },
-  );
+  useEffect(() => {
+    if (!token || !queryUrl) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch
+    setLoading(true);
+    apiFetch<SupplierResponse>(queryUrl, token)
+      .then((d) => {
+        setSuppliers(d?.items ?? []);
+        setNextCursor(d?.nextCursor ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [token, queryUrl]);
 
   // Reset pagination whenever search/filter changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phân trang khi filter đổi
     setCursor(null);
     setCursorStack([]);
   }, [debouncedSearch, filter]);
-
-  const suppliers = response?.items ?? [];
 
   const handleNext = () => {
     if (!nextCursor) return;

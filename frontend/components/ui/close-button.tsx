@@ -15,6 +15,8 @@ export function CloseButton({
 }) {
   return (
     <button
+      type="button"
+      aria-label="Close"
       onClick={onClick}
       className={`${neoBtn} p-1.5 cursor-pointer shrink-0 ${className}`}
     >

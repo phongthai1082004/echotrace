@@ -22,7 +22,10 @@
     },
     "notifications": "Notifications",
     "noNotifications": "No notifications yet",
-    "cartEmpty": "Your cart is empty"
+    "cartEmpty": "Your cart is empty",
+    "language": "Change language",
+    "menu": "Menu",
+    "softcover": "Softcover"
   },
   "common": {
     "loading": "Loading...",
@@ -167,7 +170,11 @@
       "titleLine1": "Simple Pricing.",
       "titleLine2": "No Surprises.",
       "desc": "Every plan includes free studio access, 3D preview, and tracked shipping.",
-      "tierLabels": ["SOFTCOVER", "HARDCOVER", "LEATHER"],
+      "tierLabels": [
+        "SOFTCOVER",
+        "HARDCOVER",
+        "LEATHER"
+      ],
       "note": "All prices in USD · VAT included · 30-day satisfaction guarantee"
     },
     "testimonial": {
@@ -175,7 +182,10 @@
       "quote": "The quality knocked me out. My grandmother cried when she saw the leather edition. Worth every penny and then some.",
       "name": "Sofía Marchetti",
       "detail": "Wedding Album · Hardcover · Milan, IT",
-      "statsLabels": ["Books Printed", "Would Recommend"]
+      "statsLabels": [
+        "Books Printed",
+        "Would Recommend"
+      ]
     },
     "cta": {
       "section": "GET STARTED",
@@ -194,19 +204,41 @@
       "cols": [
         {
           "title": "Product",
-          "links": ["Photo Books", "Design Studio", "Materials", "Pricing", "Templates"]
+          "links": [
+            "Photo Books",
+            "Design Studio",
+            "Materials",
+            "Pricing",
+            "Templates"
+          ]
         },
         {
           "title": "Company",
-          "links": ["About Us", "Blog", "Press", "Careers", "Contact"]
+          "links": [
+            "About Us",
+            "Blog",
+            "Press",
+            "Careers",
+            "Contact"
+          ]
         },
         {
           "title": "Support",
-          "links": ["Help Center", "Shipping Info", "Returns", "File Guide", "Status"]
+          "links": [
+            "Help Center",
+            "Shipping Info",
+            "Returns",
+            "File Guide",
+            "Status"
+          ]
         }
       ],
       "legal": "© 2024 FOLIO PRESS LTD · ALL RIGHTS RESERVED",
-      "links": ["Privacy Policy", "Terms of Service", "Cookie Preferences"],
+      "links": [
+        "Privacy Policy",
+        "Terms of Service",
+        "Cookie Preferences"
+      ],
       "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
@@ -485,7 +517,12 @@
       "paymentHalfNote": "Personalized products are non-returnable",
       "editOptions": "Customize Book",
       "cancel": "Cancel",
-      "save": "Save"
+      "save": "Save",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "cover": "Cover",
+      "paper": "Paper",
+      "unknown": "unknown"
     },
     "account": {
       "title": "Account Settings",
@@ -525,7 +562,20 @@
       "monthlyRevenue": "Monthly Revenue (₫)",
       "monthlyOrders": "Monthly Orders",
       "revenueOverview": "Revenue Overview",
-      "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ]
     },
     "finance": {
       "label": "Admin · Finance",
@@ -904,7 +954,6 @@
       "fetchFailed": "Failed to load templates",
       "archiveTitle": "Archive Template",
       "archiveConfirm": "Archive template {title}? It stays in the list with status Archive.",
-      "archive": "Archive",
       "archiving": "Archiving...",
       "archiveSuccess": "Template archived",
       "archiveFailed": "Failed to archive template",

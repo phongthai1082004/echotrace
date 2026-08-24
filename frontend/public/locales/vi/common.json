@@ -22,7 +22,10 @@
     },
     "notifications": "Thông báo",
     "noNotifications": "Chưa có thông báo",
-    "cartEmpty": "Giỏ hàng trống"
+    "cartEmpty": "Giỏ hàng trống",
+    "language": "Đổi ngôn ngữ",
+    "menu": "Menu",
+    "softcover": "Bìa mềm"
   },
   "common": {
     "loading": "Đang tải...",
@@ -167,7 +170,11 @@
       "titleLine1": "Giá Đơn Giản.",
       "titleLine2": "Không Bất Ngờ.",
       "desc": "Mọi gói đều bao gồm quyền truy cập studio miễn phí, xem trước 3D và vận chuyển có theo dõi.",
-      "tierLabels": ["BÌA MỀM", "BÌA CỨNG", "BÌA DA"],
+      "tierLabels": [
+        "BÌA MỀM",
+        "BÌA CỨNG",
+        "BÌA DA"
+      ],
       "note": "Tất cả giá bằng USD · Đã gồm VAT · Cam kết hài lòng 30 ngày"
     },
     "testimonial": {
@@ -175,7 +182,11 @@
       "quote": "Chất lượng làm tôi choáng ngợp. Bà tôi đã khóc khi thấy bản bìa da. Xứng đáng từng xu và còn hơn thế.",
       "name": "Sofía Marchetti",
       "detail": "Album Cưới · Bìa Cứng · Milan, Ý",
-      "statsLabels": ["Sách Đã In", "Đánh Giá Trung Bình", "Sẽ Giới Thiệu"]
+      "statsLabels": [
+        "Sách Đã In",
+        "Đánh Giá Trung Bình",
+        "Sẽ Giới Thiệu"
+      ]
     },
     "cta": {
       "section": "BẮT ĐẦU",
@@ -194,19 +205,41 @@
       "cols": [
         {
           "title": "Sản Phẩm",
-          "links": ["Sách Ảnh", "Studio Thiết Kế", "Chất Liệu", "Bảng Giá", "Mẫu"]
+          "links": [
+            "Sách Ảnh",
+            "Studio Thiết Kế",
+            "Chất Liệu",
+            "Bảng Giá",
+            "Mẫu"
+          ]
         },
         {
           "title": "Công Ty",
-          "links": ["Về Chúng Tôi", "Blog", "Báo Chí", "Tuyển Dụng", "Liên Hệ"]
+          "links": [
+            "Về Chúng Tôi",
+            "Blog",
+            "Báo Chí",
+            "Tuyển Dụng",
+            "Liên Hệ"
+          ]
         },
         {
           "title": "Hỗ Trợ",
-          "links": ["Trung Tâm Trợ Giúp", "Thông Tin Giao Hàng", "Đổi Trả", "Hướng Dẫn Tệp", "Trạng Thái"]
+          "links": [
+            "Trung Tâm Trợ Giúp",
+            "Thông Tin Giao Hàng",
+            "Đổi Trả",
+            "Hướng Dẫn Tệp",
+            "Trạng Thái"
+          ]
         }
       ],
       "legal": "© 2024 FOLIO PRESS LTD · BẢO LƯU MỌI QUYỀN",
-      "links": ["Chính Sách Bảo Mật", "Điều Khoản Dịch Vụ", "Tùy Chọn Cookie"],
+      "links": [
+        "Chính Sách Bảo Mật",
+        "Điều Khoản Dịch Vụ",
+        "Tùy Chọn Cookie"
+      ],
       "coords": "N 51°30′26″ / E 0°7′39″"
     }
   },
@@ -485,7 +518,12 @@
       "paymentHalfNote": "Sản phẩm cá nhân hóa không được trả lại",
       "editOptions": "Tùy chỉnh sách",
       "cancel": "Hủy",
-      "save": "Lưu"
+      "save": "Lưu",
+      "decrease": "Giảm số lượng",
+      "increase": "Tăng số lượng",
+      "cover": "Bìa",
+      "paper": "Giấy",
+      "unknown": "chưa rõ"
     },
     "account": {
       "title": "Cài đặt tài khoản",
@@ -525,7 +563,20 @@
       "monthlyRevenue": "Doanh thu hàng tháng (VND)",
       "monthlyOrders": "Đơn hàng hàng tháng",
       "revenueOverview": "Tổng quan Doanh thu",
-      "months": ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"]
+      "months": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "T8",
+        "T9",
+        "T10",
+        "T11",
+        "T12"
+      ]
     },
     "finance": {
       "label": "Admin · Tài chính",
@@ -904,7 +955,6 @@
       "fetchFailed": "Tải mẫu thất bại",
       "archiveTitle": "Lưu trữ mẫu",
       "archiveConfirm": "Lưu trữ mẫu {title}? Mẫu vẫn nằm trong danh sách với trạng thái Lưu trữ.",
-      "archive": "Lưu trữ",
       "archiving": "Đang lưu trữ...",
       "archiveSuccess": "Đã lưu trữ mẫu",
       "archiveFailed": "Lưu trữ thất bại",

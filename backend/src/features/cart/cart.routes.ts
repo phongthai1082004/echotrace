@@ -16,9 +16,17 @@ router.get(
 	'/cart',
 	asyncHandler((req, res) => cartCtrl.getCart(req, res)),
 );
-router.put(
-	'/cart',
-	asyncHandler((req, res) => cartCtrl.updateCart(req, res)),
+router.post(
+	'/cart/item',
+	asyncHandler((req, res) => cartCtrl.addItem(req, res)),
+);
+router.patch(
+	'/cart/item/:bookId',
+	asyncHandler((req, res) => cartCtrl.patchItem(req, res)),
+);
+router.delete(
+	'/cart/item/:bookId',
+	asyncHandler((req, res) => cartCtrl.deleteItem(req, res)),
 );
 router.post(
 	'/cart/calculate',

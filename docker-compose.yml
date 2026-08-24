@@ -1,3 +1,10 @@
+# ponytail: log rotation chung cho mọi container — không xoay là disk đầy trong vài tuần
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   database-service:
     image: postgres:16-alpine
@@ -11,6 +18,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 5s
@@ -20,11 +33,19 @@ services:
   redis-service:
     image: redis:alpine
     container_name: redis-container
+    # cache-only: chặn Redis nuốt RAM, đầy thì evict key cũ nhất (CacheService tự no-op khi miss)
+    command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -46,6 +67,12 @@ services:
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
     depends_on:
       database-service:
         condition: service_healthy
@@ -66,6 +93,12 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
     depends_on:
       - backend-service
 
@@ -74,8 +107,6 @@ services:
       context: ./nginx
       dockerfile: dockerfile
     container_name: nginx-container
-    # port truyền cho nginx template là port NỘI BỘ của từng container (3000/4000),
-    # không dùng BACKEND_PORT/FRONTEND_PORT vì đó là port phía host
     environment:
       NGINX_PORT: ${NGINX_PORT:-80}
       SERVER_DOMAIN: ${SERVER_DOMAIN:-localhost}
@@ -86,6 +117,12 @@ services:
     ports:
       - "${NGINX_PORT}:${NGINX_PORT}"
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
     depends_on:
       - frontend-service
       - backend-service

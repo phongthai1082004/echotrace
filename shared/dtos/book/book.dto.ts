@@ -52,8 +52,8 @@ export class BookMapper {
   static toDTOList(books: any[]): BookDTO[] {
     return books.map((b) => {
       const dto = this.toDTO(b);
-      // ponytail: list only needs the first page (thumbnail) — full content stays on detail/editor.
-      if (dto.content?.pages?.length) dto.content = { ...dto.content, pages: dto.content.pages.slice(0, 1) };
+      // ponytail: list chỉ cần thumbnail phẳng — content (canvasJson) nặng, chỉ detail/editor mới cần.
+      dto.content = null;
       return dto;
     });
   }

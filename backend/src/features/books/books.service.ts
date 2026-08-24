@@ -44,7 +44,10 @@ export class BookService extends IBookService {
 				content: data.content ?? null,
 			},
 		});
-		return BookMapper.toDTO(book);
+		// ponytail: FE chỉ đọc id — không echo lại content vừa gửi lên.
+		const dto = BookMapper.toDTO(book);
+		dto.content = null;
+		return dto;
 	}
 
 	async delete(bookId: number, userId: number) {

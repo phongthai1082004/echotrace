@@ -1,45 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Trash2, X } from "lucide-react";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
 import { apiFetch } from "@/lib/api.fetch";
-import { neoBtnPrimary, card, cardHover } from "@/lib/styles";
+import { neoBtnPrimary } from "@/lib/styles";
 import { YesNoPopup } from "@/components/yes-no-popup";
-
-interface JournalBook {
-  id: number;
-  title: string;
-  coverUrl: string | null;
-  thumbnailUrl: string | null;
-  pages: number;
-  style: string;
-  cover: string;
-  content: string | null;
-  createdAt: string;
-}
-
-function firstPageThumb(j: JournalBook): string | null {
-  return j.thumbnailUrl ?? j.coverUrl ?? null;
-}
+import { useMyBooks } from "./_hooks/use-my-books";
+import { JournalCard } from "./_components/journal-card";
+import { SizeModal } from "./_components/size-modal";
 
 export default function MyJournalsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const accessToken = (session as any)?.accessToken;
-  const router = useRouter();
   const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(280, 20);
 
-  const [journals, setJournals] = useState<JournalBook[]>([]);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<JournalBook | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { journals, fetchError, loading, deleteTarget, setDeleteTarget, deleting, handleDelete } =
+    useMyBooks(accessToken);
+
   const [showSize, setShowSize] = useState(false);
   const [sizes, setSizes] = useState<any[]>([]);
   const [sizesLoading, setSizesLoading] = useState(false);
@@ -54,34 +35,6 @@ export default function MyJournalsPage() {
         .finally(() => setSizesLoading(false));
     }
   };
-
-  const handleDelete = async () => {
-    if (!deleteTarget || !accessToken) return;
-    setDeleting(true);
-    try {
-      await apiFetch(`/api/books/${deleteTarget.id}`, accessToken, { method: "DELETE" });
-      setJournals((prev) => prev.filter((b) => b.id !== deleteTarget.id));
-      setDeleteTarget(null);
-    } catch {
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!accessToken) return;
-    setLoading(true);
-    setFetchError(null);
-    apiFetch<any[]>("/api/user/my-books", accessToken)
-      .then((d) => {
-        setJournals(d || []);
-      })
-      .catch((err) => {
-        console.warn("[my-journals] fetch failed:", err);
-        setFetchError(String(err));
-      })
-      .finally(() => setLoading(false));
-  }, [accessToken]);
 
   return (
     <div className="min-h-screen pt-15">
@@ -141,123 +94,14 @@ export default function MyJournalsPage() {
           <div className="overflow-x-auto -mx-8 px-8 pb-8" style={{ scrollbarWidth: "none" }}>
             <div className="flex gap-5" style={{ width: "max-content" }}>
               {journals.map((j) => (
-                <div
-                  key={j.id}
-                  className={`shrink-0 w-64 group ${card} ${cardHover} overflow-hidden`}
-                >
-                  <Link href={`/studio?id=${j.id}`} className="block">
-                    <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
-                      {(firstPageThumb(j) ?? j.coverUrl) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={firstPageThumb(j) ?? j.coverUrl!}
-                          alt={j.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span
-                            suppressHydrationWarning
-                            className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]"
-                          >
-                            {t("customer.myJournals.noCover")}
-                          </span>
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDeleteTarget(j);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 bg-[#B54843] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#943a36] cursor-pointer z-10"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    <div className="p-4 border-t-[3px] border-[#222]">
-                      <h3 className="text-lg font-bold mb-1 leading-tight">{j.title}</h3>
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <span className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999]">
-                          {j.style}
-                        </span>
-                        <span className="text-[#222]">·</span>
-                        <span suppressHydrationWarning className="font-mono text-[9px] font-bold text-[#999]">
-                          {j.pages} {t("customer.myJournals.pg")}
-                        </span>
-                      </div>
-                      <p className="font-mono text-[9px] font-bold text-[#999]">{j.createdAt?.slice(0, 10)}</p>
-                    </div>
-                  </Link>
-                </div>
+                <JournalCard key={j.id} j={j} onDelete={setDeleteTarget} />
               ))}
             </div>
           </div>
         )}
       </div>
 
-      {showSize && (
-        <div
-          className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center"
-          onClick={() => setShowSize(false)}
-        >
-          <div
-            className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] w-[360px] p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <p suppressHydrationWarning className="font-bold text-lg">
-                {t("customer.myJournals.chooseSize")}
-              </p>
-              <button
-                onClick={() => setShowSize(false)}
-                className="p-1.5 hover:bg-[#e8e6e0] rounded-lg border-2 border-[#222]"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-              {sizesLoading ? (
-                <p suppressHydrationWarning className="font-mono text-[10px] font-bold text-[#999]">
-                  {t("common.loading")}
-                </p>
-              ) : sizes.length === 0 ? (
-                <p suppressHydrationWarning className="font-mono text-[10px] font-bold text-[#999]">
-                  {t("customer.myJournals.noSize")}
-                </p>
-              ) : (
-                sizes.map((s) => {
-                  const lang = (i18n.language || "en").slice(0, 2) as "vi" | "en" | "es";
-                  const label = s.name?.[lang] || s.name?.en || s.code;
-                  const desc = s.description?.[lang] || s.description?.en || "";
-                  const cm = s.width && s.height ? `${s.width / 10}×${s.height / 10} cm` : "";
-                  return (
-                    <button
-                      key={s.code}
-                      onClick={() =>
-                        router.push(
-                          `/studio?format=${s.code}&w=${s.width ? s.width * 4 : ""}&h=${s.height ? s.height * 4 : ""}`,
-                        )
-                      }
-                      className="w-full text-left px-4 py-3 rounded-[8px] border-2 border-[#222] bg-white hover:bg-[#FFF7D6] hover:shadow-[2px_2px_0_#222] transition-all cursor-pointer"
-                    >
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-bold">{label}</span>
-                        {cm && <span className="font-mono text-[9px] text-[#999]">{cm}</span>}
-                      </span>
-                      {desc && (
-                        <span suppressHydrationWarning className="block text-[11px] leading-snug text-[#666] mt-1">
-                          {desc}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {showSize && <SizeModal sizes={sizes} loading={sizesLoading} onClose={() => setShowSize(false)} />}
 
       {deleteTarget && (
         <YesNoPopup

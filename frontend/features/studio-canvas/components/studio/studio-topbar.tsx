@@ -12,7 +12,6 @@ import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
 import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
-import { fetchPrintCatalog, priceForCode } from "@/lib/print-catalog";
 import { ZOOM_LEVELS, FONTS } from "../../types";
 import {
   applyUndo,
@@ -589,34 +588,25 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
           {t("customer.studio.autoFill")}
         </button>
         <button
-          onClick={async () => {
-            if (editingTitle) commitTitle();
-            const r = await saveFull(token);
-            if (r.ok && r.id && token) {
-              try {
-                const cartData = await apiFetch<any>("/api/cart", token).catch(() => null);
-                if (cartData) {
-                  const existingItems: any[] = Array.isArray(cartData.items) ? cartData.items : [];
-                  const idx = existingItems.findIndex((i: any) => i.bookId === r.id);
-                  if (idx >= 0) {
-                    const s = useCanvasStore.getState();
-                    const meta = s.bookMeta;
-                    existingItems[idx] = {
-                      ...existingItems[idx],
+            onClick={async () => {
+              if (editingTitle) commitTitle();
+              const r = await saveFull(token);
+              if (r.ok && r.id && token) {
+                try {
+                  const s = useCanvasStore.getState();
+                  const meta = s.bookMeta;
+                  await apiFetch(`/api/cart/item/${r.id}`, token, {
+                    method: "PATCH",
+                    body: JSON.stringify({
                       title: meta.title,
                       content: JSON.stringify({ pages: s.pages.map((p: any) => ({ thumbnailUrl: p.thumbnailUrl })) }),
                       pages: s.pages.length,
                       paperSize: meta.format,
                       paper: meta.paper,
-                    };
-                    await apiFetch("/api/cart", token, {
-                      method: "PUT",
-                      body: JSON.stringify({ items: existingItems }),
-                    });
-                  }
-                }
-              } catch {}
-            }
+                    }),
+                  });
+                } catch {}
+              }
             showToast(
               r.ok ? t("customer.studio.saveSuccess") : `${t("customer.studio.saveFailed")}: ${r.error}`,
               r.ok ? "success" : "error",
@@ -652,15 +642,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 const totalPages = s.pages.length;
                 const coverUrl = null;
 
-                // ponytail: giá lấy từ catalog global PrintOption; fallback 50k cũ khi fetch lỗi/chưa có code.
-                let coverPrice = 0;
-                let paperPrice = 0;
-                try {
-                  const cat = await fetchPrintCatalog(token);
-                  coverPrice = priceForCode(cat.covers, "softcover") ?? 0;
-                  paperPrice = priceForCode(cat.papers, meta.paper || "matte") ?? 0;
-                } catch {}
-
+                // ponytail: giá do server tính khi POST /cart/item — FE không gửi price.
                 const item = {
                   bookId: meta.id,
                   title: meta.title,
@@ -668,42 +650,18 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                   style: "PHOTOBOOK",
                   font: "Inter",
                   cover: "softcover",
-                  coverPrice,
                   paperSize: meta.format,
                   paper: meta.paper || "matte",
-                  paperPrice,
                   pages: totalPages,
                   coverUrl,
                   pdfUrl: null,
-                  price: coverPrice + paperPrice || 50000,
                   quantity: 1,
                 };
 
-                let existingItems: any[];
                 try {
-                  const cartData = await apiFetch<any>("/api/cart", token);
-                  existingItems = Array.isArray(cartData?.items) ? cartData.items : [];
-                } catch {
-                  showToast("Failed to fetch cart", "error");
-                  return;
-                }
-                const idx = existingItems.findIndex((i: any) => i.bookId === meta.id);
-                if (idx >= 0) {
-                  item.quantity = (existingItems[idx].quantity || 1) + 1;
-                  existingItems[idx] = {
-                    ...existingItems[idx],
-                    ...item,
-                    _id: existingItems[idx]._id,
-                    id: existingItems[idx].id,
-                  };
-                } else {
-                  existingItems.push(item);
-                }
-
-                try {
-                  await apiFetch("/api/cart", token, {
-                    method: "PUT",
-                    body: JSON.stringify({ items: JSON.stringify(existingItems) }),
+                  await apiFetch("/api/cart/item", token, {
+                    method: "POST",
+                    body: JSON.stringify(item),
                   });
                   showToast(t("customer.studio.addedToCart") || "Added to cart", "success");
                 } catch {

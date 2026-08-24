@@ -44,6 +44,23 @@ export function layoutSlotTransform(
 
 const OVERLAY_KEY = "_dragOverlay";
 const DIM_OVERLAY_KEY = "_dimOverlay";
+
+// ponytail: round toạ độ khi toJSON + bỏ field trùng mặc định -> blob autosave nhỏ đi đáng kể.
+// Chỉ xoá khi giá trị ĐÚNG bằng default nên loadFromJSON tự khôi phục, canvas không đổi pixel nào.
+fabric.config.NUM_FRACTION_DIGITS = 2;
+
+const DROP_IF_DEFAULT: Record<string, unknown> = {
+	visible: true,
+	shadow: null,
+	strokeDashArray: null,
+	backgroundColor: "",
+	paintFirst: "fill",
+	fillRule: "nonzero",
+	strokeUniform: false,
+	objectCaching: true,
+	flipX: false,
+	flipY: false,
+};
 const SERIALIZE_KEYS = [
   "z",
   "layer",
@@ -154,9 +171,11 @@ export function nextFrameZ(canvas: fabric.Canvas): number {
 
 export function serializeCanvasState(canvas: fabric.Canvas): string {
   const liveObjs = canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport);
-  const json = JSON.stringify((canvas as any).toJSON(SERIALIZE_KEYS));
-  const parsed = JSON.parse(json);
+  const parsed = (canvas as any).toJSON(SERIALIZE_KEYS) as { objects: any[] };
   parsed.objects.forEach((o: any, i: number) => {
+    for (const k of Object.keys(DROP_IF_DEFAULT)) {
+      if (o[k] === DROP_IF_DEFAULT[k]) delete o[k];
+    }
     const live = liveObjs[i];
     if (live) {
       o.customProperties = (live as any).customProperties;

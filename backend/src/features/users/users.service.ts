@@ -23,7 +23,9 @@ export class UserService extends IUserService {
 	}
 
 	public async findAll(filter: any, options?: any, extraWhere?: any) {
-		return await this.userBase.findAll(filter, options, extraWhere);
+		const { items, nextCursor } = await this.userBase.findAll(filter, options, extraWhere);
+		// Bắt buộc map — không ship raw row (tránh lộ password hash).
+		return { items: UserMapper.toDTOList(items), nextCursor };
 	}
 
 	public async findById(id: number, extraWhere: Record<string, any> = {}) {

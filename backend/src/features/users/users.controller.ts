@@ -54,7 +54,7 @@ export class UserController {
 			throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);
 		}
 		const banned = status === 'banned';
-		const target = await prisma.user.findUnique({ where: { id } });
+		const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
 		if (!target) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (target.role === 'admin') {
 			throw new AppError(ErrorCode.ADMIN_CANNOT_BAN_ADMIN, 403);

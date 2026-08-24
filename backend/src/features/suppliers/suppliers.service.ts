@@ -127,15 +127,20 @@ export class SupplierService extends ISupplierService {
 	private async attachOptions(suppliers: any[]) {
 		if (!suppliers.length) return;
 		const ids = suppliers.map((s) => s.id);
-		const d = this.linkBase.delegate;
-		const po = this.optionBase.delegate;
-		const links: any[] = await d.findMany({
+		// ponytail: prisma trực tiếp (không qua BaseService delegate) để select đúng cột cần.
+		const links: any[] = await prisma.supplierPrintOption.findMany({
 			where: { supplierId: { in: ids }, isDelete: false },
 			orderBy: { id: 'desc' },
 			take: 10000,
+			select: { supplierId: true, printOptionId: true },
 		});
 		const poIds = [...new Set(links.map((l) => l.printOptionId))];
-		const rows = poIds.length ? await po.findMany({ where: { id: { in: poIds } } }) : [];
+		const rows = poIds.length
+			? await prisma.printOption.findMany({
+					where: { id: { in: poIds } },
+					select: { id: true, type: true, code: true, name: true, description: true, width: true, height: true, price: true },
+				})
+			: [];
 		const optionById = new Map(rows.map((r: any) => [r.id, r]));
 		const bySupplier = new Map<number, Record<string, any[]>>();
 		for (const l of links) {

@@ -37,6 +37,7 @@ export class AuthService extends IAuthService {
 
 		let user = await prisma.user.findFirst({
 			where: { OR: [{ googleId: payload.sub }, { email: payload.email }] },
+			select: { id: true, email: true, name: true, avatar: true, role: true, isDelete: true },
 		});
 		if (!user) {
 			user = await prisma.user.create({
@@ -56,6 +57,7 @@ export class AuthService extends IAuthService {
 	async sendOtp(email: string) {
 		const existing = await prisma.user.findFirst({
 			where: { email, isDelete: false },
+			select: { id: true },
 		});
 		// WEB-003 fix: im lặng thay vì 409 — không lộ email nào đã đăng ký
 		if (existing) return;

@@ -28,15 +28,6 @@ export interface CartDTO {
   updatedAt: string;
 }
 
-export interface CreateCartDTO {
-  userId: number;
-  items?: CartItem[];
-}
-
-export interface UpdateCartDTO {
-  items: CartItem[];
-}
-
 // ponytail: cart list only needs the first page (thumbnail) — never ship all pages' data.
 function firstPageContent(content: string | null): string | null {
   if (!content) return null;
@@ -60,7 +51,8 @@ export function parseCartItems(raw: any): CartItem[] {
     if (content) {
       try { thumb = JSON.parse(content).pages?.[0]?.thumbnailUrl ?? thumb; } catch {}
     }
-    return { ...item, content, thumbnailUrl: thumb };
+    // ponytail: response không ship content (chỉ thumbnail phẳng); DB giữ nguyên để tương thích cart cũ.
+    return { ...item, content: null, thumbnailUrl: thumb };
   });
 }
 

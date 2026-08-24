@@ -1,7 +1,8 @@
 import { injectable } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
 import { Prisma } from '../../../generated/prisma/client.js';
-import { CartDTO, UpdateCartDTO, CartMapper, CartItem, parseCartItems, DiscountType, MinOrderType } from '@echotrace/shared';
+import { ErrorCode, CartDTO, CartMapper, CartItem, parseCartItems, DiscountType, MinOrderType } from '@echotrace/shared';
+import { AppError } from '../../middleware/app.error.js';
 
 export interface CartQuote {
 	items: CartItem[];
@@ -13,14 +14,66 @@ export interface CartQuote {
 	coupon: { code: string; amount: number } | null;
 }
 
+type OptRow = { price: number | null; width: number | null; height: number | null };
+type OptKeyMap = Map<string, OptRow>;
+
+function applyItemPrice(item: any, optByKey: OptKeyMap): any {
+	if (item.cover == null || item.paper == null || item.paperSize == null) return { ...item, price: null };
+	const cover = optByKey.get(`cover:${item.cover}`)?.price;
+	const paper = optByKey.get(`paper:${item.paper}`)?.price;
+	const size = optByKey.get(`paperSize:${item.paperSize}`);
+	if (cover == null || paper == null) return { ...item, price: null };
+	// ponytail: hệ số kích thước = paperSize.price nếu admin đặt, fallback diện tích so A4.
+	const factor = size?.price ?? (size?.width && size?.height ? (size.width * size.height) / (210 * 297) : 1);
+	return { ...item, price: computeItemPrice(item.pages ?? 0, cover, paper, factor) };
+}
+
+function toOptKeyMap(rows: { type: string; code: string; price: number | null; width: number | null; height: number | null }[]): OptKeyMap {
+	const m: OptKeyMap = new Map();
+	for (const o of rows) m.set(`${o.type}:${o.code}`, o);
+	return m;
+}
+
+function parseRawItems(cartItems: unknown): any[] {
+	try {
+		return Array.isArray(cartItems) ? (cartItems as any[]) : JSON.parse((cartItems as any) ?? '[]');
+	} catch {
+		return [];
+	}
+}
+
+async function saveCart(tx: any, userId: number, items: any[]) {
+	await tx.cart.upsert({
+		where: { userId },
+		update: { items: items as unknown as Prisma.InputJsonValue },
+		create: { userId, items: items as unknown as Prisma.InputJsonValue },
+	});
+}
+
+// Chỉ lấy đúng 3 dòng option cần cho 1 item.
+async function loadOptionsFor(tx: any, item: { cover?: string | null; paper?: string | null; paperSize?: string | null }) {
+	const conds = [
+		item.cover != null && { type: 'cover', code: item.cover },
+		item.paper != null && { type: 'paper', code: item.paper },
+		item.paperSize != null && { type: 'paperSize', code: item.paperSize },
+	].filter(Boolean);
+	const rows = await tx.printOption.findMany({
+		where: { isDelete: false, OR: conds },
+		select: { type: true, code: true, price: true, width: true, height: true },
+	});
+	return toOptKeyMap(rows);
+}
+
 export abstract class ICartService {
 	abstract getCart(userId: number): Promise<CartDTO>;
-	abstract updateCart(userId: number, dto: UpdateCartDTO): Promise<CartDTO>;
-	abstract calculateCart(
+	abstract upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem>;
+	abstract patchItem(
 		userId: number,
-		paymentMethod?: string | null,
-		couponCode?: string | null,
-	): Promise<CartQuote>;
+		bookId: number,
+		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
+	): Promise<CartItem>;
+	abstract deleteItem(userId: number, bookId: number): Promise<void>;
+	abstract calculateCart(userId: number, paymentMethod?: string | null, couponCode?: string | null): Promise<CartQuote>;
 }
 
 @injectable()
@@ -33,46 +86,65 @@ export class CartService extends ICartService {
 		return CartMapper.toDTO(cart);
 	}
 
-	async updateCart(userId: number, dto: UpdateCartDTO) {
-		const items = dto.items as unknown as Prisma.InputJsonValue;
-		const cart = await prisma.cart.upsert({
-			where: { userId },
-			update: { items },
-			create: { userId, items },
+	// Thêm mới hoặc ghi đè dòng theo bookId. Trùng sách → cộng dồn quantity (giữ hành vi cũ của studio).
+	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
+		const priced = await prisma.$transaction(async (tx) => {
+			const cart = await tx.cart.findUnique({ where: { userId } });
+			const items = parseRawItems(cart?.items);
+			const idx = items.findIndex((i) => i.bookId === input.bookId);
+			let merged: any =
+				idx >= 0
+					? { ...items[idx], ...input, quantity: (items[idx].quantity || 1) + (input.quantity ?? 1) }
+					: { quantity: 1, ...input };
+			delete merged.price; // giá luôn do server tính
+			merged = applyItemPrice(merged, await loadOptionsFor(tx, merged));
+			items[idx >= 0 ? idx : items.length] = merged;
+			await saveCart(tx, userId, items);
+			return merged;
 		});
-		return CartMapper.toDTO(cart);
+		return parseCartItems([priced])[0];
+	}
+
+	async patchItem(
+		userId: number,
+		bookId: number,
+		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
+	): Promise<CartItem> {
+		const priced = await prisma.$transaction(async (tx) => {
+			const cart = await tx.cart.findUnique({ where: { userId } });
+			const items = parseRawItems(cart?.items);
+			const idx = items.findIndex((i) => i.bookId === bookId);
+			if (idx < 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
+			const merged = applyItemPrice({ ...items[idx], ...patch }, await loadOptionsFor(tx, { ...items[idx], ...patch }));
+			items[idx] = merged;
+			await saveCart(tx, userId, items);
+			return merged;
+		});
+		return parseCartItems([priced])[0];
+	}
+
+	async deleteItem(userId: number, bookId: number): Promise<void> {
+		await prisma.$transaction(async (tx) => {
+			const cart = await tx.cart.findUnique({ where: { userId } });
+			const items = parseRawItems(cart?.items).filter((i) => i.bookId !== bookId);
+			await saveCart(tx, userId, items);
+		});
 	}
 
 	async calculateCart(userId: number, paymentMethod?: string | null, couponCode?: string | null): Promise<CartQuote> {
-		// ponytail: một transaction: đọc cart + coupon + catalog, tính giá, lưu snapshot giá vào cart.
 		const { Coupon, Priced } = await prisma.$transaction(async (tx) => {
 			const cart = await tx.cart.findUnique({ where: { userId } });
 			const coupon = await this.findCoupon(tx, couponCode);
-			const options = await tx.printOption.findMany({ where: { isDelete: false } });
-
-			const priceByKey = new Map<string, number>();
-			for (const o of options) if (o.price != null) priceByKey.set(`${o.type}:${o.code}`, o.price);
-
-			let raw: any[] = [];
-			try {
-				raw = Array.isArray(cart?.items) ? (cart.items as any[]) : JSON.parse((cart?.items as any) ?? "[]");
-			} catch {}
-
-			// ponytail: bỏ qua item chưa chọn đủ cover/paper/paperSize — chưa định giá được.
-			const priced = raw.map((item: any) => {
-				if (item.cover == null || item.paper == null || item.paperSize == null) return { ...item, price: null };
-				const cover = priceByKey.get(`cover:${item.cover}`);
-				const paper = priceByKey.get(`paper:${item.paper}`);
-				if (cover != null || paper != null) return { ...item, price: (cover ?? 0) + (paper ?? 0) };
-				return { ...item, price: item.price && item.price > 0 ? item.price : null };
+			const options = await tx.printOption.findMany({
+				where: { isDelete: false },
+				select: { type: true, code: true, price: true, width: true, height: true },
 			});
+
+			const raw = parseRawItems(cart?.items);
+			const priced = raw.map((item: any) => applyItemPrice(item, toOptKeyMap(options)));
 
 			// Lưu snapshot — checkout chỉnh qty/xoá không cần recalc nữa.
-			await tx.cart.upsert({
-				where: { userId },
-				update: { items: priced as unknown as Prisma.InputJsonValue },
-				create: { userId, items: priced as unknown as Prisma.InputJsonValue },
-			});
+			await saveCart(tx, userId, priced);
 
 			return { Coupon: coupon, Priced: priced };
 		});
@@ -111,6 +183,13 @@ export class CartService extends ICartService {
 	private couponDiscount(coupon: any, subtotal: number, items: CartItem[]): number {
 		return computeCouponDiscount(coupon, subtotal, items);
 	}
+}
+
+// Pure — unit-testable without DB.
+// Giá 1 quyển = (số trang − 2 trang bìa) × giá 1 trang × hệ số kích thước + giá bìa.
+export function computeItemPrice(pages: number, coverPrice: number, perPagePrice: number, sizeFactor: number): number {
+	const innerPages = Math.max(0, pages - 2);
+	return Math.ceil((innerPages * perPagePrice * sizeFactor + coverPrice) / 1000) * 1000;
 }
 
 // Pure — unit-testable without DB.

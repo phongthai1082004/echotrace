@@ -108,7 +108,7 @@ export class SampleBookService extends ISampleBookService {
 		// ponytail: write-through so status/size changes are visible immediately.
 		await this.sampleCache.setSample(id, dto);
 		await this.sampleCache.invalidateSamples();
-		return dto;
+		return SampleBookMapper.toDTOList([book])[0];
 	}
 
 	async updateStatus(id: number, status: string) {
@@ -120,7 +120,7 @@ export class SampleBookService extends ISampleBookService {
 		// ponytail: status drives explore visibility — write-through so it applies immediately.
 		await this.sampleCache.setSample(id, dto);
 		await this.sampleCache.invalidateSamples();
-		return dto;
+		return SampleBookMapper.toDTOList([book])[0];
 	}
 
 	async remove(id: number) {

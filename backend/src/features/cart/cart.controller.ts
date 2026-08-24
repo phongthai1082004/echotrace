@@ -14,17 +14,48 @@ export class CartController {
 		res.json(ApiResponse.success(cart));
 	};
 
-	updateCart = async (req: AuthRequest, res: Response) => {
+	addItem = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
-		const { items: rawItems } = req.body;
-		let items = rawItems;
-		if (typeof rawItems === 'string' && rawItems) {
+		let input = req.body ?? {};
+		if (typeof input === 'string') {
 			try {
-				items = JSON.parse(rawItems);
+				input = JSON.parse(input);
 			} catch {}
 		}
-		const cart = await this.cartService.updateCart(userId, { items });
-		res.json(ApiResponse.success(cart));
+		if (!input || typeof input.bookId !== 'number') {
+			res.status(400).json(ApiResponse.error('bookId is required', 400));
+			return;
+		}
+		const item = await this.cartService.upsertItem(userId, input);
+		res.json(ApiResponse.success({ item }));
+	};
+
+	patchItem = async (req: AuthRequest, res: Response) => {
+		const userId = parseInt(req.userId!);
+		const bookId = parseInt(String(req.params.bookId));
+		if (!Number.isFinite(bookId)) {
+			res.status(400).json(ApiResponse.error('invalid bookId', 400));
+			return;
+		}
+		const { quantity, cover, paper, paperSize } = req.body ?? {};
+		const patch: Record<string, unknown> = {};
+		if (quantity !== undefined) patch.quantity = Math.max(1, parseInt(quantity) || 1);
+		if (cover !== undefined) patch.cover = cover;
+		if (paper !== undefined) patch.paper = paper;
+		if (paperSize !== undefined) patch.paperSize = paperSize;
+		const item = await this.cartService.patchItem(userId, bookId, patch as any);
+		res.json(ApiResponse.success({ item }));
+	};
+
+	deleteItem = async (req: AuthRequest, res: Response) => {
+		const userId = parseInt(req.userId!);
+		const bookId = parseInt(String(req.params.bookId));
+		if (!Number.isFinite(bookId)) {
+			res.status(400).json(ApiResponse.error('invalid bookId', 400));
+			return;
+		}
+		await this.cartService.deleteItem(userId, bookId);
+		res.json(ApiResponse.success({ ok: true }));
 	};
 
 	calculateCart = async (req: AuthRequest, res: Response) => {
