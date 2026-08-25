@@ -14,9 +14,6 @@ export interface PrintCatalog {
   sizes: PrintCatalogEntry[];
 }
 
-// Catalog global PrintOption — dùng chung cho checkout/studio-topbar.
-// ponytail: gọi lại mỗi lần thêm/đổi (không cache client), catalog hiện đọc từ
-// /user/suppliers/options — thay bằng endpoint riêng khi tách pricing.
 export async function fetchPrintCatalog(token: string): Promise<PrintCatalog> {
   const d = await apiFetch<any>("/api/user/suppliers/options", token);
   return {

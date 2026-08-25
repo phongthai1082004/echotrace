@@ -1,7 +1,6 @@
 import { injectable } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
-import { Prisma } from '../../../generated/prisma/client.js';
-import { ErrorCode, CartDTO, CartMapper, CartItem, parseCartItems, DiscountType, MinOrderType } from '@echotrace/shared';
+import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
 
 export interface CartQuote {
@@ -34,34 +33,23 @@ function toOptKeyMap(rows: { type: string; code: string; price: number | null; w
 	return m;
 }
 
-function parseRawItems(cartItems: unknown): any[] {
-	try {
-		return Array.isArray(cartItems) ? (cartItems as any[]) : JSON.parse((cartItems as any) ?? '[]');
-	} catch {
-		return [];
-	}
-}
-
-async function saveCart(tx: any, userId: number, items: any[]) {
-	await tx.cart.upsert({
-		where: { userId },
-		update: { items: items as unknown as Prisma.InputJsonValue },
-		create: { userId, items: items as unknown as Prisma.InputJsonValue },
-	});
-}
-
-// Chỉ lấy đúng 3 dòng option cần cho 1 item.
-async function loadOptionsFor(tx: any, item: { cover?: string | null; paper?: string | null; paperSize?: string | null }) {
-	const conds = [
-		item.cover != null && { type: 'cover', code: item.cover },
-		item.paper != null && { type: 'paper', code: item.paper },
-		item.paperSize != null && { type: 'paperSize', code: item.paperSize },
-	].filter(Boolean);
-	const rows = await tx.printOption.findMany({
-		where: { isDelete: false, OR: conds },
+// ponytail: giá tính fresh mỗi lần đọc (không còn snapshot trong JSON) — thêm cache khi đo được chậm.
+async function loadAllOptions(db: any): Promise<OptKeyMap> {
+	const rows = await db.printOption.findMany({
+		where: { isDelete: false },
 		select: { type: true, code: true, price: true, width: true, height: true },
 	});
 	return toOptKeyMap(rows);
+}
+
+const CART_INCLUDE = { items: { include: { book: true }, orderBy: { id: 'asc' } } };
+
+async function getOrCreateCart(db: any, userId: number) {
+	let cart = await db.cart.findUnique({ where: { userId }, include: CART_INCLUDE });
+	if (!cart) {
+		cart = await db.cart.create({ data: { userId }, include: CART_INCLUDE });
+	}
+	return cart;
 }
 
 export abstract class ICartService {
@@ -73,36 +61,62 @@ export abstract class ICartService {
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem>;
 	abstract deleteItem(userId: number, bookId: number): Promise<void>;
-	abstract calculateCart(userId: number, paymentMethod?: string | null, couponCode?: string | null): Promise<CartQuote>;
+	abstract calculateCart(
+		userId: number,
+		paymentMethod?: string | null,
+		couponCode?: string | null,
+		bookIds?: number[] | null,
+	): Promise<CartQuote>;
 }
 
 @injectable()
 export class CartService extends ICartService {
-	async getCart(userId: number) {
-		let cart = await prisma.cart.findUnique({ where: { userId } });
-		if (!cart) {
-			cart = await prisma.cart.create({ data: { userId } });
-		}
-		return CartMapper.toDTO(cart);
+	private async pricedDTO(userId: number): Promise<CartDTO> {
+		const cart = await getOrCreateCart(prisma, userId);
+		const optMap = cart.items.length ? await loadAllOptions(prisma) : new Map();
+		const parsedItems = cart.items.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
+		return {
+			id: cart.id,
+			userId: cart.userId,
+			items: parsedItems.length ? parsedItems : null,
+			parsedItems,
+			createdAt: cart.createdAt,
+			updatedAt: cart.updatedAt,
+		};
 	}
 
-	// Thêm mới hoặc ghi đè dòng theo bookId. Trùng sách → cộng dồn quantity (giữ hành vi cũ của studio).
+	async getCart(userId: number) {
+		return this.pricedDTO(userId);
+	}
+
 	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
-		const priced = await prisma.$transaction(async (tx) => {
-			const cart = await tx.cart.findUnique({ where: { userId } });
-			const items = parseRawItems(cart?.items);
-			const idx = items.findIndex((i) => i.bookId === input.bookId);
-			let merged: any =
-				idx >= 0
-					? { ...items[idx], ...input, quantity: (items[idx].quantity || 1) + (input.quantity ?? 1) }
-					: { quantity: 1, ...input };
-			delete merged.price; // giá luôn do server tính
-			merged = applyItemPrice(merged, await loadOptionsFor(tx, merged));
-			items[idx >= 0 ? idx : items.length] = merged;
-			await saveCart(tx, userId, items);
-			return merged;
+		return prisma.$transaction(async (tx) => {
+			const cart = await tx.cart.upsert({ where: { userId }, update: {}, create: { userId } });
+			const book = await tx.book.findFirst({ where: { id: input.bookId, userId, isDelete: false }, select: { id: true } });
+			if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
+
+			const key = { cartId_bookId: { cartId: cart.id, bookId: input.bookId } };
+			const existing = await tx.cartItem.findUnique({ where: key });
+			const row = await tx.cartItem.upsert({
+				where: key,
+				update: {
+					quantity: Math.max(1, (existing?.quantity ?? 0) + (input.quantity ?? 1)),
+					cover: input.cover ?? existing?.cover ?? null,
+					paper: input.paper ?? existing?.paper ?? null,
+					paperSize: input.paperSize ?? existing?.paperSize ?? null,
+				},
+				create: {
+					cartId: cart.id,
+					bookId: input.bookId,
+					quantity: Math.max(1, input.quantity ?? 1),
+					cover: input.cover ?? null,
+					paper: input.paper ?? null,
+					paperSize: input.paperSize ?? null,
+				},
+				include: { book: true },
+			});
+			return applyItemPrice(composeCartItem(row, row.book), await loadAllOptions(tx));
 		});
-		return parseCartItems([priced])[0];
 	}
 
 	async patchItem(
@@ -110,51 +124,48 @@ export class CartService extends ICartService {
 		bookId: number,
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem> {
-		const priced = await prisma.$transaction(async (tx) => {
-			const cart = await tx.cart.findUnique({ where: { userId } });
-			const items = parseRawItems(cart?.items);
-			const idx = items.findIndex((i) => i.bookId === bookId);
-			if (idx < 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
-			const merged = applyItemPrice({ ...items[idx], ...patch }, await loadOptionsFor(tx, { ...items[idx], ...patch }));
-			items[idx] = merged;
-			await saveCart(tx, userId, items);
-			return merged;
+		const row = await prisma.$transaction(async (tx) => {
+			const cart = await tx.cart.findUnique({ where: { userId }, select: { id: true } });
+			if (!cart) throw new AppError(ErrorCode.NOT_FOUND, 404);
+			const key = { cartId_bookId: { cartId: cart.id, bookId } };
+			if (Object.keys(patch).length) {
+				const updated = await tx.cartItem.updateMany({
+					where: { cartId: cart.id, bookId },
+					data: { ...patch, ...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}) },
+				});
+				if (!updated.count) throw new AppError(ErrorCode.NOT_FOUND, 404);
+			}
+			return tx.cartItem.findUnique({ where: key, include: { book: true } });
 		});
-		return parseCartItems([priced])[0];
+		if (!row) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		return applyItemPrice(composeCartItem(row, row.book), await loadAllOptions(prisma));
 	}
 
 	async deleteItem(userId: number, bookId: number): Promise<void> {
-		await prisma.$transaction(async (tx) => {
-			const cart = await tx.cart.findUnique({ where: { userId } });
-			const items = parseRawItems(cart?.items).filter((i) => i.bookId !== bookId);
-			await saveCart(tx, userId, items);
-		});
+		const cart = await prisma.cart.findUnique({ where: { userId }, select: { id: true } });
+		if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id, bookId } });
 	}
 
-	async calculateCart(userId: number, paymentMethod?: string | null, couponCode?: string | null): Promise<CartQuote> {
-		const { Coupon, Priced } = await prisma.$transaction(async (tx) => {
-			const cart = await tx.cart.findUnique({ where: { userId } });
-			const coupon = await this.findCoupon(tx, couponCode);
-			const options = await tx.printOption.findMany({
-				where: { isDelete: false },
-				select: { type: true, code: true, price: true, width: true, height: true },
-			});
+	async calculateCart(
+		userId: number,
+		paymentMethod?: string | null,
+		couponCode?: string | null,
+		bookIds?: number[] | null,
+	): Promise<CartQuote> {
+		const cart = await getOrCreateCart(prisma, userId);
+		const Coupon = await this.findCoupon(prisma, couponCode);
+		const optMap = cart.items.length ? await loadAllOptions(prisma) : new Map();
+		const ids = Array.isArray(bookIds) && bookIds.length ? new Set(bookIds) : null;
+		const items: CartItem[] = cart.items
+			.filter((row: any) => !ids || ids.has(row.bookId))
+			.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
+		const incomplete = items.find((i) => i.price == null);
+		if (incomplete) {
+			throw new AppError(ErrorCode.MISSING_BOOK_OPTIONS, 400, { bookId: incomplete.bookId, title: incomplete.title });
+		}
 
-			const raw = parseRawItems(cart?.items);
-			const priced = raw.map((item: any) => applyItemPrice(item, toOptKeyMap(options)));
-
-			// Lưu snapshot — checkout chỉnh qty/xoá không cần recalc nữa.
-			await saveCart(tx, userId, priced);
-
-			return { Coupon: coupon, Priced: priced };
-		});
-
-		// ponytail: parseCartItems chỉ cắt content (ảnh thumb) cho hiển thị; price được giữ nguyên.
-		const items = parseCartItems(Priced);
-
-		const subtotal = items.reduce((s, i) => s + (i.price ?? 0) * (i.quantity || 1), 0);
-		const discount = this.couponDiscount(Coupon, subtotal, items);
-		const total = Math.max(0, subtotal - discount);
+		const subtotal = items.reduce((s: number, i) => s + (i.price ?? 0) * (i.quantity || 1), 0);
+		const discount = computeCouponDiscount(Coupon, subtotal, items);		const total = Math.max(0, subtotal - discount);
 		const payNow = total == null ? 0 : paymentMethod === 'half' ? Math.round((total * 50) / 100) : total;
 		const payLater = total - payNow;
 		return {
@@ -164,12 +175,10 @@ export class CartService extends ICartService {
 			total,
 			payNow,
 			payLater,
-			coupon: discount > 0 && Coupon ? { code: Coupon.code, amount: discount } : null,
+			coupon: discount > 0 && Coupon ? { ...Coupon, amount: discount } : null,
 		};
 	}
 
-	// Coupon mới: code lưu dạng "CODE-<timestamp>" để không trùng khi tạo. Người dùng nhập CODE trần,
-	// nên lookup theo prefix (fallback exact cho coupon seed cũ). Lấy bản mới nhất nếu trùng code.
 	private async findCoupon(tx: any, code: string | null | undefined) {
 		if (!code) return null;
 		const upper = code.trim().toUpperCase();
@@ -178,36 +187,9 @@ export class CartService extends ICartService {
 			orderBy: { id: 'desc' },
 		});
 	}
-
-	// ponytail: same math as the frontend DiscountModal — keep in sync.
-	private couponDiscount(coupon: any, subtotal: number, items: CartItem[]): number {
-		return computeCouponDiscount(coupon, subtotal, items);
-	}
 }
 
-// Pure — unit-testable without DB.
-// Giá 1 quyển = (số trang − 2 trang bìa) × giá 1 trang × hệ số kích thước + giá bìa.
 export function computeItemPrice(pages: number, coverPrice: number, perPagePrice: number, sizeFactor: number): number {
 	const innerPages = Math.max(0, pages - 2);
 	return Math.ceil((innerPages * perPagePrice * sizeFactor + coverPrice) / 1000) * 1000;
-}
-
-// Pure — unit-testable without DB.
-export function computeCouponDiscount(coupon: any, subtotal: number, items: CartItem[]): number {
-	if (!coupon) return 0;
-	if (!coupon.isActive) return 0;
-	if (coupon.expiresAt && new Date(coupon.expiresAt).getTime() < Date.now()) return 0;
-	if (coupon.maxUsageCount > 0 && (coupon.usedCount ?? 0) >= coupon.maxUsageCount) return 0;
-	// minOrderType: VALUE = theo giá (subtotal), QUANTITY = theo số quyển.
-	const orderQty = items.reduce((s, i) => s + (i.quantity || 1), 0);
-	const meetsMin =
-		(coupon.minOrderType || 'VALUE').toLowerCase() === MinOrderType.QUANTITY
-			? orderQty >= (coupon.minOrderAmount ?? 0)
-			: subtotal >= (coupon.minOrderAmount ?? 0);
-	if (!meetsMin) return 0;
-	const type = (coupon.discountType || '').toLowerCase();
-	const raw = type === DiscountType.PERCENTAGE ? (subtotal * (coupon.discountValue ?? 0)) / 100 : coupon.discountValue ?? 0;
-	// maxDiscountAmount = 0/null = không giới hạn.
-	const capped = coupon.maxDiscountAmount ? Math.min(raw, coupon.maxDiscountAmount) : raw;
-	return Math.max(0, capped);
 }

@@ -14,29 +14,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Error boundary component for catching React errors
- * Prevents entire app crash when component fails
- *
- * @example
- * ```tsx
- * <ErrorBoundary
- *   fallback={(error, reset) => (
- *     <div>
- *       <h1>Something went wrong</h1>
- *       <p>{error.message}</p>
- *       <button onClick={reset}>Try again</button>
- *     </div>
- *   )}
- *   onError={(error, info) => {
- *     console.error('Error caught:', error);
- *     reportToSentry(error);
- *   }}
- * >
- *   <YourComponent />
- * </ErrorBoundary>
- * ```
- */
+
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -54,12 +32,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log to console in development
+
     if (process.env.NODE_ENV === "development") {
       console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
 
-    // Call optional error handler (for logging services like Sentry)
+
     this.props.onError?.(error, errorInfo);
   }
 
@@ -76,7 +54,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback(this.state.error, this.reset);
       }
 
-      // Default fallback UI
+
       return <DefaultErrorFallback error={this.state.error} reset={this.reset} />;
     }
 
@@ -84,9 +62,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
-/**
- * Default error boundary fallback UI
- */
+
 export function DefaultErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -117,11 +93,7 @@ export function DefaultErrorFallback({ error, reset }: { error: Error; reset: ()
   );
 }
 
-/**
- * Async error boundary - for handling errors in async components
- * Note: React error boundaries don't catch async errors
- * Use this for promise rejections
- */
+
 export class AsyncErrorBoundary extends Component<
   ErrorBoundaryProps & { onAsyncError?: (error: Error) => void },
   ErrorBoundaryState
@@ -133,7 +105,7 @@ export class AsyncErrorBoundary extends Component<
       error: null,
     };
 
-    // Handle unhandled promise rejections
+
     window.addEventListener("unhandledrejection", (event) => {
       this.setState({
         hasError: true,

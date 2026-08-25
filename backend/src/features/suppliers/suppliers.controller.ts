@@ -62,7 +62,7 @@ export class SupplierController {
 	updateSupplierInfo = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(String(req.params.id));
 		const updateData = req.body as UpdateSupplierDTO;
-		// Only allow personal info fields
+
 		const allowedFields = ['name', 'contact', 'email', 'bankName', 'bankAccountNumber', 'bankAccountName', 'status'];
 		const filteredData: any = {};
 		allowedFields.forEach((field) => {

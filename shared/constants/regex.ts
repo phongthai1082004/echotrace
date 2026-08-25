@@ -1,4 +1,3 @@
-// Shared validation regexes (used by backend class-validator DTOs + controllers).
 export const NAME_NO_DIGITS_REGEX = /^[^\d]+$/;
 export const NO_DIGITS_REGEX = /^[^\d]*$/;
 export const PHONE_REGEX = /^\d{10,11}$/;

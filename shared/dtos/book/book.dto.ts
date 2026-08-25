@@ -52,7 +52,7 @@ export class BookMapper {
   static toDTOList(books: any[]): BookDTO[] {
     return books.map((b) => {
       const dto = this.toDTO(b);
-      // ponytail: list chỉ cần thumbnail phẳng — content (canvasJson) nặng, chỉ detail/editor mới cần.
+
       dto.content = null;
       return dto;
     });

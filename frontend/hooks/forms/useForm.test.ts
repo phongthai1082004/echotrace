@@ -101,7 +101,7 @@ describe("useForm", () => {
       } as React.ChangeEvent<HTMLInputElement>);
     });
 
-    // Note: error will only update on next blur with validateOnChange disabled
+
   });
 
   it("should handle form submission", async () => {

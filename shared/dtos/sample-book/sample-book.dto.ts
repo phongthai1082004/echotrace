@@ -88,7 +88,7 @@ export class SampleBookMapper {
   static toDTOList(books: any[]): SampleBookDTO[] {
     return books.map((b) => {
       const dto = this.toDTO(b);
-      // ponytail: list chỉ cần thumbnail phẳng + pageCount — content (canvasJson) nặng, chỉ detail/editor mới cần.
+
       dto.content = null;
       return dto;
     });

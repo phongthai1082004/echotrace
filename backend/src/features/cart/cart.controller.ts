@@ -26,7 +26,8 @@ export class CartController {
 			res.status(400).json(ApiResponse.error('bookId is required', 400));
 			return;
 		}
-		const item = await this.cartService.upsertItem(userId, input);
+		const { bookId, quantity, cover, paper, paperSize } = input;
+		const item = await this.cartService.upsertItem(userId, { bookId, quantity, cover, paper, paperSize });
 		res.json(ApiResponse.success({ item }));
 	};
 
@@ -60,8 +61,12 @@ export class CartController {
 
 	calculateCart = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
-		const { paymentMethod, couponCode } = req.body ?? {};
-		const quote = await this.cartService.calculateCart(userId, paymentMethod ?? null, couponCode ?? null);
+		const { paymentMethod, couponCode, bookIds } = req.body ?? {};
+		const ids =
+			Array.isArray(bookIds) && bookIds.every((id: unknown) => Number.isFinite(Number(id)))
+				? (bookIds as unknown[]).map(Number)
+				: null;
+		const quote = await this.cartService.calculateCart(userId, paymentMethod ?? null, couponCode ?? null, ids);
 		res.json(ApiResponse.success(quote));
 	};
 }

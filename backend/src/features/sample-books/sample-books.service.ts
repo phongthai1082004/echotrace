@@ -32,7 +32,7 @@ export class SampleBookService extends ISampleBookService {
 		super();
 	}
 
-	// ponytail: admin list is client-filtered + paginated, so no caching here — fresh rows every page.
+
 	async list(
 		params: { search?: string; type?: string; category?: string; status?: string; order?: string; limit?: number; cursor?: number } = {},
 	) {
@@ -63,7 +63,7 @@ export class SampleBookService extends ISampleBookService {
 	}
 
 	async create(adminId: number, data: CreateSampleBookDTO) {
-		// ponytail: new sample books start as draft, not published.
+
 		const book = await prisma.sampleBook.create({
 			data: {
 				createdBy: adminId,
@@ -101,11 +101,11 @@ export class SampleBookService extends ISampleBookService {
 				updateData.content = data.content;
 			}
 		}
-		// ponytail: status drives visibility — archive hides from explore, everything else shows
+
 		if ('status' in data && !('isActive' in data)) updateData.isActive = data.status !== 'archive';
 		const book = await prisma.sampleBook.update({ where: { id }, data: updateData });
 		const dto = SampleBookMapper.toDTO(book);
-		// ponytail: write-through so status/size changes are visible immediately.
+
 		await this.sampleCache.setSample(id, dto);
 		await this.sampleCache.invalidateSamples();
 		return SampleBookMapper.toDTOList([book])[0];
@@ -117,14 +117,14 @@ export class SampleBookService extends ISampleBookService {
 			data: { status, isActive: status !== 'archive' },
 		});
 		const dto = SampleBookMapper.toDTO(book);
-		// ponytail: status drives explore visibility — write-through so it applies immediately.
+
 		await this.sampleCache.setSample(id, dto);
 		await this.sampleCache.invalidateSamples();
 		return SampleBookMapper.toDTOList([book])[0];
 	}
 
 	async remove(id: number) {
-		// ponytail: "delete" now archives — the item stays in the admin list with status archive
+
 		const res = await prisma.sampleBook.updateMany({
 			where: { id, isDelete: false },
 			data: { status: 'archive', isActive: false },
@@ -134,7 +134,7 @@ export class SampleBookService extends ISampleBookService {
 		await this.sampleCache.invalidateSamples();
 	}
 
-	// statuses that are public in the customer explore grid
+
 	private visibleStatuses = ['published', 'active'];
 
 	async explore() {
@@ -145,7 +145,7 @@ export class SampleBookService extends ISampleBookService {
 			orderBy: { id: 'desc' },
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
-		// ponytail: published list cached for the customer explore grid; invalidated on write.
+
 		await this.sampleCache.setList('explore', dtos);
 		return dtos;
 	}
@@ -158,7 +158,7 @@ export class SampleBookService extends ISampleBookService {
 			orderBy: { id: 'desc' },
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
-		// ponytail: same caching contract as explore.
+
 		await this.sampleCache.setList('albums', dtos);
 		return dtos;
 	}

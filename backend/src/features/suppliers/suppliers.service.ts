@@ -72,13 +72,13 @@ export class SupplierService extends ISupplierService {
 		const { status, optionIds, ...rest } = dto;
 		const data: any = { ...rest };
 
-		// Convert status to banned/isDelete fields
+
 		if (status !== undefined) {
 			data.isDelete = status === 'banned';
 			data.deletedAt = status === 'banned' ? new Date() : null;
 		}
 
-		// Filter out undefined values to avoid Prisma validation errors
+
 		const cleanData: any = {};
 		Object.keys(data).forEach((key) => {
 			if (data[key] !== undefined) cleanData[key] = data[key];
@@ -91,8 +91,8 @@ export class SupplierService extends ISupplierService {
 		return result;
 	}
 
-	// Supplier chỉ gán PrintOption có sẵn (theo id) — không tạo mới ở đây nữa.
-	// Cache-aside: write DB trước, invalidate catalog cache sau để lần đọc tiếp fresh.
+
+
 	async updateSupplierOptions(id: number, optionIds: number[] = []) {
 		const wanted = new Set(optionIds.map(Number).filter(Boolean));
 		await prisma.$transaction(async (tx) => {
@@ -127,7 +127,7 @@ export class SupplierService extends ISupplierService {
 	private async attachOptions(suppliers: any[]) {
 		if (!suppliers.length) return;
 		const ids = suppliers.map((s) => s.id);
-		// ponytail: prisma trực tiếp (không qua BaseService delegate) để select đúng cột cần.
+
 		const links: any[] = await prisma.supplierPrintOption.findMany({
 			where: { supplierId: { in: ids }, isDelete: false },
 			orderBy: { id: 'desc' },
@@ -168,7 +168,7 @@ export class SupplierService extends ISupplierService {
 		return [...new Map(opts.map((o) => [o.code, o])).values()];
 	}
 
-	// Aggregated từ danh mục GLOBAL: không còn merge theo từng supplier nữa.
+
 	async getAggregatedOptions(): Promise<AggregatedOptionsResponse> {
 		const d = this.optionBase.delegate;
 		const rows = await d.findMany({ where: { isDelete: false }, orderBy: { type: 'asc' } });
@@ -191,7 +191,7 @@ export class SupplierService extends ISupplierService {
 		return { sizes, papers: this.uniqOptions(papers), covers: this.uniqOptions(covers) };
 	}
 
-	// Lazy catalog/info: đọc thẳng danh mục global, cache-aside (miss -> DB -> set).
+
 	async getOptionCatalog(type: string): Promise<SupplierOption[]> {
 		const cached = await this.optionCache.getCatalog<SupplierOption[]>(type);
 		if (cached) return cached;

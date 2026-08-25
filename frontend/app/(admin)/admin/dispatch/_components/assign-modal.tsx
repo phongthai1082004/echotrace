@@ -23,7 +23,7 @@ export function AssignModal({
 
   const assignFiltered = unassignedOrders.filter((o: Order) => {
     const q = assignSearch.toLowerCase();
-    return !q || o.id.toLowerCase().includes(q) || o.product.toLowerCase().includes(q);
+    return !q || o.id.toLowerCase().includes(q) || o.items.some((i) => i.title.toLowerCase().includes(q));
   });
 
   const toggleAssign = (id: string) => {
@@ -81,9 +81,14 @@ export function AssignModal({
                   </div>
                   <input type="checkbox" checked={isChecked} onChange={() => toggleAssign(o.id)} className="hidden" />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold ${isChecked ? "text-white" : "text-[#222]"}`}>{o.product}</p>
+                    <p className={`text-sm font-bold truncate ${isChecked ? "text-white" : "text-[#222]"}`}>
+                      {o.items[0]?.title}
+                      {o.items.length > 1 && (
+                        <span className="font-mono text-[10px] opacity-60"> +{o.items.length - 1}</span>
+                      )}
+                    </p>
                     <p className={`font-mono text-[10px] ${isChecked ? "text-white/60" : "text-[#999]"}`}>
-                      {o.id} &middot; {formatCurrency(o.amount)}
+                      {o.id} &middot; {formatCurrency(o.totalAmount)}
                     </p>
                   </div>
                   <StatusBadge status={o.status} />

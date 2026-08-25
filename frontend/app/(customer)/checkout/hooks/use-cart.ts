@@ -2,52 +2,88 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api.fetch";
+import { computeCouponDiscount } from "@echotrace/shared";
+import { useToast } from "@/components/toast";
 
-// Mọi thao tác giỏ + tổng tiền của checkout. Giá từng dòng do server tính;
-// tổng chốt chỉ đến từ POST /cart/calculate (gọi khi chuyển bước hoặc đổi coupon).
+// Mọi thao tác giỏ + tổng tiền của checkout.
+// Giá từng dòng do server trả (GET /cart, PATCH re-price).
+// Tổng tiền tính LOCAL mỗi render: subtotal = Σ price×qty (item được tick),
+// discount = computeCouponDiscount(couponInfo từ quote) → tick/đổi qty không tốn API.
+// POST /cart/calculate chỉ gọi khi chuyển bước (chốt) hoặc áp/gỡ coupon (lấy couponInfo mới).
 export function useCart(token?: string, paymentMethod: "full" | "half" = "full") {
   const [items, setItems] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loaded, setLoaded] = useState(false);
-  const [quote, setQuote] = useState<any>(null);
-  const [couponCode, setCouponCode] = useState<string | null>(null);
+  // Snapshot coupon từ lần calculate gần nhất — FE tự nhân công discount trên nó.
+  const [couponInfo, setCouponInfo] = useState<any>(null);
+  const [couponCode, setCouponCodeState] = useState<string | null>(null);
   const patchTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
-  const recalcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Ref cho giá trị mới nhất bên trong timer callback (tránh stale closure).
-  const couponRef = useRef(couponCode);
   const pmRef = useRef(paymentMethod);
   useEffect(() => {
-    couponRef.current = couponCode;
     pmRef.current = paymentMethod;
-  }, [couponCode, paymentMethod]);
+  }, [paymentMethod]);
+
+  const setCouponCode = useCallback((code: string | null) => {
+    setCouponCodeState(code);
+    if (!code) setCouponInfo(null);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
-    // Giá hiển thị = snapshot đã lưu trong cart; tổng chốt chỉ lúc bấm Continue.
     apiFetch<any>("/api/cart", token)
-      .then((c) => setItems(c?.parsedItems ?? []))
+      .then((c) => {
+        const list: any[] = c?.parsedItems ?? [];
+        setItems(list);
+        setSelected(new Set(list.map((i: any) => i.bookId)));
+      })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, [token]);
 
+  const toggleItem = useCallback((bookId: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(bookId)) next.delete(bookId);
+      else next.add(bookId);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setSelected((prev) => (prev.size === items.length && items.length > 0 ? new Set() : new Set(items.map((i: any) => i.bookId))));
+  }, [items]);
+
+  const { showToast } = useToast();
+
+  // Chốt tổng authoritative: server re-price + validate coupon, trả kèm couponInfo
+  // để các lần tick sau tiếp tục tính local. Chỉ gọi ở Continue và DiscountModal.
+  // Lỗi (vd MISSING_BOOK_OPTIONS) → toast + trả null, caller phải kiểm tra trước khi chuyển bước.
   const recalc = useCallback(
     async (code?: string | null) => {
-      if (!token) return;
-      const q = await apiFetch<any>("/api/cart/calculate", token, {
-        method: "POST",
-        body: JSON.stringify({ paymentMethod: pmRef.current, couponCode: code ?? couponRef.current }),
-      });
-      setQuote(q);
-      if (q?.items) setItems(q.items);
-      return q;
+      if (!token) return null;
+      try {
+        const q = await apiFetch<any>("/api/cart/calculate", token, {
+          method: "POST",
+          body: JSON.stringify({
+            paymentMethod: pmRef.current,
+            couponCode: code ?? couponCode,
+            bookIds: [...selected],
+          }),
+        });
+        if (q?.coupon) setCouponInfo(q.coupon);
+        if (q?.items) {
+          const priced = new Map(q.items.map((i: any) => [i.bookId, i]));
+          setItems((prev) => prev.map((it: any) => priced.get(it.bookId) ?? it));
+        }
+        return q;
+      } catch (e: any) {
+        showToast(e?.message || "Calculate failed", "error");
+        return null;
+      }
     },
-    [token],
+    [token, couponCode, selected, showToast],
   );
-
-  const debounceRecalc = useCallback(() => {
-    if (recalcTimer.current) clearTimeout(recalcTimer.current);
-    recalcTimer.current = setTimeout(() => recalc().catch(() => {}), 400);
-  }, [recalc]);
 
   const patchItem = useCallback(
     async (bookId: number, patch: Record<string, unknown>) => {
@@ -66,17 +102,13 @@ export function useCart(token?: string, paymentMethod: "full" | "half" = "full")
     (bookId: number, patch: Record<string, unknown>) => {
       clearTimeout(patchTimers.current[bookId]);
       patchTimers.current[bookId] = setTimeout(() => {
-        patchItem(bookId, patch)
-          .then(() => {
-            if (couponRef.current) debounceRecalc();
-          })
-          .catch(() => {});
+        patchItem(bookId, patch).catch(() => {});
       }, 400);
     },
-    [patchItem, debounceRecalc],
+    [patchItem],
   );
 
-  // Optimistic qty + debounce PATCH.
+  // Optimistic qty + debounce PATCH (persist). Giá dòng không đổi theo qty → không cần recalc.
   const changeQty = useCallback(
     (bookId: number, quantity: number) => {
       setItems((prev) => prev.map((it: any) => (it.bookId === bookId ? { ...it, quantity } : it)));
@@ -88,37 +120,42 @@ export function useCart(token?: string, paymentMethod: "full" | "half" = "full")
   const deleteItem = useCallback(
     (bookId: number) => {
       setItems((prev) => prev.filter((it: any) => it.bookId !== bookId));
-      apiFetch(`/api/cart/item/${bookId}`, token, { method: "DELETE" })
-        .then(() => {
-          if (couponRef.current) debounceRecalc();
-        })
-        .catch(() => {});
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(bookId);
+        return next;
+      });
+      apiFetch(`/api/cart/item/${bookId}`, token, { method: "DELETE" }).catch(() => {});
     },
-    [token, debounceRecalc],
+    [token],
   );
 
-  // Sửa cover/paper: server re-price rồi merge item mới vào state.
+  // Sửa cover/paper: server re-price rồi merge item mới vào state (giá dòng đổi → cần server).
   const saveItemOptions = useCallback(
     async (bookId: number, cover: string, paper: string) => {
       await patchItem(bookId, { cover, paper });
-      if (couponRef.current) debounceRecalc();
     },
-    [patchItem, debounceRecalc],
+    [patchItem],
   );
 
-  // Không coupon → toán local chính xác; có coupon → dùng quote từ server.
+  // Tổng tiền: pure derivation mỗi render — tick/qty/xóa phản ánh tức thì, 0 API.
+  const selectedItems = items.filter((i: any) => selected.has(i.bookId));
   const hasCompleteOptions = (i: any) => i?.cover && i?.paper && i?.paperSize;
-  const localSubtotal = items.reduce((s: number, i: any) => s + (i.price ?? 0) * (i.quantity || 1), 0);
-  const hasCoupon = !!couponCode;
-  const subtotal = hasCoupon ? (quote?.subtotal ?? localSubtotal) : localSubtotal;
-  const discountAmount = hasCoupon ? (quote?.discount ?? 0) : 0;
-  const total = hasCoupon ? (quote?.total ?? subtotal - discountAmount) : subtotal;
-  const missingAny = items.some((i: any) => !hasCompleteOptions(i) || i.price == null);
+  const subtotal = selectedItems.reduce((s: number, i: any) => s + (i.price ?? 0) * (i.quantity || 1), 0);
+  const discountAmount = couponInfo ? computeCouponDiscount(couponInfo, subtotal, selectedItems) : 0;
+  const total = Math.max(0, subtotal - discountAmount);
+  const missingAny =
+    selectedItems.length === 0 || selectedItems.some((i: any) => !hasCompleteOptions(i) || i.price == null);
 
   return {
     items,
+    selectedItems,
+    selected,
+    selectedCount: selected.size,
+    toggleItem,
+    toggleAll,
     loaded,
-    quote,
+    couponInfo,
     couponCode,
     setCouponCode,
     recalc,

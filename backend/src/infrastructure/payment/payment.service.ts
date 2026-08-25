@@ -3,8 +3,13 @@ import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from 
 import { IPaymentStrategy } from './payment.strategy.js';
 import { injectable } from 'tsyringe';
 
+export interface IPaymentService {
+	createPaymentLink(dto: CreatePaymentLinkDto): Promise<PaymentLinkResponse>;
+	handleWebhook(gateway: PaymentGateway, payload: any): Promise<WebhookProcessResult>;
+}
+
 @injectable()
-export class PaymentService {
+export class PaymentService implements IPaymentService {
 	private strategies: IPaymentStrategy[];
 
 	constructor(strategies: IPaymentStrategy[]) {

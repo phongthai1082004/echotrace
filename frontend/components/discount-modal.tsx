@@ -6,7 +6,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { X, Check, Tag } from "lucide-react";
 import { neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 
-// ponytail: coupon validate + tính discount từ server — frontend không tự định giá.
 export function DiscountModal({
   open,
   onClose,

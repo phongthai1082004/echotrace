@@ -19,9 +19,7 @@ const shimmerKeyframes = `
   }
 `;
 
-/**
- * Loading skeleton component with shimmer animation
- */
+
 export function LoadingSkeleton({
   rows = 3,
   columns = 3,

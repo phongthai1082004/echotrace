@@ -1,13 +1,13 @@
-// ==========================================
-// I. CÁC LOẠI BÌA (COVER TYPES)
-// ==========================================
+
+
+
 export const CoverType = {
-  HARDCOVER: 'HARDCOVER',       // Bìa cứng in hình
-  SOFTCOVER: 'SOFTCOVER',       // Bìa mềm
-  LEATHER: 'LEATHER',           // Bìa da Simili / PU
-  LINEN: 'LINEN',               // Bìa vải Linen / Canvas
-  ACRYLIC: 'ACRYLIC',           // Bìa Mica / Acrylic
-  WOODEN: 'WOODEN',             // Bìa gỗ
+  HARDCOVER: 'HARDCOVER',
+  SOFTCOVER: 'SOFTCOVER',
+  LEATHER: 'LEATHER',
+  LINEN: 'LINEN',
+  ACRYLIC: 'ACRYLIC',
+  WOODEN: 'WOODEN',
 } as const;
 
 export type CoverType = typeof CoverType[keyof typeof CoverType];
@@ -40,13 +40,13 @@ export const COVER_TYPE_METADATA: Record<CoverType, { label: string; description
 };
 
 export const PaperType = {
-  LUSTRE: 'LUSTRE',             // Giấy lụa / bán bóng
-  COUCHE: 'COUCHE',             // Giấy Couche / Magno
-  GLOSSY: 'GLOSSY',             // Giấy ảnh bóng
-  MATTE: 'MATTE',               // Giấy mờ
-  FINE_ART: 'FINE_ART',         // Giấy Mỹ thuật
-  METALLIC: 'METALLIC',         // Giấy Ánh kim
-  CANVAS: 'CANVAS',             // Giấy vân Vải Canvas
+  LUSTRE: 'LUSTRE',
+  COUCHE: 'COUCHE',
+  GLOSSY: 'GLOSSY',
+  MATTE: 'MATTE',
+  FINE_ART: 'FINE_ART',
+  METALLIC: 'METALLIC',
+  CANVAS: 'CANVAS',
 } as const;
 
 export type PaperType = typeof PaperType[keyof typeof PaperType];
@@ -89,15 +89,15 @@ export const PAPER_TYPE_METADATA: Record<PaperType, { label: string; defaultGsm:
   },
 };
 
-// ==========================================
-// III. CÁC QUY CÁCH ĐÓNG GÁY (BINDING STYLES)
-// ==========================================
+
+
+
 export const BindingStyle = {
-  LAYFLAT: 'LAYFLAT',           // Mở phẳng 180 độ
-  PERFECT_BINDING: 'PERFECT_BINDING', // Keo nhiệt (Tạp chí)
-  WIRE_O: 'WIRE_O',             // Lò xo
-  SADDLE_STITCH: 'SADDLE_STITCH',     // Khâu chỉ / Đóng kim
-  SCREW_POST: 'SCREW_POST',     // Đóng đinh ốc
+  LAYFLAT: 'LAYFLAT',
+  PERFECT_BINDING: 'PERFECT_BINDING',
+  WIRE_O: 'WIRE_O',
+  SADDLE_STITCH: 'SADDLE_STITCH',
+  SCREW_POST: 'SCREW_POST',
 } as const;
 
 export type BindingStyle = typeof BindingStyle[keyof typeof BindingStyle];

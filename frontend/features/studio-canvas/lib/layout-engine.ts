@@ -10,8 +10,8 @@ function mmToPx(mm: number): number {
   return mm * MM_TO_PX;
 }
 
-// Layouts are authored in mm on a fixed A4-portrait design canvas (210×297 mm = 840×1188 px).
-// Map design coords onto the actual paper size: scale the content box, shrink margins on small sizes.
+
+
 const DESIGN_W = 840,
   DESIGN_H = 1188,
   DESIGN_MARGIN_PX = 60;
@@ -29,7 +29,7 @@ export function layoutSlotTransform(
   const { pageWidth: pw, pageHeight: ch, kind, offsetX = 0 } = opts;
   const spread = kind === "spread";
   const designW = spread ? DESIGN_W * 2 : DESIGN_W;
-  // pw is one page's width; a spread spans two pages
+
   const targetW = spread ? pw * 2 : pw;
   const margin = layoutMargin(pw, ch);
   const sx = (targetW - margin * 2) / (designW - DESIGN_MARGIN_PX * 2);
@@ -45,8 +45,8 @@ export function layoutSlotTransform(
 const OVERLAY_KEY = "_dragOverlay";
 const DIM_OVERLAY_KEY = "_dimOverlay";
 
-// ponytail: round toạ độ khi toJSON + bỏ field trùng mặc định -> blob autosave nhỏ đi đáng kể.
-// Chỉ xoá khi giá trị ĐÚNG bằng default nên loadFromJSON tự khôi phục, canvas không đổi pixel nào.
+
+
 fabric.config.NUM_FRACTION_DIGITS = 2;
 
 const DROP_IF_DEFAULT: Record<string, unknown> = {
@@ -118,7 +118,7 @@ export function groupSelectedObjects(canvas: fabric.Canvas) {
 export function syncFrameBorders(canvas: fabric.Canvas) {
   canvas.getObjects().forEach((o: any) => {
     if (o.customProperties?.layer !== "frame") return;
-    // ponytail: border always visible — the photo is contain-fitted inside the frame
+
     styleFrame(o);
   });
   canvas.requestRenderAll();

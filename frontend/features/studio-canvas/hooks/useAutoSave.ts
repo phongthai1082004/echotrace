@@ -7,8 +7,8 @@ import { useStudioAPI } from "../context/studio-context";
 import { resolveFormat } from "../types";
 import { uploadToR2 } from "@/lib/upload";
 
-// ponytail: nhớ canvasJson lần cuối đã có thumb trên R2 theo trang — chặn re-upload object rác mỗi autosave tick.
-// Reset khi reload là chấp nhận được (tối đa 1 lần upload dư mỗi trang/phiên).
+
+
 const lastThumbUpload = new Map<string, string>();
 
 export function useAutoSave() {
@@ -37,7 +37,7 @@ export function useAutoSave() {
         ...layoutField,
       };
     } else {
-      // ponytail: upload fail thì giữ thumbnail cũ, không block saveFull (fallback an toàn)
+
       let thumbnailUrl = updatedPages[s.activePageIndex].thumbnailUrl;
       const thumbKey = `${s.bookMeta.id ?? "new"}:${s.activePageIndex}`;
       if (token && lastThumbUpload.get(thumbKey) !== currentJson) {

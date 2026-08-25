@@ -598,9 +598,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                   await apiFetch(`/api/cart/item/${r.id}`, token, {
                     method: "PATCH",
                     body: JSON.stringify({
-                      title: meta.title,
-                      content: JSON.stringify({ pages: s.pages.map((p: any) => ({ thumbnailUrl: p.thumbnailUrl })) }),
-                      pages: s.pages.length,
                       paperSize: meta.format,
                       paper: meta.paper,
                     }),
@@ -639,22 +636,13 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 if (thumb) useCanvasStore.getState().setPage(activeIdx, { thumbnailUrl: thumb });
                 const s = useCanvasStore.getState();
                 const meta = s.bookMeta;
-                const totalPages = s.pages.length;
-                const coverUrl = null;
 
-                // ponytail: giá do server tính khi POST /cart/item — FE không gửi price.
+                // ponytail: chỉ gửi tham chiếu + option — title/thumbnail/pages server đọc từ Book.
                 const item = {
                   bookId: meta.id,
-                  title: meta.title,
-                  content: JSON.stringify({ pages: s.pages.map((p) => ({ thumbnailUrl: p.thumbnailUrl })) }),
-                  style: "PHOTOBOOK",
-                  font: "Inter",
                   cover: "softcover",
                   paperSize: meta.format,
                   paper: meta.paper || "matte",
-                  pages: totalPages,
-                  coverUrl,
-                  pdfUrl: null,
                   quantity: 1,
                 };
 

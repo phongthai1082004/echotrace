@@ -35,7 +35,7 @@ export default function AdminSuppliersPage() {
   const [loading, setLoading] = useState(true);
   const token = isAuthenticated ? session.accessToken : undefined;
 
-  // Build URL with query parameters
+
   const queryUrl = useMemo(() => {
     if (!isAuthenticated) return "";
     const params = new URLSearchParams();

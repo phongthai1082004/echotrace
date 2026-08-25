@@ -91,10 +91,8 @@ export function useCoupons() {
 
   useEffect(() => {
     if (!token) return;
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     fetchCoupons().finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const filtered = coupons.filter((c) => {

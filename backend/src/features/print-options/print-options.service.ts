@@ -6,9 +6,6 @@ import { OptionCatalogCacheService } from '../../infrastructure/cache/option-cat
 import { CreatePrintOptionDTO } from '../../dto/print-option/print-option.create.dto.js';
 import { UpdatePrintOptionDTO } from '../../dto/print-option/print-option.update.dto.js';
 
-// ponytail: cache-aside — print-options là chủ sở hữu của catalog, mọi write invalidate
-// qua OptionCatalogCacheService (cùng service mà suppliers dùng để đọc catalog/info).
-// Nếu Redis down, CacheService no-op và mọi thứ đọc thẳng DB.
 export abstract class IPrintOptionService {
 	abstract list(type?: string, search?: string): Promise<PrintOptionDTO[]>;
 	abstract create(dto: CreatePrintOptionDTO): Promise<PrintOptionDTO>;
@@ -74,7 +71,6 @@ export class PrintOptionService extends IPrintOptionService {
 					...(dto.price !== undefined && { price: dto.price }),
 				},
 			});
-			// invalidate cả key cũ lẫn mới (type/code có thể đổi)
 			await this.invalidateCache(old.type, old.code);
 			await this.invalidateCache(row.type, row.code);
 			return PrintOptionMapper.toDTO(row);

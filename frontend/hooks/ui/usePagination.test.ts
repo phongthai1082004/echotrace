@@ -25,7 +25,7 @@ describe("usePagination", () => {
     });
 
     expect(result.current.currentPage).toBe(3);
-    expect(result.current.startIndex).toBe(40); // (3-1) * 20
+    expect(result.current.startIndex).toBe(40);
     expect(result.current.endIndex).toBe(60);
   });
 
@@ -42,7 +42,7 @@ describe("usePagination", () => {
 
     expect(result.current.currentPage).toBe(2);
 
-    // Navigate through all pages
+
     for (let i = 3; i <= 5; i++) {
       act(() => {
         result.current.nextPage();
@@ -75,16 +75,16 @@ describe("usePagination", () => {
     const { result } = renderHook(() => usePagination(items, { pageSize: 10 }));
 
     act(() => {
-      result.current.goToPage(100); // Way out of range
+      result.current.goToPage(100);
     });
 
-    expect(result.current.currentPage).toBe(5); // Max page
+    expect(result.current.currentPage).toBe(5);
 
     act(() => {
-      result.current.goToPage(-5); // Negative
+      result.current.goToPage(-5);
     });
 
-    expect(result.current.currentPage).toBe(1); // Min page
+    expect(result.current.currentPage).toBe(1);
   });
 
   it("should update page size", () => {
@@ -99,7 +99,7 @@ describe("usePagination", () => {
 
     expect(result.current.pageSize).toBe(25);
     expect(result.current.totalPages).toBe(4);
-    expect(result.current.currentPage).toBe(1); // Reset to first page
+    expect(result.current.currentPage).toBe(1);
   });
 
   it("should not update page size with invalid values", () => {
@@ -110,13 +110,13 @@ describe("usePagination", () => {
       result.current.setPageSize(-5);
     });
 
-    expect(result.current.pageSize).toBe(10); // Unchanged
+    expect(result.current.pageSize).toBe(10);
 
     act(() => {
       result.current.setPageSize(0);
     });
 
-    expect(result.current.pageSize).toBe(10); // Unchanged
+    expect(result.current.pageSize).toBe(10);
   });
 
   it("should reset pagination", () => {

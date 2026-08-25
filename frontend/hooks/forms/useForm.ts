@@ -18,7 +18,7 @@ export interface UseFormResult<T> {
   isDirty: boolean;
   isSubmitting: boolean;
 
-  // Methods
+
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -28,43 +28,7 @@ export interface UseFormResult<T> {
   validate: () => Partial<Record<keyof T, string>>;
 }
 
-/**
- * Hook for form state management and validation
- * @param options - Form configuration
- * @returns Form state and handlers
- *
- * @example
- * ```tsx
- * const form = useForm({
- *   initialValues: { email: '', password: '' },
- *   validators: {
- *     email: [
- *       (value) => !value ? 'Email is required' : null,
- *       (value) => !value.includes('@') ? 'Invalid email' : null,
- *     ],
- *     password: [
- *       (value) => !value ? 'Password is required' : null,
- *       (value) => value.length < 8 ? 'Min 8 characters' : null,
- *     ],
- *   },
- *   onSubmit: async (values) => {
- *     await api.login(values);
- *   },
- * });
- *
- * return (
- *   <form onSubmit={form.handleSubmit}>
- *     <input
- *       name="email"
- *       value={form.values.email}
- *       onChange={form.handleChange}
- *       onBlur={form.handleBlur}
- *     />
- *     {form.errors.email && <span>{form.errors.email}</span>}
- *   </form>
- * );
- * ```
- */
+
 export function useForm<T extends Record<string, any>>({
   initialValues,
   validators = {},
@@ -81,7 +45,7 @@ export function useForm<T extends Record<string, any>>({
   const isDirty = useRef(false);
   const isDirtyValue = JSON.stringify(values) !== JSON.stringify(initialValuesRef.current);
 
-  // Validate a single field
+
   const validateField = useCallback(
     (fieldName: keyof T, fieldValue: any): string | null => {
       const fieldValidators = validators[fieldName];
@@ -100,7 +64,7 @@ export function useForm<T extends Record<string, any>>({
     [validators, values],
   );
 
-  // Validate all fields
+
   const validate = useCallback((): Partial<Record<keyof T, string>> => {
     const newErrors: Partial<Record<keyof T, string>> = {};
 
@@ -116,7 +80,7 @@ export function useForm<T extends Record<string, any>>({
     return newErrors;
   }, [values, validateField]);
 
-  // Handle field change
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value, type } = e.target;
@@ -140,7 +104,7 @@ export function useForm<T extends Record<string, any>>({
     [validateOnChange, validateField, touched],
   );
 
-  // Handle field blur
+
   const handleBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name } = e.target;
@@ -162,12 +126,12 @@ export function useForm<T extends Record<string, any>>({
     [validateOnBlur, validateField, values],
   );
 
-  // Handle form submission
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      // Validate all fields
+
       const newErrors = validate();
       if (Object.keys(newErrors).length > 0) {
         return;
@@ -186,7 +150,7 @@ export function useForm<T extends Record<string, any>>({
     [validate, values, onSubmit],
   );
 
-  // Set field value programmatically
+
   const setFieldValue = useCallback((name: keyof T, value: any) => {
     setValues((prev) => ({
       ...prev,
@@ -195,7 +159,7 @@ export function useForm<T extends Record<string, any>>({
     isDirty.current = true;
   }, []);
 
-  // Set field error programmatically
+
   const setFieldError = useCallback((name: keyof T, error: string | null) => {
     setErrors((prev) => ({
       ...prev,
@@ -203,7 +167,7 @@ export function useForm<T extends Record<string, any>>({
     }));
   }, []);
 
-  // Reset form to initial state
+
   const reset = useCallback((newValues?: Partial<T>) => {
     const resetValues = newValues ? { ...initialValuesRef.current, ...newValues } : initialValuesRef.current;
     setValues(resetValues);

@@ -4,56 +4,26 @@ import React from "react";
 import { LucideIcon } from "lucide-react";
 
 export interface EmptyStateProps {
-  /**
-   * Icon component to display
-   */
+
   icon?: LucideIcon;
 
-  /**
-   * Title text
-   */
+
   title: string;
 
-  /**
-   * Description text
-   */
+
   description?: string;
 
-  /**
-   * CTA button text
-   */
+
   actionLabel?: string;
 
-  /**
-   * CTA button click handler
-   */
+
   onAction?: () => void;
 
-  /**
-   * Custom className for container
-   */
+
   className?: string;
 }
 
-/**
- * Empty state component for zero-data scenarios
- * Shows icon, title, description, and optional CTA button
- *
- * @example
- * ```tsx
- * {items.length === 0 ? (
- *   <EmptyState
- *     icon={Package}
- *     title="No items"
- *     description="Get started by creating your first item"
- *     actionLabel="Create Item"
- *     onAction={() => router.push('/create')}
- *   />
- * ) : (
- *   <ItemList items={items} />
- * )}
- * ```
- */
+
 export function EmptyState({ icon: Icon, title, description, actionLabel, onAction, className = "" }: EmptyStateProps) {
   return (
     <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}>

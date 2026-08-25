@@ -35,7 +35,7 @@ describe("useModal", () => {
     });
 
     expect(result.current.isOpen).toBe(true);
-    expect(result.current.data).toEqual(initialData); // Keeps previous data
+    expect(result.current.data).toEqual(initialData);
   });
 
   it("should close modal", () => {
@@ -82,7 +82,7 @@ describe("useModal", () => {
     });
 
     expect(result.current.data).toEqual(testData);
-    expect(result.current.isOpen).toBe(false); // Still closed
+    expect(result.current.isOpen).toBe(false);
   });
 
   it("should reset modal", () => {
@@ -133,7 +133,7 @@ describe("useModal", () => {
       result.current.close();
     });
 
-    expect(result.current.data).toEqual(testData); // Data persists
+    expect(result.current.data).toEqual(testData);
     expect(result.current.isOpen).toBe(false);
   });
 
@@ -153,7 +153,7 @@ describe("useModal", () => {
     });
 
     expect(result.current.data).toEqual(testData2);
-    expect(result.current.isOpen).toBe(true); // Still open
+    expect(result.current.isOpen).toBe(true);
   });
 
   it("should work with different data types", () => {

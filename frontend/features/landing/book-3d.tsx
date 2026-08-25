@@ -34,7 +34,7 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
     const camera = new THREE.PerspectiveCamera(33, W / H, 0.1, 100);
     camera.position.set(0, 0, 5);
 
-    // Lights
+
     const key = new THREE.DirectionalLight(0xfff2e0, 3);
     key.position.set(3, 6, 4);
     key.castShadow = true;
@@ -77,16 +77,16 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
       obj.rotation.set(THREE.MathUtils.degToRad(-90), 0, 0);
       obj.position.set(-0.812, 0.25, -0.09);
 
-      // Bìa: mesh "Architexture_0" là khối vỏ sách. Giữ nguyên geometry/UV, chỉ
-      // thay material bằng MeshStandardMaterial có map = ảnh bìa.
+
+
       const coverMesh = obj.getObjectByName("Architexture_0") as THREE.Mesh | undefined;
       if (coverMesh) {
         const geo = coverMesh.geometry;
         if (!geo.getAttribute("uv")) {
-          // Lưới GLB không có UV → sinh UV dạng wrap quanh chu vi bìa:
-          // front (u 0→f) → gáy spine (f→f+s) → back (f+s→1), cùng trục u
-          // để 1 ảnh trải liền từ trước ra sau. Seam đặt ở mép ngoài (x=+X).
-          // v chạy theo chiều cao (y).
+
+
+
+
           geo.computeBoundingBox();
           const bb = geo.boundingBox!;
           const p = geo.getAttribute("position");
@@ -99,9 +99,9 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
           const s = S / T;
           const uv = new Float32Array(p.count * 2);
           const wrapU = (x: number, z: number) => {
-            if (z >= bb.max.z - S * 0.25) return (f * (bb.max.x - x)) / Wx; // front
-            if (z <= bb.min.z + S * 0.25) return f + s + (f * (x - bb.min.x)) / Wx; // back
-            return f + (s * (bb.max.z - z)) / S; // spine
+            if (z >= bb.max.z - S * 0.25) return (f * (bb.max.x - x)) / Wx;
+            if (z <= bb.min.z + S * 0.25) return f + s + (f * (x - bb.min.x)) / Wx;
+            return f + (s * (bb.max.z - z)) / S;
           };
           for (let i = 0; i < p.count; i++) {
             const z = p.getZ(i);
@@ -136,7 +136,7 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
     shadowPlane.receiveShadow = true;
     scene.add(shadowPlane);
 
-    // Drag: yaw only (horizontal). Pitch is fixed tilt.
+
     let down = false;
     let lastX = 0;
     const yaw = { v: THREE.MathUtils.degToRad(25) };
@@ -163,7 +163,7 @@ export function Book3D({ autoRotate = true, height = 420, coverUrl = null, backC
     let id: number;
     let running = true;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Pause render khi lướt khỏi màn hình để đỡ tốn GPU.
+
     const io = new IntersectionObserver(([e]) => {
       running = e.isIntersecting;
       if (!running) cancelAnimationFrame(id);

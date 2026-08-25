@@ -9,14 +9,7 @@ interface UploadTicket {
   uploadUrl: string;
 }
 
-/**
- * Upload file lên Cloudflare R2 qua worker `cloudfarer2`.
- *
- * Giống cơ chế signed upload (token bảo vệ):
- * - Backend ký token = HMAC(folder:expiry) qua `/api/get-upload-signature`.
- * - Browser upload thẳng lên worker; worker tính lại token và chỉ nhận khi khớp + còn hạn.
- * - Folder được buộc vào token nên user không thể upload lên folder khác.
- */
+
 export async function uploadToR2(
   file: File,
   type: "avatar" | "gallery" | "sticker" | "book-thumb",

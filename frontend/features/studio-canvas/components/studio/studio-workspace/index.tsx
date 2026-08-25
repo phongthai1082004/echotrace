@@ -84,7 +84,7 @@ export function StudioWorkspace() {
           useCanvasStore.getState().pushUndo();
           fabric.FabricImage.fromURL(item.url, { crossOrigin: "anonymous" }).then((img) => {
             const frame = hitTestFrame(c, p.x, p.y);
-            // skip frame placement if on the non-interactive side
+
             if (frame) {
               const st = useCanvasStore.getState();
               const effView = isCoverPage(st.activePageIndex, st.pages.length) ? "spread" : st.viewMode;
@@ -102,11 +102,11 @@ export function StudioWorkspace() {
                 return;
               }
             }
-            // Calculate proper scale to fit image in 300x300 area while maintaining aspect ratio
+
             const maxSize = 300;
             const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
-            // Position image at drop point with center origin (left/top are already at center)
-            // No additional offset needed since we're using originX/originY center
+
+
             img.set({
               left: p.x,
               top: p.y,

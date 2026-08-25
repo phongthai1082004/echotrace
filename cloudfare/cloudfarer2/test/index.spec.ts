@@ -4,7 +4,6 @@ import worker from "../src/index";
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-// R2 object giả: body là ReadableStream + metadata như object thật
 function fakeObject(bytes: Uint8Array) {
 	return {
 		body: new Response(bytes).body,

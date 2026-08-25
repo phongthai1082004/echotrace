@@ -38,7 +38,7 @@ async function bootstrap() {
 			},
 		});
 
-	app.use(helmet()); // WEB-004 fix: security headers (X-Content-Type-Options, HSTS, ...)
+	app.use(helmet());
 	app.use(cors({ origin: process.env.NEXTAUTH_URL, credentials: true }));
 	app.use(express.json({ limit: '10mb' }));
 	app.use(handle(i18next));

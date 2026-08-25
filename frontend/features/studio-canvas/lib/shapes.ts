@@ -1,6 +1,6 @@
 import * as fabric from "fabric";
 
-// each shape is a function that takes (w, h) and returns an SVG path string
+
 function polygonPath(w: number, h: number, sides: number): string {
   const cx = w / 2,
     cy = h / 2,

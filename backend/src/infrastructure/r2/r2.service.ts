@@ -10,7 +10,7 @@ export class R2ImageService extends IR2ImageService {
 	private workerUrl = process.env.R2_WORKER_URL!;
 
 	async issueUpload(folder: string) {
-		const expiry = Math.round(Date.now() / 1000) + 600; // 10 min, same as before
+		const expiry = Math.round(Date.now() / 1000) + 600; 
 		const token = await this.hmacHex(`${folder}:${expiry}`);
 		return { token, folder, expiry, uploadUrl: this.workerUrl };
 	}

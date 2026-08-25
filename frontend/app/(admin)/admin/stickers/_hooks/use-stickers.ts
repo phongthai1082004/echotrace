@@ -42,9 +42,7 @@ export function useStickers() {
   };
 
   useEffect(() => {
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     fetchAssets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const upload = async (file: File, name: string, category: AssetCategory | "") => {

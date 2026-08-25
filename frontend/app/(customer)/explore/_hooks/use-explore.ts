@@ -27,7 +27,6 @@ export function useExplore(token?: string) {
 
   useEffect(() => {
     if (!accessToken) return;
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     Promise.all([
       apiFetch<any[]>("/api/explore/samples", accessToken)

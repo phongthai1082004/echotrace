@@ -3,10 +3,23 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api.fetch";
 
-export type CheckoutForm = { name: string; phone: string; address: string; city: string; note: string };
+export type CheckoutForm = { name: string; 
+  phone: string; 
+  address: string; 
+  city: string; 
+  note: string 
+};
 
 export function useCheckoutForm(token?: string) {
-  const [form, setForm] = useState<CheckoutForm>({ name: "", phone: "", address: "", city: "", note: "" });
+  const [form, setForm] = useState<CheckoutForm>(
+    { 
+      name: "", 
+      phone: "", 
+      address: "", 
+      city: "", 
+      note: "" 
+    }
+  );
 
   useEffect(() => {
     if (!token) return;

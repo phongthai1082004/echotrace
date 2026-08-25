@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { labelSm, input } from "@/lib/styles";
 import type { CheckoutForm } from "../hooks/use-checkout-form";
 
-// autocomplete hints theo chuẩn HTML — hỗ trợ password manager/autofill.
 const AUTOCOMPLETE: Partial<Record<keyof CheckoutForm, string>> = {
   name: "name",
   phone: "tel",

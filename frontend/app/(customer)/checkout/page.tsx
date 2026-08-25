@@ -18,6 +18,7 @@ import { DeliveryStep } from "./components/delivery-step";
 import { DeliverySidebar } from "./components/delivery-sidebar";
 import { PaymentStep } from "./components/payment-step";
 import { ConfirmStep } from "./components/confirm-step";
+import { apiFetch } from "@/lib/api.fetch";
 
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation();
@@ -32,7 +33,21 @@ export default function CheckoutPage() {
 
   const cart = useCart(token, paymentMethod);
   const { form, setField } = useCheckoutForm(token);
-  const { items, loaded, couponCode, setCouponCode, recalc, changeQty, deleteItem, saveItemOptions } = cart;
+  const {
+    items,
+    selectedItems,
+    selected,
+    selectedCount,
+    toggleItem,
+    toggleAll,
+    loaded,
+    couponCode,
+    setCouponCode,
+    recalc,
+    changeQty,
+    deleteItem,
+    saveItemOptions,
+  } = cart;
 
   useEffect(() => {
     if (!token) return;
@@ -41,7 +56,6 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, [token]);
 
-  // Catalog chá»n cover/paper tá»« dá»¯ liá»‡u global PrintOption.
   const optionLabel = (code: string, key: "covers" | "papers"): string => {
     const o = (catalog?.[key] ?? []).find((x) => x.code === code);
     if (!o) return code;
@@ -57,6 +71,24 @@ export default function CheckoutPage() {
   const payNow = cart.total == null ? null : paymentMethod === "half" ? Math.round((cart.total * 50) / 100) : cart.total;
   const deduction = cart.total == null ? null : paymentMethod === "full" ? 0 : payNow;
   const editing = editingIndex != null ? items[editingIndex] : null;
+
+  const createOrder = async() => {
+    apiFetch("/api/user/create-order", token, {
+      method: "POST",
+      body: JSON.stringify({
+        items: items.map((book) => ({
+          bookId: book.bookId,
+          quantity: book.quantity,
+          cover: book.cover,
+          paper: book.paper,
+          paperSize: book.paperSize,
+        })),
+        ...form,
+        paymentMethod,
+        couponCode
+      })
+    });
+  }
 
   return (
     <div className="min-h-screen pt-15">
@@ -77,6 +109,10 @@ export default function CheckoutPage() {
                 {step === "cart" && (
                   <CartStep
                     items={items}
+                    selected={selected}
+                    selectedCount={selectedCount}
+                    onToggleItem={toggleItem}
+                    onToggleAll={toggleAll}
                     describe={describeItem}
                     onChangeQty={changeQty}
                     onDelete={deleteItem}
@@ -84,12 +120,12 @@ export default function CheckoutPage() {
                   />
                 )}
                 {step === "delivery" && <DeliveryStep form={form} setField={setField} />}
-                {step === "payment" && <PaymentStep items={items} describe={describeItem} />}
+                {step === "payment" && <PaymentStep items={selectedItems} describe={describeItem} />}
               </div>
 
               {step === "cart" && (
                 <OrderSummary
-                  items={items}
+                  items={selectedItems}
                   subtotalText={priceText(cart.subtotal, t("customer.checkout.unknown"))}
                   totalText={priceText(cart.total, t("customer.checkout.unknown"))}
                   describe={describeItem}
@@ -99,7 +135,7 @@ export default function CheckoutPage() {
                       disabled={cart.missingAny}
                       onClick={async () => {
                         if (cart.missingAny) return;
-                        await recalc();
+                        if (!(await recalc())) return; // server chặn (thiếu option...) → đã toast, ở lại
                         setStep("delivery");
                       }}
                       className={`${neoBtnPrimary} w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed`}
@@ -115,7 +151,7 @@ export default function CheckoutPage() {
 
               {step === "delivery" && (
                 <DeliverySidebar
-                  items={items}
+                  items={selectedItems}
                   describe={describeItem}
                   subtotalText={priceText(cart.subtotal, t("customer.checkout.unknown"))}
                   totalText={priceText(cart.total, t("customer.checkout.unknown"))}
@@ -126,7 +162,7 @@ export default function CheckoutPage() {
                   couponCode={couponCode}
                   onShowDiscount={() => setShowDiscount(true)}
                   onContinue={async () => {
-                    await recalc();
+                    if (!(await recalc())) return;
                     setStep("payment");
                   }}
                   onBack={() => setStep("cart")}

@@ -7,7 +7,6 @@ import type { CheckoutForm } from "../hooks/use-checkout-form";
 
 export function ConfirmStep({ form }: { form: CheckoutForm }) {
   const { t } = useTranslation();
-  // Lazy initializer — random 1 lần, tránh impure render (hydration mismatch).
   const [orderCode] = useState(() => `TC-${Math.floor(Math.random() * 9000 + 1000)}`);
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

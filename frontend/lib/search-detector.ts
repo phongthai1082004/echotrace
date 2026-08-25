@@ -1,6 +1,5 @@
 export type SearchTarget = "all" | "name" | "email" | "phone";
 
-// ponytail: heuristic, not NLP. Covers the 3 admin list columns; anything ambiguous searches all fields.
 export function detectSearchTarget(q: string): SearchTarget {
   const t = q.trim();
   if (!t) return "all";

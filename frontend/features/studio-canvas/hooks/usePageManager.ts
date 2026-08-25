@@ -13,15 +13,15 @@ export function usePageManager() {
     let thumbnail: string | null = null;
     try {
       thumbnail = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
-    } catch {} // ponytail: skip if tainted
+    } catch {}
     const json = serializeCanvasState(c);
     const cw = c.getWidth();
     if (!isCoverPage(activePageIndex, n) && cw > 400) {
       const mid = cw / 2;
       const { leftJson, rightJson } = splitCanvasByMidpoint(json, mid);
       const rightIdx = Math.min(activePageIndex + 1, n - 1);
-      // ponytail: layout belongs to the page being edited (left page on L view,
-      // right page on R view, both on spread) — never overwrite the other side
+
+
       if (viewMode === "spread") {
         setPage(activePageIndex, {
           canvasJson: leftJson,

@@ -15,7 +15,7 @@ export interface UsePaginationResult {
   startIndex: number;
   endIndex: number;
 
-  // Methods
+
   goToPage: (page: number) => void;
   nextPage: () => void;
   previousPage: () => void;
@@ -24,43 +24,7 @@ export interface UsePaginationResult {
   reset: () => void;
 }
 
-/**
- * Hook for client-side pagination
- * Manages pagination state and provides navigation methods
- * @param items - Array of items to paginate
- * @param options - Configuration options
- * @returns Pagination state and methods
- *
- * @example
- * ```tsx
- * const {
- *   currentPage,
- *   pageSize,
- *   totalPages,
- *   startIndex,
- *   endIndex,
- *   nextPage,
- *   previousPage,
- * } = usePagination(allItems, { pageSize: 10 });
- *
- * const pageItems = allItems.slice(startIndex, endIndex);
- *
- * return (
- *   <>
- *     {pageItems.map((item) => (
- *       <div key={item.id}>{item.name}</div>
- *     ))}
- *     <button onClick={previousPage} disabled={!hasPreviousPage}>
- *       Previous
- *     </button>
- *     <span>Page {currentPage} of {totalPages}</span>
- *     <button onClick={nextPage} disabled={!hasNextPage}>
- *       Next
- *     </button>
- *   </>
- * );
- * ```
- */
+
 export function usePagination(items: any[] = [], options: UsePaginationOptions = {}): UsePaginationResult {
   const { pageSize: initialPageSize = 10, maxPages = 100 } = options;
 
@@ -70,7 +34,7 @@ export function usePagination(items: any[] = [], options: UsePaginationOptions =
   const totalItems = items.length;
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Clamp current page to valid range
+
   const validCurrentPage = Math.max(1, Math.min(currentPage, Math.max(1, totalPages)));
 
   const startIndex = (validCurrentPage - 1) * pageSize;
@@ -102,13 +66,13 @@ export function usePagination(items: any[] = [], options: UsePaginationOptions =
   const setPageSize = useCallback((size: number) => {
     if (size > 0 && size <= 1000) {
       setPageSizeState(size);
-      setCurrentPage(1); // Reset to first page when page size changes
+      setCurrentPage(1);
     }
   }, []);
 
   const setTotalItems = useCallback((total: number) => {
-    // This is a no-op since items are managed externally
-    // But we keep it for API consistency
+
+
   }, []);
 
   const reset = useCallback(() => {

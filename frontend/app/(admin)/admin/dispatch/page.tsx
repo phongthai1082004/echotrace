@@ -26,7 +26,7 @@ export default function DispatchPage() {
       </AdminHeader>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* ── LEFT PANEL: Suppliers ── */}
+        {}
         <div className="w-[200px] shrink-0 border-r-[3px] border-[#222] overflow-y-auto bg-[#FFF7D6]/40 flex flex-col">
           <button
             onClick={() => d.selectSupplier(null)}

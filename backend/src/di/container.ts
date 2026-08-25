@@ -13,10 +13,12 @@ import { UserImageService } from '../features/uploads/user-images.service.js';
 import { SupplierService } from '../features/suppliers/suppliers.service.js';
 import { PrintOptionService } from '../features/print-options/print-options.service.js';
 import { CartService } from '../features/cart/cart.service.js';
+import { OrderService } from '../features/order/order.service.js';
 import { CouponService } from '../features/coupons/coupons.service.js';
 import { SampleBookService } from '../features/sample-books/sample-books.service.js';
 import { PaymentService } from '../infrastructure/payment/payment.service.js';
 import { PayOSGateway } from '../infrastructure/payment/payos.service.js';
+import { PayOS } from '@payos/node';
 
 container.register('UserBaseService', { useValue: new BaseService<any>(prisma.user) });
 container.register('CacheService', { useValue: new CacheService() });
@@ -40,10 +42,26 @@ container.registerSingleton('ICouponService', CouponService);
 container.registerSingleton('ISampleBookService', SampleBookService);
 container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheService);
 container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
+container.registerSingleton('IOrderService', OrderService);
 
 let paymentService: PaymentService;
+
 container.register('IPaymentService', {
-	useFactory: () => (paymentService ??= new PaymentService([new PayOSGateway()])),
+    useFactory: (c) => {
+        if (!paymentService) {
+            const payOSGateway = c.resolve(PayOSGateway);
+            paymentService = new PaymentService([payOSGateway]);
+        }
+        return paymentService;
+    },
+});
+
+container.register('PayOS', {
+  useValue: new PayOS({
+    clientId: process.env.PAYOS_CLIENT_ID!,
+    apiKey: process.env.PAYOS_API_KEY!,
+    checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
+  }),
 });
 
 export { container };

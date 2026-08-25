@@ -18,7 +18,7 @@ export class CouponService extends ICouponService {
 	}
 
 	async create(dto: CreateCouponDTO) {
-		// Giảm trên toàn đơn (bỏ scope). Code = tên + unix timestamp để không trùng.
+
 		const type = (dto.discountType || '').toUpperCase();
 		if (type === 'FIXED' && dto.maxDiscountAmount) {
 			throw new AppError(ErrorCode.VALIDATION_FAILED, 400);

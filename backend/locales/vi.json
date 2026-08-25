@@ -40,7 +40,7 @@
 		"TOO_MANY_REQUEST": "Yêu cầu quá tải, vui lòng thử lại sau",
 		"COUPON_CODE_EXISTS": "Mã giảm giá đã tồn tại",
 		"CART_NOT_FOUND": "Không tìm thấy giỏ hàng",
-		"MISSING_BOOK_OPTIONS_VI": "Thiếu tùy chọn sách"
+		"MISSING_BOOK_OPTIONS": "Vui lòng chọn đủ tùy chọn bìa, giấy & kích thước cho các sách đã chọn"
 	},
 	"validation": {
 		"isEmail": "{{property}} phải là email hợp lệ",

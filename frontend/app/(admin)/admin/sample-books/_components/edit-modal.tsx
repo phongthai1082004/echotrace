@@ -31,7 +31,6 @@ export function EditModal({
     if (saving) return;
     setSaving(true);
     try {
-      // only albums carry a quantity; templates always reset it
       const quantity = editForm.type === "ALBUM" ? editForm.quantity : null;
       await onSave({ type: editForm.type, quantity, status: editForm.status });
     } finally {

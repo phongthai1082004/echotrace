@@ -17,7 +17,7 @@ export function useStudioEditor(
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // sampleId → open a published sample layout as a fresh book (id stays null → save creates a new book).
+
   const effectiveId = sampleId ?? bookId;
   const paramsKey = `${effectiveId ?? ""}|${canLoad}|${initialFormat ?? ""}|${initialSize?.width ?? ""}|${initialSize?.height ?? ""}|${sampleId ? "sample" : "book"}`;
 

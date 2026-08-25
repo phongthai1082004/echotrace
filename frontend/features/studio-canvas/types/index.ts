@@ -5,7 +5,7 @@ export type PaperSizeCategory = "square" | "landscape" | "portrait";
 export type FormatKey =
   "SQUARE_15" | "SQUARE_20" | "SQUARE_30" | "LANDSCAPE_A4" | "LANDSCAPE_20x30" | "PORTRAIT_A5" | "PORTRAIT_A4";
 
-// Paper formats at 4 px/mm (1 cm = 40 px). width/height = single-page canvas size.
+
 export interface PaperFormat {
   width: number;
   height: number;
@@ -104,9 +104,9 @@ export const FORMATS: Record<FormatKey, PaperFormat> = {
 
 export const CATEGORY_ORDER: PaperSizeCategory[] = ["square", "landscape", "portrait"];
 
-// Resolve a book format from supplier-derived sizes (code + width/height in px).
-// Falls back to FORMATS by key, else PORTRAIT_A4. Stored width/height win over
-// the fixed table so a sample saved as 200×200 never reopens as A4.
+
+
+
 export function resolveFormat(meta: { format: string; width?: number | null; height?: number | null }): PaperFormat {
   const f = FORMATS[meta.format as FormatKey];
   const hasSize = (meta.width ?? null) != null && (meta.height ?? null) != null;

@@ -11,8 +11,8 @@ import { AuthResponseDTO, AuthMapper } from '@echotrace/shared';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// WEB-005 fix: đếm lần sai theo token record — sai 5 lần thì revoke OTP.
-// ponytail: in-memory, restart là reset — rate limiter ở route vẫn chặn tầng ngoài.
+
+
 const otpFailCounts = new Map<number, number>();
 const MAX_OTP_ATTEMPTS = 5;
 
@@ -59,7 +59,7 @@ export class AuthService extends IAuthService {
 			where: { email, isDelete: false },
 			select: { id: true },
 		});
-		// WEB-003 fix: im lặng thay vì 409 — không lộ email nào đã đăng ký
+
 		if (existing) return;
 
 		const otp = String(Math.floor(100000 + Math.random() * 900000));

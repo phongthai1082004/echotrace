@@ -22,7 +22,7 @@ export function useDispatch() {
         !q ||
         o.id.toLowerCase().includes(q) ||
         o.customer.toLowerCase().includes(q) ||
-        o.product.toLowerCase().includes(q)
+        o.items.some((i) => i.title.toLowerCase().includes(q))
       );
     })
     .filter((o) => statusFilter === "all" || o.status === statusFilter);

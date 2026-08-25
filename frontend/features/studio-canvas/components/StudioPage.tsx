@@ -28,7 +28,7 @@ export function StudioPage({ api, hideOrder, noPadding, backHref, isAdmin }: Pro
     const fn = (e: MouseEvent) => e.preventDefault();
     document.addEventListener("contextmenu", fn);
     return () => document.removeEventListener("contextmenu", fn);
-    // Load canvas fonts only when studio mounts
+
     if (!document.querySelector(`link[href="${CANVAS_FONTS_URL}"]`)) {
       const link = document.createElement("link");
       link.rel = "stylesheet";

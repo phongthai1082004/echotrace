@@ -44,7 +44,6 @@ export const timelineKeyMap: Record<string, string> = {
   Delivered: "customer.orders.timeline.delivered",
 };
 
-// ponytail: mock data — thay bằng GET /orders khi backend có module orders.
 export const mockOrders: Order[] = [
   {
     id: "1",

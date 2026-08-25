@@ -17,5 +17,5 @@ export const PaymentMethod = {
 
 export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 
-// TransactionStatus defined in payment.enum.ts (has EXPIRED) — reuse it to avoid a duplicate.
+
 export { TransactionStatus } from './payment.enum.js';

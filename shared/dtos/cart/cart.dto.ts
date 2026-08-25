@@ -1,22 +1,36 @@
-// Snapshot of one book in the cart — stored inside Cart.items JSON, like Order.orderItems.
+import { DiscountType, MinOrderType } from "../../enums/discount.enum.js";
+
 export interface CartItem {
   bookId: number;
   title: string;
   content: string | null;
   style: string;
-  font: string; // ???
+  font: string;
   cover: string;
-  paper: string;
+  paper: string | null;
   paperHeight: number;
   paperWidth: number;
   pages: number;
   paperSize?: string | null;
   price?: number | null;
-  // Display info
   coverUrl: string | null;
   pdfUrl?: string | null;
   quantity: number;
   thumbnailUrl?: string | null;
+}
+
+export interface CartCoupon {
+  id: number;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  minOrderAmount: number;
+  minOrderType: string;
+  maxDiscountAmount: number | null;
+  maxUsageCount: number;
+  usedCount: number;
+  isActive: boolean;
+  expiresAt: string | Date | null;
 }
 
 export interface CartDTO {
@@ -28,52 +42,59 @@ export interface CartDTO {
   updatedAt: string;
 }
 
-// ponytail: cart list only needs the first page (thumbnail) — never ship all pages' data.
-function firstPageContent(content: string | null): string | null {
-  if (!content) return null;
-  try {
-    const parsed = JSON.parse(content);
-    if (!parsed?.pages) return null;
-    return JSON.stringify({ ...parsed, pages: [parsed.pages[0]] });
-  } catch {
-    return null;
+type ContentLike = { pages?: Array<Record<string, unknown>> } | string | null | undefined;
+
+function asPages(content: ContentLike): Array<Record<string, unknown>> {
+  let c: any = content;
+  if (typeof c === "string") {
+    try { c = JSON.parse(c); } catch { return []; }
   }
+  return Array.isArray(c?.pages) ? c.pages : [];
 }
 
-export function parseCartItems(raw: any): CartItem[] {
-  if (!raw) return [];
-  let arr: any;
-  try { arr = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { return []; }
-  if (!Array.isArray(arr)) return [];
-  return arr.map((item) => {
-    let thumb: string | null = item.coverUrl ?? null;
-    const content = firstPageContent(item.content);
-    if (content) {
-      try { thumb = JSON.parse(content).pages?.[0]?.thumbnailUrl ?? thumb; } catch {}
-    }
-    // ponytail: response không ship content (chỉ thumbnail phẳng); DB giữ nguyên để tương thích cart cũ.
-    return { ...item, content: null, thumbnailUrl: thumb };
-  });
+export function bookPages(content: ContentLike): number {
+  return asPages(content).length;
 }
 
-export function serializeCartItems(items: CartItem[]): CartItem[] {
-  return items;
+export function firstPageThumbnail(content: ContentLike): string | null {
+  const thumb = asPages(content)[0]?.thumbnailUrl;
+  return typeof thumb === "string" ? thumb : null;
 }
 
-export class CartMapper {
-  static toDTO(cart: any): CartDTO {
-    const parsedItems = parseCartItems(cart.items);
-    return {
-      id: cart.id,
-      userId: cart.userId,
-      items: parsedItems.length ? parsedItems : null,
-      parsedItems,
-      createdAt: cart.createdAt,
-      updatedAt: cart.updatedAt,
-    };
-  }
+export function composeCartItem(row: { quantity: number; cover: string | null; paper: string | null; paperSize: string | null }, book: any): CartItem {
+  return {
+    bookId: book.id,
+    title: book.title,
+    content: null,
+    style: book.style,
+    font: book.font,
+    cover: row.cover ?? book.cover ?? "softcover",
+    paper: row.paper ?? null,
+    paperSize: row.paperSize ?? null,
+    paperHeight: book.paperHeight ?? 0,
+    paperWidth: book.paperWidth ?? 0,
+    pages: bookPages(book.content),
+    price: null,
+    coverUrl: book.coverUrl ?? null,
+    pdfUrl: null,
+    quantity: row.quantity || 1,
+    thumbnailUrl: firstPageThumbnail(book.content),
+  };
+}
 
-  static toDTOList(carts: any[]): CartDTO[] {
-    return carts.map((c) => this.toDTO(c));
-  }
+// Pure — dùng chung BE (calculateCart) và FE (tính lại discount khi tick/đổi qty).
+export function computeCouponDiscount(coupon: CartCoupon | null | undefined, subtotal: number, items: Pick<CartItem, "quantity">[]): number {
+  if (!coupon || !coupon.isActive) return 0;
+  if (coupon.expiresAt && new Date(coupon.expiresAt).getTime() < Date.now()) return 0;
+  if (coupon.maxUsageCount > 0 && (coupon.usedCount ?? 0) >= coupon.maxUsageCount) return 0;
+  const orderQty = items.reduce((s, i) => s + (i.quantity || 1), 0);
+  const meetsMin =
+    (coupon.minOrderType || "VALUE").toLowerCase() === MinOrderType.QUANTITY
+      ? orderQty >= (coupon.minOrderAmount ?? 0)
+      : subtotal >= (coupon.minOrderAmount ?? 0);
+  if (!meetsMin) return 0;
+  const type = (coupon.discountType || "").toLowerCase();
+  const raw = type === DiscountType.PERCENTAGE ? (subtotal * (coupon.discountValue ?? 0)) / 100 : coupon.discountValue ?? 0;
+  const capped = coupon.maxDiscountAmount ? Math.min(raw, coupon.maxDiscountAmount) : raw;
+  return Math.max(0, capped);
 }

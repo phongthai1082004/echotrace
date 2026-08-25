@@ -40,7 +40,7 @@
 		"TOO_MANY_REQUEST": "Demasiadas solicitudes, por favor inténtalo de nuevo más tarde",
 		"COUPON_CODE_EXISTS": "El código de cupón ya existe",
 		"CART_NOT_FOUND": "Carrito no encontrado",
-		"MISSING_BOOK_OPTIONS_ES": "Opciones de libro faltantes"
+		"MISSING_BOOK_OPTIONS": "Selecciona las opciones de impresión de todos los libros elegidos"
 	},
 	"validation": {
 		"isEmail": "{{property}} debe ser un correo válido",

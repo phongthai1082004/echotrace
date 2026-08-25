@@ -1,8 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { CacheService } from './cache.service.js';
 
-// ponytail: domain cache for the global print-option catalog — owned here so the two
-// consumers (print-options CRUD + suppliers assignment) share one key/invalidation path.
 @injectable()
 export class OptionCatalogCacheService {
 	constructor(@inject('CacheService') private cache: CacheService) {}

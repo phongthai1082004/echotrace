@@ -11,7 +11,7 @@ type AnyLayout = LayoutConfig;
 function LayoutThumbnail({ layout, isSpread }: { layout: AnyLayout; isSpread?: boolean }) {
   const slots = layout.slots;
   const thumbW = 110;
-  // schematic: always the design canvas shape (210×297 or 420×297) so slots never overflow the box
+
   const thumbH = Math.round(thumbW * (isSpread ? 297 / 420 : 297 / 210));
   const scale = thumbW / (isSpread ? 420 : 210);
 
@@ -62,32 +62,32 @@ export function LayoutsPanel() {
     const pageW = (canvas.getWidth() ?? 840) / 2;
     const kind = layout.kind;
     const isSingleSide = kind === "single" && viewMode !== "spread";
-    // one page's pixel width in the current format (cover canvas is a single page wide)
+
     const pageWidth = spreadMode ? pageW : viewMode === "spread" ? (canvas.getWidth() ?? 840) : pageW;
     const onSide = (o: any) => {
       if (!isSingleSide) return true;
       return viewMode === "left" ? (o.left || 0) < pageW : (o.left || 0) >= pageW;
     };
 
-    // Replace frames on the target side; a single layout also removes any spread
-    // (2P) frames since the page pair is being edited as 1P pages.
+
+
     if (isSingleSide) {
       clearLayoutFrames(canvas, (o) => onSide(o) || o.customProperties?.layoutKind === "spread");
     } else {
       clearLayoutFrames(canvas);
     }
 
-    // Update layout state for the target page(s) only — other pages keep their own layout
+
     const targetIdx = isSingleSide && viewMode === "right" ? activePageIndex + 1 : activePageIndex;
 
-    // Set new layout on target page(s)
+
     if (kind === "spread") {
       useCanvasStore.getState().setPage(targetIdx, { spreadLayout: layout, layout: null });
       if (targetIdx + 1 < pages.length)
         useCanvasStore.getState().setPage(targetIdx + 1, { spreadLayout: layout, layout: null });
     } else {
       useCanvasStore.getState().setPage(targetIdx, { layout, spreadLayout: null });
-      // a single layout replaces any leftover spread on the page pair
+
       const other = viewMode === "right" ? activePageIndex : activePageIndex + 1;
       if (other >= 0 && other < pages.length && other !== targetIdx) {
         useCanvasStore.getState().setPage(other, { spreadLayout: null });
@@ -108,10 +108,10 @@ export function LayoutsPanel() {
     pushUndo();
     const pages = useCanvasStore.getState().pages;
 
-    // Clear ALL layout frames from canvas
+
     clearLayoutFrames(canvas);
 
-    // Clear layout/spreadLayout from all pages
+
     pages.forEach((_, i) => {
       useCanvasStore.getState().setPage(i, { layout: null, spreadLayout: null });
     });

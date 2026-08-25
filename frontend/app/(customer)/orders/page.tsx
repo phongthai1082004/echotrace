@@ -13,7 +13,6 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(300, 20);
 
-  // ponytail: mock data — wire GET /orders khi backend có module orders.
   const loading = false;
   void skeletonRef;
   void visibleCount;

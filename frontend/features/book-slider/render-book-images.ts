@@ -6,9 +6,9 @@ import { reviveObject } from "../studio-canvas/lib/layout-engine";
 
 export type BookPageImage = { src: string; width: number; height: number };
 
-// ponytail: renders each stored single page at fmt.width×fmt.height. Covers are
-// 1 image each; interiors are already split per-page in the store (splitCanvasByMidpoint),
-// so each spread naturally becomes 2 images. Fall back to stored thumbnail on taint.
+
+
+
 export async function renderBookImages(pages: PageState[], fmt: PaperFormat): Promise<BookPageImage[]> {
   const out: BookPageImage[] = [];
   for (const p of pages) {
@@ -40,7 +40,7 @@ async function renderOne(
       fc.renderAll();
       return fc.toDataURL({ format: "jpeg", quality: 0.85, multiplier: 1 });
     } catch {
-      // ponytail: skip tainted canvas, keep white/thumbnail
+
     } finally {
       fc.dispose();
     }

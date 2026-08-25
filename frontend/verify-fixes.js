@@ -5,7 +5,7 @@ const path = require("path");
 
 console.log("=== HYDRATION ERROR FIXES VERIFICATION ===\n");
 
-// Check 1: LanguageSwitcher returns null on server
+
 console.log("✓ Check 1: LanguageSwitcher Implementation");
 const langSwitcherCode = fs.readFileSync(path.join(__dirname, "components/language-switcher.tsx"), "utf-8");
 if (langSwitcherCode.includes("if (!hydrated) { return null; }")) {
@@ -26,7 +26,7 @@ if (langSwitcherCode.includes("useEffect") && langSwitcherCode.includes("setHydr
   console.log("  ✗ Missing useEffect hydration tracking");
 }
 
-// Check 2: AdminSidebar waits for i18n readiness
+
 console.log("\n✓ Check 2: AdminSidebar Implementation");
 const sidebarCode = fs.readFileSync(path.join(__dirname, "app/(admin)/admin-sidebar.tsx"), "utf-8");
 if (sidebarCode.includes("const { t, ready } = useTranslation()")) {
@@ -53,7 +53,7 @@ if (sidebarCode.includes("t(key)")) {
   console.log("  ✗ Translating keys in wrong place");
 }
 
-// Check 3: Translation keys exist
+
 console.log("\n✓ Check 3: Translation Keys");
 const en = require("./public/locales/en/common.json");
 const vi = require("./public/locales/vi/common.json");

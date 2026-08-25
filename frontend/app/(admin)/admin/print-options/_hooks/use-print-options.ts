@@ -61,7 +61,6 @@ export function usePrintOptions() {
 
   useEffect(() => {
     if (!token) return;
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     fetchOptions().finally(() => setLoading(false));
   }, [token, fetchOptions]);

@@ -23,7 +23,6 @@ export function useMyBooks(token?: string) {
 
   useEffect(() => {
     if (!token) return;
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     setFetchError(null);
     apiFetch<any[]>("/api/user/my-books", token)

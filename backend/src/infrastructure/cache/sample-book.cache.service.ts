@@ -1,7 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { CacheService } from './cache.service.js';
 
-// ponytail: domain cache for sample books — sample:<id> (detail) + samples:<explore|albums> (public grid).
 @injectable()
 export class SampleBookCacheService {
 	constructor(@inject('CacheService') private cache: CacheService) {}

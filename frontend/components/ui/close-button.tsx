@@ -3,7 +3,6 @@
 import { X } from "lucide-react";
 import { neoBtn } from "@/lib/styles";
 
-// ponytail: shared X-close button — neo style, used by every admin modal/detail closer.
 export function CloseButton({
   onClick,
   size = 16,

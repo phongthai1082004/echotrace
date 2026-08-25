@@ -44,7 +44,7 @@ export class BookService extends IBookService {
 				content: data.content ?? null,
 			},
 		});
-		// ponytail: FE chỉ đọc id — không echo lại content vừa gửi lên.
+
 		const dto = BookMapper.toDTO(book);
 		dto.content = null;
 		return dto;

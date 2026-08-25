@@ -12,7 +12,6 @@ export function useElementControls() {
     if (!canvas) return;
     const onSelect = () => incrementSelectionVersion();
     const onClear = () => incrementSelectionVersion();
-    // ponytail: Fabric v7 handles Ctrl+click multi-select natively
     const onMouseDown = (e: any) => {
       if (e.target) pushUndo();
     };

@@ -17,7 +17,7 @@ export function CouponDrawer({
   onDeactivate,
   onClose,
 }: {
-  coupon: Coupon; // id = 0 → tạo mới
+  coupon: Coupon; 
   saving: boolean;
   onCreate: (form: CouponForm) => Promise<boolean>;
   onDeactivate: (c: Coupon) => Promise<boolean>;

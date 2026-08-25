@@ -4,7 +4,7 @@ export interface UseModalResult<T = any> {
   isOpen: boolean;
   data: T | null;
 
-  // Methods
+
   open: (data?: T) => void;
   close: () => void;
   toggle: () => void;

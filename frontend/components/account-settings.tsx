@@ -46,7 +46,6 @@ export function AccountSettings() {
 
   useEffect(() => {
     if (!token) return;
-// eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     apiFetch<Profile>("/api/user/profile", token)
       .then((data) => {

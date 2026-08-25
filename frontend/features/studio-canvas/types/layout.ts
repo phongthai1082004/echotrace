@@ -87,7 +87,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
   },
 };
 
-// Spread layouts — cover two A4 pages side by side (420×297 mm, landscape)
+
 export const SPREAD_LAYOUTS: Record<string, LayoutConfig> = {
   "spread-2-photo": {
     layoutId: "spread-2-photo",

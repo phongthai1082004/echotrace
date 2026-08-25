@@ -23,7 +23,7 @@ describe("useDebounce", () => {
     expect(result.current).toBe("initial");
 
     rerender({ value: "updated", delay: 500 });
-    expect(result.current).toBe("initial"); // Not updated yet
+    expect(result.current).toBe("initial");
 
     act(() => {
       jest.advanceTimersByTime(500);
@@ -51,7 +51,7 @@ describe("useDebounce", () => {
       jest.advanceTimersByTime(250);
     });
 
-    expect(result.current).toBe("first"); // Still first, third timer was reset
+    expect(result.current).toBe("first");
 
     act(() => {
       jest.advanceTimersByTime(500);

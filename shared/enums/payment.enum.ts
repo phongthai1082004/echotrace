@@ -1,4 +1,4 @@
-// 1. PaymentType
+
 export const PaymentType = {
   DEPOSIT: 'deposit',
   REMAINING_PAYMENT: 'remaining_payment',
@@ -8,7 +8,7 @@ export const PaymentType = {
 export type PaymentType = typeof PaymentType[keyof typeof PaymentType];
 
 
-// 2. PaymentGateway
+
 export const PaymentGateway = {
   PAYOS: 'PAYOS',
   SEPAY: 'SEPAY',
@@ -17,7 +17,7 @@ export const PaymentGateway = {
 export type PaymentGateway = typeof PaymentGateway[keyof typeof PaymentGateway];
 
 
-// 3. TransactionStatus
+
 export const TransactionStatus = {
   PENDING: 'pending',
   SUCCESS: 'success',
