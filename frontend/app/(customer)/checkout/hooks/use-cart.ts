@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api.fetch";
-import { computeCouponDiscount } from "@echotrace/shared";
+import { computeCouponDiscount, PaymentPlan } from "@echotrace/shared";
 import { useToast } from "@/components/toast";
 
 // Mọi thao tác giỏ + tổng tiền của checkout.
@@ -10,7 +10,7 @@ import { useToast } from "@/components/toast";
 // Tổng tiền tính LOCAL mỗi render: subtotal = Σ price×qty (item được tick),
 // discount = computeCouponDiscount(couponInfo từ quote) → tick/đổi qty không tốn API.
 // POST /cart/calculate chỉ gọi khi chuyển bước (chốt) hoặc áp/gỡ coupon (lấy couponInfo mới).
-export function useCart(token?: string, paymentMethod: "full" | "half" = "full") {
+export function useCart(token?: string, paymentMethod: PaymentPlan = PaymentPlan.FULL) {
   const [items, setItems] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loaded, setLoaded] = useState(false);

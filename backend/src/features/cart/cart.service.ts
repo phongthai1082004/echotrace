@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
-import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount } from '@echotrace/shared';
+import { Prisma } from '../../../generated/prisma/client.js';
+import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount, PaymentPlan } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
 
 export interface CartQuote {
@@ -13,8 +14,7 @@ export interface CartQuote {
 	coupon: { code: string; amount: number } | null;
 }
 
-type OptRow = { price: number | null; width: number | null; height: number | null };
-type OptKeyMap = Map<string, OptRow>;
+type OptKeyMap = Map<string, { price: number | null; width: number | null; height: number | null }>;
 
 function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	if (item.cover == null || item.paper == null || item.paperSize == null) return { ...item, price: null };
@@ -22,7 +22,6 @@ function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	const paper = optByKey.get(`paper:${item.paper}`)?.price;
 	const size = optByKey.get(`paperSize:${item.paperSize}`);
 	if (cover == null || paper == null) return { ...item, price: null };
-	// ponytail: hệ số kích thước = paperSize.price nếu admin đặt, fallback diện tích so A4.
 	const factor = size?.price ?? (size?.width && size?.height ? (size.width * size.height) / (210 * 297) : 1);
 	return { ...item, price: computeItemPrice(item.pages ?? 0, cover, paper, factor) };
 }
@@ -33,23 +32,42 @@ function toOptKeyMap(rows: { type: string; code: string; price: number | null; w
 	return m;
 }
 
-// ponytail: giá tính fresh mỗi lần đọc (không còn snapshot trong JSON) — thêm cache khi đo được chậm.
-async function loadAllOptions(db: any): Promise<OptKeyMap> {
-	const rows = await db.printOption.findMany({
-		where: { isDelete: false },
-		select: { type: true, code: true, price: true, width: true, height: true },
-	});
-	return toOptKeyMap(rows);
+const CART_INCLUDE = {
+	items: { include: 
+		{ book: true }, 
+		orderBy: { id: 'asc' } 
+	},
+} satisfies Prisma.CartInclude;
+
+const OPT_ARGS = {
+	where: { isDelete: false },
+	select: { type: true, code: true, price: true, width: true, height: true },
+} satisfies Prisma.PrintOptionFindManyArgs;
+
+function couponArgs(code: string) {
+	const upper = code.trim().toUpperCase();
+	return {
+		where: { isDelete: false, OR: [{ code: upper }, { code: { startsWith: `${upper}-` } }] },
+		orderBy: { id: 'desc' },
+	} satisfies Prisma.CouponFindFirstArgs;
 }
 
-const CART_INCLUDE = { items: { include: { book: true }, orderBy: { id: 'asc' } } };
+async function loadOptions(db: any): Promise<OptKeyMap> {
+	return toOptKeyMap(await db.printOption.findMany(OPT_ARGS));
+}
 
-async function getOrCreateCart(db: any, userId: number) {
-	let cart = await db.cart.findUnique({ where: { userId }, include: CART_INCLUDE });
+async function loadCartBatch(userId: number, couponCode?: string | null) {
+	const wantsCoupon = !!couponCode;
+	const [cart, optionRows, Coupon] = await prisma.$transaction([
+		prisma.cart.findUnique({ where: { userId }, include: CART_INCLUDE }),
+		prisma.printOption.findMany(OPT_ARGS),
+		...(wantsCoupon ? [prisma.coupon.findFirst(couponArgs(couponCode!))] : []),
+	]);
 	if (!cart) {
-		cart = await db.cart.create({ data: { userId }, include: CART_INCLUDE });
+		const created = await prisma.cart.create({ data: { userId }, include: CART_INCLUDE });
+		return { cart: created, optMap: toOptKeyMap(optionRows), Coupon: null };
 	}
-	return cart;
+	return { cart, optMap: toOptKeyMap(optionRows), Coupon: wantsCoupon ? (Coupon as any) : null };
 }
 
 export abstract class ICartService {
@@ -71,22 +89,16 @@ export abstract class ICartService {
 
 @injectable()
 export class CartService extends ICartService {
-	private async pricedDTO(userId: number): Promise<CartDTO> {
-		const cart = await getOrCreateCart(prisma, userId);
-		const optMap = cart.items.length ? await loadAllOptions(prisma) : new Map();
+	async getCart(userId: number): Promise<CartDTO> {
+		const { cart, optMap } = await loadCartBatch(userId);
 		const parsedItems = cart.items.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
 		return {
 			id: cart.id,
-			userId: cart.userId,
-			items: parsedItems.length ? parsedItems : null,
+			userId,
 			parsedItems,
 			createdAt: cart.createdAt,
 			updatedAt: cart.updatedAt,
 		};
-	}
-
-	async getCart(userId: number) {
-		return this.pricedDTO(userId);
 	}
 
 	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
@@ -115,7 +127,7 @@ export class CartService extends ICartService {
 				},
 				include: { book: true },
 			});
-			return applyItemPrice(composeCartItem(row, row.book), await loadAllOptions(tx));
+			return applyItemPrice(composeCartItem(row, row.book), await loadOptions(tx));
 		});
 	}
 
@@ -124,21 +136,19 @@ export class CartService extends ICartService {
 		bookId: number,
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem> {
-		const row = await prisma.$transaction(async (tx) => {
-			const cart = await tx.cart.findUnique({ where: { userId }, select: { id: true } });
-			if (!cart) throw new AppError(ErrorCode.NOT_FOUND, 404);
-			const key = { cartId_bookId: { cartId: cart.id, bookId } };
-			if (Object.keys(patch).length) {
-				const updated = await tx.cartItem.updateMany({
-					where: { cartId: cart.id, bookId },
-					data: { ...patch, ...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}) },
-				});
-				if (!updated.count) throw new AppError(ErrorCode.NOT_FOUND, 404);
-			}
-			return tx.cartItem.findUnique({ where: key, include: { book: true } });
-		});
-		if (!row) throw new AppError(ErrorCode.NOT_FOUND, 404);
-		return applyItemPrice(composeCartItem(row, row.book), await loadAllOptions(prisma));
+		const cart = await prisma.cart.findUnique({ where: { userId }, select: { id: true } });
+		if (!cart) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		try {
+			const row = await prisma.cartItem.update({
+				where: { cartId_bookId: { cartId: cart.id, bookId } },
+				data: { ...patch, ...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}) },
+				include: { book: true },
+			});
+			return applyItemPrice(composeCartItem(row, row.book), await loadOptions(prisma));
+		} catch (e) {
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') throw new AppError(ErrorCode.NOT_FOUND, 404);
+			throw e;
+		}
 	}
 
 	async deleteItem(userId: number, bookId: number): Promise<void> {
@@ -152,21 +162,19 @@ export class CartService extends ICartService {
 		couponCode?: string | null,
 		bookIds?: number[] | null,
 	): Promise<CartQuote> {
-		const cart = await getOrCreateCart(prisma, userId);
-		const Coupon = await this.findCoupon(prisma, couponCode);
-		const optMap = cart.items.length ? await loadAllOptions(prisma) : new Map();
+		const { cart, optMap, Coupon } = await loadCartBatch(userId, couponCode);
+
 		const ids = Array.isArray(bookIds) && bookIds.length ? new Set(bookIds) : null;
-		const items: CartItem[] = cart.items
+		const items: CartItem[] = (cart?.items ?? [])
 			.filter((row: any) => !ids || ids.has(row.bookId))
 			.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
 		const incomplete = items.find((i) => i.price == null);
-		if (incomplete) {
-			throw new AppError(ErrorCode.MISSING_BOOK_OPTIONS, 400, { bookId: incomplete.bookId, title: incomplete.title });
-		}
+		if (incomplete) throw new AppError(ErrorCode.MISSING_BOOK_OPTIONS, 400, { bookId: incomplete.bookId, title: incomplete.title });
 
 		const subtotal = items.reduce((s: number, i) => s + (i.price ?? 0) * (i.quantity || 1), 0);
-		const discount = computeCouponDiscount(Coupon, subtotal, items);		const total = Math.max(0, subtotal - discount);
-		const payNow = total == null ? 0 : paymentMethod === 'half' ? Math.round((total * 50) / 100) : total;
+		const discount = computeCouponDiscount(Coupon, subtotal, items);
+		const total = Math.max(0, subtotal - discount);
+		const payNow = paymentMethod === PaymentPlan.HALF ? Math.round((total * 50) / 100) : total;
 		const payLater = total - payNow;
 		return {
 			items,
@@ -177,15 +185,6 @@ export class CartService extends ICartService {
 			payLater,
 			coupon: discount > 0 && Coupon ? { ...Coupon, amount: discount } : null,
 		};
-	}
-
-	private async findCoupon(tx: any, code: string | null | undefined) {
-		if (!code) return null;
-		const upper = code.trim().toUpperCase();
-		return tx.coupon.findFirst({
-			where: { isDelete: false, OR: [{ code: upper }, { code: { startsWith: `${upper}-` } }] },
-			orderBy: { id: 'desc' },
-		});
 	}
 }
 

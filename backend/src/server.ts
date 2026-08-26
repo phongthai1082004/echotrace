@@ -17,6 +17,9 @@ import cartRoutes from './features/cart/cart.routes.js';
 import couponsRoutes from './features/coupons/coupons.routes.js';
 import stickersRoutes from './features/stickers/stickers.routes.js';
 import uploadsRoutes from './features/uploads/uploads.routes.js';
+import orderRoutes from './features/order/order.route.js';
+import { startDelayedWorker } from './infrastructure/queue/redis-delayed-queue.js';
+import paymentRoutes from './features/payment/payment.route.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 
 const PORT = process.env.BACKEND_PORT;
@@ -61,6 +64,8 @@ async function bootstrap() {
 	apiRouter.use('/', couponsRoutes);
 	apiRouter.use('/', stickersRoutes);
 	apiRouter.use('/', uploadsRoutes);
+	apiRouter.use('/', orderRoutes);
+	apiRouter.use('/', paymentRoutes);
 
 	app.use('/:lang/api', apiRouter);
 	app.use('/api', apiRouter);
@@ -70,6 +75,9 @@ async function bootstrap() {
 	const server = app.listen(PORT, () => {
 		console.log(`🚀 Server running successfully at http://localhost:${PORT}/`);
 	});
+
+	// ponytail: xử lý các đơn hết hạn chưa thanh toán (Redis delayed job)
+	startDelayedWorker();
 
 	server.on('error', (error: Error) => {
 		console.error('❌ Server runtime error encountered:', error.message);

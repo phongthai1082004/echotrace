@@ -1,23 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ChevronRight } from "lucide-react";
 import { label, card, neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
-import type { OrderStatus } from "@/lib/mock-dispatch";
-import { dispatchSuppliers, allOrders, unassignedOrders } from "@/lib/mock-dispatch";
+import { OrderDetailDrawer } from "@/components/order-detail-drawer";
+import type { OrderStatus } from "@/lib/order.dto";
 import { useDispatch } from "./_hooks/use-dispatch";
 import { DispatchTable } from "./_components/dispatch-table";
-import { OrderDetailDrawer } from "./_components/order-detail-drawer";
-import { AssignModal } from "./_components/assign-modal";
-import { formatCurrency } from "./_lib/utils";
+import { formatCurrency } from "@/lib/order-status";
 
 export default function DispatchPage() {
   const { t } = useTranslation();
   const d = useDispatch();
-  const [showAssignModal, setShowAssignModal] = useState(false);
 
   return (
     <div className="h-screen flex flex-col">
@@ -27,7 +23,7 @@ export default function DispatchPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {}
-        <div className="w-[200px] shrink-0 border-r-[3px] border-[#222] overflow-y-auto bg-[#FFF7D6]/40 flex flex-col">
+        <div className="order-2 w-[220px] shrink-0 border-l-[3px] border-[#222] overflow-y-auto bg-[#FFF7D6]/40 flex flex-col">
           <button
             onClick={() => d.selectSupplier(null)}
             className={`w-full text-left px-5 py-3.5 border-b-2 border-[#222]/10 font-bold text-sm transition-colors flex items-center justify-between ${
@@ -35,10 +31,10 @@ export default function DispatchPage() {
             }`}
           >
             <span>{t("admin.dispatch.allOrders")}</span>
-            <span className="font-mono text-[10px] text-[#999]">{allOrders.length}</span>
+            <span className="font-mono text-[10px] text-[#999]">{d.orders.length}</span>
           </button>
           <div className="flex-1 overflow-y-auto">
-            {dispatchSuppliers.map((s) => {
+            {d.suppliers.map((s) => {
               const active = s.id === d.selectedSupplierId;
               return (
                 <button
@@ -71,7 +67,7 @@ export default function DispatchPage() {
         </div>
 
         {/* ── RIGHT PANEL: Orders ── */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="order-1 flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Supplier detail strip */}
           {d.selectedSupplier && (
             <div className="px-6 py-4 border-b-[3px] border-[#222] bg-[#FFF7D6]/60 flex items-center justify-between shrink-0">
@@ -97,12 +93,6 @@ export default function DispatchPage() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setShowAssignModal(true)}
-                className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}
-              >
-                {t("admin.dispatch.assignOrders")}
-              </button>
             </div>
           )}
 
@@ -124,17 +114,6 @@ export default function DispatchPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-3 text-xs shrink-0">
-                <span className="text-[#222] font-bold">{t("admin.dispatch.orders", { count: allOrders.length })}</span>
-                <span className="w-[2px] h-3 bg-[#222] rounded-full" />
-                <span className="text-[#222] font-bold">
-                  {t("admin.dispatch.suppliers", { count: dispatchSuppliers.length })}
-                </span>
-                <span className="w-[2px] h-3 bg-[#222] rounded-full" />
-                <span className="text-[#222] font-bold">
-                  {t("admin.dispatch.unassigned", { count: unassignedOrders.length })}
-                </span>
-              </div>
             </div>
           </div>
 
@@ -147,6 +126,7 @@ export default function DispatchPage() {
                 totalPages={d.totalPages}
                 setPage={d.setPage}
                 onOpen={d.setSelectedOrder}
+                onAssign={(o) => d.setSelectedOrder(o)}
               />
             </div>
           </div>
@@ -156,15 +136,11 @@ export default function DispatchPage() {
       {d.selectedOrder && (
         <OrderDetailDrawer
           order={d.selectedOrder}
+          variant="admin"
           onUpdateStatus={d.updateStatus}
+          onEvent={(type, payload) => d.processEvent(d.selectedOrder!.id, type, payload)}
+          suppliers={d.suppliers.map((s) => ({ id: s.id, name: s.name }))}
           onClose={() => d.setSelectedOrder(null)}
-        />
-      )}
-
-      {showAssignModal && (
-        <AssignModal
-          supplierName={d.selectedSupplier?.name || ""}
-          onClose={() => setShowAssignModal(false)}
         />
       )}
     </div>

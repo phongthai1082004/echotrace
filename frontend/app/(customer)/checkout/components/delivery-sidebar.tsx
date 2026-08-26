@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { Tag } from "lucide-react";
 import { neoBtn, neoBtnPrimary, labelSm } from "@/lib/styles";
+import { PaymentPlan } from "@echotrace/shared";
 import { OrderSummary } from "./order-summary";
 
 export function DeliverySidebar({
@@ -26,8 +27,8 @@ export function DeliverySidebar({
   totalText: string;
   discountText?: string;
   payNowText: string;
-  paymentMethod: "full" | "half";
-  onPaymentMethodChange: (m: "full" | "half") => void;
+  paymentMethod: PaymentPlan;
+  onPaymentMethodChange: (m: PaymentPlan) => void;
   couponCode: string | null;
   onShowDiscount: () => void;
   onContinue: () => void;
@@ -35,7 +36,7 @@ export function DeliverySidebar({
   continueDisabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const radio = (value: "full" | "half", labelKey: string) => (
+  const radio = (value: PaymentPlan, labelKey: string) => (
     <label
       className={`flex items-center gap-3 p-3 rounded-lg border-[3px] border-[#222] shadow-[2px_2px_0_#222] cursor-pointer transition-[transform,box-shadow] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#222] ${paymentMethod === value ? "bg-[#222]" : "bg-white"}`}
     >
@@ -66,7 +67,7 @@ export function DeliverySidebar({
             {t("customer.checkout.paymentMethod")}
           </span>
           <span className="font-mono text-xs font-bold text-[#B54843]">
-            −{paymentMethod === "half" ? payNowText : "₫0"}
+            −{paymentMethod === PaymentPlan.HALF ? payNowText : "₫0"}
           </span>
         </div>
         <div className="flex justify-between mt-1.5">
@@ -88,8 +89,8 @@ export function DeliverySidebar({
       <div className="pt-4 mt-4 border-t-[3px] border-[#222]">
         <p className={`${labelSm} block mb-3 text-[#666]`}>{t("customer.checkout.paymentMethod")}</p>
         <div className="flex flex-col gap-2">
-          {radio("full", "customer.checkout.paymentFull")}
-          {radio("half", "customer.checkout.paymentHalf")}
+          {radio(PaymentPlan.FULL, "customer.checkout.paymentFull")}
+          {radio(PaymentPlan.HALF, "customer.checkout.paymentHalf")}
         </div>
         <p className="font-mono text-[10px] text-[#B54843] mt-2">{t("customer.checkout.paymentHalfNote")}</p>
       </div>

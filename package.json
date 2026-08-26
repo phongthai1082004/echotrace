@@ -16,13 +16,6 @@
   "devDependencies": {
     "prisma": "^7.8.0"
   },
-  "overrides": {
-    "uuid": "^10.0.0",
-    "glob": "^11.0.0",
-    "react-popper>react": "^19.0.0",
-    "react-popper>react-dom": "^19.0.0",
-    "i18next": "$i18next"
-  },
   "pnpm": {
     "peerDependencyRules": {
       "ignoreMissing": ["react", "react-dom"],

@@ -1,18 +1,33 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { label, card } from "@/lib/styles";
 import type { CheckoutForm } from "../hooks/use-checkout-form";
 
-export function ConfirmStep({ form }: { form: CheckoutForm }) {
+export function ConfirmStep({
+  form,
+  orderCode,
+  status,
+}: {
+  form: CheckoutForm;
+  orderCode?: string;
+  status?: string;
+}) {
   const { t } = useTranslation();
-  const [orderCode] = useState(() => `TC-${Math.floor(Math.random() * 9000 + 1000)}`);
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center max-w-md">
         <p className={`${label} mb-3 text-[#666]`}>{t("customer.checkout.orderConfirmed")}</p>
-        <h2 className="text-5xl lg:text-6xl font-bold mb-3">{orderCode}</h2>
+        <h2 className="text-5xl lg:text-6xl font-bold mb-3">{orderCode ?? "—"}</h2>
+        {status && (
+          <p className="font-mono text-[11px] uppercase tracking-widest font-bold mb-3 text-[#1a7f37]">
+            {status === "paid"
+              ? t("customer.checkout.paidFull")
+              : status === "processing"
+                ? t("customer.checkout.depositReceived")
+                : ""}
+          </p>
+        )}
         <p className="text-sm leading-relaxed mb-6 text-[#666]">
           {t("customer.checkout.thankYou", { name: form.name })}
         </p>

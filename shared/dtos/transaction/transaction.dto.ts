@@ -1,7 +1,7 @@
-import type { PaymentGateway, PaymentType, TransactionStatus } from '../../enums/payment.enum.js';
+import type { PaymentGateway, TransactionType, TransactionStatus } from '../../enums/payment.enum.js';
 
 export type TransactionGateway = PaymentGateway | 'MANUAL' | 'CASH';
-export type TransactionKind = PaymentType | 'EXPENSE';
+export type TransactionKind = TransactionType | 'EXPENSE';
 
 export interface TransactionDTO {
   id: number;

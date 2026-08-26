@@ -3,7 +3,6 @@ import { DiscountType, MinOrderType } from "../../enums/discount.enum.js";
 export interface CartItem {
   bookId: number;
   title: string;
-  content: string | null;
   style: string;
   font: string;
   cover: string;
@@ -36,10 +35,9 @@ export interface CartCoupon {
 export interface CartDTO {
   id: number;
   userId: number;
-  items: CartItem[] | null;
   parsedItems: CartItem[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 type ContentLike = { pages?: Array<Record<string, unknown>> } | string | null | undefined;
@@ -65,7 +63,6 @@ export function composeCartItem(row: { quantity: number; cover: string | null; p
   return {
     bookId: book.id,
     title: book.title,
-    content: null,
     style: book.style,
     font: book.font,
     cover: row.cover ?? book.cover ?? "softcover",

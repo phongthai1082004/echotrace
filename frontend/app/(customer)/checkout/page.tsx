@@ -3,12 +3,17 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
+import { apiFetch } from "@/lib/api.fetch";
+import { useToast } from "@/components/toast";
 import { DiscountModal } from "@/components/discount-modal";
 import { fetchPrintCatalog, PrintCatalog } from "@/lib/print-catalog";
 import { label, card, neoBtnPrimary, neoBtn, labelSm } from "@/lib/styles";
+import { PaymentPlan } from "@echotrace/shared";
 import { paperSizeLabel } from "@/features/studio-canvas/types";
 import { useCart } from "./hooks/use-cart";
-import { useCheckoutForm } from "./hooks/use-checkout-form";
+import { useCheckoutForm, validateCheckoutForm } from "./hooks/use-checkout-form";
 import { priceText } from "./_lib/utils";
 import { StepHeader, type CheckoutStep } from "./components/step-header";
 import { OrderSummary } from "./components/order-summary";
@@ -18,16 +23,19 @@ import { DeliveryStep } from "./components/delivery-step";
 import { DeliverySidebar } from "./components/delivery-sidebar";
 import { PaymentStep } from "./components/payment-step";
 import { ConfirmStep } from "./components/confirm-step";
-import { apiFetch } from "@/lib/api.fetch";
 
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation();
   const { data: session } = useSession();
+  const router = useRouter();
   const token = (session as any)?.accessToken;
 
   const [step, setStep] = useState<CheckoutStep>("cart");
-  const [paymentMethod, setPaymentMethod] = useState<"full" | "half">("full");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentPlan>(PaymentPlan.FULL);
   const [showDiscount, setShowDiscount] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [orderInfo, setOrderInfo] = useState<any>(null);
+  const { showToast } = useToast();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [catalog, setCatalog] = useState<PrintCatalog | null>(null);
 
@@ -68,34 +76,81 @@ export default function CheckoutPage() {
   const describeItem = (item: any): string =>
     `${optionLabel(item.cover, "covers") || item.cover} · ${optionLabel(item.paper, "papers") || item.paper} · ${item.pages} trang · ${paperSizeLabel(item.paperSize || "", (i18n.language || "en").slice(0, 2) as "vi" | "en" | "es")}`;
 
-  const payNow = cart.total == null ? null : paymentMethod === "half" ? Math.round((cart.total * 50) / 100) : cart.total;
-  const deduction = cart.total == null ? null : paymentMethod === "full" ? 0 : payNow;
+  const payNow = cart.total == null ? null : paymentMethod === PaymentPlan.HALF ? Math.round((cart.total * 50) / 100) : cart.total;
+  const deduction = cart.total == null ? null : paymentMethod === PaymentPlan.FULL ? 0 : payNow;
   const editing = editingIndex != null ? items[editingIndex] : null;
+  const formErrors = validateCheckoutForm(form);
 
-  const createOrder = async() => {
-    apiFetch("/api/user/create-order", token, {
-      method: "POST",
-      body: JSON.stringify({
-        items: items.map((book) => ({
-          bookId: book.bookId,
-          quantity: book.quantity,
-          cover: book.cover,
-          paper: book.paper,
-          paperSize: book.paperSize,
-        })),
-        ...form,
-        paymentMethod,
-        couponCode
-      })
-    });
-  }
+  // Tạo đơn: chốt số lần cuối → POST /orders với Idempotency-Key chống double-submit
+  // → PayOS trả checkoutUrl, redirect sang trang thanh toán.
+  const placeOrder = async () => {
+    if (placing) return;
+    setPlacing(true);
+    try {
+      if (Object.keys(validateCheckoutForm(form)).length) {
+        showToast(t("customer.checkout.fixErrors"), "error");
+        setPlacing(false);
+        return;
+      }
+      const quote = await recalc();
+      if (!quote) return; // server chặn (thiếu option...) — đã toast
+      const order = await apiFetch<any>("/api/orders", token, {
+        method: "POST",
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+        body: JSON.stringify({
+          items: selectedItems.map((i) => ({
+            bookId: i.bookId,
+            quantity: i.quantity,
+            cover: i.cover,
+            paper: i.paper,
+            paperSize: i.paperSize,
+          })),
+          name: form.name,
+          phone: form.phone,
+          address: form.address,
+          city: form.city,
+          note: form.note,
+          paymentMethod,
+          couponCode,
+        }),
+      });
+      if (order?.checkoutUrl) {
+        setOrderInfo(order); // hiện QR, poll trạng thái → webhook xác nhận xong tự nhảy step confirm
+      } else {
+        setStep("confirm");
+      }
+    } catch (e: any) {
+      showToast(e?.message || t("customer.checkout.placeOrderFailed"), "error");
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  // Poll trạng thái đơn mỗi 3s — gọi verify (hỏi PayOS trực tiếp) vì webhook localhost không nhận được
+  const orderId = orderInfo?.orderId;
+  useEffect(() => {
+    if (!orderId) return;
+    const id = setInterval(async () => {
+      try {
+        const o = await apiFetch<{ status: string }>(`/api/orders/${orderId}/verify`, token, { method: "POST" });
+        if (o?.status && o.status !== "pending_payment") {
+          clearInterval(id);
+          setOrderInfo((prev: any) => ({ ...prev, status: o.status }));
+          showToast(t("customer.checkout.paymentSuccess"), "success");
+          router.push("/orders");
+        }
+      } catch {}
+    }, 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, token]);
 
   return (
     <div className="min-h-screen pt-15">
       <StepHeader step={step} />
 
       {step === "confirm" ? (
-        <ConfirmStep form={form} />
+        <ConfirmStep form={form} orderCode={orderInfo?.orderCode} status={orderInfo?.status} />
       ) : (
         <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-10 max-[1600px]:py-8 max-[1440px]:py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 max-[1600px]:gap-8 max-[1440px]:gap-6">
           {!loaded ? (
@@ -119,7 +174,7 @@ export default function CheckoutPage() {
                     onEdit={setEditingIndex}
                   />
                 )}
-                {step === "delivery" && <DeliveryStep form={form} setField={setField} />}
+                {step === "delivery" &&                   <DeliveryStep form={form} setField={setField} errors={formErrors} />}
                 {step === "payment" && <PaymentStep items={selectedItems} describe={describeItem} />}
               </div>
 
@@ -162,6 +217,10 @@ export default function CheckoutPage() {
                   couponCode={couponCode}
                   onShowDiscount={() => setShowDiscount(true)}
                   onContinue={async () => {
+                    if (Object.keys(validateCheckoutForm(form)).length) {
+                      showToast(t("customer.checkout.fixErrors"), "error");
+                      return;
+                    }
                     if (!(await recalc())) return;
                     setStep("payment");
                   }}
@@ -170,14 +229,13 @@ export default function CheckoutPage() {
                 />
               )}
 
-              {step === "payment" && (
+              {step === "payment" && !orderInfo && (
                 <div className={`${card} overflow-hidden`}>
                   <div className="px-5 py-4 border-b-[3px] border-[#222]">
                     <p className={`${label} text-[#666]`}>{t("customer.checkout.paymentTitle")}</p>
                   </div>
                   <div className="p-4">
-                    <PaymentQr />
-                    <div className="space-y-2 pt-4 border-t-[3px] border-[#222]">
+                    <div className="space-y-2 pt-1">
                       <TotalRow labelKey="customer.checkout.subtotal" value={priceText(cart.subtotal, t("customer.checkout.unknown"))} />
                       <TotalRow
                         labelKey="customer.checkout.discount"
@@ -199,6 +257,50 @@ export default function CheckoutPage() {
                       </span>
                       <span className="text-xl font-bold">{priceText(payNow, t("customer.checkout.unknown"))}</span>
                     </div>
+                    <button
+                      disabled={placing || cart.missingAny}
+                      onClick={placeOrder}
+                      className={`${neoBtnPrimary} w-full mt-4 py-3.5 disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      {placing ? t("customer.checkout.placing") : t("customer.checkout.placeOrder")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === "payment" && orderInfo && (
+                <div className={`${card} overflow-hidden`}>
+                  <div className="px-5 py-4 border-b-[3px] border-[#222]">
+                    <p className={`${label} text-[#666]`}>{t("customer.checkout.paymentTitle")}</p>
+                  </div>
+                  <div className="p-4">
+                    {/* QR thật từ PayOS (qrCode là chuỗi EMV/VietQR → render bằng qrcode.react) */}
+                    <div className="bg-white rounded-[10px] border-[3px] border-[#222] shadow-[2px_2px_0_#222] flex justify-center p-3">
+                      {orderInfo.qrCode ? (
+                        <QRCodeSVG value={orderInfo.qrCode} size={192} level="M" />
+                      ) : (
+                        <div className="w-48 h-48 bg-[#e8e6e0]/60 animate-pulse" />
+                      )}
+                    </div>
+                    <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#999] text-center mt-2">
+                      {t("customer.checkout.scanToPay")}
+                    </p>
+
+                    <div className="space-y-2 pt-4 mt-4 border-t-[3px] border-[#222]">
+                      <TotalRow labelKey="customer.checkout.orderCodeLabel" value={orderInfo.orderCode ?? "—"} />
+                      <TotalRow labelKey="customer.checkout.total" value={priceText(orderInfo.total, t("customer.checkout.unknown"))} />
+                    </div>
+
+                    <div className="bg-[#222] text-white rounded-[10px] px-4 py-3 flex items-center justify-between mt-2">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-70">
+                        {t("customer.checkout.payNow")}
+                      </span>
+                      <span className="text-xl font-bold">{priceText(orderInfo.payNow, t("customer.checkout.unknown"))}</span>
+                    </div>
+
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-[#999] text-center mt-4 animate-pulse">
+                      {t("customer.checkout.waitingPayment")}
+                    </p>
                   </div>
                 </div>
               )}
@@ -245,36 +347,6 @@ function TotalRow({ labelKey, value, valueClass = "" }: { labelKey: string; valu
     <div className="flex justify-between gap-4 py-1.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-[#666]">{t(labelKey)}</span>
       <span className={`text-sm font-bold text-right ${valueClass}`}>{value}</span>
-    </div>
-  );
-}
-
-function PaymentQr() {
-  return (
-    <div className="mb-4 bg-white rounded-[10px] border-[3px] border-[#222] shadow-[2px_2px_0_#222] flex justify-center p-3">
-      <div className="w-48 h-48 bg-[#222] flex items-center justify-center rounded-[7px]">
-        <svg width="144" height="144" viewBox="0 0 160 160">
-          {Array.from({ length: 20 }).map((_, row) =>
-            Array.from({ length: 20 }).map((_, col) => {
-              const on = (row * 7 + col * 11 + row * col) % 3 !== 0;
-              return on ? (
-                <rect key={`${row}-${col}`} x={col * 8} y={row * 8} width={7} height={7} fill="#FDFBF7" />
-              ) : null;
-            }),
-          )}
-          {[
-            [0, 0],
-            [0, 120],
-            [120, 0],
-          ].map(([x, y], i) => (
-            <g key={i}>
-              <rect x={x} y={y} width={32} height={32} fill="#FDFBF7" />
-              <rect x={x + 4} y={y + 4} width={24} height={24} fill="#1a1a1a" />
-              <rect x={x + 10} y={y + 10} width={12} height={12} fill="#FDFBF7" />
-            </g>
-          ))}
-        </svg>
-      </div>
     </div>
   );
 }

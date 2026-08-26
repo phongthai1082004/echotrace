@@ -7,8 +7,9 @@
 		"dev": "tsx watch src/server.ts",
 		"build": "tsc",
 		"start": "node dist/src/server.js",
-		"format": "prettier --write .",
-		"seed": "tsx prisma/seed-admin.ts",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "seed": "tsx prisma/seed-admin.ts",
 		"db:seed": "prisma db seed"
 	},
 	"dependencies": {
@@ -49,7 +50,8 @@
 		"prettier": "3.9.6",
 		"prisma": "^7.8.0",
 		"tsx": "^4.22.5",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3",
+		"vitest": "^2.1.9"
 	},
 	"pnpm": {
 		"overrides": {

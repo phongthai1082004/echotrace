@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { chip } from "@/lib/styles";
+import { ORDER_STATUS_COLORS, STATUS_LABEL_KEY } from "@/lib/order-status";
 
 type BadgeVariant =
   | "collected"
@@ -43,6 +44,17 @@ const statusKeys: Record<string, string> = {
 
 export function StatusBadge({ status, label }: { status: BadgeVariant | string; label?: string }) {
   const { t } = useTranslation();
+
+  // Status của Order (backend) — màu/nhãn từ nguồn chung lib/order-status
+  const orderColor = ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS];
+  if (orderColor && !label) {
+    return (
+      <span className={`${chip} leading-none`} style={{ background: orderColor.color, color: orderColor.text, borderColor: "#222" }}>
+        {t(STATUS_LABEL_KEY(status))}
+      </span>
+    );
+  }
+
   const v = variants[status as BadgeVariant] ?? variants.default;
   const statusKey = statusKeys[status];
   const defaultLabel = statusKey

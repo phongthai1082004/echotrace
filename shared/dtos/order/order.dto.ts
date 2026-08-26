@@ -1,4 +1,4 @@
-import { PaymentMethod } from "../../enums/order.enum.js";
+import { PaymentPlan } from "../../enums/payment.enum.js";
 
 export interface CreateOrderItem {
   bookId: number;
@@ -15,7 +15,7 @@ export interface CreateOrderDTO {
   address?: string;
   city?: string;
   note?: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentPlan;
   couponCode?: string | null;
 }
 

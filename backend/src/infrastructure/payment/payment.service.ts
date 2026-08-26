@@ -6,6 +6,8 @@ import { injectable } from 'tsyringe';
 export interface IPaymentService {
 	createPaymentLink(dto: CreatePaymentLinkDto): Promise<PaymentLinkResponse>;
 	handleWebhook(gateway: PaymentGateway, payload: any): Promise<WebhookProcessResult>;
+	refund(gateway: PaymentGateway, orderCode: number): Promise<boolean>;
+	getPaymentStatus(gateway: PaymentGateway, orderCode: number): Promise<string | null>;
 }
 
 @injectable()
@@ -45,5 +47,17 @@ export class PaymentService implements IPaymentService {
 			throw new Error(`Payment gateway [${gateway}] is not supported.`);
 		}
 		return await strategy.handleWebhook(payload);
+	}
+
+	async refund(gateway: PaymentGateway, orderCode: number): Promise<boolean> {
+		const strategy = this.strategies.find((s) => s.providerName === gateway);
+		if (!strategy) throw new Error(`Payment gateway [${gateway}] is not supported.`);
+		return await strategy.refund(orderCode);
+	}
+
+	async getPaymentStatus(gateway: PaymentGateway, orderCode: number): Promise<string | null> {
+		const strategy = this.strategies.find((s) => s.providerName === gateway);
+		if (!strategy) throw new Error(`Payment gateway [${gateway}] is not supported.`);
+		return await strategy.getPaymentStatus(orderCode);
 	}
 }

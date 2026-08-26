@@ -21,7 +21,7 @@ export class PayOSGateway implements IPaymentStrategy {
             items: (dto.items || []) as PaymentLinkItem[],
             buyerName: dto.buyerName,
             buyerCompanyName: dto.buyerCompanyName,
-            buyerTaxCode: dto.buyerTaxCode || "",
+            ...(dto.buyerTaxCode ? { buyerTaxCode: dto.buyerTaxCode } : {}), // PayOS từ chối chuỗi rỗng
             buyerEmail: dto.buyerEmail,
             buyerPhone: dto.buyerPhone,
             buyerAddress: dto.buyerAddress,
@@ -53,8 +53,48 @@ export class PayOSGateway implements IPaymentStrategy {
             raw: paymentLink, 
         };
 	}
-	handleWebhook(payload: any): Promise<WebhookProcessResult> {
-		throw new Error('Method not implemented.');
+	async getPaymentStatus(orderCode: number): Promise<string | null> {
+		try {
+			const pl = (await this.payOS.paymentRequests.get(orderCode)) as any;
+			return pl?.status ?? null;
+		} catch {
+			return null;
+		}
+	}
+
+	async handleWebhook(payload: any): Promise<WebhookProcessResult> {
+		// SDK verify() ném lỗi nếu chữ ký sai
+		const data = await this.payOS.webhooks.verify(payload);
+		const status =
+			payload.code === '00' && payload.success !== false
+				? TransactionStatus.SUCCESS
+				: payload.code === '01'
+					? TransactionStatus.CANCELLED
+					: TransactionStatus.FAILED;
+		return {
+			orderCode: String(data.orderCode),
+			gateway: this.providerName,
+			gatewayTransactionCode: data.paymentLinkId,
+			amount: data.amount,
+			status,
+			transactionTime: new Date(data.transactionDateTime),
+			bankAccount: data.accountNumber,
+			content: data.description,
+			reference: data.reference,
+			rawPayload: payload,
+			isValidSignature: true,
+		};
+	}
+
+	async refund(orderCode: number): Promise<boolean> {
+		try {
+			await this.payOS.paymentRequests.cancel(orderCode, 'refund by admin');
+			return true;
+		} catch (e: any) {
+			// ponytail: already paid -> SDK can't auto-refund; mark manual in caller
+			console.warn('[payos] refund(cancel) failed:', e?.message || e);
+			return false;
+		}
 	}
 
     generatePayOSSignature(

@@ -1,4 +1,4 @@
-import type { PaymentType, PaymentGateway, TransactionStatus } from '../../enums/payment.enum.js';
+import type { TransactionType, PaymentGateway, TransactionStatus } from '../../enums/payment.enum.js';
 
 export interface PaymentItemDto {
   name: string;
@@ -11,7 +11,7 @@ export interface PaymentItemDto {
 export interface CreatePaymentLinkDto {
   orderCode: number;         
   amount: number;              
-  type: PaymentType;            
+  type: TransactionType;            
   description: string;
   buyerName?: string;
   buyerCompanyName?: string;

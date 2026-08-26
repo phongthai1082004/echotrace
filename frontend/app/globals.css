@@ -190,6 +190,7 @@
   .neo-btn-primary {
     background-color: var(--foreground);
     color: white;
+    font-weight: 700;
     border-radius: 10px;
     border: 3px solid var(--border);
     box-shadow: 4px 4px 0 var(--border);
@@ -215,6 +216,7 @@
   .neo-btn-primary-sm {
     background-color: var(--foreground);
     color: white;
+    font-weight: 700;
     border-radius: 0.5rem;
     border: 2px solid var(--border);
     box-shadow: 2px 2px 0 var(--border);

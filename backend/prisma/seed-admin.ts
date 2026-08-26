@@ -205,8 +205,6 @@ async function main() {
 	if (supplierCount === 0) {
 		await prisma.supplier.createMany({
 			data: [
-				{ name: 'Xưởng In An Dương', contact: 'Trần Văn An', email: 'info@anduong.vn', isDelete: false },
-				{ name: 'Công ty In ấn Việt Đức', contact: 'Nguyễn Đức Việt', email: 'vietduc@printing.vn', isDelete: false },
 				{
 					name: 'Nhà Máy Giấy & In Bình Dương',
 					contact: 'Lê Văn Bình',
@@ -224,110 +222,6 @@ async function main() {
 					overdueDebt: 12000000,
 					monthDebt: 8000000,
 				},
-				{
-					name: 'Công Ty Vật Tư Ngành In Sài Gòn',
-					contact: 'Trương Minh',
-					email: 'minh@vattu.vn',
-					isDelete: true,
-					totalDebt: 78000000,
-					overdueDebt: 45000000,
-					monthDebt: 15000000,
-				},
-				{
-					name: 'Giấy In Cao Cấp Đà Nẵng',
-					contact: 'Đặng Hữu',
-					email: 'huu@giaycaocap.vn',
-					isDelete: false,
-					totalDebt: 6000000,
-					monthDebt: 2000000,
-				},
-
-				{
-					name: 'Tập Đoàn Mực In Sông Hồng',
-					contact: 'Đỗ Quốc Bảo',
-					email: 'baodq@songhongink.com',
-					isDelete: false,
-					totalDebt: 25000000,
-					monthDebt: 10000000,
-				},
-				{
-					name: 'Công Ty Bao Bì & Nhãn Mác Tân Phát',
-					contact: 'Nguyễn Thị Ngọc',
-					email: 'ngocnt@tanphatpack.vn',
-					isDelete: false,
-					totalDebt: 0,
-					overdueDebt: 0,
-					monthDebt: 0,
-				},
-				{
-					name: 'Xưởng Khai Thác & Cung Cấp Keo Dán Á Châu',
-					contact: 'Hồ Văn Thái',
-					email: 'thaiho@achauglue.com',
-					isDelete: false,
-					totalDebt: 18500000,
-					monthDebt: 6500000,
-				},
-				{
-					name: 'Công Ty Thiết Bị Ngành In Phúc Long',
-					contact: 'Phó Đức Phương',
-					email: 'phuong.p@phuclongprint.vn',
-					isDelete: false,
-					totalDebt: 120000000,
-					overdueDebt: 30000000,
-					monthDebt: 25000000,
-				},
-				{
-					name: 'Nhà Cung Cấp Màng Lamination Minh Quân',
-					contact: 'Trịnh Minh Quân',
-					email: 'quan@laminatemq.vn',
-					isDelete: false,
-					totalDebt: 8500000,
-					monthDebt: 3000000,
-				},
-				{
-					name: 'Công Ty Cổ Phần Giấy Bãi Bằng',
-					contact: 'Lê Thanh Tùng',
-					email: 'tunglt@baibangpaper.com.vn',
-					isDelete: false,
-					totalDebt: 350000000,
-					overdueDebt: 0,
-					monthDebt: 80000000,
-				},
-				{
-					name: 'Xưởng In Lụa & Ép Kim Thành Công',
-					contact: 'Vũ Công Thành',
-					email: 'thanhcong@inlua.vn',
-					isDelete: true,
-					totalDebt: 55000000,
-					overdueDebt: 55000000,
-					monthDebt: 0,
-				},
-				{
-					name: 'Công Ty Vật Tư Khổ In Lớn Hải Phòng',
-					contact: 'Phạm Xuân Trường',
-					email: 'truongpx@haiphongprint.vn',
-					isDelete: false,
-					totalDebt: 32000000,
-					overdueDebt: 5000000,
-					monthDebt: 12000000,
-				},
-				{
-					name: 'Tổng Kho Phụ Liệu Đóng Sách Việt Nhật',
-					contact: 'Mori Hiroshi',
-					email: 'contact@vietnhatbind.com',
-					isDelete: false,
-					totalDebt: 94000000,
-					overdueDebt: 14000000,
-					monthDebt: 20000000,
-				},
-				{
-					name: 'Công Ty In Decal & Tem Nhãn Đông Á',
-					contact: 'Bùi Hoàng Anh',
-					email: 'hoanganh@donga-decal.vn',
-					isDelete: false,
-					totalDebt: 11000000,
-					monthDebt: 4500000,
-				},
 			],
 		});
 		console.log(`Seeded ${await prisma.supplier.count()} suppliers.`);
@@ -338,7 +232,6 @@ async function main() {
 	// Options giờ là danh mục GLOBAL (PrintOption) + link per-supplier (SupplierPrintOption).
 	type Opt = { code: string; name: { vi: string; en: string; es: string }; width?: number; height?: number; price?: number };
 	const kitsBySupplier: { type: string; options: Opt[] }[][] = [
-		// Supplier 1 — Xưởng In An Dương: phân khúc phổ thông.
 		[
 			{
 				type: 'paperSize',
@@ -398,7 +291,6 @@ async function main() {
 		select: { id: true, name: true },
 	});
 
-	// Upsert danh mục GLOBAL rồi link lại theo kit của từng supplier.
 	for (const [i, supplier] of firstTwo.entries()) {
 		const kits = kitsBySupplier[i] ?? [];
 		for (const kit of kits) {
@@ -425,7 +317,6 @@ async function main() {
 		console.log(`Seeded options for supplier #${supplier.id} (${supplier.name}).`);
 	}
 
-	// Gỡ link cũ của 2 supplier không còn trong kit (tránh để lại code lỗi thời).
 	const keepCodes = (i: number, type: string) =>
 		new Set((kitsBySupplier[i] ?? []).find((k) => k.type === type)?.options.map((o) => o.code) ?? []);
 	const allTypes = ['paperSize', 'paper', 'cover'] as const;
@@ -442,22 +333,6 @@ async function main() {
 			}
 		}
 	}
-
-	// Coupon demo — giữ đồng bộ với frontend DiscountModal.
-	const coupons: { code: string; discountType: string; discountValue: number; minOrderAmount?: number }[] = [
-		{ code: 'WELCOME10', discountType: 'PERCENTAGE', discountValue: 10 },
-		{ code: 'FLAT50', discountType: 'FIXED', discountValue: 50000 },
-		{ code: 'FREESHIP', discountType: 'FIXED', discountValue: 50000 },
-	];
-	for (const c of coupons) {
-		await prisma.coupon.upsert({
-			where: { code: c.code },
-			update: { isActive: true, isDelete: false, deletedAt: null },
-			create: { ...c, isActive: true },
-		});
-	}
-	console.log(`Seeded ${await prisma.coupon.count({ where: { isDelete: false } })} coupons.`);
-
 	console.log('Seed complete.');
 }
 

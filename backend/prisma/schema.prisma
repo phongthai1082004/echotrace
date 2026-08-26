@@ -98,7 +98,6 @@ model Order {
   depositAmount  Float    @default(0)
   paidAmount     Float    @default(0)
   paymentType    String   @default("FULL")
-  paymentStatus  String   @default("UNPAID")
   status         String   @default("PENDING_PAYMENT")
   name           String?
   phone          String?
@@ -110,6 +109,10 @@ model Order {
   orderShippingFee    Float?   
   supplierShippingFee Float?   
   trackingCode      String?
+  codReconciledAt DateTime?
+  qrCode        String?
+  checkoutUrl   String?
+  expiredAt     DateTime?
   orderItems     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,7 +126,6 @@ model Order {
   @@index([userId])
   @@index([supplierId])
   @@index([status])
-  @@index([paymentStatus])
   @@index([orderCode])
   @@index([trackingCode])
 }
@@ -151,7 +153,7 @@ model Transaction {
   order           Order?          @relation(fields: [orderId], references: [id])
   idempotencyKey  IdempotencyKey? @relation(fields: [idempotencyKeyId], references: [key])
   income          Income?
-  expense         Expense?
+  expenses        Expense[]
 
   @@index([orderId])
   @@index([status])
@@ -161,7 +163,8 @@ model Transaction {
 
 model Income {
   id            Int      @id @default(autoincrement())
-  transactionId Int      @unique
+  transactionId Int?     @unique
+  orderId       Int?
   amount        Float
   receivedAt    DateTime
   note          String?
@@ -170,7 +173,7 @@ model Income {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  transaction Transaction @relation(fields: [transactionId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
   cashflow    Cashflow?
 
   @@index([receivedAt])
@@ -178,7 +181,8 @@ model Income {
 
 model Expense {
   id            Int              @id @default(autoincrement())
-  transactionId Int              @unique
+  transactionId Int?
+  orderId       Int?
   amount        Float
   category      ExpenseCategory
   description   String?
@@ -192,7 +196,7 @@ model Expense {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  transaction Transaction @relation(fields: [transactionId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
   cashflow    Cashflow?
 
   @@index([date])
@@ -201,13 +205,15 @@ model Expense {
 }
 
 model Cashflow {
-  id        Int      @id @default(autoincrement())
-  type      String   
-  incomeId  Int?     @unique
-  expenseId Int?     @unique
-  amount    Float
-  date      DateTime
-  note      String?
+  id            Int      @id @default(autoincrement())
+  type          String   
+  incomeId      Int?     @unique
+  expenseId     Int?     @unique
+  transactionId Int?
+  orderId       Int?
+  amount        Float
+  date          DateTime
+  note          String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)

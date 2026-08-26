@@ -15,9 +15,11 @@ const AUTOCOMPLETE: Partial<Record<keyof CheckoutForm, string>> = {
 export function DeliveryStep({
   form,
   setField,
+  errors,
 }: {
   form: CheckoutForm;
   setField: (key: keyof CheckoutForm, value: string) => void;
+  errors?: Partial<Record<keyof CheckoutForm, string>>;
 }) {
   const { t } = useTranslation();
   const idName = useId();
@@ -45,8 +47,9 @@ export function DeliveryStep({
         onChange={(e) => setField(key, e.target.value)}
         placeholder={t(placeholderKey)}
         autoComplete={AUTOCOMPLETE[key]}
-        className={input}
+        className={`${input} ${errors?.[key] ? "border-[#B54843]" : ""}`}
       />
+      {errors?.[key] && <p className="text-[#B54843] text-xs mt-1">{t(errors[key]!)}</p>}
     </div>
   );
 
