@@ -32,7 +32,6 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "confirm": "Confirmar",
-      "cancel": "Cancelar",
     "close": "Cerrar",
     "delete": "Eliminar",
     "edit": "Editar",
@@ -304,7 +303,8 @@
       "minimal": "Minimalista",
       "adventure": "Aventura",
       "cultural": "Cultural",
-      "custom": "Personalizado"
+      "custom": "Personalizado",
+      "loadMore": "Cargar más"
     },
     "myJournals": {
       "title": "Mis Diarios",
@@ -474,7 +474,25 @@
         "delivered": "Entregado",
         "cancelled": "Cancelado"
       },
-      "empty": "Aún no tienes pedidos."
+      "empty": "Aún no tienes pedidos.",
+      "requestReturn": "Solicitar devolución/cambio",
+      "return": {
+        "requested": "Devolución solicitada",
+        "exchange": "Cambio",
+        "refund": "Reembolso",
+        "reasonPlaceholder": "Motivo (opcional)",
+        "submit": "Enviar solicitud",
+        "none": "Sin devolución",
+        "approved": "Devolución aprobada",
+        "reshipping": "Reenviando",
+        "reshipped": "Reenviado",
+        "refunding": "Reembolsando",
+        "refunded": "Reembolsado",
+        "hint": "Selecciona el/los artículo(s) defectuosos y la cantidad a reemplazar (garantía)",
+        "qty": "Cant.",
+        "defectPlaceholder": "Describe el defecto (opcional)",
+        "selectOne": "Selecciona al menos un artículo"
+      }
     },
     "checkout": {
       "title": "Pago",
@@ -610,17 +628,56 @@
     "finance": {
       "label": "Admin · Finanzas",
       "title": "Visión general Financiera",
-      "cashInflow": "Entradas de caja",
-      "outflow": "Salidas de caja",
-      "grossProfit": "Beneficio bruto",
-      "cashOnHand": "Efectivo disponible",
-      "receivables": "Cobros pendientes",
-      "overdueReceivable": "Cobros vencidos",
-      "payables": "Pagos pendientes",
-      "overduePayable": "Pagos vencidos",
-      "chartTitle": "Ingresos vs Beneficio bruto (30 días)",
-      "revenue": "Ingresos",
-      "grossProfitLegend": "Beneficio bruto"
+      "overviewTitle": "Último mes",
+      "allTime": "Todo",
+      "monthlyTitle": "Contadores mensuales",
+      "suppliersTitle": "Pagos a proveedores",
+      "totalDebt": "Deuda total",
+      "thisMonth": "Vence este mes",
+      "noData": "Sin datos",
+      "incomeTitle": "Ingresos",
+      "expenseTitle": "Gastos",
+      "cashflowTitle": "Flujo de caja",
+      "from": "Desde",
+      "to": "Hasta",
+      "type": "Tipo",
+      "in": "Entrada",
+      "out": "Salida",
+      "date": "Fecha",
+      "amount": "Monto",
+      "note": "Nota",
+      "col": {
+        "period": "Mes",
+        "totalOrders": "Pedidos",
+        "totalRevenue": "Ingresos",
+        "totalExpense": "Gastos",
+        "totalSupplierExpense": "Gasto prov.",
+        "cashInflow": "Caja entrada",
+        "cashOutflow": "Caja salida",
+        "totalProfit": "Beneficio",
+        "cashOnHand": "Efectivo",
+        "receivables": "Cobros pend.",
+        "payables": "Pagos pend."
+      }
+    },
+    "expenses": {
+      "label": "Admin · Gastos",
+      "title": "Registrar Gasto",
+      "amount": "Monto",
+      "category": "Categoría",
+      "description": "Descripción",
+      "date": "Fecha",
+      "supplierName": "Nombre del proveedor (si aplica)",
+      "submit": "Añadir gasto",
+      "saved": "Guardado",
+      "categories": {
+        "OPERATING": "Operativo",
+        "PAYROLL": "Nóminas",
+        "MARKETING": "Marketing",
+        "DEBT": "Deuda",
+        "OTHER": "Otro",
+        "SUPPLIER": "Proveedor"
+      }
     },
     "marketing": {
       "label": "Admin · Marketing",
@@ -737,8 +794,16 @@
       "deliverItem": "Entregar ítem",
       "reconcileCod": "Conciliar COD",
       "reconcileSupplier": "Conciliar proveedor",
+      "reconcileNeedCost": "Ingresa el costo del proveedor para cada ítem antes de conciliar",
       "reconcileRefund": "Conciliar reembolso",
-      "refund": "Reembolsar"
+      "refund": "Reembolsar",
+      "returnApproveTitle": "Solicitud de devolución",
+      "returnFaultSelf": "Nuestra culpa (propia)",
+      "returnFaultSupplier": "Culpa del proveedor (imprenta)",
+      "returnDecisionExchange": "Cambio",
+      "returnDecisionRefund": "Reembolso",
+      "returnApprove": "Aprobar devolución",
+      "markReshipped": "Marcar reenviado"
     },
     "stickers": {
       "label": "Admin · Activos",
@@ -904,6 +969,7 @@
     "sidebar": {
       "overview": "Visión general",
       "finance": "Finanzas",
+      "expenses": "Gastos",
       "marketing": "Marketing",
       "dispatch": "Envío",
       "suppliers": "Proveedores",
@@ -990,6 +1056,7 @@
       "title": "Plantilla",
       "subtitle": "Diseños listos para publicar",
       "addNew": "Añadir",
+      "createBtn": "+ Nuevo libro",
       "name": "Nombre",
       "type": "Tipo",
       "category": "Categoría",

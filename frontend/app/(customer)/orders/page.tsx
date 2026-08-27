@@ -69,6 +69,13 @@ export default function OrdersPage() {
     }
   };
 
+  const requestReturn = async (id: number, body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] }) => {
+    await apiFetch(`/api/orders/${id}/return`, token!, { method: "POST", body: JSON.stringify(body) });
+    showToast(t("customer.orders.return.requested"), "success");
+    setOrders((prev) => (prev ? prev.map((o) => (o.id === id ? { ...o, returnState: "requested" } : o)) : prev));
+    setSelectedOrder((prev) => (prev ? { ...prev, returnState: "requested" } : prev));
+  };
+
   return (
     <div className="min-h-screen pt-15">
       <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6 border-b-[3px] border-[#222]">
@@ -103,6 +110,7 @@ export default function OrdersPage() {
           variant="user"
           onRequestPaymentLink={requestPaymentLink}
           onCancelOrder={cancelOrder}
+          onRequestReturn={requestReturn}
           onClose={() => setSelectedOrder(null)}
         />
       )}

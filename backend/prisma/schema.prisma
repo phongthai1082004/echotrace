@@ -13,6 +13,7 @@ enum ExpenseCategory {
   MARKETING 
   DEBT      
   OTHER
+  SUPPLIER
 }
 
 enum SampleBookType {
@@ -58,8 +59,6 @@ model Token {
   expiresAt    DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
   user         User?    @relation(fields: [userId], references: [id])
 
@@ -86,6 +85,21 @@ model UserImage {
 
   @@index([userId])
   @@index([bookId])
+}
+
+enum ReturnState {
+  none
+  requested
+  approved
+  reshipping
+  reshipped
+  refunding
+  refunded
+}
+
+enum ReturnFault {
+  self
+  supplier
 }
 
 model Order {
@@ -116,8 +130,9 @@ model Order {
   orderItems     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
+  returnState  ReturnState? @default(none)
+  returnFault  ReturnFault?
+  returnReason String?
 
   user         User          @relation(fields: [userId], references: [id])
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
@@ -147,8 +162,6 @@ model Transaction {
   rawPayload             Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
   order           Order?          @relation(fields: [orderId], references: [id])
   idempotencyKey  IdempotencyKey? @relation(fields: [idempotencyKeyId], references: [key])
@@ -170,8 +183,6 @@ model Income {
   note          String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
   transaction Transaction? @relation(fields: [transactionId], references: [id])
   cashflow    Cashflow?
@@ -193,8 +204,6 @@ model Expense {
   note          String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
   transaction Transaction? @relation(fields: [transactionId], references: [id])
   cashflow    Cashflow?
@@ -216,8 +225,6 @@ model Cashflow {
   note          String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
-  deletedAt DateTime?
 
   income  Income?  @relation(fields: [incomeId], references: [id])
   expense Expense? @relation(fields: [expenseId], references: [id])
@@ -284,6 +291,7 @@ model IdempotencyKey {
   status       String @default("PROCESSING")
   responseBody Json?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   transaction Transaction?
 
@@ -421,4 +429,21 @@ model Coupon {
 
   @@index([isActive])
   @@index([expiresAt])
+}
+
+// ponytail: bảng counter tài chính theo tháng, cập nhật bởi DB trigger (xem prisma/triggers/finance_counters.sql)
+model FinancePeriod {
+  period               String   @id // 'YYYY-MM'
+  totalOrders          Int      @default(0)
+  totalRevenue         Float    @default(0)
+  totalExpense         Float    @default(0)
+  totalSupplierExpense Float    @default(0)
+  cashInflow           Float    @default(0)
+  cashOutflow          Float    @default(0)
+  totalProfit          Float    @default(0)
+  cashOnHand           Float    @default(0)
+  receivables          Float    @default(0)
+  payables             Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }

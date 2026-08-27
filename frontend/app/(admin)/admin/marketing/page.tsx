@@ -120,8 +120,6 @@ export default function MarketingPage() {
                     t("admin.marketing.visitors"),
                     t("admin.marketing.orders"),
                     t("admin.marketing.convRate"),
-                    t("admin.marketing.adSpend"),
-                    t("admin.marketing.roas"),
                   ].map((h) => (
                     <th
                       key={h}
@@ -148,12 +146,6 @@ export default function MarketingPage() {
                       <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4E6] text-[#2D6A2D] border-2 border-[#2D6A2D]">
                         {s.conv}%
                       </span>
-                    </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
-                      {s.spend ? `$${s.spend}` : <span className="text-[#999]">{t("common.dash")}</span>}
-                    </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
-                      {s.roas ? `${s.roas}x` : <span className="text-[#999]">{t("admin.marketing.organic")}</span>}
                     </td>
                   </tr>
                 ))}

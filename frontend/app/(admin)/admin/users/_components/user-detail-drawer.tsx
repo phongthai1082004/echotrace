@@ -6,6 +6,7 @@ import { Save } from "lucide-react";
 import { User } from "@/models/users/user";
 import { card, label, neoBtnPrimary } from "@/lib/styles";
 import { CloseButton } from "@/components/ui/close-button";
+import { YesNoPopup } from "@/components/yes-no-popup";
 import { timeSince, UserStatus } from "@echotrace/shared";
 
 const STATUS: UserStatus[] = [UserStatus.ACTIVE, UserStatus.BANNED];
@@ -16,11 +17,14 @@ export function UserDetailDrawer({
   onClose,
 }: {
   user: User;
-  onSave: () => void;
+  onSave: (status: UserStatus) => void | Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
   const [statusForm, setStatusForm] = useState<UserStatus>(user.isDelete ? "banned" : "active");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   return (
     <>
@@ -92,8 +96,12 @@ export function UserDetailDrawer({
         </div>
 
         <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
+          {err && <p className="text-xs font-bold text-[#c0392b] mb-2 text-center">{err}</p>}
           <button
-            onClick={onSave}
+            onClick={() => {
+              setErr(null);
+              setShowConfirm(true);
+            }}
             className={`${neoBtnPrimary} w-full flex items-center justify-center gap-2 py-3 ${
               user.role === "admin" ? "opacity-40 pointer-events-none" : ""
             }`}
@@ -102,6 +110,28 @@ export function UserDetailDrawer({
           </button>
         </div>
       </div>
+
+      <YesNoPopup
+        open={showConfirm}
+        variant={statusForm === "banned" ? "danger" : "primary"}
+        title={statusForm === "banned" ? t("admin.users.ban") : t("admin.users.unban")}
+        message={statusForm === "banned" ? t("admin.users.confirmBan") : t("admin.users.confirmUnban")}
+        confirmLabel={statusForm === "banned" ? t("admin.users.ban") : t("admin.users.unban")}
+        busy={busy}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={async () => {
+          setBusy(true);
+          setErr(null);
+          try {
+            await onSave(statusForm);
+            setShowConfirm(false);
+          } catch (e: any) {
+            setErr(e?.message || t("admin.users.statusUpdateFailed"));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
     </>
   );
 }

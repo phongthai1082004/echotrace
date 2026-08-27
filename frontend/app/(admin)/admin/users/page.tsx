@@ -31,6 +31,8 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
     cursorStack,
     handleNext,
     handlePrevious,
+    updateStatus,
+    refresh,
   } = useUsers();
 
   const [selected, setSelected] = useState<User | null>(null);
@@ -68,8 +70,11 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
       {selected && (
         <UserDetailDrawer
           user={selected}
-          onSave={() => {
-            /* TODO: wire PATCH /api/admin/users/status khi làm flow cập nhật trạng thái */
+          onSave={async (status) => {
+            if (!selected) return;
+            await updateStatus(selected.id, status);
+            refresh();
+            setSelected(null);
           }}
           onClose={() => setSelected(null)}
         />

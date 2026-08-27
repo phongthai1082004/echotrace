@@ -3,6 +3,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { IOrderService } from './order.service.js';
 import { ApiResponse } from '../../middleware/api.response.js';
+import { AppError } from '../../middleware/app.error.js';
+import { ErrorCode, ReturnFault } from '@echotrace/shared';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -56,5 +58,27 @@ export class OrderController {
 	updateOrder = async (req: AuthRequest, res: Response) => {
 		await this.orderService.adminUpdateOrder(parseInt(req.params.id as string), req.body ?? {});
 		res.json(ApiResponse.message('Order updated'));
+	};
+
+	requestReturn = async (req: AuthRequest, res: Response) => {
+		const { reason, items } = req.body ?? {};
+		// ponytail: items tuỳ chọn; nếu thiếu coi như cả đơn lỗi.
+		if (items !== undefined && (!Array.isArray(items) || items.some((r: any) => typeof r?.index !== 'number' || typeof r?.quantity !== 'number' || r.quantity <= 0))) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		await this.orderService.requestReturn(parseInt(req.params.id as string), parseInt(req.userId!), { reason, items });
+		res.json(ApiResponse.message('Return requested'));
+	};
+
+	approveReturn = async (req: AuthRequest, res: Response) => {
+		const { fault } = req.body ?? {};
+		if (fault !== ReturnFault.SELF && fault !== ReturnFault.SUPPLIER) throw new AppError(ErrorCode.INTERNAL, 400);
+		await this.orderService.approveReturn(parseInt(req.params.id as string), { fault });
+		res.json(ApiResponse.message('Return approved'));
+	};
+
+	markReshipped = async (req: AuthRequest, res: Response) => {
+		await this.orderService.markReshipped(parseInt(req.params.id as string));
+		res.json(ApiResponse.message('Marked reshipped'));
 	};
 }

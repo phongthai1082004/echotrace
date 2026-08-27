@@ -59,14 +59,23 @@ export class SampleBookController {
 	};
 
 	explore = async (req: AuthRequest, res: Response) => {
-		const items = await this.sampleBookService.explore();
+		const items = await this.sampleBookService.explore(this.paginationParams(req));
 		res.json(ApiResponse.success(items));
 	};
 
 	albums = async (req: AuthRequest, res: Response) => {
-		const items = await this.sampleBookService.albums();
+		const items = await this.sampleBookService.albums(this.paginationParams(req));
 		res.json(ApiResponse.success(items));
 	};
+
+	private paginationParams(req: AuthRequest) {
+		const q = req.query as Record<string, any>;
+		return {
+			cursor: q.cursor ? Number(q.cursor) : undefined,
+			limit: q.limit ? Number(q.limit) : undefined,
+			category: q.category ? String(q.category) : undefined,
+		};
+	}
 
 	getPublishedById = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(String(req.params.id));

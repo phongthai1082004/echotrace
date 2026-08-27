@@ -178,8 +178,8 @@ export function DualLineChart({
   const iw = W - pad.left - pad.right,
     ih = H - pad.top - pad.bottom;
   const gap = iw / (data.length - 1);
-  const fmt1 = formatValue1 ?? ((v: number) => `$${v.toLocaleString()}`);
-  const fmt2 = formatValue2 ?? ((v: number) => `$${v.toLocaleString()}`);
+  const fmt1 = formatValue1 ?? ((v: number) => `${v.toLocaleString()}₫`);
+  const fmt2 = formatValue2 ?? ((v: number) => `${v.toLocaleString()}₫`);
 
   const toPts = (field: "series1" | "series2") =>
     data.map((d, i) => ({

@@ -20,6 +20,7 @@ import { PaymentService } from '../infrastructure/payment/payment.service.js';
 import { PayOSGateway } from '../infrastructure/payment/payos.service.js';
 import { PayOS } from '@payos/node';
 import { PaymentWebhookService } from '../features/payment/payment.service.js';
+import { FinanceService } from '../features/finance/finance.service.js';
 
 container.register('UserBaseService', { useValue: new BaseService<any>(prisma.user) });
 container.register('CacheService', { useValue: new CacheService() });
@@ -45,6 +46,7 @@ container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheServ
 container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
 container.registerSingleton('IOrderService', OrderService);
 container.registerSingleton('IPaymentWebhookService', PaymentWebhookService);
+container.registerSingleton('IFinanceService', FinanceService);
 
 let paymentService: PaymentService;
 

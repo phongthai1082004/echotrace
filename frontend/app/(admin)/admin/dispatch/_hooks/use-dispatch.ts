@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
+import { useDebounce } from "@/hooks";
 import { apiFetch } from "@/lib/api.fetch";
 import type { OrderDTO, OrderStatus } from "@/lib/order.dto";
 import { ORDER_STATUSES } from "@/lib/order.dto";
@@ -28,6 +29,7 @@ export function useDispatch() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderDTO | null>(null);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [page, setPage] = useState(0);
   const perPage = 6;
@@ -54,7 +56,7 @@ export function useDispatch() {
   const filteredOrders = list
     .filter((o) => !selectedSupplierId || o.supplierId === selectedSupplierId)
     .filter((o) => {
-      const q = search.toLowerCase();
+      const q = debouncedSearch.toLowerCase();
       return (
         !q ||
         (o.orderCode ?? "").toLowerCase().includes(q) ||
@@ -116,6 +118,47 @@ export function useDispatch() {
     setPage(0);
   };
 
+  // ponytail: duyệt đổi trả / đánh dấu đã gửi lại — xong thì refetch cho chắc
+  const refreshOrder = useCallback(
+    async (id: number) => {
+      const r = await apiFetch<OrderDTO[]>("/api/admin/orders", token).catch(() => null);
+      if (r) {
+        setOrders(r);
+        setSelectedOrder((p) => (p ? r.find((o) => o.id === id) ?? p : p));
+      }
+    },
+    [token],
+  );
+
+  const approveReturn = useCallback(
+    async (id: number, body: { fault: "self" | "supplier" }) => {
+      try {
+        await apiFetch(`/api/admin/orders/${id}/return-approve`, token, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        await refreshOrder(id);
+      }
+    },
+    [token, refreshOrder],
+  );
+
+  const markReshipped = useCallback(
+    async (id: number) => {
+      try {
+        await apiFetch(`/api/admin/orders/${id}/return-reshipped`, token, { method: "POST" });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        await refreshOrder(id);
+      }
+    },
+    [token, refreshOrder],
+  );
+
   const statusLabel = (key: string) =>
     key === "all" ? t("admin.dispatch.filterAll") : t(STATUS_LABEL_KEY(key));
 
@@ -139,6 +182,8 @@ export function useDispatch() {
     counts,
     updateStatus,
     processEvent,
+    approveReturn,
+    markReshipped,
     statusLabel,
     customerName,
     suppliers: enrichedSuppliers,

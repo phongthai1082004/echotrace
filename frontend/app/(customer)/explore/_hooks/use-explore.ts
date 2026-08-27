@@ -1,42 +1,83 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 
 export interface ExploreSample {
-  id: number;
-  name: string;
-  description: string | null;
-  category: string | null;
-  style: string;
-  pageCount: number;
-  coverUrl: string | null;
-  thumbnailUrl: string | null;
-  paperWidth: number | null;
-  paperHeight: number | null;
-  theme: { name: string; code: string } | null;
+	id: number;
+	name: string;
+	description: string | null;
+	category: string | null;
+	style: string;
+	pageCount: number;
+	coverUrl: string | null;
+	thumbnailUrl: string | null;
+	paperWidth: number | null;
+	paperHeight: number | null;
+	theme: { name: string; code: string } | null;
 }
 
+const LIMIT = 12;
+
+// ponytail: cursor pagination (offset-based) theo đơn vị item; backend giữ cache full-list rồi slice.
 export function useExplore(token?: string) {
-  const { data: session } = useSession();
-  const accessToken = token ?? (session as any)?.accessToken;
-  const [samples, setSamples] = useState<ExploreSample[]>([]);
-  const [albums, setAlbums] = useState<ExploreSample[]>([]);
-  const [loading, setLoading] = useState(true);
+	const { data: session } = useSession();
+	const accessToken = token ?? (session as any)?.accessToken;
+	const [samples, setSamples] = useState<ExploreSample[]>([]);
+	const [albums, setAlbums] = useState<ExploreSample[]>([]);
+	const [samplesNext, setSamplesNext] = useState<number | null>(null);
+	const [albumsNext, setAlbumsNext] = useState<number | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [category, setCategoryState] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!accessToken) return;
-    setLoading(true);
-    Promise.all([
-      apiFetch<any[]>("/api/explore/samples", accessToken)
-        .then((d) => setSamples(d || []))
-        .catch(() => {}),
-      apiFetch<any[]>("/api/explore/albums", accessToken)
-        .then((d) => setAlbums(d || []))
-        .catch(() => {}),
-    ]).finally(() => setLoading(false));
-  }, [accessToken]);
+	const loadSamples = useCallback(
+		async (cursor: number, cat: string | null, replace: boolean) => {
+			if (!accessToken) return;
+			const url = `/api/explore/samples?cursor=${cursor}&limit=${LIMIT}${cat ? `&category=${encodeURIComponent(cat)}` : ""}`;
+			const d = await apiFetch<{ items: ExploreSample[]; nextCursor: number | null }>(url, accessToken);
+			setSamples((prev) => (replace ? d.items : [...prev, ...d.items]));
+			setSamplesNext(d.nextCursor);
+		},
+		[accessToken],
+	);
 
-  return { samples, albums, loading };
+	const loadAlbums = useCallback(
+		async (cursor: number, replace: boolean) => {
+			if (!accessToken) return;
+			const d = await apiFetch<{ items: ExploreSample[]; nextCursor: number | null }>(
+				`/api/explore/albums?cursor=${cursor}&limit=${LIMIT}`,
+				accessToken,
+			);
+			setAlbums((prev) => (replace ? d.items : [...prev, ...d.items]));
+			setAlbumsNext(d.nextCursor);
+		},
+		[accessToken],
+	);
+
+	useEffect(() => {
+		if (!accessToken) return;
+		setLoading(true);
+		Promise.all([loadSamples(0, null, true), loadAlbums(0, true)]).finally(() => setLoading(false));
+	}, [accessToken, loadSamples, loadAlbums]);
+
+	const setCategory = useCallback(
+		(cat: string | null) => {
+			setCategoryState(cat);
+			setSamples([]);
+			setSamplesNext(null);
+			loadSamples(0, cat, true);
+		},
+		[loadSamples],
+	);
+
+	const loadMoreSamples = useCallback(() => {
+		if (samplesNext != null) loadSamples(samplesNext, category, false);
+	}, [samplesNext, category, loadSamples]);
+
+	const loadMoreAlbums = useCallback(() => {
+		if (albumsNext != null) loadAlbums(albumsNext, false);
+	}, [albumsNext, loadAlbums]);
+
+	return { samples, albums, samplesNext, albumsNext, loading, setCategory, loadMoreSamples, loadMoreAlbums };
 }

@@ -51,4 +51,4 @@ EXPOSE 4000
 # bake pnpm vào image -> lúc boot không cần tải từ registry
 RUN corepack enable pnpm && corepack prepare pnpm@11.9.0 --activate
 
-CMD ["sh", "-c", "pnpm exec prisma db push && node dist/src/server.js"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/server.js"]

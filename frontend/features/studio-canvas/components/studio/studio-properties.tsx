@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { NeoSelect } from "@/components/neo-select";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FONTS, resolveFormat } from "../../types";
 import * as fabric from "fabric";
@@ -221,17 +222,13 @@ export function StudioProperties() {
               <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
                 {t("customer.studio.font")}
               </p>
-              <select
+              <NeoSelect
                 value={(selected as any)?.fontFamily || ""}
-                onChange={(e) => applyFont(e.target.value)}
-                className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white"
-              >
-                {FONTS.map((f) => (
-                  <option key={f.name} value={f.css}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+                onChange={applyFont}
+                placeholder={t("customer.studio.font")}
+                className="w-full"
+                options={FONTS.map((f) => ({ value: f.css, label: f.name }))}
+              />
             </div>
             {selected && (
               <div>

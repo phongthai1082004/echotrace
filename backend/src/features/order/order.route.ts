@@ -16,9 +16,12 @@ router.get('/orders', authMiddleware, asyncHandler((req, res) => orderCtrl.listM
 router.post('/orders/:id/payment-link', authMiddleware, asyncHandler((req, res) => orderCtrl.createPaymentLink(req, res)));
 router.post('/orders/:id/verify', authMiddleware, asyncHandler((req, res) => orderCtrl.verifyPayment(req, res)));
 router.post('/orders/:id/cancel', authMiddleware, asyncHandler((req, res) => orderCtrl.cancelOrder(req, res)));
+router.post('/orders/:id/return', authMiddleware, asyncHandler((req, res) => orderCtrl.requestReturn(req, res)));
 
 router.get('/admin/orders', adminMiddleware, asyncHandler((req, res) => orderCtrl.listAllOrders(req, res)));
 router.post('/admin/orders/:id/events', adminMiddleware, asyncHandler((req, res) => orderCtrl.processEvent(req, res)));
 router.patch('/admin/orders/:id', adminMiddleware, asyncHandler((req, res) => orderCtrl.updateOrder(req, res)));
+router.post('/admin/orders/:id/return-approve', adminMiddleware, asyncHandler((req, res) => orderCtrl.approveReturn(req, res)));
+router.post('/admin/orders/:id/return-reshipped', adminMiddleware, asyncHandler((req, res) => orderCtrl.markReshipped(req, res)));
 
 export default router;

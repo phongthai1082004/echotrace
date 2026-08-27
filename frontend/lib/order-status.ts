@@ -4,6 +4,7 @@ import type { OrderDTO, OrderStatus } from "./order.dto";
 export const ORDER_STATUS_COLORS: Record<OrderStatus, { color: string; text: string }> = {
   pending_payment: { color: "#FFF7D6", text: "#222" },
   paid: { color: "#FFD93D", text: "#222" },
+  partially_paid: { color: "#8E7CC3", text: "#fff" },
   processing: { color: "#9CB8A8", text: "#222" },
   shipping: { color: "#5A8F4A", text: "#fff" },
   delivered: { color: "#222", text: "#fff" },

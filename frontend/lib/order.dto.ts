@@ -35,8 +35,11 @@ export interface OrderItemDTO {
   thumbnailUrl?: string | null;
   supplierId?: number | null;
   costPrice?: number | null;
-  reconciledAt?: string | null;
-  deliveredAt?: string | null;
+	reconciledAt?: string | null;
+	deliveredAt?: string | null;
+	defective?: boolean | null;
+	returnQty?: number | null;
+	returnDefect?: string | null;
 }
 
 export interface OrderDTO {
@@ -67,6 +70,9 @@ export interface OrderDTO {
   expiredAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  returnState?: string | null;
+  returnFault?: string | null;
+  returnReason?: string | null;
   // join phía admin
   user?: { id: number; name: string | null; email: string } | null;
   supplier?: { id: number; name: string; contact: string; email: string } | null;

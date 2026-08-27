@@ -6,6 +6,8 @@ import {
 	PaymentPlan,
 	TransactionType,
 	OrderStatus,
+	ReturnState,
+	ReturnFault,
 	TransactionStatus,
 	PaymentGateway,
 	makeSku,
@@ -31,6 +33,13 @@ export abstract class IOrderService {
 	abstract createPaymentLink(orderId: number, userId: number): Promise<{ qrCode?: string; checkoutUrl?: string }>;
 	abstract verifyPayment(orderId: number, userId: number): Promise<string>;
 	abstract cancelOrder(orderId: number, userId: number): Promise<{ refunded: boolean; amount: number }>;
+	abstract requestReturn(
+		orderId: number,
+		userId: number,
+		body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] },
+	): Promise<void>;
+	abstract approveReturn(orderId: number, body: { fault: ReturnFault }): Promise<void>;
+	abstract markReshipped(orderId: number): Promise<void>;
 }
 
 @injectable()
@@ -192,7 +201,7 @@ export class OrderService implements IOrderService {
 	// ponytail: tạo/làm mới link thanh toán cho đơn pending — để user mất mạng/out trang vẫn trả được
 	async createPaymentLink(orderId: number, userId: number): Promise<{ qrCode?: string; checkoutUrl?: string }> {
 		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId, isDelete: false },
+			where: { id: orderId, userId },
 			include: { transactions: { orderBy: { id: 'desc' }, take: 1 } },
 		});
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
@@ -230,7 +239,7 @@ export class OrderService implements IOrderService {
 	// Polling từ client gọi hàm này: hỏi PayOS status thật, nếu PAID thì áp dụng logic webhook (idempotent).
 	async verifyPayment(orderId: number, userId: number): Promise<string> {
 		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId, isDelete: false },
+			where: { id: orderId, userId },
 			include: { transactions: { orderBy: { id: 'desc' }, take: 1 } },
 		});
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
@@ -257,14 +266,14 @@ export class OrderService implements IOrderService {
 
 	async listMyOrders(userId: number): Promise<any[]> {
 		return prisma.order.findMany({
-			where: { userId, isDelete: false },
+			where: { userId },
 			orderBy: { createdAt: 'desc' },
 		});
 	}
 
 	async listAllOrders(): Promise<any[]> {
 		return prisma.order.findMany({
-			where: { isDelete: false },
+			where: {},
 			orderBy: { createdAt: 'desc' },
 			include: {
 				user: { select: { id: true, name: true, email: true } },
@@ -411,13 +420,20 @@ export class OrderService implements IOrderService {
 		const idxSet = Array.isArray(payload.itemIndices)
 			? new Set(payload.itemIndices as number[])
 			: null;
-		const targets = items
+		// ponytail: ứng viên = item đã gán NCC, chưa đối soát, và không phải lỗi nhà in (bỏ qua nếu returnFault=supplier)
+		const candidates = items
 			.map((it, i) => ({ it, i }))
-			.filter(({ it, i }) => (idxSet ? idxSet.has(i) : true) && it.supplierId != null && it.costPrice != null && !it.reconciledAt);
+			.filter(({ it, i }) => (idxSet ? idxSet.has(i) : true) && it.supplierId != null && !it.reconciledAt && it.returnFault !== 'supplier');
+
+		// ponytail: phải nhập giá đã trả NCC (>0) cho TẤT CẢ item trước khi đối soát
+		const missingCost = candidates.filter(
+			({ it }) => it.costPrice == null || Number.isNaN(Number(it.costPrice)) || Number(it.costPrice) <= 0,
+		);
+		if (missingCost.length > 0) throw new AppError("MISSING_SUPPLIER_COST", 400);
 
 		// group by supplier
 		const bySupplier = new Map<number, { amount: number; indices: number[] }>();
-		for (const { it, i } of targets) {
+		for (const { it, i } of candidates) {
 			const cur = bySupplier.get(it.supplierId) ?? { amount: 0, indices: [] };
 			cur.amount += Number(it.costPrice);
 			cur.indices.push(i);
@@ -432,7 +448,7 @@ export class OrderService implements IOrderService {
 					data: {
 						orderId: order.id,
 						amount: grp.amount,
-						category: 'OTHER', // ponytail: enum chưa có SUPPLIER
+						category: 'SUPPLIER',
 						date: new Date(),
 						supplierName: sup?.name ?? null,
 						note: `Chi phí NCC đơn ${order.orderCode}`,
@@ -480,7 +496,7 @@ export class OrderService implements IOrderService {
 	// ponytail: customer cancel. Refund (Expense + cashflow OUT) only if order hasn't reached PROCESSING yet.
 	async cancelOrder(orderId: number, userId: number): Promise<{ refunded: boolean; amount: number }> {
 		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId, isDelete: false },
+			where: { id: orderId, userId },
 			include: { transactions: { where: { status: TransactionStatus.SUCCESS }, orderBy: { id: 'desc' } } },
 		});
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
@@ -511,6 +527,82 @@ export class OrderService implements IOrderService {
 		}
 		await prisma.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
 		return { refunded: false, amount: 0 };
+	}
+
+	// ===== Return / Warranty (bảo hành = giao lại quyển khác) =====
+	// ponytail: "hoàn" thực chất là bảo hành giao lại. KHÔNG gọi PayOS, KHÔNG trả tiền khách.
+	// Khách báo lỗi + số quyển; mình giao lại và chỉ reconcile (ghi Expense) phần đó.
+	// SELF -> ghi Expense bản thay thế (mình trả NCC); SUPPLIER -> nhà in chịu, bỏ qua Expense.
+	async requestReturn(
+		orderId: number,
+		userId: number,
+		body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] },
+	): Promise<void> {
+		const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		if (order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.SHIPPING) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		if (order.returnState && order.returnState !== ReturnState.NONE) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		const items: any[] = Array.isArray(order.orderItems) ? order.orderItems : [];
+		const reported = body.items ?? items.map((_, i) => ({ index: i, quantity: items[i]?.quantity ?? 1, defect: undefined }));
+		// ponytail: đánh dấu từng item lỗi để admin duyệt + reconcile đúng phần
+		for (const r of reported) {
+			if (r.index < 0 || r.index >= items.length || !Number.isInteger(r.quantity) || r.quantity <= 0) {
+				throw new AppError(ErrorCode.INTERNAL, 400);
+			}
+			items[r.index] = { ...items[r.index], defective: true, returnQty: r.quantity, returnDefect: r.defect ?? null };
+		}
+		await prisma.order.update({
+			where: { id: orderId },
+			data: { returnState: ReturnState.REQUESTED, returnReason: body.reason ?? null, orderItems: items },
+		});
+	}
+
+	async approveReturn(orderId: number, body: { fault: ReturnFault }): Promise<void> {
+		const order = await prisma.order.findUnique({ where: { id: orderId } });
+		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		if (order.returnState !== ReturnState.REQUESTED) throw new AppError(ErrorCode.INTERNAL, 400);
+
+		const fault = body.fault === ReturnFault.SUPPLIER ? ReturnFault.SUPPLIER : ReturnFault.SELF;
+		// ponytail: chỉ đánh dấu item lỗi nhà in (returnFault='supplier') để reconcileSupplier bỏ qua;
+		// item lỗi thường (SELF) vẫn để reconcile bình thường (NCC được trả tiền bản thay thế).
+		const items: any[] = Array.isArray(order.orderItems) ? order.orderItems : [];
+		for (const it of items) {
+			if (it.defective && fault === ReturnFault.SUPPLIER) it.returnFault = 'supplier';
+		}
+		await prisma.order.update({
+			where: { id: orderId },
+			data: { returnFault: fault, orderItems: items, returnState: ReturnState.RESHIPPING },
+		});
+	}
+
+	async markReshipped(orderId: number): Promise<void> {
+		const order = await prisma.order.findUnique({ where: { id: orderId } });
+		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		if (order.returnState !== ReturnState.RESHIPPING) throw new AppError(ErrorCode.INTERNAL, 400);
+		// ponytail: SELF -> ghi Expense bản thay thế (reconcile chỗ đó); SUPPLIER -> nhà in chịu, không ghi
+		if (order.returnFault === ReturnFault.SELF) {
+			const items: any[] = Array.isArray(order.orderItems) ? order.orderItems : [];
+			const amount = items
+				.filter((it) => it.defective)
+				.reduce((sum, it) => sum + (Number(it.costPrice) || 0) * (Number(it.returnQty) || Number(it.quantity) || 0), 0);
+			await prisma.$transaction(async (tx) => {
+				if (amount > 0) {
+					const expense = await tx.expense.create({
+						data: { orderId: order.id, amount, category: 'OTHER', date: new Date(), note: `Bảo hành giao lại đơn ${order.orderCode}` },
+					});
+					await tx.cashflow.create({
+						data: { type: 'OUT', expenseId: expense.id, orderId: order.id, amount, date: new Date(), note: 'Bảo hành giao lại' },
+					});
+				}
+				await tx.order.update({ where: { id: order.id }, data: { returnState: ReturnState.RESHIPPED } });
+			});
+		} else {
+			await prisma.order.update({ where: { id: orderId }, data: { returnState: ReturnState.RESHIPPED } });
+		}
 	}
 
 	// ponytail: admin đối soát đơn đã refund — đánh dấu txn đã reconciled (hoàn tiền thủ công trên PayOS)

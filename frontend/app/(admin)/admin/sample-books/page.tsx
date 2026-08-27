@@ -7,6 +7,8 @@ import { SampleBookDTO, Category, SampleBookType, SampleBookStatus } from "@echo
 import { card } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
+import Link from "next/link";
+import { neoBtnPrimary } from "@/lib/styles";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
 import { useSampleBooks } from "./_hooks/use-sample-books";
@@ -61,9 +63,17 @@ export default function AdminSampleBooksPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <AdminHeader label={t("admin.sampleBooks.label")} title={t("admin.sampleBooks.title")}>
-        <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.sampleBooks.searchPlaceholder")} />
-      </AdminHeader>
+<AdminHeader label={t("admin.sampleBooks.label")} title={t("admin.sampleBooks.title")}>
+  <div className="flex items-center gap-3">
+    <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.sampleBooks.searchPlaceholder")} />
+    <Link
+      href="/admin/studio"
+      className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}
+    >
+      {t("admin.sampleBooks.createBtn")}
+    </Link>
+  </div>
+</AdminHeader>
 
       <div className="flex-1 flex flex-col px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 max-[1600px]:py-5 max-[1440px]:py-4 max-[1280px]:py-3 gap-4 min-h-0 overflow-hidden">
         <div className={`${card} p-3 shrink-0`}>

@@ -32,7 +32,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "confirm": "Confirm",
-      "cancel": "Cancel",
     "close": "Close",
     "delete": "Delete",
     "edit": "Edit",
@@ -303,7 +302,8 @@
       "minimal": "Minimal",
       "adventure": "Adventure",
       "cultural": "Cultural",
-      "custom": "Custom"
+      "custom": "Custom",
+      "loadMore": "Load more"
     },
     "myJournals": {
       "title": "My Journals",
@@ -473,7 +473,25 @@
         "delivered": "Delivered",
         "cancelled": "Cancelled"
       },
-      "empty": "You have no orders yet."
+      "empty": "You have no orders yet.",
+      "requestReturn": "Request return / exchange",
+      "return": {
+        "requested": "Return requested",
+        "exchange": "Exchange",
+        "refund": "Refund",
+        "reasonPlaceholder": "Reason (optional)",
+        "submit": "Submit request",
+        "none": "No return",
+        "approved": "Return approved",
+        "reshipping": "Reshipping",
+        "reshipped": "Reshipped",
+        "refunding": "Refunding",
+        "refunded": "Refunded",
+        "hint": "Select the defective item(s) and quantity to replace (warranty)",
+        "qty": "Qty",
+        "defectPlaceholder": "Describe the defect (optional)",
+        "selectOne": "Please select at least one item"
+      }
     },
     "checkout": {
       "title": "Checkout",
@@ -609,17 +627,56 @@
     "finance": {
       "label": "Admin · Finance",
       "title": "Financial Overview",
-      "cashInflow": "Cash Inflow",
-      "outflow": "Outflow",
-      "grossProfit": "Gross Profit",
-      "cashOnHand": "Cash on Hand",
-      "receivables": "Receivables",
-      "overdueReceivable": "Overdue Receivable",
-      "payables": "Payables",
-      "overduePayable": "Overdue Payable",
-      "chartTitle": "Revenue vs Gross Profit (30 Days)",
-      "revenue": "Revenue",
-      "grossProfitLegend": "Gross Profit"
+      "overviewTitle": "Latest Month",
+      "allTime": "All-time",
+      "monthlyTitle": "Monthly Counters",
+      "suppliersTitle": "Supplier Payables",
+      "totalDebt": "Total Debt",
+      "thisMonth": "Due This Month",
+      "noData": "No data yet",
+      "incomeTitle": "Income",
+      "expenseTitle": "Expense",
+      "cashflowTitle": "Cashflow",
+      "from": "From",
+      "to": "To",
+      "type": "Type",
+      "in": "In",
+      "out": "Out",
+      "date": "Date",
+      "amount": "Amount",
+      "note": "Note",
+      "col": {
+        "period": "Month",
+        "totalOrders": "Orders",
+        "totalRevenue": "Revenue",
+        "totalExpense": "Expense",
+        "totalSupplierExpense": "Supplier Exp.",
+        "cashInflow": "Cash In",
+        "cashOutflow": "Cash Out",
+        "totalProfit": "Profit",
+        "cashOnHand": "Cash On Hand",
+        "receivables": "Receivables",
+        "payables": "Payables"
+      }
+    },
+    "expenses": {
+      "label": "Admin · Expenses",
+      "title": "Record Expense",
+      "amount": "Amount",
+      "category": "Category",
+      "description": "Description",
+      "date": "Date",
+      "supplierName": "Supplier name (if any)",
+      "submit": "Add Expense",
+      "saved": "Saved",
+      "categories": {
+        "OPERATING": "Operating",
+        "PAYROLL": "Payroll",
+        "MARKETING": "Marketing",
+        "DEBT": "Debt",
+        "OTHER": "Other",
+        "SUPPLIER": "Supplier"
+      }
     },
     "marketing": {
       "label": "Admin · Marketing",
@@ -736,8 +793,16 @@
       "deliverItem": "Deliver item",
       "reconcileCod": "Reconcile COD",
       "reconcileSupplier": "Reconcile supplier",
+      "reconcileNeedCost": "Enter the supplier cost for every item before reconciling",
       "reconcileRefund": "Reconcile refund",
-      "refund": "Refund"
+      "refund": "Refund",
+      "returnApproveTitle": "Return request",
+      "returnFaultSelf": "Our fault (self)",
+      "returnFaultSupplier": "Supplier fault (print house)",
+      "returnDecisionExchange": "Exchange",
+      "returnDecisionRefund": "Refund",
+      "returnApprove": "Approve return",
+      "markReshipped": "Mark reshipped"
     },
     "suppliers": {
       "label": "Admin · Suppliers",
@@ -903,6 +968,7 @@
     "sidebar": {
       "overview": "Overview",
       "finance": "Finance",
+      "expenses": "Expenses",
       "marketing": "Marketing",
       "dispatch": "Dispatch",
       "suppliers": "Suppliers",
@@ -989,6 +1055,7 @@
       "title": "Template",
       "subtitle": "Pre-built designs ready to publish",
       "addNew": "Add New",
+      "createBtn": "+ New Book",
       "name": "Name",
       "type": "Type",
       "category": "Category",

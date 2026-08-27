@@ -19,7 +19,9 @@ import stickersRoutes from './features/stickers/stickers.routes.js';
 import uploadsRoutes from './features/uploads/uploads.routes.js';
 import orderRoutes from './features/order/order.route.js';
 import { startDelayedWorker } from './infrastructure/queue/redis-delayed-queue.js';
+import { startOrderExpiryCron } from './infrastructure/queue/order-expiry-cron.js';
 import paymentRoutes from './features/payment/payment.route.js';
+import financeRoutes from './features/finance/finance.route.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 
 const PORT = process.env.BACKEND_PORT;
@@ -66,6 +68,7 @@ async function bootstrap() {
 	apiRouter.use('/', uploadsRoutes);
 	apiRouter.use('/', orderRoutes);
 	apiRouter.use('/', paymentRoutes);
+	apiRouter.use('/', financeRoutes);
 
 	app.use('/:lang/api', apiRouter);
 	app.use('/api', apiRouter);
@@ -78,6 +81,8 @@ async function bootstrap() {
 
 	// ponytail: xử lý các đơn hết hạn chưa thanh toán (Redis delayed job)
 	startDelayedWorker();
+	// ponytail: cron 10 phút backup phòng Redis lỡ đơn hết hạn
+	startOrderExpiryCron();
 
 	server.on('error', (error: Error) => {
 		console.error('❌ Server runtime error encountered:', error.message);

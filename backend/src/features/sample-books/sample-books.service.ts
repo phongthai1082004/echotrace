@@ -21,8 +21,8 @@ export abstract class ISampleBookService {
 	abstract update(id: number, data: UpdateSampleBookDTO): Promise<SampleBookDTO>;
 	abstract updateStatus(id: number, status: string): Promise<SampleBookDTO>;
 	abstract remove(id: number): Promise<void>;
-	abstract explore(): Promise<SampleBookDTO[]>;
-	abstract albums(): Promise<SampleBookDTO[]>;
+	abstract explore(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
+	abstract albums(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
 	abstract getPublishedById(id: number): Promise<SampleBookDTO>;
 }
 
@@ -137,7 +137,18 @@ export class SampleBookService extends ISampleBookService {
 
 	private visibleStatuses = ['published', 'active'];
 
-	async explore() {
+	// ponytail: giữ cache full-list, slice theo cursor/limit/category ở bộ nhớ (catalog bé, không đổi schema)
+	async explore(params: { cursor?: number; limit?: number; category?: string } = {}): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }> {
+		const all = await this.getExploreList();
+		return this.paginate(all, params);
+	}
+
+	async albums(params: { cursor?: number; limit?: number; category?: string } = {}): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }> {
+		const all = await this.getAlbumList();
+		return this.paginate(all, params);
+	}
+
+	private async getExploreList(): Promise<SampleBookDTO[]> {
 		const cached = await this.sampleCache.getList<SampleBookDTO[]>('explore');
 		if (cached) return cached;
 		const books = await prisma.sampleBook.findMany({
@@ -145,12 +156,11 @@ export class SampleBookService extends ISampleBookService {
 			orderBy: { id: 'desc' },
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
-
 		await this.sampleCache.setList('explore', dtos);
 		return dtos;
 	}
 
-	async albums() {
+	private async getAlbumList(): Promise<SampleBookDTO[]> {
 		const cached = await this.sampleCache.getList<SampleBookDTO[]>('albums');
 		if (cached) return cached;
 		const books = await prisma.sampleBook.findMany({
@@ -158,9 +168,17 @@ export class SampleBookService extends ISampleBookService {
 			orderBy: { id: 'desc' },
 		});
 		const dtos = SampleBookMapper.toDTOList(books);
-
 		await this.sampleCache.setList('albums', dtos);
 		return dtos;
+	}
+
+	private paginate(all: SampleBookDTO[], params: { cursor?: number; limit?: number; category?: string }) {
+		const filtered = params.category ? all.filter((b) => b.category === params.category) : all;
+		const limit = params.limit && params.limit > 0 ? params.limit : 12;
+		const start = params.cursor && params.cursor > 0 ? params.cursor : 0;
+		const items = filtered.slice(start, start + limit);
+		const nextCursor = start + limit < filtered.length ? start + limit : null;
+		return { items, nextCursor };
 	}
 
 	async getPublishedById(id: number) {

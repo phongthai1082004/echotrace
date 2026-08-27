@@ -32,7 +32,6 @@
     "save": "Lưu",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
-      "cancel": "Hủy",
     "close": "Đóng",
     "delete": "Xóa",
     "edit": "Sửa",
@@ -304,7 +303,8 @@
       "minimal": "Tối giản",
       "adventure": "Phiêu lưu",
       "cultural": "Văn hóa",
-      "custom": "Tùy chỉnh"
+      "custom": "Tùy chỉnh",
+      "loadMore": "Tải thêm"
     },
     "myJournals": {
       "title": "Sổ tay của tôi",
@@ -474,7 +474,25 @@
         "delivered": "Đã nhận",
         "cancelled": "Đã hủy"
       },
-      "empty": "Bạn chưa có đơn nào."
+      "empty": "Bạn chưa có đơn nào.",
+      "requestReturn": "Yêu cầu đổi/trả hàng",
+      "return": {
+        "requested": "Đã yêu cầu trả hàng",
+        "exchange": "Đổi hàng",
+        "refund": "Hoàn tiền",
+        "reasonPlaceholder": "Lý do (tùy chọn)",
+        "submit": "Gửi yêu cầu",
+        "none": "Không trả hàng",
+        "approved": "Đã duyệt trả hàng",
+        "reshipping": "Đang gửi lại",
+        "reshipped": "Đã gửi lại",
+        "refunding": "Đang hoàn tiền",
+        "refunded": "Đã hoàn tiền",
+        "hint": "Chọn sản phẩm lỗi và số quyển cần đổi (bảo hành)",
+        "qty": "Số quyển",
+        "defectPlaceholder": "Mô tả lỗi (tùy chọn)",
+        "selectOne": "Vui lòng chọn ít nhất một sản phẩm"
+      }
     },
     "checkout": {
       "title": "Thanh toán",
@@ -610,17 +628,56 @@
     "finance": {
       "label": "Admin · Tài chính",
       "title": "Tổng quan Tài chính",
-      "cashInflow": "Tiền vào",
-      "outflow": "Tiền ra",
-      "grossProfit": "Lợi nhuận gộp",
-      "cashOnHand": "Tiền mặt",
-      "receivables": "Phải thu",
-      "overdueReceivable": "Phải thu quá hạn",
-      "payables": "Phải trả",
-      "overduePayable": "Phải trả quá hạn",
-      "chartTitle": "Doanh thu vs Lợi nhuận gộp (30 ngày)",
-      "revenue": "Doanh thu",
-      "grossProfitLegend": "Lợi nhuận gộp"
+      "overviewTitle": "Tháng gần nhất",
+      "allTime": "Tất cả",
+      "monthlyTitle": "Chỉ số theo tháng",
+      "suppliersTitle": "Công nợ NCC",
+      "totalDebt": "Tổng nợ",
+      "thisMonth": "Đến hạn tháng này",
+      "noData": "Chưa có dữ liệu",
+      "incomeTitle": "Thu",
+      "expenseTitle": "Chi",
+      "cashflowTitle": "Dòng tiền",
+      "from": "Từ",
+      "to": "Đến",
+      "type": "Loại",
+      "in": "Vào",
+      "out": "Ra",
+      "date": "Ngày",
+      "amount": "Số tiền",
+      "note": "Ghi chú",
+      "col": {
+        "period": "Tháng",
+        "totalOrders": "Đơn",
+        "totalRevenue": "Doanh thu",
+        "totalExpense": "Chi phí",
+        "totalSupplierExpense": "Chi NCC",
+        "cashInflow": "Tiền vào",
+        "cashOutflow": "Tiền ra",
+        "totalProfit": "Lợi nhuận",
+        "cashOnHand": "Tiền mặt",
+        "receivables": "Phải thu",
+        "payables": "Phải trả"
+      }
+    },
+    "expenses": {
+      "label": "Admin · Chi phí",
+      "title": "Ghi nhận Chi phí",
+      "amount": "Số tiền",
+      "category": "Danh mục",
+      "description": "Mô tả",
+      "date": "Ngày",
+      "supplierName": "Tên NCC (nếu có)",
+      "submit": "Thêm chi phí",
+      "saved": "Đã lưu",
+      "categories": {
+        "OPERATING": "Vận hành",
+        "PAYROLL": "Lương",
+        "MARKETING": "Marketing",
+        "DEBT": "Nợ",
+        "OTHER": "Khác",
+        "SUPPLIER": "NCC"
+      }
     },
     "marketing": {
       "label": "Admin · Marketing",
@@ -737,8 +794,16 @@
       "deliverItem": "Giao kiện",
       "reconcileCod": "Đối soát COD",
       "reconcileSupplier": "Đối soát NCC",
+      "reconcileNeedCost": "Nhập giá đã trả NCC cho mọi item trước khi đối soát",
       "reconcileRefund": "Đối soát hoàn tiền",
-      "refund": "Hoàn tiền"
+      "refund": "Hoàn tiền",
+      "returnApproveTitle": "Yêu cầu trả hàng",
+      "returnFaultSelf": "Lỗi từ chúng ta",
+      "returnFaultSupplier": "Lỗi nhà in",
+      "returnDecisionExchange": "Đổi hàng",
+      "returnDecisionRefund": "Hoàn tiền",
+      "returnApprove": "Duyệt trả hàng",
+      "markReshipped": "Đánh dấu đã gửi lại"
     },
     "stickers": {
       "label": "Admin · Tài sản",
@@ -904,6 +969,7 @@
     "sidebar": {
       "overview": "Tổng quan",
       "finance": "Tài chính",
+      "expenses": "Chi phí",
       "marketing": "Marketing",
       "dispatch": "Phân phối",
       "suppliers": "Nhà cung cấp",
@@ -990,6 +1056,7 @@
       "title": "Mẫu",
       "subtitle": "Thiết kế có sẵn sẵn sàng xuất bản",
       "addNew": "Thêm mới",
+      "createBtn": "+ Sách mới",
       "name": "Tên",
       "type": "Loại",
       "category": "Phân loại",

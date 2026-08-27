@@ -39,7 +39,7 @@ async function processDue(): Promise<void> {
   }
 }
 
-async function handleOrderExpiry(orderId: number): Promise<void> {
+export async function handleOrderExpiry(orderId: number): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     select: { id: true, status: true, expiredAt: true },

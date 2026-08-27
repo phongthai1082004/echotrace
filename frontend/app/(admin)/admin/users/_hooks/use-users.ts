@@ -22,6 +22,7 @@ export function useUsers() {
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [users, setUsers] = useState<UserResponse["users"]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const queryUrl = useMemo(() => {
     if (!isAuthenticated) return "";
@@ -33,8 +34,19 @@ export function useUsers() {
     }
     if (cursor) params.set("cursor", cursor);
     params.set("limit", "20");
+    params.set("_r", String(refreshKey));
     return `/api/admin/users?${params.toString()}`;
-  }, [isAuthenticated, filter, debouncedSearch, cursor]);
+  }, [isAuthenticated, filter, debouncedSearch, cursor, refreshKey]);
+
+  const updateStatus = async (id: number, status: UserStatus) => {
+    if (!token) throw new Error("missing token");
+    await apiFetch(`/api/admin/users/${id}/status`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+  };
+
+  const refresh = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
     if (!token || !queryUrl) return;
@@ -82,5 +94,7 @@ export function useUsers() {
     handlePrevious,
     isAuthenticated,
     accessToken: token,
+    updateStatus,
+    refresh,
   };
 }

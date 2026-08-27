@@ -139,6 +139,8 @@ export default function DispatchPage() {
           variant="admin"
           onUpdateStatus={d.updateStatus}
           onEvent={(type, payload) => d.processEvent(d.selectedOrder!.id, type, payload)}
+          onApproveReturn={(id, body) => d.approveReturn(id, body)}
+          onMarkReshipped={(id) => d.markReshipped(id)}
           suppliers={d.suppliers.map((s) => ({ id: s.id, name: s.name }))}
           onClose={() => d.setSelectedOrder(null)}
         />

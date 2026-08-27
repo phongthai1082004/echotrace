@@ -42,6 +42,9 @@ export function OrderDetailDrawer({
   suppliers = [],
   onRequestPaymentLink,
   onCancelOrder,
+  onRequestReturn,
+  onApproveReturn,
+  onMarkReshipped,
   onClose,
 }: {
   order: OrderDTO;
@@ -51,6 +54,9 @@ export function OrderDetailDrawer({
   suppliers?: { id: number; name: string }[];
   onRequestPaymentLink?: (id: number) => Promise<{ qrCode?: string; checkoutUrl?: string }>;
   onCancelOrder?: (id: number) => Promise<{ refunded: boolean; amount: number }>;
+  onRequestReturn?: (id: number, body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] }) => Promise<void>;
+  onApproveReturn?: (id: number, body: { fault: "self" | "supplier" }) => Promise<void>;
+  onMarkReshipped?: (id: number) => Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -61,6 +67,14 @@ export function OrderDetailDrawer({
   const remaining = Math.max(0, order.totalAmount - order.paidAmount);
   const [assignOpen, setAssignOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  // ponytail: mỗi item lỗi: chọn + số quyển + mô tả. index theo orderItems.
+  const [returnItems, setReturnItems] = useState<{ index: number; quantity: number; defect: string }[]>([]);
+  const [returnBusy, setReturnBusy] = useState(false);
+  const [fault, setFault] = useState<"self" | "supplier">("self");
+  const [returnApproveBusy, setReturnApproveBusy] = useState(false);
+  const [reshippedBusy, setReshippedBusy] = useState(false);
   const canAssign = admin && !order.supplierId && (order.status === "paid" || order.status === "partially_paid") && order.paidAmount > 0;
   const cancellable = !admin && ["pending_payment", "paid", "partially_paid", "processing", "shipping"].includes(order.status);
   const refundable = (order.status === "paid" || order.status === "partially_paid") && order.paidAmount > 0;
@@ -104,6 +118,11 @@ export function OrderDetailDrawer({
               >
                 {m.label}
               </span>
+              {order.returnState && order.returnState !== "none" && (
+                <span className={`${chip} ml-2`} style={{ background: "#FDE68A", color: "#222" }}>
+                  {t(`customer.orders.return.${order.returnState}`)}
+                </span>
+              )}
             </div>
 
 			<Timeline steps={mockTimeline(order.status, order.createdAt)} t={t} />
@@ -304,11 +323,29 @@ export function OrderDetailDrawer({
                 </button>
               )}
               {(order.status === "processing" || order.status === "shipping") &&
-                items.some((it) => it.supplierId != null && it.costPrice != null && !it.reconciledAt) && (
-                  <button onClick={() => onEvent("reconcile_supplier")} className={`${neoBtn} py-2.5`}>
-                    {t("admin.dispatch.reconcileSupplier")}
-                  </button>
-                )}
+                (() => {
+                  const pendingItems = items.filter((it) => it.supplierId != null && !it.reconciledAt);
+                  const canReconcile =
+                    pendingItems.length > 0 &&
+                    pendingItems.every((it) => it.costPrice != null && Number(it.costPrice) > 0);
+                  if (pendingItems.length === 0) return null;
+                  return (
+                    <>
+                      <button
+                        onClick={() => onEvent("reconcile_supplier")}
+                        disabled={!canReconcile}
+                        className={`${neoBtn} py-2.5 disabled:opacity-40`}
+                      >
+                        {t("admin.dispatch.reconcileSupplier")}
+                      </button>
+                      {!canReconcile && (
+                        <p className="col-span-2 font-mono text-[9px] font-bold text-[#B54843]">
+                          {t("admin.dispatch.reconcileNeedCost")}
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               {order.status === "processing" && order.supplierId && (
                 <button onClick={() => onEvent("ship")} className={`${neoBtn} py-2.5`}>
                   {t("admin.dispatch.ship")}
@@ -335,6 +372,54 @@ export function OrderDetailDrawer({
                 </button>
               )}
             </div>
+
+            {order.returnState === "requested" && onApproveReturn && (
+              <div className="p-3 border-2 border-[#222] rounded bg-white/40 space-y-2">
+                <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
+                  {t("admin.dispatch.returnApproveTitle")}
+                </p>
+                <select
+                  value={fault}
+                  onChange={(e) => setFault(e.target.value as "self" | "supplier")}
+                  className="w-full border-2 border-[#222] rounded px-2 py-1.5 text-xs font-bold bg-white"
+                >
+                  <option value="self">{t("admin.dispatch.returnFaultSelf")}</option>
+                  <option value="supplier">{t("admin.dispatch.returnFaultSupplier")}</option>
+                </select>
+                <button
+                  onClick={async () => {
+                    setReturnApproveBusy(true);
+                    try {
+                      await onApproveReturn(order.id, { fault });
+                    } finally {
+                      setReturnApproveBusy(false);
+                    }
+                  }}
+                  disabled={returnApproveBusy}
+                  className={`${neoBtnPrimary} w-full py-2.5 disabled:opacity-50`}
+                >
+                  {returnApproveBusy ? "..." : t("admin.dispatch.returnApprove")}
+                </button>
+              </div>
+            )}
+
+            {order.returnState === "reshipping" && onMarkReshipped && (
+              <button
+                onClick={async () => {
+                  setReshippedBusy(true);
+                  try {
+                    await onMarkReshipped(order.id);
+                  } finally {
+                    setReshippedBusy(false);
+                  }
+                }}
+                disabled={reshippedBusy}
+                className={`${neoBtnPrimary} w-full py-2.5 disabled:opacity-50`}
+              >
+                {reshippedBusy ? "..." : t("admin.dispatch.markReshipped")}
+              </button>
+            )}
+
             <button onClick={() => alert(t("admin.dispatch.invoiceExported"))} className={`${neoBtnPrimary} w-full py-3`}>
               {t("admin.dispatch.exportInvoice")}
             </button>
@@ -352,6 +437,18 @@ export function OrderDetailDrawer({
             </button>
           </div>
         )}
+
+        {/* Footer — user return request */}
+        {!admin &&
+          (order.status === "delivered" || order.status === "shipping") &&
+          (!order.returnState || order.returnState === "none") &&
+          onRequestReturn && (
+            <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
+              <button onClick={() => setReturnOpen(true)} className={`${neoBtn} w-full py-3`}>
+                {t("customer.orders.requestReturn")}
+              </button>
+            </div>
+          )}
       </div>
 
       {assignOpen && (
@@ -391,6 +488,103 @@ export function OrderDetailDrawer({
                 className="flex-1 py-2.5 border-2 border-[#B54843] text-[#B54843] font-bold rounded hover:bg-[#B54843]/10"
               >
                 {t("customer.orders.confirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {returnOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6"
+          onClick={() => setReturnOpen(false)}
+        >
+          <div
+            className="bg-[#F8F2E5] border-[3px] border-[#222] shadow-[4px_4px_0_#222] rounded-[10px] w-full max-w-[340px] p-5 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-bold mb-1">{t("customer.orders.requestReturn")}</p>
+            <p className="font-mono text-[10px] text-[#666] mb-3">{t("customer.orders.return.hint")}</p>
+            <div className="space-y-2 mb-3">
+              {items.map((it, i) => {
+                const sel = returnItems.find((r) => r.index === i);
+                return (
+                  <div key={i} className="border-2 border-[#222] rounded p-2 bg-white">
+                    <label className="flex items-center gap-2 font-bold text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!sel}
+                        onChange={(e) =>
+                          setReturnItems((prev) =>
+                            e.target.checked
+                              ? [...prev, { index: i, quantity: it.quantity ?? 1, defect: "" }]
+                              : prev.filter((r) => r.index !== i),
+                          )
+                        }
+                      />
+                      <span className="truncate">{it.title}</span>
+                    </label>
+                    {sel && (
+                      <div className="mt-2 flex flex-col gap-2 pl-6">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold text-[#666]">{t("customer.orders.return.qty")}</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={it.quantity ?? 1}
+                            value={sel.quantity}
+                            onChange={(e) =>
+                              setReturnItems((prev) =>
+                                prev.map((r) => (r.index === i ? { ...r, quantity: Math.max(1, Number(e.target.value) || 1) } : r)),
+                              )
+                            }
+                            className="w-16 border-2 border-[#222] rounded px-2 py-1 text-xs font-bold bg-white"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={sel.defect}
+                          onChange={(e) =>
+                            setReturnItems((prev) => prev.map((r) => (r.index === i ? { ...r, defect: e.target.value } : r)))
+                          }
+                          placeholder={t("customer.orders.return.defectPlaceholder")}
+                          className="w-full border-2 border-[#222] rounded px-2 py-1 text-xs bg-white"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <textarea
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder={t("customer.orders.return.reasonPlaceholder")}
+              className="w-full border-2 border-[#222] rounded px-2 py-1.5 text-xs mb-4 bg-white"
+              rows={2}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setReturnOpen(false)} className={`${neoBtn} flex-1 py-2.5`}>
+                {t("customer.orders.cancel")}
+              </button>
+              <button
+                onClick={async () => {
+                  if (returnItems.length === 0) {
+                    alert(t("customer.orders.return.selectOne"));
+                    return;
+                  }
+                  setReturnBusy(true);
+                  try {
+                    await onRequestReturn?.(order.id, { reason: returnReason, items: returnItems });
+                    setReturnOpen(false);
+                  } finally {
+                    setReturnBusy(false);
+                  }
+                }}
+                disabled={returnBusy}
+                className={`flex-1 py-2.5 border-2 border-[#222] font-bold rounded hover:bg-[#222] hover:text-white disabled:opacity-50`}
+              >
+                {returnBusy ? "..." : t("customer.orders.return.submit")}
               </button>
             </div>
           </div>
