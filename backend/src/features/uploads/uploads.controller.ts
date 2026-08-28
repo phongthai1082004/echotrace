@@ -39,7 +39,7 @@ export class UploadController {
 
 	saveImage = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
-		const { url, publicId, width, height, size } = req.body;
+		const { url, publicId, width, height, size, thumbUrl } = req.body;
 		if (!url) throw new AppError(ErrorCode.UPLOAD_URL_REQUIRED, 400);
 
 		const image = await this.userImageService.create({ userId, url, publicId, width, height, size });

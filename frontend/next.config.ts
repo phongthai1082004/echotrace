@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' https://cloudfarer2.cabinetdememoire.workers.dev https://images.unsplash.com https://lh3.googleusercontent.com https://arashiyamabambooforest.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
           },
           {
             key: "X-Frame-Options",

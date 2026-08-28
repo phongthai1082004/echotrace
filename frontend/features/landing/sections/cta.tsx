@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Book3D } from "@/features/landing/book-3d";
+import dynamic from "next/dynamic";
+const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.Book3D), { ssr: false });
 import weddingImg from "@/assets/images/travel.jpg";
 
 export function CtaSection() {

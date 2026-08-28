@@ -13,11 +13,13 @@ export function BarChart({ data, height = 260, color = "#222", formatValue }: Ba
   const W = 480,
     H = height,
     PAD = { top: 28, right: 0, bottom: 28, left: 0 };
-  const maxVal = Math.max(...data.map((d) => d.value));
+  const total = data.length || 1;
+  const rawMax = Math.max(0, ...data.map((d) => Number(d.value) || 0));
+  const safeMax = rawMax > 0 ? rawMax : 1;
   const iw = W - PAD.left - PAD.right;
   const ih = H - PAD.top - PAD.bottom;
-  const barW = Math.floor((iw / data.length) * 0.45);
-  const gap = iw / data.length;
+  const slot = iw / total;
+  const barW = Math.floor(slot * 0.45);
   const fmt = formatValue ?? ((v: number) => v.toLocaleString());
 
   return (
@@ -29,8 +31,10 @@ export function BarChart({ data, height = 260, color = "#222", formatValue }: Ba
         `}</style>
       </defs>
       {data.map((d, i) => {
-        const barH = Math.round((d.value / maxVal) * ih);
-        const x = PAD.left + gap * i + (gap - barW) / 2;
+        const v = Number(d.value) || 0;
+        if (v <= 0) return null; // tháng không có dữ liệu → bỏ, giữ nguyên vị trí tháng khác
+        const barH = Math.round((v / safeMax) * ih);
+        const x = PAD.left + slot * i + (slot - barW) / 2;
         const y = PAD.top + ih - barH;
         const delay = i * 0.04;
         return (
@@ -86,14 +90,17 @@ export function LineChart({ data, height = 260, color = "#222", formatValue }: L
   const W = 480,
     H = height,
     PAD = { top: 28, right: 8, bottom: 28, left: 8 };
-  const maxVal = Math.max(...data.map((d) => d.value));
+  const total = data.length || 1;
+  const rawMax = Math.max(0, ...data.map((d) => Number(d.value) || 0));
+  const safeMax = rawMax > 0 ? rawMax : 1;
   const iw = W - PAD.left - PAD.right;
   const ih = H - PAD.top - PAD.bottom;
-  const gap = iw / (data.length - 1);
+  const denom = Math.max(1, total - 1);
   const fmt = formatValue ?? ((v: number) => v.toLocaleString());
 
-  const pts = data.map((d, i) => ({ x: PAD.left + gap * i, y: PAD.top + ih - (d.value / maxVal) * ih, d, i }));
-  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const pts = data.map((d, i) => ({ x: PAD.left + (iw / denom) * i, y: PAD.top + ih - (Number(d.value) / safeMax) * ih, d, i }));
+  const visible = pts.filter((p) => Number(p.d.value) > 0);
+  const pathD = visible.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="overflow-visible">
@@ -112,7 +119,7 @@ export function LineChart({ data, height = 260, color = "#222", formatValue }: L
         strokeDashoffset="2000"
         style={{ animation: "drawLine 1s ease-out forwards" }}
       />
-      {pts.map((p, i) => (
+      {visible.map((p, i) => (
         <g key={p.d.label}>
           <circle
             cx={p.x}
@@ -174,10 +181,11 @@ export function DualLineChart({
   const W = 600,
     H = height,
     pad = { top: 32, right: 16, bottom: 28, left: 16 };
-  const maxVal = Math.max(...data.map((d) => Math.max(d.series1, d.series2))) * 1.3;
+  const rawMax = Math.max(0, ...data.map((d) => Math.max(Number(d.series1) || 0, Number(d.series2) || 0)));
+  const maxVal = (rawMax > 0 ? rawMax : 1) * 1.3;
   const iw = W - pad.left - pad.right,
     ih = H - pad.top - pad.bottom;
-  const gap = iw / (data.length - 1);
+  const gap = iw / Math.max(1, data.length - 1);
   const fmt1 = formatValue1 ?? ((v: number) => `${v.toLocaleString()}₫`);
   const fmt2 = formatValue2 ?? ((v: number) => `${v.toLocaleString()}₫`);
 

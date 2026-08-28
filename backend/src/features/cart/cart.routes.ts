@@ -20,6 +20,10 @@ router.post(
 	'/cart/item',
 	asyncHandler((req, res) => cartCtrl.addItem(req, res)),
 );
+router.post(
+	'/cart/album',
+	asyncHandler((req, res) => cartCtrl.addAlbum(req, res)),
+);
 router.patch(
 	'/cart/item/:bookId',
 	asyncHandler((req, res) => cartCtrl.patchItem(req, res)),

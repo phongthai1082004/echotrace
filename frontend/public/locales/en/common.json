@@ -184,6 +184,7 @@
       "detail": "Wedding Album · Hardcover · Milan, IT",
       "statsLabels": [
         "Books Printed",
+        "Average Rating",
         "Would Recommend"
       ]
     },
@@ -303,7 +304,11 @@
       "adventure": "Adventure",
       "cultural": "Cultural",
       "custom": "Custom",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "addToCart": "Add to cart",
+      "view": "View",
+      "viewSoon": "View feature coming soon",
+      "loginRequired": "Please sign in"
     },
     "myJournals": {
       "title": "My Journals",
@@ -475,6 +480,12 @@
       },
       "empty": "You have no orders yet.",
       "requestReturn": "Request return / exchange",
+      "reportDefect": "Report defect",
+      "defect": {
+        "reported": "Defect reported",
+        "resolved": "Resolved",
+        "failed": "Failed to report defect"
+      },
       "return": {
         "requested": "Return requested",
         "exchange": "Exchange",
@@ -675,7 +686,8 @@
         "MARKETING": "Marketing",
         "DEBT": "Debt",
         "OTHER": "Other",
-        "SUPPLIER": "Supplier"
+        "SUPPLIER": "Supplier",
+        "DEFECTIVE": "Defective shipping"
       }
     },
     "marketing": {
@@ -718,7 +730,6 @@
       "unassigned": "{{count}} unassigned",
       "allOrders": "All Orders",
       "debt": "Debt",
-      "overdue": "Overdue",
       "mtd": "MTD",
       "active": "active",
       "assignOrders": "Assign Orders",
@@ -802,7 +813,9 @@
       "returnDecisionExchange": "Exchange",
       "returnDecisionRefund": "Refund",
       "returnApprove": "Approve return",
-      "markReshipped": "Mark reshipped"
+      "markReshipped": "Mark reshipped",
+      "markDefective": "Mark defective",
+      "resolveDefect": "Resolve defect"
     },
     "suppliers": {
       "label": "Admin · Suppliers",
@@ -812,7 +825,6 @@
       "email": "Email",
       "contact": "Contact",
       "totalDebt": "Total Debt",
-      "overdueDebt": "Overdue Debt",
       "monthDebt": "This Month",
       "status": "Status",
       "noSuppliers": "No suppliers found",
@@ -980,6 +992,12 @@
       "notifications": "Notifications",
       "coupons": "Coupons",
       "sampleBooks": "Template"
+    },
+    "cat": {
+      "business": "Business",
+      "operations": "Operations",
+      "catalog": "Catalog",
+      "system": "System"
     },
     "pagination": {
       "previous": "Previous",

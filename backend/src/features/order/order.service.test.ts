@@ -12,17 +12,19 @@ vi.mock('../../../lib/prisma.js', () => ({ prisma: mocks.prisma }));
 vi.mock('../../infrastructure/payment/payment.service.js', () => ({ PaymentService: class {} }));
 vi.mock('../../features/payment/payment.service.js', () => ({ PaymentWebhookService: class {} }));
 
-import { OrderService } from './order.service.js';
+import { OrderService, __resetPayStatusCache } from './order.service.js';
 import { OrderStatus, PaymentGateway } from '@echotrace/shared';
 
 beforeEach(() => {
   vi.resetAllMocks();
+  __resetPayStatusCache();
 });
 
 const svc = new OrderService(
   {} as any,
   { getPaymentStatus: mocks.getPaymentStatus } as any,
   { processWebhook: mocks.processWebhook } as any,
+  {} as any,
 );
 
 const pendingOrder = (extra: any = {}) => ({

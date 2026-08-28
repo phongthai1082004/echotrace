@@ -13,6 +13,7 @@ export interface SaveImageDTO {
   width?: number;
   height?: number;
   size?: number;
+  thumbUrl?: string;
 }
 
 export interface ImageDTO {
@@ -23,6 +24,7 @@ export interface ImageDTO {
   width: number | null;
   height: number | null;
   size: number | null;
+  thumbUrl: string | null;
 }
 
 export class ImageMapper {
@@ -35,6 +37,7 @@ export class ImageMapper {
       width: image.width,
       height: image.height,
       size: image.size,
+      thumbUrl: image.thumbUrl ?? null,
     };
   }
 

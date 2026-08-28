@@ -304,7 +304,11 @@
       "adventure": "Phiêu lưu",
       "cultural": "Văn hóa",
       "custom": "Tùy chỉnh",
-      "loadMore": "Tải thêm"
+      "loadMore": "Tải thêm",
+      "addToCart": "Thêm vào giỏ",
+      "view": "Xem",
+      "viewSoon": "Tính năng xem sẽ có sau",
+      "loginRequired": "Vui lòng đăng nhập"
     },
     "myJournals": {
       "title": "Sổ tay của tôi",
@@ -476,6 +480,12 @@
       },
       "empty": "Bạn chưa có đơn nào.",
       "requestReturn": "Yêu cầu đổi/trả hàng",
+      "reportDefect": "Báo lỗi hàng",
+      "defect": {
+        "reported": "Đã báo lỗi",
+        "resolved": "Đã xử lý",
+        "failed": "Báo lỗi thất bại"
+      },
       "return": {
         "requested": "Đã yêu cầu trả hàng",
         "exchange": "Đổi hàng",
@@ -676,7 +686,8 @@
         "MARKETING": "Marketing",
         "DEBT": "Nợ",
         "OTHER": "Khác",
-        "SUPPLIER": "NCC"
+        "SUPPLIER": "NCC",
+        "DEFECTIVE": "Gửi hàng lỗi"
       }
     },
     "marketing": {
@@ -719,7 +730,6 @@
       "unassigned": "{{count}} chưa phân",
       "allOrders": "Tất cả đơn hàng",
       "debt": "Nợ",
-      "overdue": "Quá hạn",
       "mtd": "Từ đầu tháng",
       "active": "hoạt động",
       "assignOrders": "Phân công đơn hàng",
@@ -803,7 +813,9 @@
       "returnDecisionExchange": "Đổi hàng",
       "returnDecisionRefund": "Hoàn tiền",
       "returnApprove": "Duyệt trả hàng",
-      "markReshipped": "Đánh dấu đã gửi lại"
+      "markReshipped": "Đánh dấu đã gửi lại",
+      "markDefective": "Đánh dấu lỗi",
+      "resolveDefect": "Đã xử lý xong"
     },
     "stickers": {
       "label": "Admin · Tài sản",
@@ -848,7 +860,6 @@
       "email": "Email",
       "contact": "Liên hệ",
       "totalDebt": "Tổng nợ",
-      "overdueDebt": "Nợ quá hạn",
       "monthDebt": "Tháng này",
       "status": "Trạng thái",
       "noSuppliers": "Không có nhà cung cấp",
@@ -981,6 +992,12 @@
       "notifications": "Thông báo",
       "coupons": "Mã giảm giá",
       "sampleBooks": "Mẫu"
+    },
+    "cat": {
+      "business": "Kinh doanh",
+      "operations": "Vận hành",
+      "catalog": "Sản phẩm",
+      "system": "Hệ thống"
     },
     "pagination": {
       "previous": "Trước",

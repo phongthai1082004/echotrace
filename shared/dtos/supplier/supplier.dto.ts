@@ -31,7 +31,6 @@ export interface SupplierDTO {
   email: string;
   banned: boolean;
   totalDebt: number;
-  overdueDebt: number;
   monthDebt: number;
   lastPaymentDate: Date | string | null;
   bankName: string | null;
@@ -98,7 +97,6 @@ export class SupplierMapper {
       email: supplier.email,
       banned: !!supplier.isDelete,
       totalDebt: supplier.totalDebt,
-      overdueDebt: supplier.overdueDebt,
       monthDebt: supplier.monthDebt,
       lastPaymentDate: supplier.lastPaymentDate ?? null,
       bankName: supplier.bankName ?? null,

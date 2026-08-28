@@ -14,6 +14,7 @@ enum ExpenseCategory {
   DEBT      
   OTHER
   SUPPLIER
+  DEFECTIVE
 }
 
 enum SampleBookType {
@@ -75,6 +76,7 @@ model UserImage {
   width    Int?
   height   Int?
   size     Int?
+  thumbUrl String?
   bookId   Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,6 +99,12 @@ enum ReturnState {
   refunded
 }
 
+enum DefectState {
+  none
+  reported
+  resolved
+}
+
 enum ReturnFault {
   self
   supplier
@@ -104,15 +112,15 @@ enum ReturnFault {
 
 model Order {
   id             Int      @id @default(autoincrement())
-  orderCode      String?
+  orderCode      String? @unique
   userId         Int
   supplierId     Int?
   subTotal       Float
   totalAmount    Float
   depositAmount  Float    @default(0)
   paidAmount     Float    @default(0)
-  paymentType    String   @default("FULL")
-  status         String   @default("PENDING_PAYMENT")
+  paymentType    String   @default("full-payment")
+  status         String   @default("pending_payment")
   name           String?
   phone          String?
   address        String?
@@ -122,7 +130,7 @@ model Order {
   discountAmount Float    @default(0)
   orderShippingFee    Float?   
   supplierShippingFee Float?   
-  trackingCode      String?
+  trackingCode      String? @unique
   codReconciledAt DateTime?
   qrCode        String?
   checkoutUrl   String?
@@ -133,6 +141,7 @@ model Order {
   returnState  ReturnState? @default(none)
   returnFault  ReturnFault?
   returnReason String?
+  defectState  DefectState? @default(none)
 
   user         User          @relation(fields: [userId], references: [id])
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
@@ -151,7 +160,7 @@ model Transaction {
   idempotencyKeyId       String?  @unique
   gateway                String
   gatewayTransactionCode String?  @unique
-  type                   String   @default("FULL_PAYMENT")
+  type                   String   @default("full_payment")
   amount                 Float
   paymentLinkId          String?
   bankAccount            String?
@@ -160,6 +169,7 @@ model Transaction {
   status                 String
   transactionTime        DateTime
   rawPayload             Json?
+  reconciledAt           DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -188,6 +198,7 @@ model Income {
   cashflow    Cashflow?
 
   @@index([receivedAt])
+  @@index([orderId])
 }
 
 model Expense {
@@ -211,6 +222,8 @@ model Expense {
   @@index([date])
   @@index([category])
   @@index([taxCode])
+  @@index([orderId])
+  @@index([transactionId])
 }
 
 model Cashflow {
@@ -231,6 +244,8 @@ model Cashflow {
 
   @@index([type])
   @@index([date])
+  @@index([orderId])
+  @@index([transactionId])
 }
 
 model Book {
@@ -251,11 +266,15 @@ model Book {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
+  sampleBookId Int?
+  sampleBook   SampleBook? @relation(fields: [sampleBookId], references: [id])
+
   user       User        @relation(fields: [userId], references: [id])
   cartItems  CartItem[]
 
   @@index([userId])
   @@index([type])
+  @@index([sampleBookId])
 }
 
 model Cart {
@@ -280,7 +299,7 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id])
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, bookId])
   @@index([bookId])
@@ -321,6 +340,7 @@ model SampleBook {
   deletedAt DateTime?
 
   creator User @relation(fields: [createdBy], references: [id])
+  books   Book[]
 
   @@index([createdBy])
   @@index([type])
@@ -351,7 +371,7 @@ model Supplier {
   id          Int      @id @default(autoincrement())
   name        String
   contact     String
-  email       String
+  email       String @unique
   taxCode     String?          
   address     String?          
   bankName          String?
@@ -360,7 +380,6 @@ model Supplier {
   bankAccountName   String?
   contactPerson     String?    
   totalDebt   Float    @default(0)
-  overdueDebt Float    @default(0)
   monthDebt   Float    @default(0)
   lastPaymentDate DateTime?
   banned            Boolean   @default(false)
@@ -416,7 +435,7 @@ model Coupon {
   discountType      String
   discountValue     Float
   minOrderAmount     Float     @default(0)
-  minOrderType       String    @default("VALUE") 
+  minOrderType       String    @default("value")
   maxDiscountAmount Float?
   maxUsageCount     Int       @default(0)
   usedCount         Int       @default(0)

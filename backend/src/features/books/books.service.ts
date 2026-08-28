@@ -5,16 +5,16 @@ import { ErrorCode } from '@echotrace/shared';
 import { BookDTO, CreateBookDTO, UpdatePagesDTO, BookMapper } from '@echotrace/shared';
 import { resolveContent } from '../../lib/merge-book-content.js';
 
-export abstract class IBookService {
-	abstract getById(bookId: number, userId: number): Promise<BookDTO>;
-	abstract getMyBooks(userId: number): Promise<BookDTO[]>;
-	abstract create(userId: number, data: CreateBookDTO): Promise<BookDTO>;
-	abstract delete(bookId: number, userId: number): Promise<void>;
-	abstract updatePages(bookId: number, userId: number, data: UpdatePagesDTO): Promise<void>;
+export interface IBookService {
+	getById(bookId: number, userId: number): Promise<BookDTO>;
+	getMyBooks(userId: number): Promise<BookDTO[]>;
+	create(userId: number, data: CreateBookDTO): Promise<BookDTO>;
+	delete(bookId: number, userId: number): Promise<void>;
+	updatePages(bookId: number, userId: number, data: UpdatePagesDTO): Promise<void>;
 }
 
 @injectable()
-export class BookService extends IBookService {
+export class BookService implements IBookService {
 	async getById(bookId: number, userId: number) {
 		const book = await prisma.book.findUnique({ where: { id: bookId } });
 		if (!book) throw new AppError(ErrorCode.BOOK_NOT_FOUND, 404);

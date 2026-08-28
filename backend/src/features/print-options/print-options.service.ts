@@ -6,17 +6,16 @@ import { OptionCatalogCacheService } from '../../infrastructure/cache/option-cat
 import { CreatePrintOptionDTO } from '../../dto/print-option/print-option.create.dto.js';
 import { UpdatePrintOptionDTO } from '../../dto/print-option/print-option.update.dto.js';
 
-export abstract class IPrintOptionService {
-	abstract list(type?: string, search?: string): Promise<PrintOptionDTO[]>;
-	abstract create(dto: CreatePrintOptionDTO): Promise<PrintOptionDTO>;
-	abstract update(id: number, dto: UpdatePrintOptionDTO): Promise<PrintOptionDTO>;
-	abstract remove(id: number): Promise<void>;
+export interface IPrintOptionService {
+	list(type?: string, search?: string): Promise<PrintOptionDTO[]>;
+	create(dto: CreatePrintOptionDTO): Promise<PrintOptionDTO>;
+	update(id: number, dto: UpdatePrintOptionDTO): Promise<PrintOptionDTO>;
+	remove(id: number): Promise<void>;
 }
 
 @injectable()
-export class PrintOptionService extends IPrintOptionService {
+export class PrintOptionService implements IPrintOptionService {
 	constructor(@inject('IOptionCatalogCacheService') private readonly optionCache: OptionCatalogCacheService) {
-		super();
 	}
 
 	private async invalidateCache(type: string, code: string) {

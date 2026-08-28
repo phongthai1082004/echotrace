@@ -9,11 +9,12 @@ export function makeBookSave(
 ) {
   return async (token: string, bookId: number | null, payload: Record<string, unknown>) => {
     try {
-      const { [titleField]: title, paperHeight, paperWidth, kind, ...content } = payload;
+      const { [titleField]: title, paperHeight, paperWidth, kind, sampleBookId, ...content } = payload;
       const body: Record<string, unknown> = { content, [titleField]: title };
       if (paperHeight !== undefined && paperHeight !== null) body.paperHeight = paperHeight;
       if (paperWidth !== undefined && paperWidth !== null) body.paperWidth = paperWidth;
       if (opts?.includeKind && kind !== undefined) body.type = kind;
+      if (sampleBookId !== undefined && sampleBookId !== null) body.sampleBookId = sampleBookId;
       const res = await apiFetch<Response>(bookId ? `${base}/${bookId}${updateSuffix}` : base, token, {
         method: bookId ? "PATCH" : "POST",
         body: JSON.stringify(body),
@@ -35,9 +36,9 @@ export function makeBookSave(
 }
 
 export const customerAPI: StudioAPI = {
-  save: makeBookSave("/api/books", "/pages", "title"),
+  save: makeBookSave("/api/books", "/pages", "title", { includeKind: true }),
   async load(bookId) {
-    const res = await fetch(`/api/books/${bookId}`);
+    const res = await apiFetch<Response>(`/api/books/${bookId}`, "", { raw: true });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },

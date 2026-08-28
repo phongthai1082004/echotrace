@@ -69,4 +69,25 @@ export class CartController {
 		const quote = await this.cartService.calculateCart(userId, paymentMethod ?? null, couponCode ?? null, ids);
 		res.json(ApiResponse.success(quote));
 	};
+
+	addAlbum = async (req: AuthRequest, res: Response) => {
+		const userId = parseInt(req.userId!);
+		let input = req.body ?? {};
+		if (typeof input === 'string') {
+			try {
+				input = JSON.parse(input);
+			} catch {}
+		}
+		const sampleBookId = Number(input?.sampleBookId);
+		const quantity = Number(input?.quantity);
+		if (!Number.isFinite(sampleBookId)) {
+			res.status(400).json(ApiResponse.error('sampleBookId is required', 400));
+			return;
+		}
+		const item = await this.cartService.addAlbumToCart(userId, {
+			sampleBookId,
+			quantity: Number.isFinite(quantity) ? quantity : 1,
+		});
+		res.json(ApiResponse.success({ item }));
+	};
 }

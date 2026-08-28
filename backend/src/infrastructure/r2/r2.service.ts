@@ -1,12 +1,12 @@
 import { injectable } from 'tsyringe';
 
-export abstract class IR2ImageService {
-	abstract issueUpload(folder: string): Promise<{ token: string; folder: string; expiry: number; uploadUrl: string }>;
-	abstract deleteAsset(publicId: string): Promise<unknown>;
+export interface IR2ImageService {
+	issueUpload(folder: string): Promise<{ token: string; folder: string; expiry: number; uploadUrl: string }>;
+	deleteAsset(publicId: string): Promise<unknown>;
 }
 
 @injectable()
-export class R2ImageService extends IR2ImageService {
+export class R2ImageService implements IR2ImageService {
 	private workerUrl = process.env.R2_WORKER_URL!;
 
 	async issueUpload(folder: string) {

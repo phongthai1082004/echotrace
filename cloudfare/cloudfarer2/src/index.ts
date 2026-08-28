@@ -91,7 +91,9 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   url.pathname = `/${key}`;
   url.search = "";
-  return json({ url: url.toString(), publicId: key }, 201);
+  // ponytail: thumbnail = on-the-fly Cloudflare Images transform (w_800), reuses handleGet; no extra R2 storage.
+  const thumbUrl = `${url.origin}/w_800/${key}`;
+  return json({ url: url.toString(), publicId: key, thumbUrl }, 201);
 }
 
 async function pickFormat(request: Request): Promise<"image/avif" | "image/webp" | "image/jpeg"> {

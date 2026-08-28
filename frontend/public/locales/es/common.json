@@ -304,7 +304,11 @@
       "adventure": "Aventura",
       "cultural": "Cultural",
       "custom": "Personalizado",
-      "loadMore": "Cargar más"
+      "loadMore": "Cargar más",
+      "addToCart": "Añadir al carrito",
+      "view": "Ver",
+      "viewSoon": "Función de vista próximamente",
+      "loginRequired": "Inicia sesión"
     },
     "myJournals": {
       "title": "Mis Diarios",
@@ -476,6 +480,12 @@
       },
       "empty": "Aún no tienes pedidos.",
       "requestReturn": "Solicitar devolución/cambio",
+      "reportDefect": "Reportar defecto",
+      "defect": {
+        "reported": "Defecto reportado",
+        "resolved": "Resuelto",
+        "failed": "Error al reportar defecto"
+      },
       "return": {
         "requested": "Devolución solicitada",
         "exchange": "Cambio",
@@ -676,7 +686,8 @@
         "MARKETING": "Marketing",
         "DEBT": "Deuda",
         "OTHER": "Otro",
-        "SUPPLIER": "Proveedor"
+        "SUPPLIER": "Proveedor",
+        "DEFECTIVE": "Envío de defectuosos"
       }
     },
     "marketing": {
@@ -719,7 +730,6 @@
       "unassigned": "{{count}} sin asignar",
       "allOrders": "Todos los pedidos",
       "debt": "Deuda",
-      "overdue": "Vencido",
       "mtd": "MTD",
       "active": "activo",
       "assignOrders": "Asignar pedidos",
@@ -803,7 +813,9 @@
       "returnDecisionExchange": "Cambio",
       "returnDecisionRefund": "Reembolso",
       "returnApprove": "Aprobar devolución",
-      "markReshipped": "Marcar reenviado"
+      "markReshipped": "Marcar reenviado",
+      "markDefective": "Marcar defectuoso",
+      "resolveDefect": "Resolver defecto"
     },
     "stickers": {
       "label": "Admin · Activos",
@@ -848,7 +860,6 @@
       "email": "Correo",
       "contact": "Contacto",
       "totalDebt": "Deuda total",
-      "overdueDebt": "Deuda vencida",
       "monthDebt": "Este mes",
       "status": "Estado",
       "noSuppliers": "Sin proveedores",
@@ -981,6 +992,12 @@
       "notifications": "Notificaciones",
       "coupons": "Cupones",
       "sampleBooks": "Plantilla"
+    },
+    "cat": {
+      "business": "Negocio",
+      "operations": "Operaciones",
+      "catalog": "Catálogo",
+      "system": "Sistema"
     },
     "pagination": {
       "previous": "Anterior",

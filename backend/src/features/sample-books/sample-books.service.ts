@@ -6,8 +6,8 @@ import { SampleBookDTO, CreateSampleBookDTO, UpdateSampleBookDTO, SampleBookMapp
 import { SampleBookCacheService } from '../../infrastructure/cache/sample-book.cache.service.js';
 import { resolveContent } from '../../lib/merge-book-content.js';
 
-export abstract class ISampleBookService {
-	abstract list(params: {
+export interface ISampleBookService {
+	list(params: {
 		search?: string;
 		type?: string;
 		category?: string;
@@ -16,20 +16,19 @@ export abstract class ISampleBookService {
 		limit?: number;
 		cursor?: number;
 	}): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
-	abstract getById(id: number): Promise<SampleBookDTO>;
-	abstract create(adminId: number, data: CreateSampleBookDTO): Promise<SampleBookDTO>;
-	abstract update(id: number, data: UpdateSampleBookDTO): Promise<SampleBookDTO>;
-	abstract updateStatus(id: number, status: string): Promise<SampleBookDTO>;
-	abstract remove(id: number): Promise<void>;
-	abstract explore(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
-	abstract albums(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
-	abstract getPublishedById(id: number): Promise<SampleBookDTO>;
+	getById(id: number): Promise<SampleBookDTO>;
+	create(adminId: number, data: CreateSampleBookDTO): Promise<SampleBookDTO>;
+	update(id: number, data: UpdateSampleBookDTO): Promise<SampleBookDTO>;
+	updateStatus(id: number, status: string): Promise<SampleBookDTO>;
+	remove(id: number): Promise<void>;
+	explore(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
+	albums(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
+	getPublishedById(id: number): Promise<SampleBookDTO>;
 }
 
 @injectable()
-export class SampleBookService extends ISampleBookService {
+export class SampleBookService implements ISampleBookService {
 	constructor(@inject('ISampleBookCacheService') private readonly sampleCache: SampleBookCacheService) {
-		super();
 	}
 
 

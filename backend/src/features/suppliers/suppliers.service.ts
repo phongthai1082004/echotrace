@@ -1,35 +1,33 @@
 import { injectable, inject } from 'tsyringe';
-import { BaseService } from '../../utils/base.service.js';
+import { AppError } from '../../middleware/app.error.js';
+import { ErrorCode } from '@echotrace/shared';
 import { SupplierDTO, SupplierMapper, SupplierOption, AggregatedOptionsResponse, CatalogSize } from '@echotrace/shared';
 import { CreateSupplierDTO } from '../../dto/supplier/supplier.create.dto.js';
 import { UpdateSupplierDTO } from '../../dto/supplier/supplier.update.dto.js';
 import { OptionCatalogCacheService } from '../../infrastructure/cache/option-catalog.cache.service.js';
+import { paginate } from '../../utils/paginate.js';
 import { prisma } from '../../../lib/prisma.js';
 
-export abstract class ISupplierService {
-	abstract getSupplierList(
+export interface ISupplierService {
+	getSupplierList(
 		params: { search?: string; field?: string; order?: string; limit?: number; cursor?: number },
 		extraWhere?: any,
 	): Promise<{ items: SupplierDTO[]; nextCursor: number | null }>;
-	abstract getSupplierById(id: number): Promise<SupplierDTO>;
-	abstract createSupplier(dto: CreateSupplierDTO): Promise<SupplierDTO>;
-	abstract updateSupplier(id: number, dto: UpdateSupplierDTO): Promise<void>;
-	abstract updateSupplierOptions(id: number, optionIds: number[]): Promise<void>;
-	abstract deleteSupplier(id: number): Promise<void>;
-	abstract getAggregatedOptions(): Promise<AggregatedOptionsResponse>;
-	abstract getOptionCatalog(type: string): Promise<SupplierOption[]>;
-	abstract getOptionInfo(type: string, code: string): Promise<SupplierOption | null>;
+	getSupplierById(id: number): Promise<SupplierDTO>;
+	createSupplier(dto: CreateSupplierDTO): Promise<SupplierDTO>;
+	updateSupplier(id: number, dto: UpdateSupplierDTO): Promise<void>;
+	updateSupplierOptions(id: number, optionIds: number[]): Promise<void>;
+	deleteSupplier(id: number): Promise<void>;
+	getAggregatedOptions(): Promise<AggregatedOptionsResponse>;
+	getOptionCatalog(type: string): Promise<SupplierOption[]>;
+	getOptionInfo(type: string, code: string): Promise<SupplierOption | null>;
 }
 
 @injectable()
-export class SupplierService extends ISupplierService {
+export class SupplierService implements ISupplierService {
 	constructor(
-		@inject('SupplierBaseService') private readonly supplierBase: BaseService<any>,
-		@inject('PrintOptionBaseService') private readonly optionBase: BaseService<any>,
-		@inject('SupplierPrintOptionBaseService') private readonly linkBase: BaseService<any>,
 		@inject('IOptionCatalogCacheService') private readonly optionCache: OptionCatalogCacheService,
 	) {
-		super();
 	}
 
 	async getSupplierList(
@@ -44,7 +42,8 @@ export class SupplierService extends ISupplierService {
 					: params.field === 'contact'
 						? ['contact']
 						: ['name', 'email', 'contact'];
-		const { items, nextCursor } = await this.supplierBase.findAll(
+		const { items, nextCursor } = await paginate(
+			prisma.supplier,
 			{ search: params.search, order: params.order || 'desc', limit: params.limit || 50, cursor: params.cursor },
 			{ searchFields, allowedFilterFields: [] },
 			extraWhere,
@@ -54,14 +53,15 @@ export class SupplierService extends ISupplierService {
 	}
 
 	async getSupplierById(id: number) {
-		const supplier = await this.supplierBase.findById(id, { isDelete: undefined });
+		const supplier = await prisma.supplier.findFirst({ where: Object.assign({ id, isDelete: false }, { isDelete: undefined }) });
+		if (!supplier) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		await this.attachOptions([supplier]);
 		return SupplierMapper.toDTO(supplier);
 	}
 
 	async createSupplier(dto: CreateSupplierDTO) {
 		const { optionIds, ...rest } = dto as any;
-		const supplier = await this.supplierBase.create({ ...rest });
+		const supplier = await prisma.supplier.create({ data: { ...rest } });
 		if (Array.isArray(optionIds) && optionIds.length) {
 			await this.updateSupplierOptions(supplier.id, optionIds);
 		}
@@ -84,11 +84,10 @@ export class SupplierService extends ISupplierService {
 			if (data[key] !== undefined) cleanData[key] = data[key];
 		});
 
-		const result = await this.supplierBase.update(id, cleanData, { isDelete: undefined });
+		await prisma.supplier.updateMany({ where: Object.assign({ id, isDelete: false }, { isDelete: undefined }), data: cleanData });
 		if (Array.isArray(optionIds)) {
 			await this.updateSupplierOptions(id, optionIds);
 		}
-		return result;
 	}
 
 
@@ -98,11 +97,13 @@ export class SupplierService extends ISupplierService {
 		await prisma.$transaction(async (tx) => {
 			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
 			const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
-			for (const l of existing) {
-				if (wanted.has(l.printOptionId)) continue;
-				if (l.isDelete) continue;
+			// ponytail: 1 updateMany thay vì lặp từng link (N+1)
+			const toDeleteIds = existing
+				.filter((l: any) => !wanted.has(l.printOptionId) && !l.isDelete)
+				.map((l: any) => l.id);
+			if (toDeleteIds.length) {
 				await tx.supplierPrintOption.updateMany({
-					where: { id: l.id },
+					where: { id: { in: toDeleteIds } },
 					data: { isDelete: true, deletedAt: new Date() },
 				});
 			}
@@ -121,7 +122,8 @@ export class SupplierService extends ISupplierService {
 	}
 
 	async deleteSupplier(id: number) {
-		await this.supplierBase.delete(id);
+		const result = await prisma.supplier.updateMany({ where: { id, isDelete: false }, data: { isDelete: true, deletedAt: new Date() } });
+		if (result.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
 	}
 
 	private async attachOptions(suppliers: any[]) {
@@ -170,8 +172,8 @@ export class SupplierService extends ISupplierService {
 
 
 	async getAggregatedOptions(): Promise<AggregatedOptionsResponse> {
-		const d = this.optionBase.delegate;
-		const rows = await d.findMany({ where: { isDelete: false }, orderBy: { type: 'asc' } });
+		const d = prisma.printOption;
+		const rows = (await d.findMany({ where: { isDelete: false }, orderBy: { type: 'asc' } })) as any[];
 		const sizes: CatalogSize[] = [];
 		const papers: SupplierOption[] = [];
 		const covers: SupplierOption[] = [];
@@ -195,10 +197,10 @@ export class SupplierService extends ISupplierService {
 	async getOptionCatalog(type: string): Promise<SupplierOption[]> {
 		const cached = await this.optionCache.getCatalog<SupplierOption[]>(type);
 		if (cached) return cached;
-		const rows: any[] = await this.optionBase.delegate.findMany({
+		const rows = (await prisma.printOption.findMany({
 			where: { type, isDelete: false },
 			orderBy: { updatedAt: 'desc' },
-		});
+		})) as any[];
 		const list = rows.map((r) => ({
 			code: r.code,
 			name: r.name ?? { vi: r.code, en: r.code, es: r.code },
@@ -214,7 +216,7 @@ export class SupplierService extends ISupplierService {
 	async getOptionInfo(type: string, code: string): Promise<SupplierOption | null> {
 		const cached = await this.optionCache.getInfo<SupplierOption>(type, code);
 		if (cached) return cached;
-		const row = await this.optionBase.delegate.findFirst({ where: { type, code, isDelete: false } });
+		const row = (await prisma.printOption.findFirst({ where: { type, code, isDelete: false } })) as any;
 		if (!row) return null;
 		const info = {
 			code: row.code,

@@ -22,10 +22,6 @@ export class UpdateSupplierDTO {
 
 	@IsNumber()
 	@IsOptional()
-	overdueDebt?: number;
-
-	@IsNumber()
-	@IsOptional()
 	monthDebt?: number;
 
 	@IsDateString()

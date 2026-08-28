@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import { label, card, neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
@@ -14,6 +15,11 @@ import { formatCurrency } from "@/lib/order-status";
 export default function DispatchPage() {
   const { t } = useTranslation();
   const d = useDispatch();
+
+  const drawerSuppliers = useMemo(
+    () => d.suppliers.map((s) => ({ id: s.id, name: s.name })),
+    [d.suppliers],
+  );
 
   return (
     <div className="h-screen flex flex-col">
@@ -54,7 +60,7 @@ export default function DispatchPage() {
                     </span>
                     <span
                       className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                        s.overdueDebt > 0 ? "text-[#B54843] bg-[#B54843]/10" : "text-[#22C55E] bg-[#22C55E]/10"
+                        s.totalDebt > 0 ? "text-[#B54843] bg-[#B54843]/10" : "text-[#22C55E] bg-[#22C55E]/10"
                       }`}
                     >
                       {formatCurrency(s.totalDebt)}
@@ -82,10 +88,6 @@ export default function DispatchPage() {
                   <div className={`${card} px-3 py-1.5`}>
                     <p className={`${label} text-[#999]`}>{t("admin.dispatch.debt")}</p>
                     <p className="text-sm font-bold">{formatCurrency(d.selectedSupplier.totalDebt)}</p>
-                  </div>
-                  <div className={`${card} px-3 py-1.5 ${d.selectedSupplier.overdueDebt > 0 ? "" : "opacity-50"}`}>
-                    <p className={`${label} text-[#999]`}>{t("admin.dispatch.overdue")}</p>
-                    <p className="text-sm font-bold text-[#B54843]">{formatCurrency(d.selectedSupplier.overdueDebt)}</p>
                   </div>
                   <div className={`${card} px-3 py-1.5`}>
                     <p className={`${label} text-[#999]`}>{t("admin.dispatch.mtd")}</p>
@@ -141,7 +143,9 @@ export default function DispatchPage() {
           onEvent={(type, payload) => d.processEvent(d.selectedOrder!.id, type, payload)}
           onApproveReturn={(id, body) => d.approveReturn(id, body)}
           onMarkReshipped={(id) => d.markReshipped(id)}
-          suppliers={d.suppliers.map((s) => ({ id: s.id, name: s.name }))}
+          onMarkDefective={(id) => d.markDefective(id)}
+          onResolveDefect={(id) => d.resolveDefect(id)}
+          suppliers={drawerSuppliers}
           onClose={() => d.setSelectedOrder(null)}
         />
       )}

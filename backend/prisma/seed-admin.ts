@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { prisma } from '../lib/prisma.js';
 
 async function main() {
@@ -6,14 +7,15 @@ async function main() {
 	const supplierCount = await prisma.supplier.count();
 
 	if (userCount === 0) {
-		const hash = await bcrypt.hash('admin123', 10);
-		const hash2 = await bcrypt.hash('admin456', 10);
+		const adminPassword = process.env.SEED_ADMIN_PASSWORD || randomBytes(12).toString('hex');
+		const adminHash = await bcrypt.hash(adminPassword, 10);
 		const userHash = await bcrypt.hash('user123', 10);
+		console.log(`Seeded admin password: ${adminPassword}`);
 
 		await prisma.user.createMany({
 			data: [
-				{ email: 'admin@cabinetmemoir.app', password: hash, name: 'Admin One', role: 'admin', isDelete: false },
-				{ email: 'admin2@cabinetmemoir.app', password: hash2, name: 'Admin Two', role: 'admin', isDelete: false },
+				{ email: 'admin@cabinetmemoir.app', password: adminHash, name: 'Admin One', role: 'admin', isDelete: false },
+				{ email: 'admin2@cabinetmemoir.app', password: adminHash, name: 'Admin Two', role: 'admin', isDelete: false },
 				{
 					email: 'minh@example.com',
 					password: userHash,
@@ -187,7 +189,7 @@ async function main() {
 				},
 				{
 					email: 'quang.admin@cabinetmemoir.app',
-					password: hash,
+					password: adminHash,
 					name: 'Trần Minh Quang',
 					phone: '0909000999',
 					address: '88 Phạm Văn Đồng',
@@ -219,7 +221,6 @@ async function main() {
 					email: 'hoang@sach.vn',
 					isDelete: false,
 					totalDebt: 42000000,
-					overdueDebt: 12000000,
 					monthDebt: 8000000,
 				},
 			],

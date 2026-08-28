@@ -1,4 +1,5 @@
 import { DiscountType, MinOrderType } from "../../enums/discount.enum.js";
+import { makeSku } from "../../utils/sku.js";
 
 export interface CartItem {
   bookId: number;
@@ -14,6 +15,7 @@ export interface CartItem {
   price?: number | null;
   coverUrl: string | null;
   pdfUrl?: string | null;
+  type?: string | null;
   quantity: number;
   thumbnailUrl?: string | null;
 }
@@ -74,8 +76,50 @@ export function composeCartItem(row: { quantity: number; cover: string | null; p
     price: null,
     coverUrl: book.coverUrl ?? null,
     pdfUrl: null,
+    type: book.type ?? null,
     quantity: row.quantity || 1,
     thumbnailUrl: firstPageThumbnail(book.content),
+  };
+}
+
+// Slim snapshot stored in Order.orderItems (JSON). Only the fields the order
+// lifecycle actually reads — NOT the full CartItem (style/font/coverUrl/pdfUrl/
+// paperHeight/paperWidth/type are cart-only and never used after checkout).
+export interface OrderItem {
+  bookId: number;
+  title: string;
+  thumbnailUrl: string | null;
+  pages: number;
+  quantity: number;
+  cover: string | null;
+  paper: string | null;
+  paperSize: string | null;
+  price: number | null;
+  sku: string | null;
+}
+
+export function toOrderItem(item: {
+  bookId: number;
+  title: string;
+  thumbnailUrl?: string | null;
+  pages: number;
+  quantity: number;
+  cover: string | null;
+  paper: string | null;
+  paperSize?: string | null;
+  price?: number | null;
+}, nameEn?: { cover?: string | null; paper?: string | null; paperSize?: string | null }): OrderItem {
+  return {
+    bookId: item.bookId,
+    title: item.title,
+    thumbnailUrl: item.thumbnailUrl ?? null,
+    pages: item.pages,
+    quantity: item.quantity || 1,
+    cover: item.cover ?? null,
+    paper: item.paper ?? null,
+    paperSize: item.paperSize ?? null,
+    price: item.price ?? null,
+    sku: makeSku(item.cover ?? "", item.paper ?? "", item.paperSize ?? "", nameEn),
   };
 }
 

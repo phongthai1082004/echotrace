@@ -2,6 +2,7 @@ import { injectable } from 'tsyringe';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 import { prisma } from '../../../lib/prisma.js';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
@@ -16,17 +17,17 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const otpFailCounts = new Map<number, number>();
 const MAX_OTP_ATTEMPTS = 5;
 
-export abstract class IAuthService {
-	abstract loginWithGoogle(idToken: string): Promise<AuthResponseDTO>;
-	abstract sendOtp(email: string): Promise<void>;
-	abstract verifyOtpAndRegister(email: string, otp: string, password: string): Promise<AuthResponseDTO>;
-	abstract login(email: string, password: string): Promise<AuthResponseDTO>;
-	abstract logout(userId: string): Promise<void>;
-	abstract refresh(token: string): Promise<{ accessToken: string }>;
+export interface IAuthService {
+	loginWithGoogle(idToken: string): Promise<AuthResponseDTO>;
+	sendOtp(email: string): Promise<void>;
+	verifyOtpAndRegister(email: string, otp: string, password: string): Promise<AuthResponseDTO>;
+	login(email: string, password: string): Promise<AuthResponseDTO>;
+	logout(userId: string): Promise<void>;
+	refresh(token: string): Promise<{ accessToken: string }>;
 }
 
 @injectable()
-export class AuthService extends IAuthService {
+export class AuthService implements IAuthService {
 	async loginWithGoogle(idToken: string) {
 		const ticket = await googleClient.verifyIdToken({
 			idToken,
@@ -62,7 +63,7 @@ export class AuthService extends IAuthService {
 
 		if (existing) return;
 
-		const otp = String(Math.floor(100000 + Math.random() * 900000));
+		const otp = String(randomInt(100000, 1000000));
 		const hashed = await bcrypt.hash(otp, 10);
 
 		await prisma.token.deleteMany({ where: { email, tokenType: TokenType.OTP } });

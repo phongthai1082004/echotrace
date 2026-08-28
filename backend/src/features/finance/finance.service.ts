@@ -19,7 +19,7 @@ export interface CreateExpenseInput {
 	note?: string;
 }
 
-const EXPENSE_CATEGORIES = ['OPERATING', 'PAYROLL', 'MARKETING', 'DEBT', 'OTHER', 'SUPPLIER'];
+const EXPENSE_CATEGORIES = ['OPERATING', 'PAYROLL', 'MARKETING', 'DEBT', 'OTHER', 'SUPPLIER', 'DEFECTIVE'];
 
 export interface IFinanceService {
 	getSummary(): Promise<{ summary: Record<string, number>; monthly: { period: string; revenue: number; orders: number }[] }>;
@@ -94,36 +94,47 @@ export class FinanceService implements IFinanceService {
 	async getSuppliers(): Promise<SupplierDebt[]> {
 		const termsDays = Number(process.env.PAYABLE_TERMS_DAYS ?? 14);
 		const now = new Date();
-		const orders = await prisma.order.findMany({ select: { orderItems: true, createdAt: true } });
+		const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+		const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-		const map = new Map<number, { total: number; mtd: number }>();
-		for (const o of orders) {
-			const items: any[] = Array.isArray(o.orderItems) ? o.orderItems : [];
-			for (const it of items) {
-				if (it.supplierId == null || it.costPrice == null || it.reconciledAt) continue;
-				const sid = Number(it.supplierId);
-				const cur = map.get(sid) ?? { total: 0, mtd: 0 };
-				const cost = Number(it.costPrice);
-				cur.total += cost;
-				const due = new Date(o.createdAt);
-				due.setDate(due.getDate() + termsDays);
-				if (due.getFullYear() === now.getFullYear() && due.getMonth() === now.getMonth()) cur.mtd += cost;
-				map.set(sid, cur);
-			}
-		}
+		const result: any[] = await prisma.$queryRaw`
+			WITH item_debts AS (
+				SELECT
+					(it->>'supplierId')::int AS supplier_id,
+					COALESCE((it->>'costPrice')::numeric, 0) AS cost,
+					o."createdAt"
+				FROM "Order" o,
+				jsonb_array_elements(o."orderItems") it
+				WHERE it->>'supplierId' IS NOT NULL
+					AND it->>'costPrice' IS NOT NULL
+					AND it->>'reconciledAt' IS NULL
+			)
+			SELECT
+				s.id,
+				s.name,
+				COALESCE(SUM(id.cost), 0)::double precision AS totalDebt,
+				COALESCE(SUM(CASE
+					WHEN (id."createdAt" + (${termsDays} || ' days')::interval) >= ${monthStart}
+						AND (id."createdAt" + (${termsDays} || ' days')::interval) < ${monthEnd}
+					THEN id.cost ELSE 0
+				END), 0)::double precision AS thisMonth
+			FROM "Supplier" s
+			LEFT JOIN item_debts id ON s.id = id.supplier_id
+			GROUP BY s.id, s.name
+			ORDER BY s.id;
+		`;
 
-		const suppliers = await prisma.supplier.findMany();
-		return suppliers.map((s) => ({
-			id: s.id,
-			name: s.name,
-			totalDebt: map.get(s.id)?.total ?? 0,
-			thisMonth: map.get(s.id)?.mtd ?? 0,
+		return result.map((row: any) => ({
+			id: Number(row.id),
+			name: row.name,
+			totalDebt: Number(row.totalDebt) || 0,
+			thisMonth: Number(row.thisMonth) || 0,
 		}));
 	}
 
-	async createExpense(input: CreateExpenseInput): Promise<any> {
-		if (!input.amount || input.amount <= 0) throw new AppError(ErrorCode.INTERNAL, 400);
-		if (!EXPENSE_CATEGORIES.includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
+async createExpense(input: CreateExpenseInput): Promise<any> {
+	if (typeof input.amount !== 'number' || !Number.isFinite(input.amount) || input.amount <= 0) throw new AppError(ErrorCode.INTERNAL, 400);
+	if (!EXPENSE_CATEGORIES.includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
 		return prisma.expense.create({
 			data: {
 				amount: input.amount,

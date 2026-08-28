@@ -26,7 +26,6 @@ export interface Supplier {
   email: string;
   banned: boolean;
   totalDebt: number;
-  overdueDebt: number;
   monthDebt: number;
   lastPaymentDate: string | null;
   bankName: string | null;

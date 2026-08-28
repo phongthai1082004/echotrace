@@ -73,6 +73,7 @@ export interface OrderDTO {
   returnState?: string | null;
   returnFault?: string | null;
   returnReason?: string | null;
+  defectState?: string | null;
   // join phía admin
   user?: { id: number; name: string | null; email: string } | null;
   supplier?: { id: number; name: string; contact: string; email: string } | null;

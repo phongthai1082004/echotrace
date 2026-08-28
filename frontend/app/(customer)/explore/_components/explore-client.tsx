@@ -21,7 +21,14 @@ export function ExploreClient() {
 		setCategory(cat);
 	};
 
-	const grid = (list: typeof samples, emptyKey: string, skeletonCount: number, next: number | null, onLoadMore: () => void) =>
+	const grid = (
+		list: typeof samples,
+		emptyKey: string,
+		skeletonCount: number,
+		next: number | null,
+		onLoadMore: () => void,
+		variant?: "sample" | "album",
+	) =>
 		loading ? (
 			<SkeletonGrid count={skeletonCount} aspect="portrait" />
 		) : list.length === 0 ? (
@@ -32,7 +39,7 @@ export function ExploreClient() {
 			<>
 				<div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
 					{list.map((s) => (
-						<SampleCard key={s.id} s={s} />
+						<SampleCard key={s.id} s={s} variant={variant} />
 					))}
 				</div>
 				{next != null && (
@@ -70,8 +77,8 @@ export function ExploreClient() {
 					</button>
 				</div>
 
-				{tab === "samples" && grid(samples, "customer.explore.emptySamples", 10, samplesNext, loadMoreSamples)}
-				{tab === "albums" && grid(albums, "customer.explore.emptyAlbums", 4, albumsNext, loadMoreAlbums)}
+			{tab === "samples" && grid(samples, "customer.explore.emptySamples", 10, samplesNext, loadMoreSamples)}
+			{tab === "albums" && grid(albums, "customer.explore.emptyAlbums", 4, albumsNext, loadMoreAlbums, "album")}
 			</main>
 		</div>
 	);

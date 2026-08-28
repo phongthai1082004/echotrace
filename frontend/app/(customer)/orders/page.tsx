@@ -1,80 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useSession } from "next-auth/react";
 import { SkeletonCardRow } from "@/components/skeleton";
-import { useVisibleCards } from "@/lib/use-container-query";
-import { apiFetch } from "@/lib/api.fetch";
-import { useToast } from "@/components/toast";
-import type { OrderDTO } from "@/lib/order.dto";
 import { OrderCard } from "./_components/order-card";
 import { OrderDetailDrawer } from "@/components/order-detail-drawer";
+import { useCustomerOrders } from "./_hooks/use-customer-orders";
 
 export default function OrdersPage() {
   const { t } = useTranslation();
-  const { showToast } = useToast();
-  const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
-  const [orders, setOrders] = useState<OrderDTO[] | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<OrderDTO | null>(null);
-  const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(300, 20);
-  void skeletonRef;
-  void visibleCount;
+  const {
+    orders,
+    selectedOrder,
+    setSelectedOrder,
+    requestPaymentLink,
+    cancelOrder,
+    requestReturn,
+    reportDefect,
+    pollVerify,
+  } = useCustomerOrders();
 
   useEffect(() => {
-    if (!token) return;
-    apiFetch<OrderDTO[]>("/api/orders", token)
-      .then(setOrders)
-      .catch(() => setOrders([]));
-  }, [token]);
-
-  // Poll verify khi đơn đang chờ thanh toán (webhook localhost không tới được → hỏi PayOS trực tiếp)
-  const selId = selectedOrder?.id;
-  const selStatus = selectedOrder?.status;
-  useEffect(() => {
-    if (!token || !selId || selStatus !== "pending_payment") return;
-    const id = setInterval(async () => {
-      try {
-        const r = await apiFetch<{ status: string }>(`/api/orders/${selId}/verify`, token, { method: "POST" });
-        if (r?.status && r.status !== "pending_payment") {
-          clearInterval(id);
-          showToast(t("customer.orders.paymentSuccess"), "success");
-          setOrders((prev) => (prev ? prev.map((o) => (o.id === selId ? { ...o, status: r.status as OrderDTO["status"], qrCode: undefined } : o)) : prev));
-          setSelectedOrder((prev) => (prev ? { ...prev, status: r.status as OrderDTO["status"] } : prev));
-        }
-      } catch {}
-    }, 3000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selId, selStatus, token]);
-
-  const requestPaymentLink = (id: number) =>
-    apiFetch<{ qrCode?: string; checkoutUrl?: string }>(`/api/orders/${id}/payment-link`, token!, {
-      method: "POST",
-    });
-
-  const cancelOrder = async (id: number) => {
-    try {
-      const r = await apiFetch<{ refunded: boolean; amount: number }>(`/api/orders/${id}/cancel`, token!, {
-        method: "POST",
-      });
-      const status = r?.refunded ? "refunded" : "cancelled";
-      showToast(r?.refunded ? t("customer.orders.cancelledRefunded") : t("customer.orders.cancelled"), "success");
-      setOrders((prev) => (prev ? prev.map((o) => (o.id === id ? { ...o, status: status as OrderDTO["status"] } : o)) : prev));
-      setSelectedOrder((prev) => (prev ? { ...prev, status: status as OrderDTO["status"] } : prev));
-      return r;
-    } catch (e: any) {
-      showToast(e?.message || t("customer.orders.cancelledRefunded"), "error");
-      return { refunded: false, amount: 0 };
-    }
-  };
-
-  const requestReturn = async (id: number, body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] }) => {
-    await apiFetch(`/api/orders/${id}/return`, token!, { method: "POST", body: JSON.stringify(body) });
-    showToast(t("customer.orders.return.requested"), "success");
-    setOrders((prev) => (prev ? prev.map((o) => (o.id === id ? { ...o, returnState: "requested" } : o)) : prev));
-    setSelectedOrder((prev) => (prev ? { ...prev, returnState: "requested" } : prev));
-  };
+    if (!selectedOrder?.id) return;
+    const cleanup = pollVerify(selectedOrder.id, selectedOrder.status);
+    return cleanup;
+  }, [selectedOrder?.id, selectedOrder?.status, pollVerify]);
 
   return (
     <div className="min-h-screen pt-15">
@@ -111,6 +61,7 @@ export default function OrdersPage() {
           onRequestPaymentLink={requestPaymentLink}
           onCancelOrder={cancelOrder}
           onRequestReturn={requestReturn}
+          onReportDefect={reportDefect}
           onClose={() => setSelectedOrder(null)}
         />
       )}

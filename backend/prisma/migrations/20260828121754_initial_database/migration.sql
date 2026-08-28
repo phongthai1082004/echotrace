@@ -1,8 +1,17 @@
 -- CreateEnum
-CREATE TYPE "ExpenseCategory" AS ENUM ('OPERATING', 'PAYROLL', 'MARKETING', 'DEBT', 'OTHER', 'SUPPLIER');
+CREATE TYPE "ExpenseCategory" AS ENUM ('OPERATING', 'PAYROLL', 'MARKETING', 'DEBT', 'OTHER', 'SUPPLIER', 'DEFECTIVE');
 
 -- CreateEnum
 CREATE TYPE "SampleBookType" AS ENUM ('ALBUM', 'TEMPLATE');
+
+-- CreateEnum
+CREATE TYPE "ReturnState" AS ENUM ('none', 'requested', 'approved', 'reshipping', 'reshipped', 'refunding', 'refunded');
+
+-- CreateEnum
+CREATE TYPE "DefectState" AS ENUM ('none', 'reported', 'resolved');
+
+-- CreateEnum
+CREATE TYPE "ReturnFault" AS ENUM ('self', 'supplier');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -35,8 +44,6 @@ CREATE TABLE "Token" (
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Token_pkey" PRIMARY KEY ("id")
 );
@@ -88,8 +95,10 @@ CREATE TABLE "Order" (
     "orderItems" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
+    "returnState" "ReturnState" DEFAULT 'none',
+    "returnFault" "ReturnFault",
+    "returnReason" TEXT,
+    "defectState" "DefectState" DEFAULT 'none',
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
 );
@@ -112,8 +121,6 @@ CREATE TABLE "Transaction" (
     "rawPayload" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
 );
@@ -128,8 +135,6 @@ CREATE TABLE "Income" (
     "note" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Income_pkey" PRIMARY KEY ("id")
 );
@@ -149,8 +154,6 @@ CREATE TABLE "Expense" (
     "note" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
 );
@@ -168,8 +171,6 @@ CREATE TABLE "Cashflow" (
     "note" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isDelete" BOOLEAN NOT NULL DEFAULT false,
-    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Cashflow_pkey" PRIMARY KEY ("id")
 );
@@ -191,6 +192,7 @@ CREATE TABLE "Book" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "isDelete" BOOLEAN NOT NULL DEFAULT false,
     "deletedAt" TIMESTAMP(3),
+    "sampleBookId" INTEGER,
 
     CONSTRAINT "Book_pkey" PRIMARY KEY ("id")
 );
@@ -226,6 +228,7 @@ CREATE TABLE "IdempotencyKey" (
     "status" TEXT NOT NULL DEFAULT 'PROCESSING',
     "responseBody" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "IdempotencyKey_pkey" PRIMARY KEY ("key")
 );
@@ -287,7 +290,6 @@ CREATE TABLE "Supplier" (
     "bankAccountName" TEXT,
     "contactPerson" TEXT,
     "totalDebt" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "overdueDebt" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "monthDebt" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "lastPaymentDate" TIMESTAMP(3),
     "banned" BOOLEAN NOT NULL DEFAULT false,
@@ -467,6 +469,9 @@ CREATE INDEX "Book_userId_idx" ON "Book"("userId");
 CREATE INDEX "Book_type_idx" ON "Book"("type");
 
 -- CreateIndex
+CREATE INDEX "Book_sampleBookId_idx" ON "Book"("sampleBookId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Cart_userId_key" ON "Cart"("userId");
 
 -- CreateIndex
@@ -549,6 +554,9 @@ ALTER TABLE "Cashflow" ADD CONSTRAINT "Cashflow_incomeId_fkey" FOREIGN KEY ("inc
 
 -- AddForeignKey
 ALTER TABLE "Cashflow" ADD CONSTRAINT "Cashflow_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Book" ADD CONSTRAINT "Book_sampleBookId_fkey" FOREIGN KEY ("sampleBookId") REFERENCES "SampleBook"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Book" ADD CONSTRAINT "Book_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

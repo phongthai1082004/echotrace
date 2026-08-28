@@ -49,6 +49,12 @@ export class OrderController {
 		res.json(ApiResponse.success(orders));
 	};
 
+	getOrderById = async (req: AuthRequest, res: Response) => {
+		const order = await this.orderService.getOrderById(parseInt(req.params.id as string));
+		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		res.json(ApiResponse.success(order));
+	};
+
 	processEvent = async (req: AuthRequest, res: Response) => {
 		const { type, ...payload } = req.body ?? {};
 		await this.orderService.processOrderEvent(parseInt(req.params.id as string), type, payload);
@@ -80,5 +86,15 @@ export class OrderController {
 	markReshipped = async (req: AuthRequest, res: Response) => {
 		await this.orderService.markReshipped(parseInt(req.params.id as string));
 		res.json(ApiResponse.message('Marked reshipped'));
+	};
+
+	reportDefect = async (req: AuthRequest, res: Response) => {
+		await this.orderService.reportDefect(parseInt(req.params.id as string), parseInt(req.userId!));
+		res.json(ApiResponse.message('Defect reported'));
+	};
+
+	markDefective = async (req: AuthRequest, res: Response) => {
+		await this.orderService.markDefective(parseInt(req.params.id as string));
+		res.json(ApiResponse.message('Marked defective'));
 	};
 }

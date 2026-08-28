@@ -44,8 +44,10 @@ async function bootstrap() {
 		});
 
 	app.use(helmet());
-	app.use(cors({ origin: process.env.NEXTAUTH_URL, credentials: true }));
-	app.use(express.json({ limit: '10mb' }));
+	const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+	// ponytail: global JSON body cap lowered from 10mb; uploads use R2 presigned URLs (metadata only), so 1mb is ample.
+	app.use(express.json({ limit: '1mb' }));
 	app.use(handle(i18next));
 
 	const apiRouter = express.Router({ mergeParams: true });
@@ -89,10 +91,9 @@ async function bootstrap() {
 		console.error(error.stack);
 	});
 
-	process.on('unhandledRejection', (reason: unknown) => {
-		console.error('💥 UNHANDLED PROMISE REJECTION! Shutting down server...', reason);
-		server.close(() => process.exit(1));
-	});
+process.on('unhandledRejection', (reason: unknown) => {
+	console.error('💥 UNHANDLED PROMISE REJECTION!', reason);
+});
 
 	process.on('uncaughtException', (error: Error) => {
 		console.error('💥 UNCAUGHT EXCEPTION! Shutting down server...', error);

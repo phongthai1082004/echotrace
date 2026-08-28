@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import { useDebounce } from "@/hooks";
@@ -17,7 +17,6 @@ interface SupplierRow {
   contact: string;
   email: string;
   totalDebt: number;
-  overdueDebt: number;
   monthDebt: number;
 }
 
@@ -39,8 +38,9 @@ export function useDispatch() {
     apiFetch<OrderDTO[]>("/api/admin/orders", token)
       .then(setOrders)
       .catch(() => setOrders([]));
-    // ponytail: debt NCC lấy thẳng từ API; activeOrders tự tính từ orders
-    apiFetch<{ items: SupplierRow[] }>("/api/admin/suppliers?status=active&limit=100", token)
+    // ponytail: supplier list là nhỏ (admin config); cap 1000 tránh truncate silent,
+    // không cần phân trang UI ở scale này.
+    apiFetch<{ items: SupplierRow[] }>("/api/admin/suppliers?status=active&limit=1000", token)
       .then((r) => setSuppliers(r.items ?? []))
       .catch(() => setSuppliers([]));
   }, [token]);
@@ -48,10 +48,14 @@ export function useDispatch() {
   const customerName = (o: OrderDTO) => o.name || o.user?.name || "";
 
   const list = orders ?? [];
-  const enrichedSuppliers = suppliers.map((s) => ({
-    ...s,
-    activeOrders: list.filter((o) => o.supplierId === s.id && ACTIVE_STATUSES.includes(o.status)).length,
-  }));
+  const enrichedSuppliers = useMemo(
+    () =>
+      suppliers.map((s) => ({
+        ...s,
+        activeOrders: list.filter((o) => o.supplierId === s.id && ACTIVE_STATUSES.includes(o.status)).length,
+      })),
+    [suppliers, list],
+  );
 
   const filteredOrders = list
     .filter((o) => !selectedSupplierId || o.supplierId === selectedSupplierId)
@@ -93,6 +97,20 @@ export function useDispatch() {
     [orders, token],
   );
 
+  const patchOrder = useCallback((updated: OrderDTO) => {
+    setOrders((cur) => (cur ? cur.map((o) => (o.id === updated.id ? updated : o)) : [updated]));
+    setSelectedOrder((p) => (p?.id === updated.id ? updated : p));
+  }, []);
+
+  // ponytail: chỉ fetch 1 đơn thay vì whole list (B1) — patch vào local state.
+  const refreshOrder = useCallback(
+    async (id: number) => {
+      const o = await apiFetch<OrderDTO>(`/api/admin/orders/${id}`, token).catch(() => null);
+      if (o) patchOrder(o);
+    },
+    [token, patchOrder],
+  );
+
   const processEvent = useCallback(
     async (id: number, type: string, payload?: any) => {
       try {
@@ -103,32 +121,16 @@ export function useDispatch() {
       } catch (e) {
         console.error(e);
       } finally {
-        const r = await apiFetch<OrderDTO[]>("/api/admin/orders", token).catch(() => null);
-        if (r) {
-          setOrders(r);
-          setSelectedOrder((p) => (p ? r.find((o) => o.id === id) ?? p : p));
-        }
+        await refreshOrder(id);
       }
     },
-    [token],
+    [token, refreshOrder],
   );
 
   const selectSupplier = (id: number | null) => {
     setSelectedSupplierId(id);
     setPage(0);
   };
-
-  // ponytail: duyệt đổi trả / đánh dấu đã gửi lại — xong thì refetch cho chắc
-  const refreshOrder = useCallback(
-    async (id: number) => {
-      const r = await apiFetch<OrderDTO[]>("/api/admin/orders", token).catch(() => null);
-      if (r) {
-        setOrders(r);
-        setSelectedOrder((p) => (p ? r.find((o) => o.id === id) ?? p : p));
-      }
-    },
-    [token],
-  );
 
   const approveReturn = useCallback(
     async (id: number, body: { fault: "self" | "supplier" }) => {
@@ -150,6 +152,36 @@ export function useDispatch() {
     async (id: number) => {
       try {
         await apiFetch(`/api/admin/orders/${id}/return-reshipped`, token, { method: "POST" });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        await refreshOrder(id);
+      }
+    },
+    [token, refreshOrder],
+  );
+
+  // ponytail: hàng lỗi chỉ là state; mark = reported, resolve = PATCH defectState.
+  const markDefective = useCallback(
+    async (id: number) => {
+      try {
+        await apiFetch(`/api/admin/orders/${id}/mark-defective`, token, { method: "POST" });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        await refreshOrder(id);
+      }
+    },
+    [token, refreshOrder],
+  );
+
+  const resolveDefect = useCallback(
+    async (id: number) => {
+      try {
+        await apiFetch(`/api/admin/orders/${id}`, token, {
+          method: "PATCH",
+          body: JSON.stringify({ defectState: "resolved" }),
+        });
       } catch (e) {
         console.error(e);
       } finally {
@@ -184,6 +216,8 @@ export function useDispatch() {
     processEvent,
     approveReturn,
     markReshipped,
+    markDefective,
+    resolveDefect,
     statusLabel,
     customerName,
     suppliers: enrichedSuppliers,

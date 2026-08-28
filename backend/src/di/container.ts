@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { BaseService } from '../utils/base.service.js';
 import { prisma } from '../../lib/prisma.js';
 import { CacheService } from '../infrastructure/cache/cache.service.js';
 import { OptionCatalogCacheService } from '../infrastructure/cache/option-catalog.cache.service.js';
@@ -14,23 +13,17 @@ import { SupplierService } from '../features/suppliers/suppliers.service.js';
 import { PrintOptionService } from '../features/print-options/print-options.service.js';
 import { CartService } from '../features/cart/cart.service.js';
 import { OrderService } from '../features/order/order.service.js';
+import { OrderFinanceService } from '../features/order/order-finance.service.js';
 import { CouponService } from '../features/coupons/coupons.service.js';
 import { SampleBookService } from '../features/sample-books/sample-books.service.js';
 import { PaymentService } from '../infrastructure/payment/payment.service.js';
 import { PayOSGateway } from '../infrastructure/payment/payos.service.js';
 import { PayOS } from '@payos/node';
 import { PaymentWebhookService } from '../features/payment/payment.service.js';
+import { EmailService } from '../features/email/email.service.js';
 import { FinanceService } from '../features/finance/finance.service.js';
 
-container.register('UserBaseService', { useValue: new BaseService<any>(prisma.user) });
 container.register('CacheService', { useValue: new CacheService() });
-container.register('UserImageBaseService', { useValue: new BaseService<any>(prisma.userImage) });
-container.register('SupplierBaseService', { useValue: new BaseService<any>(prisma.supplier) });
-container.register('PrintOptionBaseService', { useValue: new BaseService<any>(prisma.printOption) });
-container.register('SupplierPrintOptionBaseService', { useValue: new BaseService<any>(prisma.supplierPrintOption) });
-container.register('DecorAssetBaseService', { useValue: new BaseService<any>(prisma.decorAsset) });
-container.register('CartBaseService', { useValue: new BaseService<any>(prisma.cart) });
-container.register('OrderBaseService', { useValue: new BaseService<any>(prisma.order) });
 
 container.registerSingleton('IR2ImageService', R2ImageService);
 container.registerSingleton('IAuthService', AuthService);
@@ -45,7 +38,9 @@ container.registerSingleton('ISampleBookService', SampleBookService);
 container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheService);
 container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
 container.registerSingleton('IOrderService', OrderService);
+container.registerSingleton('IOrderFinanceService', OrderFinanceService);
 container.registerSingleton('IPaymentWebhookService', PaymentWebhookService);
+container.registerSingleton('IEmailService', EmailService);
 container.registerSingleton('IFinanceService', FinanceService);
 
 let paymentService: PaymentService;

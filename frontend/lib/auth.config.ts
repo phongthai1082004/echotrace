@@ -98,11 +98,13 @@ export const authOptions = {
       if (trigger === "update" && session?.image) token.picture = session.image;
       return token;
     },
-    async session({ session, token }: any) {
-      session.accessToken = token.accessToken;
-      session.accessTokenExpires = token.accessTokenExpires;
-      if (session.user) {
-        session.user.id = token.sub;
+  async session({ session, token }: any) {
+    // ponytail: the real access token lives ONLY in the httpOnly JWT cookie and
+    // is injected server-side by /api/proxy. We expose an inert placeholder here
+    // so guards/type-checks pass without ever leaking the secret to client JS.
+    if (session.user) {
+      session.accessToken = "client";
+      session.user.id = token.sub;
         session.user.role = token.role || "user";
         session.user.dbId = token.dbId;
         session.user.image = token.picture || null;

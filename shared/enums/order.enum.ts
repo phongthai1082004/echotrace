@@ -33,4 +33,13 @@ export const ReturnFault = {
 
 export type ReturnFault = typeof ReturnFault[keyof typeof ReturnFault];
 
+// ponytail: hàng lỗi chỉ là 1 state (không phải status chính). none = bình thường.
+export const DefectState = {
+  NONE: 'none',
+  REPORTED: 'reported',
+  RESOLVED: 'resolved',
+} as const;
+
+export type DefectState = typeof DefectState[keyof typeof DefectState];
+
 export { TransactionStatus, TransactionType, PaymentPlan } from './payment.enum.js';

@@ -18,7 +18,7 @@ export function OrderCard({ order, onOpen }: { order: OrderDTO; onOpen: (o: Orde
       <div className="aspect-[4/3] bg-[#e8e6e0] overflow-hidden relative">
         <div className="grid grid-cols-2 h-full">
           {items.slice(0, 2).map((item, i) => (
-            <div key={i} className="relative overflow-hidden">
+            <div key={item.bookId ?? i} className="relative overflow-hidden">
               {item.thumbnailUrl ? (
                 <Image src={item.thumbnailUrl} alt={item.title} fill sizes="80px" className="object-cover" />
               ) : null}

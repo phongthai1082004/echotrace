@@ -3,15 +3,15 @@ import { prisma } from '../../../lib/prisma.js';
 import { CouponDTO, CreateCouponDTO, CouponMapper, ErrorCode } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
 
-export abstract class ICouponService {
-	abstract list(): Promise<CouponDTO[]>;
-	abstract create(dto: CreateCouponDTO): Promise<CouponDTO>;
-	abstract deactivate(id: number): Promise<void>;
-	abstract remove(id: number): Promise<void>;
+export interface ICouponService {
+	list(): Promise<CouponDTO[]>;
+	create(dto: CreateCouponDTO): Promise<CouponDTO>;
+	deactivate(id: number): Promise<void>;
+	remove(id: number): Promise<void>;
 }
 
 @injectable()
-export class CouponService extends ICouponService {
+export class CouponService implements ICouponService {
 	async list() {
 		const coupons = await prisma.coupon.findMany({ where: { isDelete: false }, orderBy: { id: 'desc' } });
 		return coupons.map(CouponMapper.toDTO);

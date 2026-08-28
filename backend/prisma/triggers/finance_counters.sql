@@ -127,7 +127,7 @@ BEGIN
     FOR it IN SELECT * FROM jsonb_array_elements(o."orderItems")
     LOOP
       IF (it->>'supplierId') IS NOT NULL AND (it->>'costPrice') IS NOT NULL AND (it->>'reconciledAt') IS NULL THEN
-        v_pay := v_pay + COALESCE((it->>'costPrice')::numeric, 0);
+        v_pay := v_pay + COALESCE(NULLIF(it->>'costPrice','')::numeric, 0);
       END IF;
     END LOOP;
   END IF;
@@ -149,6 +149,16 @@ BEGIN
     PERFORM fn_period_upsert(v_period, -1, 0, 0, 0, 0, 0, -v_old[1], -v_old[2]);
     RETURN OLD;
   ELSE
+    -- ponytail: skip the O(n) orderItems scan when no counter-relevant column changed
+    IF OLD."orderItems" IS NOT DISTINCT FROM NEW."orderItems"
+       AND OLD.status IS NOT DISTINCT FROM NEW.status
+       AND OLD."paymentType" IS NOT DISTINCT FROM NEW."paymentType"
+       AND OLD."codReconciledAt" IS NOT DISTINCT FROM NEW."codReconciledAt"
+       AND OLD."totalAmount" IS NOT DISTINCT FROM NEW."totalAmount"
+       AND OLD."paidAmount" IS NOT DISTINCT FROM NEW."paidAmount"
+       AND OLD."createdAt" IS NOT DISTINCT FROM NEW."createdAt" THEN
+      RETURN NEW;
+    END IF;
     v_period := to_char(NEW."createdAt", 'YYYY-MM');
     v_old := order_rp(OLD);
     v_new := order_rp(NEW);
@@ -186,7 +196,7 @@ WITH
       COUNT(*) AS orders,
       SUM(CASE WHEN status='delivered' AND "paymentType"='half-payment' AND "codReconciledAt" IS NULL
                THEN "totalAmount" - "paidAmount" ELSE 0 END) AS rec,
-      COALESCE(SUM((SELECT COALESCE(SUM(COALESCE((it->>'costPrice')::numeric,0)),0)
+      COALESCE(SUM((SELECT COALESCE(SUM(COALESCE(NULLIF(it->>'costPrice','')::numeric,0)),0)
                      FROM jsonb_array_elements("orderItems") it
                      WHERE (it->>'supplierId') IS NOT NULL
                        AND (it->>'costPrice') IS NOT NULL

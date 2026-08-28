@@ -103,10 +103,10 @@ export function PhotosPanel() {
     for (const file of Array.from(files)) {
       const currentId = ids[i++];
       try {
-        const { url, publicId } = await uploadToR2(file, "gallery", token);
+        const { url, publicId, thumbUrl } = await uploadToR2(file, "gallery", token);
         const saved = await apiFetch<any>("/api/uploads/image", token, {
           method: "POST",
-          body: JSON.stringify({ url, publicId }),
+          body: JSON.stringify({ url, publicId, thumbUrl }),
         });
         setUserImages((prev) => [{ id: saved?.id || Date.now(), url }, ...prev]);
       } catch (err: any) {

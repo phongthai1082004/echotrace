@@ -37,19 +37,39 @@ export function AdminSidebar() {
     if (status === "unauthenticated" && wasAuth.current) router.push("/");
   }, [status, router]);
 
-  const nav = [
-    { href: "/admin/analytics", label: t("admin.sidebar.overview"), icon: BarChart3 },
-    { href: "/admin/finance", label: t("admin.sidebar.finance"), icon: DollarSign },
-    { href: "/admin/marketing", label: t("admin.sidebar.marketing"), icon: TrendingUp },
-    { href: "/admin/dispatch", label: t("admin.sidebar.dispatch"), icon: Package },
-    { href: "/admin/suppliers", label: t("admin.sidebar.suppliers"), icon: Truck },
-    { href: "/admin/print-options", label: t("admin.sidebar.printOptions"), icon: Printer },
-    { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
-    { href: "/admin/stickers", label: t("admin.sidebar.assets"), icon: Sticker },
-    { href: "/admin/coupons", label: t("admin.sidebar.coupons"), icon: TrendingUp },
-    { href: "/admin/sample-books", label: t("admin.sidebar.sampleBooks"), icon: BookOpen },
-    { href: "/admin/account", label: t("admin.sidebar.account"), icon: UserCircle },
-    { href: "#", label: t("admin.sidebar.notifications"), icon: Bell, notify: true },
+  const navGroups = [
+    {
+      key: "business",
+      items: [
+        { href: "/admin/analytics", label: t("admin.sidebar.overview"), icon: BarChart3 },
+        { href: "/admin/finance", label: t("admin.sidebar.finance"), icon: DollarSign },
+        { href: "/admin/marketing", label: t("admin.sidebar.marketing"), icon: TrendingUp },
+      ],
+    },
+    {
+      key: "operations",
+      items: [
+        { href: "/admin/dispatch", label: t("admin.sidebar.dispatch"), icon: Package },
+        { href: "/admin/suppliers", label: t("admin.sidebar.suppliers"), icon: Truck },
+        { href: "/admin/print-options", label: t("admin.sidebar.printOptions"), icon: Printer },
+      ],
+    },
+    {
+      key: "catalog",
+      items: [
+        { href: "/admin/sample-books", label: t("admin.sidebar.sampleBooks"), icon: BookOpen },
+        { href: "/admin/stickers", label: t("admin.sidebar.assets"), icon: Sticker },
+        { href: "/admin/coupons", label: t("admin.sidebar.coupons"), icon: TrendingUp },
+      ],
+    },
+    {
+      key: "system",
+      items: [
+        { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
+        { href: "/admin/account", label: t("admin.sidebar.account"), icon: UserCircle },
+        { href: "#", label: t("admin.sidebar.notifications"), icon: Bell, notify: true },
+      ],
+    },
   ];
 
   return (
@@ -71,31 +91,43 @@ export function AdminSidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 p-3 max-[1600px]:p-2 max-[1280px]:p-1.5 space-y-0.5">
-        {nav.map(({ href, label, icon: Icon, notify }) => {
-          const active =
-            !notify && (href === "/admin/analytics" ? path === href || path === "/admin" : path.startsWith(href));
-          const btnClass = `flex items-center gap-2.5 w-full text-sm max-[1600px]:text-xs max-[1280px]:justify-center max-[1280px]:px-2 font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all border-2 ${
-            active
-              ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
-              : "text-[#222] hover:bg-[#e8e6e0] border-transparent hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_rgba(0,0,0,0.1)]"
-          }`;
-          return notify ? (
-            <button key={label} onClick={() => setNotifOpen(true)} className={btnClass}>
-              <Icon size={14} className="shrink-0" />
-              <span className="max-[1280px]:hidden" suppressHydrationWarning>
-                {label}
-              </span>
-            </button>
-          ) : (
-            <Link key={href} href={href} className={btnClass}>
-              <Icon size={14} className="shrink-0" />
-              <span className="max-[1280px]:hidden" suppressHydrationWarning>
-                {label}
-              </span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto overscroll-contain p-3 max-[1600px]:p-2 max-[1280px]:p-1.5 space-y-4">
+        {navGroups.map((group) => (
+          <div key={group.key}>
+            <p
+              className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] px-3 mb-1.5 max-[1280px]:hidden"
+              suppressHydrationWarning
+            >
+              {t(`admin.cat.${group.key}`)}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map(({ href, label, icon: Icon, notify }) => {
+                const active =
+                  !notify && (href === "/admin/analytics" ? path === href || path === "/admin" : path.startsWith(href));
+                const btnClass = `flex items-center gap-2.5 w-full text-sm max-[1600px]:text-xs max-[1280px]:justify-center max-[1280px]:px-2 font-bold px-3 py-2.5 max-[1600px]:py-2 rounded-lg transition-all border-2 ${
+                  active
+                    ? "bg-[#222] text-white border-[#222] shadow-[2px_2px_0_#222]"
+                    : "text-[#222] hover:bg-[#e8e6e0] border-transparent hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_rgba(0,0,0,0.1)]"
+                }`;
+                return notify ? (
+                  <button key={label} onClick={() => setNotifOpen(true)} className={btnClass}>
+                    <Icon size={14} className="shrink-0" />
+                    <span className="max-[1280px]:hidden" suppressHydrationWarning>
+                      {label}
+                    </span>
+                  </button>
+                ) : (
+                  <Link key={href} href={href} className={btnClass}>
+                    <Icon size={14} className="shrink-0" />
+                    <span className="max-[1280px]:hidden" suppressHydrationWarning>
+                      {label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-3 max-[1600px]:p-2 max-[1280px]:p-1.5 space-y-1">

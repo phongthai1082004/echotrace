@@ -1,4 +1,6 @@
--- This is an empty migration.
+-- Restore finance counter triggers (omitted from the streamlined initial migration).
+-- Idempotent: DROP TRIGGER IF EXISTS + CREATE OR REPLACE FUNCTION.
+
 CREATE OR REPLACE FUNCTION fn_period_upsert(
   p_period text,
   d_orders int,
@@ -35,9 +37,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ---------------------------------------------------------------------------
 -- Income  -> totalRevenue  (period = receivedAt)
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION trg_income_counter() RETURNS trigger AS $$
 DECLARE v_period text;
 BEGIN
@@ -58,10 +58,7 @@ CREATE TRIGGER trg_income_aiud
   AFTER INSERT OR UPDATE OR DELETE ON "Income"
   FOR EACH ROW EXECUTE FUNCTION trg_income_counter();
 
--- ---------------------------------------------------------------------------
 -- Expense -> totalExpense (always) + totalSupplierExpense (only category=SUPPLIER)
--- period = date
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION trg_expense_counter() RETURNS trigger AS $$
 DECLARE v_period text; v_sup numeric;
 BEGIN
@@ -84,11 +81,7 @@ CREATE TRIGGER trg_expense_aiud
   AFTER INSERT OR UPDATE OR DELETE ON "Expense"
   FOR EACH ROW EXECUTE FUNCTION trg_expense_counter();
 
--- ---------------------------------------------------------------------------
 -- Cashflow -> cashInflow (IN) / cashOutflow (OUT). period = date
--- (Income/Expense also create Cashflow rows, so money movement is counted here
---  while revenue/expense recognition is counted by their own triggers — no double count.)
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION trg_cashflow_counter() RETURNS trigger AS $$
 DECLARE v_period text; v_in numeric; v_out numeric;
 BEGIN
@@ -113,10 +106,7 @@ CREATE TRIGGER trg_cashflow_aiud
   AFTER INSERT OR UPDATE OR DELETE ON "Cashflow"
   FOR EACH ROW EXECUTE FUNCTION trg_cashflow_counter();
 
--- ---------------------------------------------------------------------------
 -- Order -> totalOrders + receivables (HALF COD outstanding) + payables (NCC unpaid)
--- period = createdAt. Recomputed as delta on every update.
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION order_rp(o "Order") RETURNS numeric[] AS $$
 DECLARE v_rec numeric := 0; v_pay numeric := 0; it jsonb;
 BEGIN
@@ -127,7 +117,7 @@ BEGIN
     FOR it IN SELECT * FROM jsonb_array_elements(o."orderItems")
     LOOP
       IF (it->>'supplierId') IS NOT NULL AND (it->>'costPrice') IS NOT NULL AND (it->>'reconciledAt') IS NULL THEN
-        v_pay := v_pay + COALESCE((it->>'costPrice')::numeric, 0);
+        v_pay := v_pay + COALESCE(NULLIF(it->>'costPrice','')::numeric, 0);
       END IF;
     END LOOP;
   END IF;
@@ -149,6 +139,16 @@ BEGIN
     PERFORM fn_period_upsert(v_period, -1, 0, 0, 0, 0, 0, -v_old[1], -v_old[2]);
     RETURN OLD;
   ELSE
+    -- ponytail: skip the O(n) orderItems scan when no counter-relevant column changed
+    IF OLD."orderItems" IS NOT DISTINCT FROM NEW."orderItems"
+       AND OLD.status IS NOT DISTINCT FROM NEW.status
+       AND OLD."paymentType" IS NOT DISTINCT FROM NEW."paymentType"
+       AND OLD."codReconciledAt" IS NOT DISTINCT FROM NEW."codReconciledAt"
+       AND OLD."totalAmount" IS NOT DISTINCT FROM NEW."totalAmount"
+       AND OLD."paidAmount" IS NOT DISTINCT FROM NEW."paidAmount"
+       AND OLD."createdAt" IS NOT DISTINCT FROM NEW."createdAt" THEN
+      RETURN NEW;
+    END IF;
     v_period := to_char(NEW."createdAt", 'YYYY-MM');
     v_old := order_rp(OLD);
     v_new := order_rp(NEW);
@@ -163,11 +163,7 @@ CREATE TRIGGER trg_order_aiud
   AFTER INSERT OR UPDATE OR DELETE ON "Order"
   FOR EACH ROW EXECUTE FUNCTION trg_order_counter();
 
--- ============================================================================
--- Backfill: recompute FinancePeriod from history (does NOT touch source tables,
--- so existing triggers are not double-counted). Run once after creating triggers,
--- or any time you want to rebuild counters.
--- ============================================================================
+-- Backfill: recompute FinancePeriod from source tables (idempotent; safe to run once).
 TRUNCATE "FinancePeriod";
 
 INSERT INTO "FinancePeriod" (
@@ -186,7 +182,7 @@ WITH
       COUNT(*) AS orders,
       SUM(CASE WHEN status='delivered' AND "paymentType"='half-payment' AND "codReconciledAt" IS NULL
                THEN "totalAmount" - "paidAmount" ELSE 0 END) AS rec,
-      COALESCE(SUM((SELECT COALESCE(SUM(COALESCE((it->>'costPrice')::numeric,0)),0)
+      COALESCE(SUM((SELECT COALESCE(SUM(COALESCE(NULLIF(it->>'costPrice','')::numeric,0)),0)
                      FROM jsonb_array_elements("orderItems") it
                      WHERE (it->>'supplierId') IS NOT NULL
                        AND (it->>'costPrice') IS NOT NULL

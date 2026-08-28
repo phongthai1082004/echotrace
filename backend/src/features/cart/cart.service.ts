@@ -70,16 +70,17 @@ async function loadCartBatch(userId: number, couponCode?: string | null) {
 	return { cart, optMap: toOptKeyMap(optionRows), Coupon: wantsCoupon ? (Coupon as any) : null };
 }
 
-export abstract class ICartService {
-	abstract getCart(userId: number): Promise<CartDTO>;
-	abstract upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem>;
-	abstract patchItem(
+export interface ICartService {
+	getCart(userId: number): Promise<CartDTO>;
+	upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem>;
+	patchItem(
 		userId: number,
 		bookId: number,
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem>;
-	abstract deleteItem(userId: number, bookId: number): Promise<void>;
-	abstract calculateCart(
+	deleteItem(userId: number, bookId: number): Promise<void>;
+	addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number }): Promise<CartItem>;
+	calculateCart(
 		userId: number,
 		paymentMethod?: string | null,
 		couponCode?: string | null,
@@ -88,7 +89,7 @@ export abstract class ICartService {
 }
 
 @injectable()
-export class CartService extends ICartService {
+export class CartService implements ICartService {
 	async getCart(userId: number): Promise<CartDTO> {
 		const { cart, optMap } = await loadCartBatch(userId);
 		const parsedItems = cart.items.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
@@ -154,6 +155,43 @@ export class CartService extends ICartService {
 	async deleteItem(userId: number, bookId: number): Promise<void> {
 		const cart = await prisma.cart.findUnique({ where: { userId }, select: { id: true } });
 		if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id, bookId } });
+	}
+
+	async addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number }): Promise<CartItem> {
+		const sampleBookId = input.sampleBookId;
+		const quantity = Math.max(1, Math.floor(input.quantity ?? 1));
+		if (!Number.isFinite(sampleBookId)) throw new AppError('sampleBookId không hợp lệ', 400);
+
+		// ponytail: check tồn kho trực tiếp trong DB. quantity=null = không giới hạn.
+		const sample = await prisma.sampleBook.findFirst({
+			where: {
+				id: sampleBookId,
+				isDelete: false,
+				isActive: true,
+				OR: [{ quantity: null }, { quantity: { gte: quantity } }],
+			},
+		});
+		if (!sample) throw new AppError('Album đã hết hàng hoặc không đủ số lượng tồn kho', 400);
+
+		let book = await prisma.book.findFirst({ where: { userId, sampleBookId } });
+		if (!book) {
+			book = await prisma.book.create({
+				data: {
+					userId,
+					sampleBookId,
+					type: sample.type,
+					title: sample.name,
+					style: sample.style,
+					font: sample.font,
+					cover: sample.cover,
+					coverUrl: sample.coverUrl,
+					paperHeight: sample.paperHeight,
+					paperWidth: sample.paperWidth,
+					content: (sample.content as object) ?? {},
+				},
+			});
+		}
+		return this.upsertItem(userId, { bookId: book.id, quantity, cover: sample.cover, paper: null, paperSize: null });
 	}
 
 	async calculateCart(

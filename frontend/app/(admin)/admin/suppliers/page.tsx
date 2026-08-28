@@ -115,7 +115,6 @@ export default function AdminSuppliersPage() {
               { key: "email", label: t("admin.suppliers.email"), width: "1fr" },
               { key: "contact", label: t("admin.suppliers.contact"), width: "0.8fr" },
               { key: "totalDebt", label: t("admin.suppliers.totalDebt"), width: "110px" },
-              { key: "overdueDebt", label: t("admin.suppliers.overdueDebt"), width: "110px" },
               { key: "monthDebt", label: t("admin.suppliers.monthDebt"), width: "110px" },
               { key: "status", label: t("admin.suppliers.status"), width: "90px", align: "center" },
               { key: "action", label: t("common.action"), width: "80px", align: "center" },
@@ -145,9 +144,6 @@ export default function AdminSuppliersPage() {
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
                   {s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}
-                </div>
-                <div className="px-2 font-mono text-[11px] font-bold text-[#B54843] whitespace-nowrap">
-                  {s.overdueDebt ? `₫${s.overdueDebt.toLocaleString()}` : "—"}
                 </div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
                   {s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}

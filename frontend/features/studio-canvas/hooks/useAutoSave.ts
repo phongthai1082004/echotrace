@@ -6,6 +6,7 @@ import { serializeCanvasState, isCoverPage, splitCanvasByMidpoint } from "../lib
 import { useStudioAPI } from "../context/studio-context";
 import { resolveFormat } from "../types";
 import { uploadToR2 } from "@/lib/upload";
+import { serializePage } from "../lib/book-content";
 
 
 
@@ -65,6 +66,9 @@ export function useAutoSave() {
       spreadLayout: p.spreadLayout,
       canvasJson: p.canvasJson,
       thumbnailUrl: p.thumbnailUrl,
+      // ponytail: chuẩn hóa sẵn trên frontend, gửi kèm canvasJson (giữ edit cũ).
+      // Backend merge content.pages theo index nên elements được lưu cùng trang.
+      elements: serializePage(p.canvasJson, p.index)?.elements ?? [],
     }));
 
     const metaSig = JSON.stringify([
@@ -78,6 +82,7 @@ export function useAutoSave() {
 
     const payload: Record<string, unknown> = {
       version: 3,
+      schema: 2, // ponytail: đánh dấu content đã có elements chuẩn hóa mm sẵn sàng cho pdf-lib
       id: s.bookMeta.id || undefined,
       title: s.bookMeta.title,
       kind: s.bookMeta.kind,

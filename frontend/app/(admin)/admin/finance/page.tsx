@@ -6,11 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { AdminHeader } from "@/components/admin-header";
 import { NeoSelect } from "@/components/neo-select";
-import { card, label, input, neoBtnPrimary } from "@/lib/styles";
+import { card, label, input, neoBtnPrimary, typeBadge } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { AdminList } from "@/components/admin-list";
 import { AdminPagination } from "@/components/admin-pagination";
 import { Modal } from "@/components/ui/modal";
+import { useCursorList } from "./_hooks/use-cursor-list";
 
 const COLS = [
 	"totalOrders",
@@ -25,63 +26,10 @@ const COLS = [
 	"payables",
 ] as const;
 
-const EXPENSE_CATS = ["OPERATING", "PAYROLL", "MARKETING", "DEBT", "OTHER", "SUPPLIER"] as const;
+const EXPENSE_CATS = ["OPERATING", "PAYROLL", "MARKETING", "DEBT", "OTHER", "SUPPLIER", "DEFECTIVE"] as const;
 
 // ponytail: dùng đúng theme — nút như "+ New Supplier", select/date như neo-input
 const addBtnCls = `${neoBtnPrimary} flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5`;
-
-type ListResp<T> = { items: T[]; nextCursor: number | null };
-
-function useCursorList<T>(endpoint: string, filters: Record<string, string>) {
-	const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
-	const [items, setItems] = useState<T[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [cursor, setCursor] = useState<number | null>(null);
-	const [nextCursor, setNextCursor] = useState<number | null>(null);
-	const [stack, setStack] = useState<number[]>([]);
-	const [nonce, setNonce] = useState(0);
-	const filterKey = JSON.stringify(filters);
-
-	const query = useMemo(() => {
-		const p = new URLSearchParams();
-		Object.entries(filters).forEach(([k, v]) => {
-			if (v) p.set(k, v);
-		});
-		if (cursor) p.set("cursor", String(cursor));
-		return `${endpoint}?${p.toString()}`;
-	}, [endpoint, filterKey, cursor]);
-
-	useEffect(() => {
-		if (!token) return;
-		setLoading(true);
-		apiFetch<ListResp<T>>(query, token)
-			.then((d) => {
-				setItems(d?.items || []);
-				setNextCursor(d?.nextCursor ?? null);
-			})
-			.catch(() => {})
-			.finally(() => setLoading(false));
-	}, [token, query, nonce]);
-
-	useEffect(() => {
-		setCursor(null);
-		setStack([]);
-	}, [filterKey]);
-
-	const next = () => {
-		if (!nextCursor) return;
-		setStack((s) => (cursor ? [...s, cursor] : s));
-		setCursor(nextCursor);
-	};
-	const prev = () => {
-		const s = [...stack];
-		const p = s.pop() ?? null;
-		setCursor(p);
-		setStack(s);
-	};
-
-	return { items, loading, nextCursor, hasPrevious: stack.length > 0, next, prev, reload: () => setNonce((n) => n + 1) };
-}
 
 function money(v?: number) {
 	return `${(Number(v || 0) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}₫`;
@@ -304,7 +252,7 @@ export default function FinancePage() {
 								<div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">{day(r.date)}</div>
 								<div className="px-2 text-center font-mono text-sm font-bold">{money(r.amount)}</div>
 								<div className="px-2 flex justify-center">
-									<span className={`${"font-mono text-[9px] font-bold tracking-widest uppercase px-2.5 py-1.5 rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] inline-block whitespace-nowrap"} ${r.type === "IN" ? "bg-[#1565c0] text-white" : "bg-[#B54843] text-white"}`}>
+									<span className={`${typeBadge} ${r.type === "IN" ? "bg-[#1565c0] text-white" : "bg-[#B54843] text-white"}`}>
 										{r.type}
 									</span>
 								</div>

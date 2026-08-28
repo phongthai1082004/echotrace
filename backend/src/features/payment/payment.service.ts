@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
 import { Prisma } from '../../../generated/prisma/client.js';
 import {
@@ -8,13 +8,17 @@ import {
 	WebhookProcessResult,
 } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
+import { restockOrderAlbums } from '../sample-books/stock.service.js';
+import { EmailService } from '../email/email.service.js';
 
-export abstract class IPaymentWebhookService {
-	abstract processWebhook(result: WebhookProcessResult): Promise<void>;
+export interface IPaymentWebhookService {
+	processWebhook(result: WebhookProcessResult): Promise<void>;
 }
 
 @injectable()
 export class PaymentWebhookService implements IPaymentWebhookService {
+	constructor(@inject('IEmailService') private emailService: EmailService) {}
+
 	async processWebhook(result: WebhookProcessResult): Promise<void> {
 		let email: { to: string; name: string; orderCode: string; paid: number; total: number; fullyPaid: boolean } | null = null;
 
@@ -52,6 +56,11 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 				if (order && (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED)) return;
 
 				if (result.status === TransactionStatus.SUCCESS && order) {
+					// ponytail: chặn đúp paidAmount/Income khi có ≥2 mã giao dịch SUCCESS khác nhau
+					// (renew link, webhook retransmit mã khác). txn hiện tại chưa SUCCESS (đã qua guard dòng 28)
+					// nên count chỉ đếm mã khác → >0 nghĩa là trùng, bỏ qua. Serializable → race-safe.
+					const dupPaid = await tx.transaction.count({ where: { orderId: order.id, status: TransactionStatus.SUCCESS } });
+					if (dupPaid > 0) return;
 					const paidAmount = order.paidAmount + result.amount;
 					// Đủ tiền (FULL) → PAID; thiếu (cọc) → PARTIALLY_PAID, gán NCC mới thành PROCESSING
 					const isFull = paidAmount >= order.totalAmount;
@@ -72,18 +81,8 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 							},
 						});
 					}
-					// Income: FULL ghi nhận ngay; HALF ghi lúc giao hàng (reconcile_cod)
-					if (isFull) {
-						await tx.income.create({
-							data: {
-								transactionId: txn.id,
-								orderId: order.id,
-								amount: order.totalAmount,
-								receivedAt: new Date(),
-								note: 'Doanh thu toàn bộ (FULL)',
-							},
-						});
-					}
+					// ponytail: Income ghi nhận tại DELIVERED (order.service.deliverOrder); trigger cộng counters.
+					// Ở đây chỉ ghi Cashflow IN (tiền thực thu), tách biệt với doanh thu.
 
 					if (order.user?.email) {
 						email = {
@@ -96,6 +95,12 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 						};
 					}
 				} else if (result.status === TransactionStatus.CANCELLED && order) {
+					// ponytail: link bị huỷ khi còn PENDING_PAYMENT → hoàn tồn kho album (đồng bộ với cancel/user + expiry)
+				if (order.status === OrderStatus.PENDING_PAYMENT) {
+					const oi = await tx.order.findUnique({ where: { id: order.id }, select: { orderItems: true } });
+					// ponytail: chạy trong tx Serializable để đồng bộ tồn kho + status order
+					await restockOrderAlbums(oi?.orderItems, tx);
+				}
 					await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
 				}
 			},
@@ -113,30 +118,14 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 		total: number;
 		fullyPaid: boolean;
 	}): Promise<void> {
-		try {
-			// ponytail: Resend REST trực tiếp, đổi sang service riêng khi cần template/attach
-			const res = await fetch('https://api.resend.com/emails', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					from: process.env.MAIL_FROM || 'onboarding@resend.dev',
-					to: [mail.to],
-					subject: mail.fullyPaid
-						? `Đã nhận thanh toán đơn ${mail.orderCode}`
-						: `Đã nhận tiền cọc đơn ${mail.orderCode}`,
-					html: `<p>Xin chào ${mail.name || 'bạn'},</p><p>Chúng tôi đã nhận <b>${mail.paid.toLocaleString('vi-VN')}đ</b> cho đơn <b>${mail.orderCode}</b>.</p>${
-						mail.fullyPaid
-							? '<p>Đơn hàng đã được thanh toán đủ và đang được xử lý.</p>'
-							: `<p>Đây là 50% tiền cọc. Phần còn lại <b>${(mail.total - mail.paid).toLocaleString('vi-VN')}đ</b> sẽ thu khi giao hàng (COD).</p>`
-					}`,
-				}),
-			});
-			if (!res.ok) console.error('[payos-webhook] email failed:', await res.text());
-		} catch (e: any) {
-			console.error('[payos-webhook] email error:', e?.message || e);
-		}
+		const subject = mail.fullyPaid
+			? `Đã nhận thanh toán đơn ${mail.orderCode}`
+			: `Đã nhận tiền cọc đơn ${mail.orderCode}`;
+		const html = `<p>Xin chào ${mail.name || 'bạn'},</p><p>Chúng tôi đã nhận <b>${mail.paid.toLocaleString('vi-VN')}đ</b> cho đơn <b>${mail.orderCode}</b>.</p>${
+			mail.fullyPaid
+				? '<p>Đơn hàng đã được thanh toán đủ và đang được xử lý.</p>'
+				: `<p>Đây là 50% tiền cọc. Phần còn lại <b>${(mail.total - mail.paid).toLocaleString('vi-VN')}đ</b> sẽ thu khi giao hàng (COD).</p>`
+		}`;
+		await this.emailService.send({ to: mail.to, subject, html });
 	}
 }

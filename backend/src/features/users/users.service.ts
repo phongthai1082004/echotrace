@@ -1,39 +1,38 @@
-import { injectable, inject } from 'tsyringe';
-import { BaseService } from '../../utils/base.service.js';
+import { injectable } from 'tsyringe';
 import { prisma } from '../../../lib/prisma.js';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
+import { paginate } from '../../utils/paginate.js';
 import bcrypt from 'bcryptjs';
 import { UserListDTO, UserMapper } from '@echotrace/shared';
 import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from '@echotrace/shared';
 
-export abstract class IUserService {
-	abstract findAll(filter: any, options?: any, extraWhere?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
-	abstract findById(id: number, extraWhere?: Record<string, any>): Promise<any>;
-	abstract update(id: number, data: any, extraWhere?: Record<string, any>): Promise<void>;
-	abstract getProfile(userId: string): Promise<ProfileDTO>;
-	abstract updateProfile(userId: string, data: UpdateProfileDTO): Promise<ProfileDTO>;
-	abstract changePassword(userId: string, body: ChangePasswordDTO): Promise<{ message: string }>;
+export interface IUserService {
+	findAll(filter: any, options?: any, extraWhere?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
+	findById(id: number, extraWhere?: Record<string, any>): Promise<any>;
+	update(id: number, data: any, extraWhere?: Record<string, any>): Promise<void>;
+	getProfile(userId: string): Promise<ProfileDTO>;
+	updateProfile(userId: string, data: UpdateProfileDTO): Promise<ProfileDTO>;
+	changePassword(userId: string, body: ChangePasswordDTO): Promise<{ message: string }>;
 }
 
 @injectable()
-export class UserService extends IUserService {
-	constructor(@inject('UserBaseService') private readonly userBase: BaseService<any>) {
-		super();
-	}
-
+export class UserService implements IUserService {
 	public async findAll(filter: any, options?: any, extraWhere?: any) {
-		const { items, nextCursor } = await this.userBase.findAll(filter, options, extraWhere);
-
+		const { items, nextCursor } = await paginate(prisma.user, filter, options, extraWhere);
 		return { items: UserMapper.toDTOList(items), nextCursor };
 	}
 
 	public async findById(id: number, extraWhere: Record<string, any> = {}) {
-		return await this.userBase.findById(id, extraWhere);
+		const user = await prisma.user.findFirst({ where: Object.assign({ id, isDelete: false }, extraWhere) });
+		if (!user) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		return user;
 	}
 
 	public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-		return await this.userBase.update(id, data, extraWhere);
+		const where = Object.assign({ id, isDelete: false }, extraWhere);
+		const result = await prisma.user.updateMany({ where, data });
+		if (result.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
 	}
 
 	async getProfile(userId: string) {
