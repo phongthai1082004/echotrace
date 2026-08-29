@@ -10,7 +10,7 @@ import { AdminSearch } from "@/components/admin-search";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
 import { AdminPagination } from "@/components/admin-pagination";
 import { AdminList } from "@/components/admin-list";
-import { Supplier } from "@/models/supplier/supplier";
+import { SupplierDTO } from "@echotrace/shared";
 import { SupplierResponse } from "@/models/supplier/supplier.list";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { Eye } from "lucide-react";
@@ -31,7 +31,7 @@ export default function AdminSuppliersPage() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<number[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const token = isAuthenticated ? session.accessToken : undefined;
 
@@ -137,7 +137,7 @@ export default function AdminSuppliersPage() {
                 onPrevious={handlePrevious}
               />
             }
-            renderRow={(s: Supplier) => (
+            renderRow={(s: SupplierDTO) => (
               <>
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.name}</div>
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>

@@ -7,7 +7,7 @@ import { label, card, neoBtn, neoBtnPrimary, input } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import { PrintOption, PRINT_OPTION_TYPES } from "@/models/print-option/print-option";
-import { SupplierOption, Supplier, L10NText } from "@/models/supplier/supplier";
+import { SupplierOption, SupplierDTO, L10NText } from "@echotrace/shared";
 import { CloseButton } from "@/components/ui/close-button";
 import { Save, Plus, Trash2, Search } from "lucide-react";
 
@@ -67,7 +67,7 @@ export function PrintOptionAssign({ supplierId, assigned, onChanged }: Props) {
         method: "PATCH",
         body: JSON.stringify({ optionIds: [...ids] }),
       });
-      const fresh = await apiFetch<Supplier>(`/api/admin/suppliers/${supplierId}`, token);
+      const fresh = await apiFetch<SupplierDTO>(`/api/admin/suppliers/${supplierId}`, token);
       onChanged({
         paperSizeOptions: fresh.paperSizeOptions ?? [],
         paperOptions: fresh.paperOptions ?? [],

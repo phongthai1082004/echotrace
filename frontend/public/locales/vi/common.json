@@ -815,7 +815,9 @@
       "returnApprove": "Duyệt trả hàng",
       "markReshipped": "Đánh dấu đã gửi lại",
       "markDefective": "Đánh dấu lỗi",
-      "resolveDefect": "Đã xử lý xong"
+      "resolveDefect": "Đã xử lý xong",
+      "requeuePdf": "Tạo lại PDF",
+      "downloadPdf": "Tải PDF"
     },
     "stickers": {
       "label": "Admin · Tài sản",

@@ -1,7 +1,7 @@
-import { injectable } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
+import { injectable, inject } from 'tsyringe';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
+import { FinanceRepository } from './finance.repository.js';
 
 export interface SupplierDebt {
 	id: number;
@@ -41,22 +41,11 @@ export interface ListParams {
 
 @injectable()
 export class FinanceService implements IFinanceService {
+	constructor(@inject('FinanceRepository') private readonly financeRepo: FinanceRepository) {}
+
 	async getSummary(): Promise<{ summary: Record<string, number>; monthly: { period: string; revenue: number; orders: number }[] }> {
 		// ponytail: mọi chỉ số đã được trigger ghi vào FinancePeriod, chỉ SUM 1 truy vấn
-		const agg = await prisma.financePeriod.aggregate({
-			_sum: {
-				totalOrders: true,
-				totalRevenue: true,
-				totalExpense: true,
-				totalSupplierExpense: true,
-				cashInflow: true,
-				cashOutflow: true,
-				totalProfit: true,
-				cashOnHand: true,
-				receivables: true,
-				payables: true,
-			},
-		});
+		const agg = await this.financeRepo.aggregateFinancePeriod();
 		const s = agg._sum;
 		const summary: Record<string, number> = {
 			totalOrders: Number(s.totalOrders) || 0,
@@ -77,7 +66,7 @@ export class FinanceService implements IFinanceService {
 			const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
 			keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
 		}
-		const rows = await prisma.financePeriod.findMany({ orderBy: { period: 'desc' }, take: 12 });
+		const rows = await this.financeRepo.listFinancePeriods();
 		const byPeriod = new Map(rows.map((r) => [r.period, r]));
 		const monthly = keys.map((k) => {
 			const r = byPeriod.get(k);
@@ -97,32 +86,7 @@ export class FinanceService implements IFinanceService {
 		const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 		const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-		const result: any[] = await prisma.$queryRaw`
-			WITH item_debts AS (
-				SELECT
-					(it->>'supplierId')::int AS supplier_id,
-					COALESCE((it->>'costPrice')::numeric, 0) AS cost,
-					o."createdAt"
-				FROM "Order" o,
-				jsonb_array_elements(o."orderItems") it
-				WHERE it->>'supplierId' IS NOT NULL
-					AND it->>'costPrice' IS NOT NULL
-					AND it->>'reconciledAt' IS NULL
-			)
-			SELECT
-				s.id,
-				s.name,
-				COALESCE(SUM(id.cost), 0)::double precision AS totalDebt,
-				COALESCE(SUM(CASE
-					WHEN (id."createdAt" + (${termsDays} || ' days')::interval) >= ${monthStart}
-						AND (id."createdAt" + (${termsDays} || ' days')::interval) < ${monthEnd}
-					THEN id.cost ELSE 0
-				END), 0)::double precision AS thisMonth
-			FROM "Supplier" s
-			LEFT JOIN item_debts id ON s.id = id.supplier_id
-			GROUP BY s.id, s.name
-			ORDER BY s.id;
-		`;
+		const result: any[] = await this.financeRepo.getSupplierDebtsRaw(termsDays, monthStart, monthEnd);
 
 		return result.map((row: any) => ({
 			id: Number(row.id),
@@ -132,18 +96,16 @@ export class FinanceService implements IFinanceService {
 		}));
 	}
 
-async createExpense(input: CreateExpenseInput): Promise<any> {
-	if (typeof input.amount !== 'number' || !Number.isFinite(input.amount) || input.amount <= 0) throw new AppError(ErrorCode.INTERNAL, 400);
-	if (!EXPENSE_CATEGORIES.includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
-		return prisma.expense.create({
-			data: {
-				amount: input.amount,
-				category: input.category as any,
-				description: input.description,
-				date: input.date ? new Date(input.date) : new Date(),
-				supplierName: input.supplierName,
-				note: input.note,
-			},
+	async createExpense(input: CreateExpenseInput): Promise<any> {
+		if (typeof input.amount !== 'number' || !Number.isFinite(input.amount) || input.amount <= 0) throw new AppError(ErrorCode.INTERNAL, 400);
+		if (!EXPENSE_CATEGORIES.includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
+		return this.financeRepo.createExpense({
+			amount: input.amount,
+			category: input.category as any,
+			description: input.description,
+			date: input.date ? new Date(input.date) : new Date(),
+			supplierName: input.supplierName,
+			note: input.note,
 		});
 	}
 
@@ -151,7 +113,7 @@ async createExpense(input: CreateExpenseInput): Promise<any> {
 		if (!from && !to) return undefined;
 		const r: any = {};
 		if (from) r.gte = new Date(from);
-		if (to) r.lte = new Date(to + "T23:59:59.999Z");
+		if (to) r.lte = new Date(to + 'T23:59:59.999Z');
 		return r;
 	}
 
@@ -159,7 +121,7 @@ async createExpense(input: CreateExpenseInput): Promise<any> {
 		const where: any = {};
 		const range = this.dateRange(p.from, p.to);
 		if (range) where.receivedAt = range;
-		return this.paginate(() => prisma.income.findMany({ where, orderBy: { id: "desc" }, take: p.limit ?? 20, ...(p.cursor ? { cursor: { id: p.cursor }, skip: 1 } : {}) }), p.limit);
+		return this.paginate(() => this.financeRepo.listIncomes(where, p.limit), p.limit);
 	}
 
 	async listExpense(p: ListParams): Promise<{ items: any[]; nextCursor: number | null }> {
@@ -167,7 +129,7 @@ async createExpense(input: CreateExpenseInput): Promise<any> {
 		const range = this.dateRange(p.from, p.to);
 		if (range) where.date = range;
 		if (p.category) where.category = p.category;
-		return this.paginate(() => prisma.expense.findMany({ where, orderBy: { id: "desc" }, take: p.limit ?? 20, ...(p.cursor ? { cursor: { id: p.cursor }, skip: 1 } : {}) }), p.limit);
+		return this.paginate(() => this.financeRepo.listExpenses(where, p.limit), p.limit);
 	}
 
 	async listCashflow(p: ListParams): Promise<{ items: any[]; nextCursor: number | null }> {
@@ -175,7 +137,7 @@ async createExpense(input: CreateExpenseInput): Promise<any> {
 		const range = this.dateRange(p.from, p.to);
 		if (range) where.date = range;
 		if (p.type) where.type = p.type;
-		return this.paginate(() => prisma.cashflow.findMany({ where, orderBy: { id: "desc" }, take: p.limit ?? 20, ...(p.cursor ? { cursor: { id: p.cursor }, skip: 1 } : {}) }), p.limit);
+		return this.paginate(() => this.financeRepo.listCashflows(where, p.limit), p.limit);
 	}
 
 	private async paginate(find: () => Promise<any[]>, limit?: number): Promise<{ items: any[]; nextCursor: number | null }> {

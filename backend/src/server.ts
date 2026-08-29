@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import './di/container.js';
+import { container } from './di/container.js';
+import { PdfWorker } from './features/pdf/pdf.worker.js';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -85,6 +87,8 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 	startDelayedWorker();
 	// ponytail: cron 10 phút backup phòng Redis lỡ đơn hết hạn
 	startOrderExpiryCron();
+	// ponytail: worker render PDF (queue độc lập, giới hạn PDF_MAX_CONCURRENT job cùng lúc)
+	container.resolve(PdfWorker).start();
 
 	server.on('error', (error: Error) => {
 		console.error('❌ Server runtime error encountered:', error.message);

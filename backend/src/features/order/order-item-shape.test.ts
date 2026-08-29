@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { toOrderItem } from '@echotrace/shared';
 
-// ponytail: U1 — orderItems snapshot must be the slim OrderItem shape, not the
-// whole CartItem (style/font/coverUrl/pdfUrl/paperHeight/paperWidth/type leak).
-describe('toOrderItem (U1 slim order snapshot)', () => {
+// ponytail: orderItems snapshot keeps order-relevant + dispatch fields (type,
+// pdfUrl) but drops purely cart-only fields (style/font/coverUrl/paper*).
+describe('toOrderItem (slim order snapshot)', () => {
   const cart = {
     bookId: 7,
     title: 'My Book',
@@ -44,8 +44,13 @@ describe('toOrderItem (U1 slim order snapshot)', () => {
     expect(out.sku).toBe('HARD_COU200_A5');
   });
 
-  it('drops cart-only fields', () => {
-    for (const k of ['style', 'font', 'coverUrl', 'pdfUrl', 'paperHeight', 'paperWidth', 'type']) {
+  it('keeps dispatch fields type + pdfUrl', () => {
+    expect(out.type).toBe('photo');
+    expect(out.pdfUrl).toBeNull();
+  });
+
+  it('drops purely cart-only fields', () => {
+    for (const k of ['style', 'font', 'coverUrl', 'paperHeight', 'paperWidth']) {
       expect((out as any)[k]).toBeUndefined();
     }
   });

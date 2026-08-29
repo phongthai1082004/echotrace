@@ -1,14 +1,13 @@
-import { prisma } from '../../../lib/prisma.js';
-import { Prisma } from '../../../generated/prisma/client.js';
+import { Prisma, PrismaClient } from '../../../generated/prisma/client.js';
 import { AppError } from '../../middleware/app.error.js';
 
 // ponytail: tính tổng số lượng theo SampleBook từ danh sách bookId + items.
 // Chỉ tính các Book có sampleBookId (album); photobook (null) bỏ qua.
-// db = tx (trong transaction) hoặc prisma (ngoài) — để chạy trong Serializable khi cần.
+// db = tx (trong transaction) hoặc PrismaClient (ngoài) — để chạy trong Serializable khi cần.
 export async function sumNeedBySampleBook(
 	bookIds: number[],
 	items: { bookId: number; quantity?: number }[],
-	db: Prisma.TransactionClient | typeof prisma,
+	db: Prisma.TransactionClient | PrismaClient,
 ): Promise<Map<number, number>> {
 	const books = await db.book.findMany({
 		where: { id: { in: bookIds } },
@@ -25,7 +24,11 @@ export async function sumNeedBySampleBook(
 
 // ponytail: hoàn tồn kho album khi đơn rời PENDING_PAYMENT chưa trả (hết hạn / user huỷ / webhook cancel).
 // orderItems là snapshot, mỗi item có bookId + quantity; chỉ cộng lại cho SampleBook có quantity (null = unlimited).
-export async function restockOrderAlbums(orderItems: unknown, db: Prisma.TransactionClient | typeof prisma = prisma): Promise<void> {
+// db bắt buộc truyền vào (tx khi trong transaction, PrismaClient khi ngoài) — không còn default global prisma.
+export async function restockOrderAlbums(
+	orderItems: unknown,
+	db: Prisma.TransactionClient | PrismaClient,
+): Promise<void> {
 	if (!Array.isArray(orderItems) || orderItems.length === 0) return;
 	const items = orderItems as { bookId?: number; quantity?: number }[];
 	const bookIds = items.map((i) => i.bookId).filter((id): id is number => typeof id === 'number');

@@ -1,7 +1,8 @@
 import { Redis } from "ioredis";
-import { prisma } from "../../../lib/prisma.js";
+import { container } from "tsyringe";
 import { OrderStatus } from "@echotrace/shared";
 import { restockOrderAlbums } from "../../features/sample-books/stock.service.js";
+import { OrderRepository } from "../../features/order/order.repository.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const QUEUE_KEY = "echotrace:delayed_jobs";
@@ -41,17 +42,15 @@ async function processDue(): Promise<void> {
 }
 
 export async function handleOrderExpiry(orderId: number): Promise<void> {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { id: true, status: true, expiredAt: true, orderItems: true },
-  });
+  const orderRepo = container.resolve<OrderRepository>("OrderRepository");
+  const order = await orderRepo.findForExpiry(orderId);
   // ponytail: chỉ cancel nếu vẫn pending_payment VÀ đã qua expiredAt (link có thể được làm mới)
   if (!order || order.status !== OrderStatus.PENDING_PAYMENT) return;
   if (order.expiredAt && order.expiredAt.getTime() > Date.now()) return;
   // ponytail: restock + cancel trong 1 transaction để tránh double-restock nếu chạy lại
-  await prisma.$transaction(async (tx) => {
+  await orderRepo.client.$transaction(async (tx) => {
     await restockOrderAlbums(order.orderItems, tx);
-    await tx.order.update({ where: { id: orderId }, data: { status: OrderStatus.CANCELLED } });
+    await orderRepo.markCancelled(orderId, tx);
   });
 }
 

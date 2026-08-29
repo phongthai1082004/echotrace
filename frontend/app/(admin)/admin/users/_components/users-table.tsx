@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { Eye } from "lucide-react";
-import { User } from "@/models/users/user";
+import { UserListDTO } from "@echotrace/shared";
 import { chip, neoBtn } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
 import { AdminPagination } from "@/components/admin-pagination";
@@ -19,13 +19,13 @@ export function UsersTable({
   onPrevious,
   onOpen,
 }: {
-  users: User[];
+  users: UserListDTO[];
   loading: boolean;
   hasNext: boolean;
   hasPrevious: boolean;
   onNext: () => void;
   onPrevious: () => void;
-  onOpen: (u: User) => void;
+  onOpen: (u: UserListDTO) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -47,14 +47,14 @@ export function UsersTable({
       footer={
         <AdminPagination hasNext={hasNext} hasPrevious={hasPrevious} onNext={onNext} onPrevious={onPrevious} />
       }
-      renderRow={(user: User) => (
+      renderRow={(user: UserListDTO) => (
         <>
           <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.name}</div>
           <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.email}</div>
           <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.phone || "—"}</div>
           <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{user.city || "—"}</div>
           <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">
-            {user.createdAt ? timeSince(user.createdAt) : "—"}
+            {user.createdAt ? timeSince(String(user.createdAt)) : "—"}
           </div>
           <div className="px-2 whitespace-nowrap">
             <span className={`${chip} ${user.role === "admin" ? "bg-[#222] text-white" : "bg-[#e8e6e0] text-[#444]"}`}>
@@ -62,7 +62,7 @@ export function UsersTable({
             </span>
           </div>
           <div className="px-2 flex justify-center whitespace-nowrap">
-            <StatusBadge status={user.isDelete ? "banned" : "active"} />
+            <StatusBadge status={user.banned ? "banned" : "active"} />
           </div>
           <div className="px-2 flex justify-center">
             <button onClick={() => onOpen(user)} className={`${neoBtn} p-1.5`}>

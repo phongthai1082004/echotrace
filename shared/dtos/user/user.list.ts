@@ -8,6 +8,7 @@ export interface UserListDTO {
   city: string | null;
   banned: boolean;
   role: string;
+  createdAt?: Date | string | null;
 }
 export class UserMapper {
     static toDTO(user: any) {
@@ -20,7 +21,8 @@ export class UserMapper {
             address: user.address,
             city: user.city,
             banned: !!user.isDelete,
-            role: user.role
+            role: user.role,
+            createdAt: user.createdAt ?? null,
         };
     }
     static toDTOList(users: any[]): UserListDTO[] {

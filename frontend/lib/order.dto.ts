@@ -1,14 +1,9 @@
-// Dùng chung cho customer orders + admin dispatch — khớp Order model backend
-export type OrderStatus =
-  | "pending_payment"
-  | "paid"
-  | "partially_paid"
-  | "processing"
-  | "shipping"
-  | "delivered"
-  | "cancelled"
-  | "refunding"
-  | "refunded";
+// Khớp Order model backend. Contract types nằm ở @echotrace/shared (single source of truth).
+import type { OrderStatus, OrderItem, OrderDTO } from "@echotrace/shared";
+
+export type { OrderStatus, OrderItem, OrderDTO };
+// Alias backward-compatible cho consumer hiện tại
+export type OrderItemDTO = OrderItem;
 
 export const ORDER_STATUSES: OrderStatus[] = [
   "pending_payment",
@@ -21,60 +16,3 @@ export const ORDER_STATUSES: OrderStatus[] = [
   "refunding",
   "refunded",
 ];
-
-export interface OrderItemDTO {
-  bookId?: number;
-  title: string;
-  quantity: number;
-  pages?: number;
-  cover?: string;
-  paper?: string;
-  paperSize?: string;
-  price?: number | null;
-  sku?: string;
-  thumbnailUrl?: string | null;
-  supplierId?: number | null;
-  costPrice?: number | null;
-	reconciledAt?: string | null;
-	deliveredAt?: string | null;
-	defective?: boolean | null;
-	returnQty?: number | null;
-	returnDefect?: string | null;
-}
-
-export interface OrderDTO {
-  id: number;
-  orderCode: string | null;
-  userId: number;
-  supplierId?: number | null;
-  subTotal: number;
-  totalAmount: number;
-  depositAmount: number;
-  paidAmount: number;
-  discountAmount: number;
-  paymentType: string; // full-payment | half-payment
-  status: OrderStatus;
-  name?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  note?: string | null;
-  couponCode?: string | null;
-  orderShippingFee?: number | null;
-  supplierShippingFee?: number | null;
-  trackingCode?: string | null;
-  orderItems: OrderItemDTO[] | null;
-  codReconciledAt?: string | null;
-  qrCode?: string | null;
-  checkoutUrl?: string | null;
-  expiredAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  returnState?: string | null;
-  returnFault?: string | null;
-  returnReason?: string | null;
-  defectState?: string | null;
-  // join phía admin
-  user?: { id: number; name: string | null; email: string } | null;
-  supplier?: { id: number; name: string; contact: string; email: string } | null;
-}

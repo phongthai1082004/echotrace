@@ -1,38 +1,15 @@
 import { container } from 'tsyringe';
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { UserController } from './users.controller.js';
-import { authMiddleware, adminMiddleware, AuthRequest } from '../../middleware/auth.middleware.js';
+import { route } from '../../middleware/route.js';
 
 const router = Router();
 const user = container.resolve(UserController);
 
-const asyncHandler =
-	(fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>) => (req: Request, res: Response, next: NextFunction) =>
-		fn(req as AuthRequest, res, next).catch(next);
-
-router.use('/user', authMiddleware);
-router.get(
-	'/user/profile',
-	asyncHandler((req, res) => user.getProfile(req, res)),
-);
-router.put(
-	'/user/profile',
-	asyncHandler((req, res) => user.updateProfile(req, res)),
-);
-router.put(
-	'/user/change-password',
-	asyncHandler((req, res) => user.changePassword(req, res)),
-);
-
-router.get(
-	'/admin/users',
-	adminMiddleware,
-	asyncHandler((req, res) => user.getUserList(req, res)),
-);
-router.patch(
-	'/admin/users/:id/status',
-	adminMiddleware,
-	asyncHandler((req, res) => user.updateUserStatus(req, res)),
-);
+route(router, 'get', '/user/profile', (req, res) => user.getProfile(req, res), { auth: true });
+route(router, 'put', '/user/profile', (req, res) => user.updateProfile(req, res), { auth: true });
+route(router, 'put', '/user/change-password', (req, res) => user.changePassword(req, res), { auth: true });
+route(router, 'get', '/admin/users', (req, res) => user.getUserList(req, res), { auth: ['admin'] });
+route(router, 'patch', '/admin/users/:id/status', (req, res) => user.updateUserStatus(req, res), { auth: ['admin'] });
 
 export default router;

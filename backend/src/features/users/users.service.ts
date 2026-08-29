@@ -1,11 +1,11 @@
-import { injectable } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
+import { injectable, inject } from 'tsyringe';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { paginate } from '../../utils/paginate.js';
 import bcrypt from 'bcryptjs';
 import { UserListDTO, UserMapper } from '@echotrace/shared';
 import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from '@echotrace/shared';
+import { UserRepository } from './users.repository.js';
 
 export interface IUserService {
 	findAll(filter: any, options?: any, extraWhere?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
@@ -18,39 +18,26 @@ export interface IUserService {
 
 @injectable()
 export class UserService implements IUserService {
+	constructor(@inject('UserRepository') private userRepo: UserRepository) {}
+
 	public async findAll(filter: any, options?: any, extraWhere?: any) {
-		const { items, nextCursor } = await paginate(prisma.user, filter, options, extraWhere);
+		const { items, nextCursor } = await paginate(this.userRepo.client.user, filter, options, extraWhere);
 		return { items: UserMapper.toDTOList(items), nextCursor };
 	}
 
 	public async findById(id: number, extraWhere: Record<string, any> = {}) {
-		const user = await prisma.user.findFirst({ where: Object.assign({ id, isDelete: false }, extraWhere) });
+		const user = await this.userRepo.findById(id, extraWhere);
 		if (!user) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		return user;
 	}
 
 	public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
-		const where = Object.assign({ id, isDelete: false }, extraWhere);
-		const result = await prisma.user.updateMany({ where, data });
+		const result = await this.userRepo.updateById(id, data, extraWhere);
 		if (result.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
 	}
 
 	async getProfile(userId: string) {
-		const user = await prisma.user.findUnique({
-			where: { id: parseInt(userId) },
-			select: {
-				id: true,
-				email: true,
-				name: true,
-				avatar: true,
-				phone: true,
-				address: true,
-				city: true,
-				role: true,
-				isDelete: true,
-				password: true,
-			},
-		});
+		const user = await this.userRepo.findByIdFull(parseInt(userId));
 		if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
 		const { password, ...safe } = user;
 		return ProfileMapper.toDTO({ ...safe, hasPassword: !!password });
@@ -62,7 +49,7 @@ export class UserService implements IUserService {
 			if (!/^(\+84|0)[1-9]\d{8,9}$/.test(cleaned)) {
 				throw new AppError(ErrorCode.USER_INVALID_PHONE, 400);
 			}
-			const dupPhone = await prisma.user.findFirst({ where: { phone: cleaned } });
+			const dupPhone = await this.userRepo.findByPhone(cleaned);
 			if (dupPhone && dupPhone.id !== parseInt(userId)) {
 				throw new AppError(ErrorCode.USER_PHONE_EXISTS, 409);
 			}
@@ -70,10 +57,7 @@ export class UserService implements IUserService {
 		}
 
 		try {
-			await prisma.user.update({
-				where: { id: parseInt(userId) },
-				data,
-			});
+			await this.userRepo.updateUser(parseInt(userId), data as unknown as Record<string, unknown>);
 			return this.getProfile(userId);
 		} catch (error: any) {
 			if (error && error.code === 'P2025') {
@@ -84,7 +68,7 @@ export class UserService implements IUserService {
 	}
 
 	async changePassword(userId: string, body: ChangePasswordDTO) {
-		const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
+		const user = await this.userRepo.findByIdForPassword(parseInt(userId));
 		if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 404);
 
 		if (user.password) {
@@ -96,7 +80,7 @@ export class UserService implements IUserService {
 		if (body.newPassword.length < 6) throw new AppError(ErrorCode.USER_NEW_PASSWORD_MIN_LENGTH, 400);
 
 		const hashed = await bcrypt.hash(body.newPassword, 10);
-		await prisma.user.update({ where: { id: parseInt(userId) }, data: { password: hashed } });
+		await this.userRepo.updateUser(parseInt(userId), { password: hashed });
 		return { message: 'Password updated successfully' };
 	}
 }

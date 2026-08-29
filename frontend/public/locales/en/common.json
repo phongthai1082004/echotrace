@@ -815,7 +815,9 @@
       "returnApprove": "Approve return",
       "markReshipped": "Mark reshipped",
       "markDefective": "Mark defective",
-      "resolveDefect": "Resolve defect"
+      "resolveDefect": "Resolve defect",
+      "requeuePdf": "Regenerate PDF",
+      "downloadPdf": "Download PDF"
     },
     "suppliers": {
       "label": "Admin · Suppliers",

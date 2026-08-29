@@ -57,6 +57,7 @@ CREATE TABLE "UserImage" (
     "width" INTEGER,
     "height" INTEGER,
     "size" INTEGER,
+    "thumbUrl" TEXT,
     "bookId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -76,8 +77,8 @@ CREATE TABLE "Order" (
     "totalAmount" DOUBLE PRECISION NOT NULL,
     "depositAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "paidAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "paymentType" TEXT NOT NULL DEFAULT 'FULL',
-    "status" TEXT NOT NULL DEFAULT 'PENDING_PAYMENT',
+    "paymentType" TEXT NOT NULL DEFAULT 'full-payment',
+    "status" TEXT NOT NULL DEFAULT 'pending_payment',
     "name" TEXT,
     "phone" TEXT,
     "address" TEXT,
@@ -93,6 +94,7 @@ CREATE TABLE "Order" (
     "checkoutUrl" TEXT,
     "expiredAt" TIMESTAMP(3),
     "orderItems" JSONB,
+    "pdfUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "returnState" "ReturnState" DEFAULT 'none',
@@ -104,13 +106,29 @@ CREATE TABLE "Order" (
 );
 
 -- CreateTable
+CREATE TABLE "OrderPdfJob" (
+    "id" SERIAL NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "pdfUrl" TEXT,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "lastError" TEXT,
+    "lockedAt" TIMESTAMP(3),
+    "processedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "OrderPdfJob_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Transaction" (
     "id" SERIAL NOT NULL,
     "orderId" INTEGER,
     "idempotencyKeyId" TEXT,
     "gateway" TEXT NOT NULL,
     "gatewayTransactionCode" TEXT,
-    "type" TEXT NOT NULL DEFAULT 'FULL_PAYMENT',
+    "type" TEXT NOT NULL DEFAULT 'full_payment',
     "amount" DOUBLE PRECISION NOT NULL,
     "paymentLinkId" TEXT,
     "bankAccount" TEXT,
@@ -119,6 +137,7 @@ CREATE TABLE "Transaction" (
     "status" TEXT NOT NULL,
     "transactionTime" TIMESTAMP(3) NOT NULL,
     "rawPayload" JSONB,
+    "reconciledAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -339,7 +358,7 @@ CREATE TABLE "Coupon" (
     "discountType" TEXT NOT NULL,
     "discountValue" DOUBLE PRECISION NOT NULL,
     "minOrderAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "minOrderType" TEXT NOT NULL DEFAULT 'VALUE',
+    "minOrderType" TEXT NOT NULL DEFAULT 'value',
     "maxDiscountAmount" DOUBLE PRECISION,
     "maxUsageCount" INTEGER NOT NULL DEFAULT 0,
     "usedCount" INTEGER NOT NULL DEFAULT 0,
@@ -403,6 +422,12 @@ CREATE INDEX "UserImage_userId_idx" ON "UserImage"("userId");
 CREATE INDEX "UserImage_bookId_idx" ON "UserImage"("bookId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Order_orderCode_key" ON "Order"("orderCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Order_trackingCode_key" ON "Order"("trackingCode");
+
+-- CreateIndex
 CREATE INDEX "Order_userId_idx" ON "Order"("userId");
 
 -- CreateIndex
@@ -416,6 +441,12 @@ CREATE INDEX "Order_orderCode_idx" ON "Order"("orderCode");
 
 -- CreateIndex
 CREATE INDEX "Order_trackingCode_idx" ON "Order"("trackingCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "OrderPdfJob_orderId_key" ON "OrderPdfJob"("orderId");
+
+-- CreateIndex
+CREATE INDEX "OrderPdfJob_status_idx" ON "OrderPdfJob"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Transaction_idempotencyKeyId_key" ON "Transaction"("idempotencyKeyId");
@@ -442,6 +473,9 @@ CREATE UNIQUE INDEX "Income_transactionId_key" ON "Income"("transactionId");
 CREATE INDEX "Income_receivedAt_idx" ON "Income"("receivedAt");
 
 -- CreateIndex
+CREATE INDEX "Income_orderId_idx" ON "Income"("orderId");
+
+-- CreateIndex
 CREATE INDEX "Expense_date_idx" ON "Expense"("date");
 
 -- CreateIndex
@@ -449,6 +483,12 @@ CREATE INDEX "Expense_category_idx" ON "Expense"("category");
 
 -- CreateIndex
 CREATE INDEX "Expense_taxCode_idx" ON "Expense"("taxCode");
+
+-- CreateIndex
+CREATE INDEX "Expense_orderId_idx" ON "Expense"("orderId");
+
+-- CreateIndex
+CREATE INDEX "Expense_transactionId_idx" ON "Expense"("transactionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Cashflow_incomeId_key" ON "Cashflow"("incomeId");
@@ -461,6 +501,12 @@ CREATE INDEX "Cashflow_type_idx" ON "Cashflow"("type");
 
 -- CreateIndex
 CREATE INDEX "Cashflow_date_idx" ON "Cashflow"("date");
+
+-- CreateIndex
+CREATE INDEX "Cashflow_orderId_idx" ON "Cashflow"("orderId");
+
+-- CreateIndex
+CREATE INDEX "Cashflow_transactionId_idx" ON "Cashflow"("transactionId");
 
 -- CreateIndex
 CREATE INDEX "Book_userId_idx" ON "Book"("userId");
@@ -502,6 +548,9 @@ CREATE INDEX "DecorAsset_createdBy_idx" ON "DecorAsset"("createdBy");
 CREATE INDEX "DecorAsset_type_idx" ON "DecorAsset"("type");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Supplier_email_key" ON "Supplier"("email");
+
+-- CreateIndex
 CREATE INDEX "PrintOption_type_idx" ON "PrintOption"("type");
 
 -- CreateIndex
@@ -538,6 +587,9 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") RE
 ALTER TABLE "Order" ADD CONSTRAINT "Order_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "OrderPdfJob" ADD CONSTRAINT "OrderPdfJob_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -568,7 +620,7 @@ ALTER TABLE "Cart" ADD CONSTRAINT "Cart_userId_fkey" FOREIGN KEY ("userId") REFE
 ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "Cart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_bookId_fkey" FOREIGN KEY ("bookId") REFERENCES "Book"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_bookId_fkey" FOREIGN KEY ("bookId") REFERENCES "Book"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SampleBook" ADD CONSTRAINT "SampleBook_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

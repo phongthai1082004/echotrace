@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import { apiFetch } from "@/lib/api.fetch";
-import { Profile } from "@/models/profile";
+import { ProfileDTO } from "@echotrace/shared";
 import { useToast } from "@/components/toast";
 import { SkeletonForm } from "@/components/skeleton";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -36,7 +36,7 @@ export function AccountSettings() {
   const { data: session, update } = useSession();
   const { showToast } = useToast();
   const token = (session as any)?.accessToken;
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ProfileDTO | null>(null);
   const [tab, setTab] = useState<"information" | "reset-password" | "language">("information");
   const [form, setForm] = useState<FormData>({ name: "", phone: "", address: "", city: "" });
   const [initialForm, setInitialForm] = useState<FormData | null>(null);
@@ -47,7 +47,7 @@ export function AccountSettings() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    apiFetch<Profile>("/api/user/profile", token)
+    apiFetch<ProfileDTO>("/api/user/profile", token)
       .then((data) => {
         setProfile(data);
         if (data.avatar) update({ image: data.avatar });
@@ -80,7 +80,7 @@ export function AccountSettings() {
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
     try {
-      const updatedData = await apiFetch<Profile>("/api/user/profile", token, {
+      const updatedData = await apiFetch<ProfileDTO>("/api/user/profile", token, {
         method: "PUT",
         body: JSON.stringify(form),
       });

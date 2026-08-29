@@ -1,6 +1,6 @@
-import { injectable } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
+import { injectable, inject } from 'tsyringe';
 import { Prisma } from '../../../generated/prisma/client.js';
+import { FinanceRepository } from '../finance/finance.repository.js';
 
 export interface IOrderFinanceService {
 	recordOutflow(
@@ -16,6 +16,8 @@ export interface IOrderFinanceService {
 
 @injectable()
 export class OrderFinanceService implements IOrderFinanceService {
+	constructor(@inject('FinanceRepository') private readonly financeRepo: FinanceRepository) {}
+
 	// ponytail: single place for Expense + Cashflow OUT writes (NCC/hoàn tiền/bảo hành).
 	async recordOutflow(
 		tx: Prisma.TransactionClient,
@@ -35,7 +37,7 @@ export class OrderFinanceService implements IOrderFinanceService {
 	}
 
 	async recognizeIncome(orderId: number, amount: number, tx?: Prisma.TransactionClient): Promise<void> {
-		const db = tx ?? prisma;
+		const db = tx ?? this.financeRepo.client;
 		const existing = await db.income.findFirst({ where: { orderId } });
 		if (existing) return; // idempotent
 		await db.income.create({

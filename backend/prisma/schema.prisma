@@ -136,6 +136,7 @@ model Order {
   checkoutUrl   String?
   expiredAt     DateTime?
   orderItems     Json?
+  pdfUrl         String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   returnState  ReturnState? @default(none)
@@ -146,12 +147,30 @@ model Order {
   user         User          @relation(fields: [userId], references: [id])
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
   transactions Transaction[]
+  pdfJobs       OrderPdfJob[]
 
   @@index([userId])
   @@index([supplierId])
   @@index([status])
   @@index([orderCode])
   @@index([trackingCode])
+}
+
+model OrderPdfJob {
+  id         Int       @id @default(autoincrement())
+  orderId    Int       @unique
+  status     String    @default("PENDING")
+  pdfUrl     String?
+  attempts   Int       @default(0)
+  lastError  String?
+  lockedAt   DateTime?
+  processedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }
 
 model Transaction {
@@ -450,7 +469,9 @@ model Coupon {
   @@index([expiresAt])
 }
 
-// ponytail: bảng counter tài chính theo tháng, cập nhật bởi DB trigger (xem prisma/triggers/finance_counters.sql)
+// ponytail: bảng counter tài chính theo tháng, cập nhật bởi DB trigger.
+// Schema (functions+triggers): prisma/triggers/finance_counters.sql (an toàn để paste vào migration).
+// Backfill dữ liệu 1 lần (không phải schema): prisma/triggers/backfill_finance_periods.sql.
 model FinancePeriod {
   period               String   @id // 'YYYY-MM'
   totalOrders          Int      @default(0)

@@ -1,66 +1,72 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { prisma } from '../../lib/prisma.js';
 import { CacheService } from '../infrastructure/cache/cache.service.js';
 import { OptionCatalogCacheService } from '../infrastructure/cache/option-catalog.cache.service.js';
 import { SampleBookCacheService } from '../infrastructure/cache/sample-book.cache.service.js';
 import { R2ImageService } from '../infrastructure/r2/r2.service.js';
-import { AuthService } from '../features/auth/auth.service.js';
-import { BookService } from '../features/books/books.service.js';
-import { UserService } from '../features/users/users.service.js';
-import { UserImageService } from '../features/uploads/user-images.service.js';
-import { SupplierService } from '../features/suppliers/suppliers.service.js';
-import { PrintOptionService } from '../features/print-options/print-options.service.js';
-import { CartService } from '../features/cart/cart.service.js';
-import { OrderService } from '../features/order/order.service.js';
-import { OrderFinanceService } from '../features/order/order-finance.service.js';
-import { CouponService } from '../features/coupons/coupons.service.js';
-import { SampleBookService } from '../features/sample-books/sample-books.service.js';
 import { PaymentService } from '../infrastructure/payment/payment.service.js';
 import { PayOSGateway } from '../infrastructure/payment/payos.service.js';
 import { PayOS } from '@payos/node';
-import { PaymentWebhookService } from '../features/payment/payment.service.js';
 import { EmailService } from '../features/email/email.service.js';
-import { FinanceService } from '../features/finance/finance.service.js';
+import { FabricRenderer } from '../features/pdf/fabric.renderer.js';
+import { R2FileService } from '../features/pdf/r2-file.service.js';
+import { PdfService } from '../features/pdf/pdf.service.js';
+import { PdfRepository } from '../features/pdf/pdf.repository.js';
+import { DbPdfQueue } from '../features/pdf/pdf.queue.js';
+import { PdfWorker } from '../features/pdf/pdf.worker.js';
+import { DecorAssetRepository } from '../features/stickers/stickers.repository.js';
+import { PrismaService } from '../../lib/db.service.js';
 
+import { register as registerAuth } from '../features/auth/index.js';
+import { register as registerBooks } from '../features/books/index.js';
+import { register as registerUsers } from '../features/users/index.js';
+import { register as registerUploads } from '../features/uploads/index.js';
+import { register as registerSuppliers } from '../features/suppliers/index.js';
+import { register as registerPrintOptions } from '../features/print-options/index.js';
+import { register as registerCart } from '../features/cart/index.js';
+import { register as registerOrder } from '../features/order/index.js';
+import { register as registerCoupons } from '../features/coupons/index.js';
+import { register as registerSampleBooks } from '../features/sample-books/index.js';
+import { register as registerPayment } from '../features/payment/index.js';
+import { register as registerFinance } from '../features/finance/index.js';
+
+// Infrastructure, pdf (no barrel) and email (no barrel) keep registration here.
 container.register('CacheService', { useValue: new CacheService() });
-
 container.registerSingleton('IR2ImageService', R2ImageService);
-container.registerSingleton('IAuthService', AuthService);
-container.registerSingleton('IBookService', BookService);
-container.registerSingleton('IUserService', UserService);
-container.registerSingleton('IUserImageService', UserImageService);
-container.registerSingleton('ISupplierService', SupplierService);
-container.registerSingleton('IPrintOptionService', PrintOptionService);
-container.registerSingleton('ICartService', CartService);
-container.registerSingleton('ICouponService', CouponService);
-container.registerSingleton('ISampleBookService', SampleBookService);
 container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheService);
 container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
-container.registerSingleton('IOrderService', OrderService);
-container.registerSingleton('IOrderFinanceService', OrderFinanceService);
-container.registerSingleton('IPaymentWebhookService', PaymentWebhookService);
+container.registerSingleton('IOrderPdfRenderer', FabricRenderer);
+container.registerSingleton('IR2FileService', R2FileService);
+container.registerSingleton('PdfService', PdfService);
+container.registerSingleton('PdfRepository', PdfRepository);
+container.registerSingleton('IPdfQueue', DbPdfQueue);
+container.registerSingleton('PdfWorker', PdfWorker);
+container.registerSingleton('DecorAssetRepository', DecorAssetRepository);
 container.registerSingleton('IEmailService', EmailService);
-container.registerSingleton('IFinanceService', FinanceService);
+container.registerSingleton('PrismaService', PrismaService);
 
 let paymentService: PaymentService;
-
 container.register('IPaymentService', {
-    useFactory: (c) => {
-        if (!paymentService) {
-            const payOSGateway = c.resolve(PayOSGateway);
-            paymentService = new PaymentService([payOSGateway]);
-        }
-        return paymentService;
-    },
+	useFactory: (c) => {
+		if (!paymentService) {
+			const payOSGateway = c.resolve(PayOSGateway);
+			paymentService = new PaymentService([payOSGateway]);
+		}
+		return paymentService;
+	},
 });
 
 container.register('PayOS', {
-  useValue: new PayOS({
-    clientId: process.env.PAYOS_CLIENT_ID!,
-    apiKey: process.env.PAYOS_API_KEY!,
-    checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-  }),
+	useValue: new PayOS({
+		clientId: process.env.PAYOS_CLIENT_ID!,
+		apiKey: process.env.PAYOS_API_KEY!,
+		checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
+	}),
 });
+
+// ponytail: mỗi feature tự đăng ký service của nó; file này chỉ dài thêm khi THÊM FEATURE MỚI.
+[registerAuth, registerBooks, registerUsers, registerUploads, registerSuppliers,
+	registerPrintOptions, registerCart, registerOrder, registerCoupons,
+	registerSampleBooks, registerPayment, registerFinance].forEach((r) => r(container));
 
 export { container };

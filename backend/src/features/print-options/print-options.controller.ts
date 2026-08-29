@@ -2,8 +2,8 @@ import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { ApiResponse } from '../../middleware/api.response.js';
-import { CreatePrintOptionDTO } from '../../dto/print-option/print-option.create.dto.js';
-import { UpdatePrintOptionDTO } from '../../dto/print-option/print-option.update.dto.js';
+import { CreatePrintOptionDTO } from '@echotrace/shared';
+import { UpdatePrintOptionDTO } from '@echotrace/shared';
 import { IPrintOptionService } from './print-options.service.js';
 
 @injectable()

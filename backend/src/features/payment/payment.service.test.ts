@@ -16,6 +16,7 @@ vi.mock('../sample-books/stock.service.js', () => ({ restockOrderAlbums: mocks.r
 vi.mock('../email/email.service.js', () => ({ EmailService: class {} }));
 
 import { PaymentWebhookService } from './payment.service.js';
+import { PaymentWebhookRepository } from './payment.repository.js';
 import { OrderStatus, TransactionStatus } from '@echotrace/shared';
 
 const baseResult = (over: any = {}) => ({
@@ -39,7 +40,7 @@ beforeEach(() => {
 	mocks.$transaction.mockImplementation(async (cb: any) => cb({ transaction: mocks.transaction, order: mocks.order, cashflow: mocks.cashflow }));
 	mocks.restock.mockResolvedValue(undefined);
 	mocks.emailSend.mockResolvedValue(undefined);
-	svc = new PaymentWebhookService({ send: mocks.emailSend } as any);
+	svc = new PaymentWebhookService({ send: mocks.emailSend } as any, new PaymentWebhookRepository({ db: mocks } as any));
 });
 
 describe('PaymentWebhookService.processWebhook', () => {

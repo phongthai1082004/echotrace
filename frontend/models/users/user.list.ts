@@ -1,6 +1,6 @@
-import { User } from "@/models/users/user";
+import { UserListDTO } from "@echotrace/shared";
 
 export interface UserResponse {
-  users: User[];
+  users: UserListDTO[];
   nextCursor: string | null;
 }

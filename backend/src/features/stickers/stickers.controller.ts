@@ -3,10 +3,10 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { ApiResponse } from '../../middleware/api.response.js';
 import { AppError } from '../../middleware/app.error.js';
-import { prisma } from '../../../lib/prisma.js';
 import { ErrorCode } from '@echotrace/shared';
 import { AssetCategory } from '@echotrace/shared';
 import { IR2ImageService } from '../../infrastructure/r2/r2.service.js';
+import { DecorAssetRepository } from './stickers.repository.js';
 
 const VALID_CATEGORIES = new Set(Object.values(AssetCategory));
 
@@ -14,6 +14,7 @@ const VALID_CATEGORIES = new Set(Object.values(AssetCategory));
 export class StickerController {
 	constructor(
 		@inject('IR2ImageService') private readonly r2: IR2ImageService,
+		@inject('DecorAssetRepository') private readonly stickerRepo: DecorAssetRepository,
 	) {}
 
 	list = async (req: AuthRequest, res: Response) => {
@@ -22,10 +23,7 @@ export class StickerController {
 		if (typeof category === 'string' && VALID_CATEGORIES.has(category as AssetCategory)) {
 			extraWhere.category = category;
 		}
-		const stickers = await prisma.decorAsset.findMany({
-			where: { ...extraWhere, isDelete: false },
-			orderBy: { id: 'desc' },
-		});
+		const stickers = await this.stickerRepo.list({ ...extraWhere, isDelete: false });
 		res.json(ApiResponse.success(stickers));
 	};
 
@@ -35,24 +33,22 @@ export class StickerController {
 		if (category && !VALID_CATEGORIES.has(category)) {
 			throw new AppError(ErrorCode.UPLOAD_CATEGORY_INVALID, 400, { validCategories: Object.values(AssetCategory) });
 		}
-		const sticker = await prisma.decorAsset.create({
-			data: {
-				url,
-				publicId: publicId || '',
-				type: 'sticker',
-				name: name || '',
-				category: category || null,
-				createdBy: parseInt(req.userId!),
-			},
+		const sticker = await this.stickerRepo.create({
+			url,
+			publicId: publicId || '',
+			type: 'sticker',
+			name: name || '',
+			category: category || null,
+			createdBy: parseInt(req.userId!),
 		});
 		res.status(201).json(ApiResponse.success(sticker));
 	};
 
 	remove = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(String(req.params.id));
-		const sticker = await prisma.decorAsset.findFirst({ where: { id, isDelete: false } });
+		const sticker = await this.stickerRepo.findById(id);
 		if (!sticker) throw new AppError(ErrorCode.NOT_FOUND, 404);
-		await prisma.decorAsset.deleteMany({ where: { id } });
+		await this.stickerRepo.remove(id);
 		if (sticker.publicId) {
 			this.r2.deleteAsset(sticker.publicId).catch(() => {});
 		}

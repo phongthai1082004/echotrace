@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { usePathname, useRouter } from "next/navigation";
 import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 
 function FlagUk() {
@@ -44,8 +45,13 @@ const langs = [
 
 export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inline?: boolean }) {
   const { i18n } = useTranslation();
+  const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const current = langs.find((l) => i18n.language.startsWith(l.code)) || langs[0];
+
+  // ponytail: disable on studio page
+  if (pathname?.includes("studio")) return null;
 
   if (inline) {
     return (
@@ -55,9 +61,10 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
           return (
             <button
               key={l.code}
-              onClick={() => {
-                localStorage.setItem("i18nextLng", l.code);
-                i18n.changeLanguage(l.code);
+              onClick={async () => {
+                document.cookie = `i18nextLng=${l.code}; path=/`;
+                await i18n.changeLanguage(l.code);
+                router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`);
               }}
               className={`flex items-center gap-2 w-full text-left font-mono font-bold tracking-wider text-[10px] px-3 py-2.5 rounded-[6px] ${
                 active ? neoBtnPrimarySm : `${neoBtnSm} text-[#666] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer`
@@ -90,9 +97,10 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
             {langs.map((l) => (
               <button
                 key={l.code}
-                onClick={() => {
-                  localStorage.setItem("i18nextLng", l.code);
-                  i18n.changeLanguage(l.code);
+                onClick={async () => {
+                  document.cookie = `i18nextLng=${l.code}; path=/`;
+                  await i18n.changeLanguage(l.code);
+                  router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`);
                   setOpen(false);
                 }}
                 className={`flex items-center gap-2 w-full text-left px-3 py-2 font-mono text-[10px] font-bold tracking-wider transition-colors ${

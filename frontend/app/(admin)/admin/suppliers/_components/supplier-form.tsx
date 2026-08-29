@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { label, card, input, neoBtnPrimary } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
-import { Supplier, SupplierOption } from "@/models/supplier/supplier";
+import { SupplierDTO, SupplierOption } from "@echotrace/shared";
 import { PrintOptionAssign } from "./print-option-assign";
 import { Save } from "lucide-react";
 
@@ -60,7 +60,7 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
   useEffect(() => {
     if (creating || !supplierId || !token) return;
     setLoading(true);
-    apiFetch<Supplier>(`/api/admin/suppliers/${supplierId}`, token)
+    apiFetch<SupplierDTO>(`/api/admin/suppliers/${supplierId}`, token)
       .then((data) => {
         const f: Form = {
           name: data.name,
@@ -99,7 +99,7 @@ export function SupplierForm({ supplierId, creating }: { supplierId?: number; cr
         bankAccountName: form.bankAccountName,
       });
       if (creating) {
-        const data = await apiFetch<Supplier>("/api/admin/suppliers", token, { method: "POST", body });
+        const data = await apiFetch<SupplierDTO>("/api/admin/suppliers", token, { method: "POST", body });
         showToast(t("admin.suppliers.createSuccess"), "success");
         router.push(`/admin/suppliers/${data.id}`);
       } else {

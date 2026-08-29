@@ -48,8 +48,10 @@ function bearerToken(request: Request): string | null {
   return h.startsWith("Bearer ") ? h.slice(7) : null;
 }
 
-function detectImageMime(b: Uint8Array): string | null {
+function detectUploadMime(b: Uint8Array): string | null {
   const ascii = (start: number, len: number) => String.fromCharCode(...b.slice(start, start + len));
+  // ponytail: PDF đầu bằng "%PDF-". Cho phép upload file PDF (in ấn) qua worker.
+  if (b.length >= 5 && ascii(0, 5) === "%PDF-") return "application/pdf";
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
   if (b.length >= 3 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
@@ -79,8 +81,8 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   if (body.byteLength === 0) return json({ error: "empty body" }, 400);
   if (body.byteLength > MAX_UPLOAD_BYTES) return json({ error: "file too large" }, 413);
 
-  const mime = detectImageMime(new Uint8Array(body.slice(0, 12)));
-  if (!mime) return json({ error: "only image uploads are allowed" }, 415);
+  const mime = detectUploadMime(new Uint8Array(body.slice(0, 12)));
+  if (!mime) return json({ error: "unsupported file type" }, 415);
 
   const key = `${folder}/${crypto.randomUUID()}`;
   await env.R2.put(key, body, {

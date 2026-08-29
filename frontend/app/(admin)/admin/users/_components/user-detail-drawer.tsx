@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Save } from "lucide-react";
-import { User } from "@/models/users/user";
+import { UserListDTO } from "@echotrace/shared";
 import { card, label, neoBtnPrimary } from "@/lib/styles";
 import { CloseButton } from "@/components/ui/close-button";
 import { YesNoPopup } from "@/components/yes-no-popup";
@@ -16,12 +16,12 @@ export function UserDetailDrawer({
   onSave,
   onClose,
 }: {
-  user: User;
+  user: UserListDTO;
   onSave: (status: UserStatus) => void | Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [statusForm, setStatusForm] = useState<UserStatus>(user.isDelete ? "banned" : "active");
+    const [statusForm, setStatusForm] = useState<UserStatus>(user.banned ? "banned" : "active");
   const [showConfirm, setShowConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export function UserDetailDrawer({
             <div className="flex items-center gap-3 mb-4">
               <div className={`${card} px-3 py-1.5`}>
                 <p className={`${label} text-[#999]`}>{t("admin.users.joined")}</p>
-                <p className="text-sm font-bold">{user.createdAt ? timeSince(user.createdAt) : "—"}</p>
+                <p className="text-sm font-bold">{user.createdAt ? timeSince(String(user.createdAt)) : "—"}</p>
               </div>
             </div>
             {[

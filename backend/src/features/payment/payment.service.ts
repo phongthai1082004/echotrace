@@ -1,5 +1,4 @@
 import { injectable, inject } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
 import { Prisma } from '../../../generated/prisma/client.js';
 import {
 	ErrorCode,
@@ -10,6 +9,7 @@ import {
 import { AppError } from '../../middleware/app.error.js';
 import { restockOrderAlbums } from '../sample-books/stock.service.js';
 import { EmailService } from '../email/email.service.js';
+import { PaymentWebhookRepository } from './payment.repository.js';
 
 export interface IPaymentWebhookService {
 	processWebhook(result: WebhookProcessResult): Promise<void>;
@@ -17,12 +17,15 @@ export interface IPaymentWebhookService {
 
 @injectable()
 export class PaymentWebhookService implements IPaymentWebhookService {
-	constructor(@inject('IEmailService') private emailService: EmailService) {}
+	constructor(
+		@inject('IEmailService') private emailService: EmailService,
+		@inject('PaymentWebhookRepository') private paymentRepo: PaymentWebhookRepository,
+	) {}
 
 	async processWebhook(result: WebhookProcessResult): Promise<void> {
 		let email: { to: string; name: string; orderCode: string; paid: number; total: number; fullyPaid: boolean } | null = null;
 
-		await prisma.$transaction(
+		await this.paymentRepo.client.$transaction(
 			async (tx) => {
 				const txn = await tx.transaction.findUnique({
 					where: { gatewayTransactionCode: result.gatewayTransactionCode },

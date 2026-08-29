@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { User } from "@/models/users/user";
+import { UserListDTO } from "@echotrace/shared";
 import { card } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
@@ -12,7 +12,7 @@ import { UsersTable } from "./_components/users-table";
 import { UserDetailDrawer } from "./_components/user-detail-drawer";
 
 interface AdminUsersPageProps {
-  initialUsers?: User[];
+  initialUsers?: UserListDTO[];
   initialNextCursor?: string | null;
 }
 
@@ -35,7 +35,7 @@ export default function AdminUsersPage({ initialUsers = [], initialNextCursor = 
     refresh,
   } = useUsers();
 
-  const [selected, setSelected] = useState<User | null>(null);
+  const [selected, setSelected] = useState<UserListDTO | null>(null);
 
   return (
     <div className="h-screen flex flex-col">

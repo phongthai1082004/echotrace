@@ -1,2 +1,2 @@
 export { StickerController } from './stickers.controller.js';
-export { default as stickersRoutes } from './stickers.routes.js';
+export { DecorAssetRepository } from './stickers.repository.js';

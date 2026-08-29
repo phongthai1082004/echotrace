@@ -6,22 +6,9 @@ import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import { useDebounce } from "@hooks";
-import { DiscountType, MinOrderType } from "@echotrace/shared";
+import { CouponDTO, DiscountType, MinOrderType } from "@echotrace/shared";
 
-export interface Coupon {
-  id: number;
-  code: string;
-  discountType: string;
-  discountValue: number;
-  minOrderAmount: number;
-  minOrderType: string;
-  maxDiscountAmount: number | null;
-  maxUsageCount: number;
-  usedCount: number;
-  isActive: boolean;
-  expiresAt: string | null;
-  createdAt: string;
-}
+export type Coupon = CouponDTO;
 
 export interface CouponForm {
   code: string;

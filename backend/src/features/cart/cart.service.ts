@@ -1,8 +1,8 @@
-import { injectable } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
+import { inject, injectable } from 'tsyringe';
 import { Prisma } from '../../../generated/prisma/client.js';
 import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount, PaymentPlan } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
+import { CartRepository, toOptKeyMap } from './cart.repository.js';
 
 export interface CartQuote {
 	items: CartItem[];
@@ -26,49 +26,7 @@ function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	return { ...item, price: computeItemPrice(item.pages ?? 0, cover, paper, factor) };
 }
 
-function toOptKeyMap(rows: { type: string; code: string; price: number | null; width: number | null; height: number | null }[]): OptKeyMap {
-	const m: OptKeyMap = new Map();
-	for (const o of rows) m.set(`${o.type}:${o.code}`, o);
-	return m;
-}
-
-const CART_INCLUDE = {
-	items: { include: 
-		{ book: true }, 
-		orderBy: { id: 'asc' } 
-	},
-} satisfies Prisma.CartInclude;
-
-const OPT_ARGS = {
-	where: { isDelete: false },
-	select: { type: true, code: true, price: true, width: true, height: true },
-} satisfies Prisma.PrintOptionFindManyArgs;
-
-function couponArgs(code: string) {
-	const upper = code.trim().toUpperCase();
-	return {
-		where: { isDelete: false, OR: [{ code: upper }, { code: { startsWith: `${upper}-` } }] },
-		orderBy: { id: 'desc' },
-	} satisfies Prisma.CouponFindFirstArgs;
-}
-
-async function loadOptions(db: any): Promise<OptKeyMap> {
-	return toOptKeyMap(await db.printOption.findMany(OPT_ARGS));
-}
-
-async function loadCartBatch(userId: number, couponCode?: string | null) {
-	const wantsCoupon = !!couponCode;
-	const [cart, optionRows, Coupon] = await prisma.$transaction([
-		prisma.cart.findUnique({ where: { userId }, include: CART_INCLUDE }),
-		prisma.printOption.findMany(OPT_ARGS),
-		...(wantsCoupon ? [prisma.coupon.findFirst(couponArgs(couponCode!))] : []),
-	]);
-	if (!cart) {
-		const created = await prisma.cart.create({ data: { userId }, include: CART_INCLUDE });
-		return { cart: created, optMap: toOptKeyMap(optionRows), Coupon: null };
-	}
-	return { cart, optMap: toOptKeyMap(optionRows), Coupon: wantsCoupon ? (Coupon as any) : null };
-}
+// ponytail: loadCartBatch / loadOptions / toOptKeyMap đã chuyển vào CartRepository; service gọi repo.
 
 export interface ICartService {
 	getCart(userId: number): Promise<CartDTO>;
@@ -90,8 +48,12 @@ export interface ICartService {
 
 @injectable()
 export class CartService implements ICartService {
+	constructor(@inject('CartRepository') private cartRepo: CartRepository) {}
+
 	async getCart(userId: number): Promise<CartDTO> {
-		const { cart, optMap } = await loadCartBatch(userId);
+		const rows = await this.cartRepo.loadCartBatch(userId);
+		const optMap = toOptKeyMap(rows[1]);
+		const cart = rows[0] ?? (await this.cartRepo.createCart(userId));
 		const parsedItems = cart.items.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
 		return {
 			id: cart.id,
@@ -103,7 +65,7 @@ export class CartService implements ICartService {
 	}
 
 	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
-		return prisma.$transaction(async (tx) => {
+		return this.cartRepo.client.$transaction(async (tx) => {
 			const cart = await tx.cart.upsert({ where: { userId }, update: {}, create: { userId } });
 			const book = await tx.book.findFirst({ where: { id: input.bookId, userId, isDelete: false }, select: { id: true } });
 			if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
@@ -128,7 +90,7 @@ export class CartService implements ICartService {
 				},
 				include: { book: true },
 			});
-			return applyItemPrice(composeCartItem(row, row.book), await loadOptions(tx));
+			return applyItemPrice(composeCartItem(row, row.book), await this.cartRepo.loadOptions(tx));
 		});
 	}
 
@@ -137,15 +99,14 @@ export class CartService implements ICartService {
 		bookId: number,
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem> {
-		const cart = await prisma.cart.findUnique({ where: { userId }, select: { id: true } });
+		const cart = await this.cartRepo.findCart(userId);
 		if (!cart) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		try {
-			const row = await prisma.cartItem.update({
-				where: { cartId_bookId: { cartId: cart.id, bookId } },
-				data: { ...patch, ...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}) },
-				include: { book: true },
+			const row = await this.cartRepo.updateCartItem(cart.id, bookId, {
+				...patch,
+				...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}),
 			});
-			return applyItemPrice(composeCartItem(row, row.book), await loadOptions(prisma));
+			return applyItemPrice(composeCartItem(row, row.book), await this.cartRepo.loadOptions());
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') throw new AppError(ErrorCode.NOT_FOUND, 404);
 			throw e;
@@ -153,8 +114,8 @@ export class CartService implements ICartService {
 	}
 
 	async deleteItem(userId: number, bookId: number): Promise<void> {
-		const cart = await prisma.cart.findUnique({ where: { userId }, select: { id: true } });
-		if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id, bookId } });
+		const cart = await this.cartRepo.findCart(userId);
+		if (cart) await this.cartRepo.deleteCartItems(cart.id, bookId);
 	}
 
 	async addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number }): Promise<CartItem> {
@@ -163,32 +124,23 @@ export class CartService implements ICartService {
 		if (!Number.isFinite(sampleBookId)) throw new AppError('sampleBookId không hợp lệ', 400);
 
 		// ponytail: check tồn kho trực tiếp trong DB. quantity=null = không giới hạn.
-		const sample = await prisma.sampleBook.findFirst({
-			where: {
-				id: sampleBookId,
-				isDelete: false,
-				isActive: true,
-				OR: [{ quantity: null }, { quantity: { gte: quantity } }],
-			},
-		});
+		const sample = await this.cartRepo.findSampleBook(sampleBookId, quantity);
 		if (!sample) throw new AppError('Album đã hết hàng hoặc không đủ số lượng tồn kho', 400);
 
-		let book = await prisma.book.findFirst({ where: { userId, sampleBookId } });
+		let book = await this.cartRepo.findBookByUser(userId, sampleBookId);
 		if (!book) {
-			book = await prisma.book.create({
-				data: {
-					userId,
-					sampleBookId,
-					type: sample.type,
-					title: sample.name,
-					style: sample.style,
-					font: sample.font,
-					cover: sample.cover,
-					coverUrl: sample.coverUrl,
-					paperHeight: sample.paperHeight,
-					paperWidth: sample.paperWidth,
-					content: (sample.content as object) ?? {},
-				},
+			book = await this.cartRepo.createBook({
+				userId,
+				sampleBookId,
+				type: sample.type,
+				title: sample.name,
+				style: sample.style,
+				font: sample.font,
+				cover: sample.cover,
+				coverUrl: sample.coverUrl,
+				paperHeight: sample.paperHeight,
+				paperWidth: sample.paperWidth,
+				content: (sample.content as object) ?? {},
 			});
 		}
 		return this.upsertItem(userId, { bookId: book.id, quantity, cover: sample.cover, paper: null, paperSize: null });
@@ -200,7 +152,10 @@ export class CartService implements ICartService {
 		couponCode?: string | null,
 		bookIds?: number[] | null,
 	): Promise<CartQuote> {
-		const { cart, optMap, Coupon } = await loadCartBatch(userId, couponCode);
+		const rows = await this.cartRepo.loadCartBatch(userId, couponCode);
+		const optMap = toOptKeyMap(rows[1]);
+		const cart = rows[0] ?? (await this.cartRepo.createCart(userId));
+		const Coupon = rows[0] && couponCode ? rows[2] : null;
 
 		const ids = Array.isArray(bookIds) && bookIds.length ? new Set(bookIds) : null;
 		const items: CartItem[] = (cart?.items ?? [])

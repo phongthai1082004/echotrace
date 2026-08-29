@@ -96,6 +96,16 @@ export interface OrderItem {
   paperSize: string | null;
   price: number | null;
   sku: string | null;
+  type?: string | null;
+  pdfUrl?: string | null;
+  // Dispatch / reconciliation fields (populated for admin order views)
+  supplierId?: number | null;
+  costPrice?: number | null;
+  reconciledAt?: string | null;
+  deliveredAt?: string | null;
+  defective?: boolean | null;
+  returnQty?: number | null;
+  returnDefect?: boolean | null;
 }
 
 export function toOrderItem(item: {
@@ -108,6 +118,8 @@ export function toOrderItem(item: {
   paper: string | null;
   paperSize?: string | null;
   price?: number | null;
+  type?: string | null;
+  pdfUrl?: string | null;
 }, nameEn?: { cover?: string | null; paper?: string | null; paperSize?: string | null }): OrderItem {
   return {
     bookId: item.bookId,
@@ -120,6 +132,8 @@ export function toOrderItem(item: {
     paperSize: item.paperSize ?? null,
     price: item.price ?? null,
     sku: makeSku(item.cover ?? "", item.paper ?? "", item.paperSize ?? "", nameEn),
+    type: item.type ?? null,
+    pdfUrl: item.pdfUrl ?? null,
   };
 }
 

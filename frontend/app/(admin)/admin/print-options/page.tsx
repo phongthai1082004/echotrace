@@ -7,7 +7,7 @@ import { AdminHeader } from "@/components/admin-header";
 import { AdminFilterTabs } from "@/components/admin-filter-tabs";
 import { YesNoPopup } from "@/components/yes-no-popup";
 import { PrintOption } from "@/models/print-option/print-option";
-import { L10NText } from "@/models/supplier/supplier";
+import { L10NText } from "@echotrace/shared";
 import { usePrintOptions } from "./_hooks/use-print-options";
 import { OptionsTable } from "./_components/options-table";
 import { OptionFormModal } from "./_components/option-form-modal";

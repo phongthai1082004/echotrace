@@ -1,6 +1,6 @@
-import { Supplier } from "./supplier";
+import { SupplierDTO } from "@echotrace/shared";
 
 export interface SupplierResponse {
-  items: Supplier[];
+  items: SupplierDTO[];
   nextCursor: number | null;
 }

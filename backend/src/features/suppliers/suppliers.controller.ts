@@ -4,8 +4,8 @@ import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { ApiResponse } from '../../middleware/api.response.js';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
-import { CreateSupplierDTO } from '../../dto/supplier/supplier.create.dto.js';
-import { UpdateSupplierDTO } from '../../dto/supplier/supplier.update.dto.js';
+import { CreateSupplierDTO } from '@echotrace/shared';
+import { UpdateSupplierDTO } from '@echotrace/shared';
 import { ISupplierService } from './suppliers.service.js';
 
 @injectable()

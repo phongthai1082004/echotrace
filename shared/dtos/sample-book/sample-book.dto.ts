@@ -1,3 +1,8 @@
+import { IsString, IsOptional, IsIn, IsInt, IsBoolean, Min } from 'class-validator';
+
+const SAMPLE_BOOK_TYPES = ['TEMPLATE', 'ALBUM'] as const;
+const SAMPLE_BOOK_STATUSES = ['draft', 'published', 'archive'] as const;
+
 export interface SampleBookDTO {
   id: number;
   name: string | null;
@@ -20,38 +25,103 @@ export interface SampleBookDTO {
   updatedAt: string;
 }
 
-export interface CreateSampleBookDTO {
+export class CreateSampleBookDTO {
+  @IsString()
+  @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsOptional()
   description?: string | null;
-  type?: "ALBUM" | "TEMPLATE";
+
+  @IsIn(SAMPLE_BOOK_TYPES, { message: 'Loại sample book không hợp lệ' })
+  @IsOptional()
+  type?: (typeof SAMPLE_BOOK_TYPES)[number];
+
+  @IsString()
+  @IsOptional()
   category?: string | null;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
   quantity?: number | null;
+
+  @IsString()
+  @IsOptional()
   style?: string;
+
+  @IsString()
+  @IsOptional()
   font?: string;
+
+  @IsString()
+  @IsOptional()
   cover?: string;
+
+  @IsString()
+  @IsOptional()
   coverUrl?: string | null;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
   paperHeight?: number | null;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
   paperWidth?: number | null;
+
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
-  status?: string;
+
+  @IsIn(SAMPLE_BOOK_STATUSES, { message: 'Trạng thái sample book không hợp lệ' })
+  @IsOptional()
+  status?: (typeof SAMPLE_BOOK_STATUSES)[number];
+
+  @IsOptional()
   content?: any;
 }
 
-export interface UpdateSampleBookDTO {
+export class UpdateSampleBookDTO {
+  @IsString()
+  @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsOptional()
   description?: string | null;
-  type?: "ALBUM" | "TEMPLATE";
+
+  @IsIn(SAMPLE_BOOK_TYPES, { message: 'Loại sample book không hợp lệ' })
+  @IsOptional()
+  type?: (typeof SAMPLE_BOOK_TYPES)[number];
+
+  @IsString()
+  @IsOptional()
   category?: string | null;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
   quantity?: number | null;
-  style?: string;
-  font?: string;
-  cover?: string;
-  coverUrl?: string | null;
-  paperHeight?: number | null;
-  paperWidth?: number | null;
+
+  @IsIn(SAMPLE_BOOK_STATUSES, { message: 'Trạng thái sample book không hợp lệ' })
+  @IsOptional()
+  status?: (typeof SAMPLE_BOOK_STATUSES)[number];
+
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
-  status?: string;
+
+  @IsOptional()
   content?: any;
+}
+
+export class UpdateSampleBookStatusDTO {
+  @IsIn(SAMPLE_BOOK_STATUSES, { message: 'Trạng thái sample book không hợp lệ' })
+  status!: (typeof SAMPLE_BOOK_STATUSES)[number];
 }
 
 export class SampleBookMapper {
@@ -88,7 +158,6 @@ export class SampleBookMapper {
   static toDTOList(books: any[]): SampleBookDTO[] {
     return books.map((b) => {
       const dto = this.toDTO(b);
-
       dto.content = null;
       return dto;
     });

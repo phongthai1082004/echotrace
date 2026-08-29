@@ -1,6 +1,6 @@
-import { prisma } from "../../../lib/prisma.js";
-import { OrderStatus } from "@echotrace/shared";
 import { handleOrderExpiry } from "./redis-delayed-queue.js";
+import { container } from "tsyringe";
+import { OrderRepository } from "../../features/order/order.repository.js";
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
@@ -9,18 +9,14 @@ const TEN_MINUTES_MS = 10 * 60 * 1000;
 const BATCH_SIZE = 200;
 
 export function startOrderExpiryCron(): void {
+  const orderRepo = container.resolve<OrderRepository>("OrderRepository");
   const scan = async () => {
     try {
       // ponytail: phân trang theo id tăng dần để không load 1 lần; lặp tới khi hết.
       let lastId = 0;
       let processed = 0;
       for (;;) {
-        const due = await prisma.order.findMany({
-          where: { id: { gt: lastId }, status: OrderStatus.PENDING_PAYMENT, expiredAt: { lt: new Date() } },
-          select: { id: true },
-          orderBy: { id: "asc" },
-          take: BATCH_SIZE,
-        });
+        const due = await orderRepo.findExpiredForCancellation(lastId, BATCH_SIZE);
         if (due.length === 0) break;
         for (const o of due) {
           await handleOrderExpiry(o.id).catch((e) => console.error("[expiry-cron] skip", o.id, e));

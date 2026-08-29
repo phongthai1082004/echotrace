@@ -25,9 +25,12 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 	}
 };
 
-export const adminMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
-	await authMiddleware(req, res, () => {
-		if (req.userRole !== 'admin') return next(new AppError(ErrorCode.ADMIN_ACCESS_REQUIRED, 403));
-		next();
-	});
-};
+// ponytail: 1 guard thay adminMiddleware lồng authMiddleware; authMiddleware vẫn dùng nội bộ.
+export const authGuard = (...roles: string[]) =>
+	(req: AuthRequest, res: Response, next: NextFunction) =>
+		authMiddleware(req, res, (err?: unknown) => {
+			if (err) return next(err);
+			if (roles.length && !roles.includes(req.userRole ?? ''))
+				return next(new AppError(ErrorCode.ADMIN_ACCESS_REQUIRED, 403));
+			next();
+		});

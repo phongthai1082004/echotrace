@@ -1,16 +1,14 @@
 import { container } from 'tsyringe';
+import { asyncHandler } from '../../middleware/async-handler.js';
 import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { AuthController } from './auth.controller.js';
-import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { authGuard } from '../../middleware/auth.middleware.js';
 import { ErrorCode } from '@echotrace/shared';
 
 const router = Router();
 const auth = container.resolve(AuthController);
 
-const asyncHandler =
-	(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => (req: Request, res: Response, next: NextFunction) =>
-		fn(req, res, next).catch(next);
 
 const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
@@ -51,7 +49,7 @@ router.post(
 );
 router.post(
 	'/logout',
-	authMiddleware,
+	authGuard(),
 	asyncHandler((req, res) => auth.logout(req, res)),
 );
 router.post(

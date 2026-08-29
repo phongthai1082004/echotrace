@@ -2,11 +2,11 @@ import { injectable, inject } from 'tsyringe';
 import { AppError } from '../../middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { SupplierDTO, SupplierMapper, SupplierOption, AggregatedOptionsResponse, CatalogSize } from '@echotrace/shared';
-import { CreateSupplierDTO } from '../../dto/supplier/supplier.create.dto.js';
-import { UpdateSupplierDTO } from '../../dto/supplier/supplier.update.dto.js';
+import { CreateSupplierDTO } from '@echotrace/shared';
+import { UpdateSupplierDTO } from '@echotrace/shared';
 import { OptionCatalogCacheService } from '../../infrastructure/cache/option-catalog.cache.service.js';
 import { paginate } from '../../utils/paginate.js';
-import { prisma } from '../../../lib/prisma.js';
+import { SupplierRepository } from './suppliers.repository.js';
 
 export interface ISupplierService {
 	getSupplierList(
@@ -27,6 +27,7 @@ export interface ISupplierService {
 export class SupplierService implements ISupplierService {
 	constructor(
 		@inject('IOptionCatalogCacheService') private readonly optionCache: OptionCatalogCacheService,
+		@inject('SupplierRepository') private readonly supplierRepo: SupplierRepository,
 	) {
 	}
 
@@ -43,7 +44,7 @@ export class SupplierService implements ISupplierService {
 						? ['contact']
 						: ['name', 'email', 'contact'];
 		const { items, nextCursor } = await paginate(
-			prisma.supplier,
+			this.supplierRepo.client.supplier,
 			{ search: params.search, order: params.order || 'desc', limit: params.limit || 50, cursor: params.cursor },
 			{ searchFields, allowedFilterFields: [] },
 			extraWhere,
@@ -53,7 +54,7 @@ export class SupplierService implements ISupplierService {
 	}
 
 	async getSupplierById(id: number) {
-		const supplier = await prisma.supplier.findFirst({ where: Object.assign({ id, isDelete: false }, { isDelete: undefined }) });
+		const supplier = await this.supplierRepo.findSupplierById(id);
 		if (!supplier) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		await this.attachOptions([supplier]);
 		return SupplierMapper.toDTO(supplier);
@@ -61,7 +62,7 @@ export class SupplierService implements ISupplierService {
 
 	async createSupplier(dto: CreateSupplierDTO) {
 		const { optionIds, ...rest } = dto as any;
-		const supplier = await prisma.supplier.create({ data: { ...rest } });
+		const supplier = await this.supplierRepo.createSupplier({ ...rest });
 		if (Array.isArray(optionIds) && optionIds.length) {
 			await this.updateSupplierOptions(supplier.id, optionIds);
 		}
@@ -84,7 +85,7 @@ export class SupplierService implements ISupplierService {
 			if (data[key] !== undefined) cleanData[key] = data[key];
 		});
 
-		await prisma.supplier.updateMany({ where: Object.assign({ id, isDelete: false }, { isDelete: undefined }), data: cleanData });
+		await this.supplierRepo.updateSupplier(id, cleanData);
 		if (Array.isArray(optionIds)) {
 			await this.updateSupplierOptions(id, optionIds);
 		}
@@ -94,7 +95,7 @@ export class SupplierService implements ISupplierService {
 
 	async updateSupplierOptions(id: number, optionIds: number[] = []) {
 		const wanted = new Set(optionIds.map(Number).filter(Boolean));
-		await prisma.$transaction(async (tx) => {
+		await this.supplierRepo.client.$transaction(async (tx) => {
 			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
 			const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
 			// ponytail: 1 updateMany thay vì lặp từng link (N+1)
@@ -122,7 +123,7 @@ export class SupplierService implements ISupplierService {
 	}
 
 	async deleteSupplier(id: number) {
-		const result = await prisma.supplier.updateMany({ where: { id, isDelete: false }, data: { isDelete: true, deletedAt: new Date() } });
+		const result = await this.supplierRepo.deleteSupplier(id);
 		if (result.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
 	}
 
@@ -130,18 +131,10 @@ export class SupplierService implements ISupplierService {
 		if (!suppliers.length) return;
 		const ids = suppliers.map((s) => s.id);
 
-		const links: any[] = await prisma.supplierPrintOption.findMany({
-			where: { supplierId: { in: ids }, isDelete: false },
-			orderBy: { id: 'desc' },
-			take: 10000,
-			select: { supplierId: true, printOptionId: true },
-		});
+		const links: any[] = await this.supplierRepo.listSupplierPrintOptions(ids);
 		const poIds = [...new Set(links.map((l) => l.printOptionId))];
 		const rows = poIds.length
-			? await prisma.printOption.findMany({
-					where: { id: { in: poIds } },
-					select: { id: true, type: true, code: true, name: true, description: true, width: true, height: true, price: true },
-				})
+			? await this.supplierRepo.listPrintOptionsByIds(poIds)
 			: [];
 		const optionById = new Map(rows.map((r: any) => [r.id, r]));
 		const bySupplier = new Map<number, Record<string, any[]>>();
@@ -172,8 +165,7 @@ export class SupplierService implements ISupplierService {
 
 
 	async getAggregatedOptions(): Promise<AggregatedOptionsResponse> {
-		const d = prisma.printOption;
-		const rows = (await d.findMany({ where: { isDelete: false }, orderBy: { type: 'asc' } })) as any[];
+		const rows = (await this.supplierRepo.listActivePrintOptions()) as any[];
 		const sizes: CatalogSize[] = [];
 		const papers: SupplierOption[] = [];
 		const covers: SupplierOption[] = [];
@@ -197,10 +189,7 @@ export class SupplierService implements ISupplierService {
 	async getOptionCatalog(type: string): Promise<SupplierOption[]> {
 		const cached = await this.optionCache.getCatalog<SupplierOption[]>(type);
 		if (cached) return cached;
-		const rows = (await prisma.printOption.findMany({
-			where: { type, isDelete: false },
-			orderBy: { updatedAt: 'desc' },
-		})) as any[];
+		const rows = (await this.supplierRepo.listPrintOptionsByType(type)) as any[];
 		const list = rows.map((r) => ({
 			code: r.code,
 			name: r.name ?? { vi: r.code, en: r.code, es: r.code },
@@ -216,7 +205,7 @@ export class SupplierService implements ISupplierService {
 	async getOptionInfo(type: string, code: string): Promise<SupplierOption | null> {
 		const cached = await this.optionCache.getInfo<SupplierOption>(type, code);
 		if (cached) return cached;
-		const row = (await prisma.printOption.findFirst({ where: { type, code, isDelete: false } })) as any;
+		const row = (await this.supplierRepo.findPrintOptionByTypeCode(type, code)) as any;
 		if (!row) return null;
 		const info = {
 			code: row.code,

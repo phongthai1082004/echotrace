@@ -1,16 +1,14 @@
 import { container } from 'tsyringe';
+import { asyncHandler } from '../../middleware/async-handler.js';
 import { Router, Request, Response, NextFunction } from 'express';
 import { BookController } from './books.controller.js';
-import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware.js';
+import { authGuard, AuthRequest } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 const bookCtrl = container.resolve(BookController);
 
-const asyncHandler =
-	(fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>) => (req: Request, res: Response, next: NextFunction) =>
-		fn(req as AuthRequest, res, next).catch(next);
 
-router.use(authMiddleware);
+router.use(authGuard());
 
 router.get(
 	'/books/:id',

@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import { PrintOption } from "@/models/print-option/print-option";
-import { L10NText } from "@/models/supplier/supplier";
+import { L10NText } from "@echotrace/shared";
 
 export interface OptionForm {
   type: string;

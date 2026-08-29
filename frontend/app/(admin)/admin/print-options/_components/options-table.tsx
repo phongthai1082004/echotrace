@@ -3,7 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { Pencil, Trash2 } from "lucide-react";
 import { PrintOption } from "@/models/print-option/print-option";
-import { L10NText } from "@/models/supplier/supplier";
+import { L10NText } from "@echotrace/shared";
 import { chip, neoBtn, neoBtnDanger } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
 

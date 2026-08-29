@@ -1,14 +1,12 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { randomInt } from 'crypto';
-import { prisma } from '../../../lib/prisma.js';
 import { AppError } from '../../middleware/app.error.js';
-import { ErrorCode } from '@echotrace/shared';
+import { ErrorCode, TokenType, AuthResponseDTO, AuthMapper } from '@echotrace/shared';
 import { sendOtpEmail } from '../../../lib/mailer.js';
-import { TokenType } from '@echotrace/shared';
-import { AuthResponseDTO, AuthMapper } from '@echotrace/shared';
+import { AuthRepository } from './auth.repository.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -28,6 +26,8 @@ export interface IAuthService {
 
 @injectable()
 export class AuthService implements IAuthService {
+	constructor(@inject('AuthRepository') private authRepo: AuthRepository) {}
+
 	async loginWithGoogle(idToken: string) {
 		const ticket = await googleClient.verifyIdToken({
 			idToken,
@@ -36,18 +36,13 @@ export class AuthService implements IAuthService {
 		const payload = ticket.getPayload();
 		if (!payload?.email) throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
 
-		let user = await prisma.user.findFirst({
-			where: { OR: [{ googleId: payload.sub }, { email: payload.email }] },
-			select: { id: true, email: true, name: true, avatar: true, role: true, isDelete: true },
-		});
+		let user = await this.authRepo.findUserByGoogleOrEmail(payload.email, payload.sub);
 		if (!user) {
-			user = await prisma.user.create({
-				data: {
-					email: payload.email,
-					name: payload.name || 'User',
-					googleId: payload.sub,
-					avatar: payload.picture,
-				},
+			user = await this.authRepo.createGoogleUser({
+				email: payload.email,
+				name: payload.name || 'User',
+				googleId: payload.sub,
+				avatar: payload.picture,
 			});
 		} else if (user.isDelete) {
 			throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
@@ -56,34 +51,22 @@ export class AuthService implements IAuthService {
 	}
 
 	async sendOtp(email: string) {
-		const existing = await prisma.user.findFirst({
-			where: { email, isDelete: false },
-			select: { id: true },
-		});
+		const existing = await this.authRepo.findActiveUserByEmail(email);
 
 		if (existing) return;
 
 		const otp = String(randomInt(100000, 1000000));
 		const hashed = await bcrypt.hash(otp, 10);
 
-		await prisma.token.deleteMany({ where: { email, tokenType: TokenType.OTP } });
+		await this.authRepo.deleteOtpTokens(email);
 
-		await prisma.token.create({
-			data: {
-				email,
-				refreshToken: hashed,
-				tokenType: TokenType.OTP,
-				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-			},
-		});
+		await this.authRepo.createOtpToken(email, hashed, new Date(Date.now() + 24 * 60 * 60 * 1000));
 
 		await sendOtpEmail(email, otp);
 	}
 
 	async verifyOtpAndRegister(email: string, otp: string, password: string) {
-		const record = await prisma.token.findFirst({
-			where: { email, tokenType: TokenType.OTP, isRevoked: false },
-		});
+		const record = await this.authRepo.findValidOtp(email);
 		if (!record) throw new AppError(ErrorCode.AUTH_OTP_NOT_REQUESTED, 400);
 		if (Date.now() > record.expiresAt.getTime()) throw new AppError(ErrorCode.AUTH_OTP_EXPIRED, 400);
 
@@ -91,7 +74,7 @@ export class AuthService implements IAuthService {
 		if (!valid) {
 			const fails = (otpFailCounts.get(record.id) ?? 0) + 1;
 			if (fails >= MAX_OTP_ATTEMPTS) {
-				await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
+				await this.authRepo.revokeToken(record.id);
 				otpFailCounts.delete(record.id);
 			} else {
 				otpFailCounts.set(record.id, fails);
@@ -100,18 +83,16 @@ export class AuthService implements IAuthService {
 		}
 		otpFailCounts.delete(record.id);
 
-		await prisma.token.update({ where: { id: record.id }, data: { isRevoked: true } });
+		await this.authRepo.revokeToken(record.id);
 
 		const hashed = await bcrypt.hash(password, 10);
-		const user = await prisma.user.create({ data: { email, password: hashed, name: email.split('@')[0] } });
+		const user = await this.authRepo.createPasswordUser(email, hashed);
 
 		return AuthMapper.toAuthResponse(user, this.generateAccessToken(String(user.id), user.role), await this.generateRefreshToken(String(user.id)));
 	}
 
 	async login(email: string, password: string) {
-		const user = await prisma.user.findFirst({
-			where: { email, isDelete: false },
-		});
+		const user = await this.authRepo.findActiveUserByEmailFull(email);
 		if (!user || !user.password) throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, 401);
 		if (user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
@@ -122,10 +103,7 @@ export class AuthService implements IAuthService {
 	}
 
 	async logout(userId: string) {
-		await prisma.token.updateMany({
-			where: { userId: parseInt(userId), isRevoked: false, tokenType: TokenType.SESSION },
-			data: { isRevoked: true },
-		});
+		await this.authRepo.revokeSessionTokens(parseInt(userId));
 	}
 
 	async refresh(token: string) {
@@ -136,15 +114,10 @@ export class AuthService implements IAuthService {
 			throw new AppError(ErrorCode.AUTH_INVALID_REFRESH_TOKEN, 401);
 		}
 
-		const existing = await prisma.token.findFirst({
-			where: { refreshToken: token, isRevoked: false, tokenType: TokenType.SESSION },
-		});
+		const existing = await this.authRepo.findSessionByToken(token);
 		if (!existing) throw new AppError(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED, 401);
 
-		const user = await prisma.user.findUnique({
-			where: { id: parseInt(payload.userId) },
-			select: { isDelete: true, role: true },
-		});
+		const user = await this.authRepo.findUserByIdRole(parseInt(payload.userId));
 		if (!user || user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
 		return { accessToken: this.generateAccessToken(payload.userId, user.role) };
@@ -155,17 +128,10 @@ export class AuthService implements IAuthService {
 	}
 
 	private async generateRefreshToken(userId: string) {
-		await prisma.token.deleteMany({ where: { userId: parseInt(userId), tokenType: TokenType.SESSION } });
+		await this.authRepo.deleteSessionTokens(parseInt(userId));
 
 		const rt = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '30d' });
-		await prisma.token.create({
-			data: {
-				userId: parseInt(userId),
-				refreshToken: rt,
-				tokenType: TokenType.SESSION,
-				expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-			},
-		});
+		await this.authRepo.createSessionToken(parseInt(userId), rt, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 		return rt;
 	}
 }

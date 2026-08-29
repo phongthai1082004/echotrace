@@ -11,6 +11,9 @@ export function LangMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  // ponytail: disable on studio page
+  if (pathname?.includes("studio")) return null;
+
   const langs = [
     { code: "en", label: "EN", Flag: FlagUk },
     { code: "vi", label: "VI", Flag: FlagVn },
@@ -46,8 +49,9 @@ export function LangMenu() {
             {langs.map((l) => (
               <button
                 key={l.code}
-                onClick={() => {
-                  i18n.changeLanguage(l.code);
+                onClick={async () => {
+                  document.cookie = `i18nextLng=${l.code}; path=/`;
+                  await i18n.changeLanguage(l.code);
                   router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`);
                   setOpen(false);
                 }}

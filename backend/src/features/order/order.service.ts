@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
-import { prisma } from '../../../lib/prisma.js';
 import { Prisma } from '../../../generated/prisma/client.js';
+import { OrderRepository } from './order.repository.js';
 import {
 	IdempotencyKeyType,
 	PaymentPlan,
@@ -26,6 +26,7 @@ import { IOrderFinanceService } from './order-finance.service.js';
 import { scheduleDelayedJob } from '../../infrastructure/queue/redis-delayed-queue.js';
 import { restockOrderAlbums, sumNeedBySampleBook } from '../sample-books/stock.service.js';
 import { PaymentLinkItem } from '@payos/node';
+import { IPdfQueue } from '../pdf/pdf.types.js';
 
 // ponytail: cache PayOS status a few seconds to avoid hammering the gateway on
 // client polling. In-memory per process; swap for a shared cache if multi-instance.
@@ -77,12 +78,13 @@ export class OrderService implements IOrderService {
 		@inject('IPaymentService') private paymentService: PaymentService,
 		@inject('IPaymentWebhookService') private webhookService: PaymentWebhookService,
 		@inject('IOrderFinanceService') private finance: IOrderFinanceService,
+		@inject('IPdfQueue') private pdfQueue: IPdfQueue,
+		@inject('OrderRepository') private orderRepo: OrderRepository,
 	) {}
-
 	async createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any> {
-		const [existing, user] = await prisma.$transaction([
-			prisma.idempotencyKey.findUnique({ where: { key: idempotencyKey } }),
-			prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, phone: true, address: true } }),
+		const [existing, user] = await this.orderRepo.client.$transaction([
+			this.orderRepo.getIdempotencyKey(idempotencyKey),
+			this.orderRepo.getUserContact(userId),
 		]);
 		if (existing?.status === IdempotencyKeyType.SUCCESS && existing.responseBody) {
 			return existing.responseBody;
@@ -91,9 +93,9 @@ export class OrderService implements IOrderService {
 			throw new AppError(ErrorCode.INTERNAL, 409);
 		}
 		if (existing) {
-			await prisma.idempotencyKey.delete({ where: { key: idempotencyKey } }); // FAILED → cho retry
+			await this.orderRepo.deleteIdempotencyKey(idempotencyKey); // FAILED → cho retry
 		}
-		await prisma.idempotencyKey.create({ data: { key: idempotencyKey, status: IdempotencyKeyType.PROCESSING } });
+		await this.orderRepo.createIdempotencyKey(idempotencyKey, IdempotencyKeyType.PROCESSING);
 
 		try {
 			const createOrderDto = parseCreateOrderDTO(requestBody);
@@ -120,9 +122,9 @@ export class OrderService implements IOrderService {
 			// ponytail: check tồn kho trước khi tạo payment link (tránh orphan link khi hết hàng).
 			// Dùng chung sumNeedBySampleBook với nhánh giảm tồn kho trong tx bên dưới.
 			{
-				const need0 = await sumNeedBySampleBook(bookIds, quote.items, prisma);
+				const need0 = await sumNeedBySampleBook(bookIds, quote.items, this.orderRepo.client);
 				if (need0.size) {
-					const sms = await prisma.sampleBook.findMany({ where: { id: { in: [...need0.keys()] } }, select: { id: true, quantity: true } });
+					const sms = await this.orderRepo.findSampleBooks([...need0.keys()]);
 					for (const s of sms) {
 						const need = need0.get(s.id) ?? 0;
 						if (s.quantity != null && need > s.quantity) throw new AppError(`Vượt quá số lượng tồn kho (còn ${s.quantity}, cần ${need})`, 400);
@@ -159,30 +161,24 @@ export class OrderService implements IOrderService {
 			};
 			const link = await this.paymentService.createPaymentLink(linkDto);
 
-			const result = await prisma.$transaction(
+			const result = await this.orderRepo.client.$transaction(
 				async (tx) => {
 					// ponytail: giảm tồn kho atomic (WHERE quantity >= need) → không âm, race-safe.
 					const needBySample = await sumNeedBySampleBook(bookIds, quote.items, tx);
 					if (needBySample.size) {
-						const samples = await tx.sampleBook.findMany({
-							where: { id: { in: [...needBySample.keys()] } },
-							select: { id: true, quantity: true },
-						});
+						const samples = await this.orderRepo.findSampleBooks([...needBySample.keys()], tx);
 						for (const s of samples) {
 							const need = needBySample.get(s.id) ?? 0;
 							if (s.quantity == null) continue; // unlimited
-							const r = await tx.sampleBook.updateMany({
-								where: { id: s.id, quantity: { gte: need } },
-								data: { quantity: { decrement: need } },
-							});
+							const r = await this.orderRepo.updateSampleBookQuantity(s.id, need, tx);
 							if (r.count === 0) throw new AppError('Vượt quá số lượng tồn kho', 400);
 						}
 					}
 
 	// ponytail: snapshot only the slim OrderItem shape, not the whole CartItem.
 	const itemsSnapshot = quote.items.map((item) => toOrderItem(item));
-					const order = await tx.order.create({
-						data: {
+					const order = await this.orderRepo.createOrder(
+						{
 							orderCode: String(orderCode),
 							userId,
 							subTotal: quote.subtotal,
@@ -203,9 +199,10 @@ export class OrderService implements IOrderService {
 							checkoutUrl: link.checkoutUrl ?? null,
 							expiredAt: new Date(Date.now() + PAYMENT_LINK_EXPIRY_MS),
 						},
-					});
-					await tx.transaction.create({
-						data: {
+						tx,
+					);
+					await this.orderRepo.createTransaction(
+						{
 							orderId: order.id,
 							idempotencyKeyId: idempotencyKey,
 							gateway: link.gateway,
@@ -219,10 +216,9 @@ export class OrderService implements IOrderService {
 							transactionTime: new Date(),
 							rawPayload: link.raw as any,
 						},
-					});
-					await tx.cartItem.deleteMany({
-						where: { cart: { userId }, bookId: { in: bookIds } },
-					});
+						tx,
+					);
+					await this.orderRepo.deleteCartItems(userId, bookIds, tx);
 
 					const responseBody = {
 						orderId: order.id,
@@ -234,10 +230,7 @@ export class OrderService implements IOrderService {
 						total: quote.total,
 					};
 
-					await tx.idempotencyKey.update({
-						where: { key: idempotencyKey },
-						data: { status: IdempotencyKeyType.SUCCESS, responseBody },
-					});
+					await this.orderRepo.markIdempotencySuccess(idempotencyKey, responseBody, tx);
 					return responseBody;
 				},
 				{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5000, timeout: 10000 },
@@ -246,21 +239,19 @@ export class OrderService implements IOrderService {
 			// ponytail: ném vào Redis delayed job, hết hạn chưa trả thì tự cancel
 			scheduleDelayedJob('order_expiry', { orderId: result.orderId }, PAYMENT_LINK_EXPIRY_MS);
 
+			// ponytail: enqueue PDF render job (async, không block response). Lỗi enqueue không fail order.
+			this.pdfQueue.enqueue(result.orderId).catch(() => {});
+
 			return result;
 		} catch (error) {
-			await prisma.idempotencyKey
-				.update({ where: { key: idempotencyKey }, data: { status: IdempotencyKeyType.FAILED } })
-				.catch(() => {});
+			await this.orderRepo.markIdempotencyFailed(idempotencyKey).catch(() => {});
 			throw error;
 		}
 	}
 
 	// ponytail: tạo/làm mới link thanh toán cho đơn pending — để user mất mạng/out trang vẫn trả được
 	async createPaymentLink(orderId: number, userId: number): Promise<{ qrCode?: string; checkoutUrl?: string }> {
-		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId },
-			include: { transactions: { orderBy: { id: 'desc' }, take: 1 } },
-		});
+		const order = await this.orderRepo.findOrderWithTransactions(orderId, userId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.status !== OrderStatus.PENDING_PAYMENT) {
 			throw new AppError('Order is not pending payment', 400);
@@ -284,10 +275,7 @@ export class OrderService implements IOrderService {
 			expiredAt: Math.floor((now + PAYMENT_LINK_EXPIRY_MS) / 1000),
 		});
 		const expiredAt = new Date(now + PAYMENT_LINK_EXPIRY_MS);
-		await prisma.order.update({
-			where: { id: order.id },
-			data: { qrCode: link?.qrCode ?? null, checkoutUrl: link?.checkoutUrl ?? null, expiredAt },
-		});
+		await this.orderRepo.updateOrder(order.id, { qrCode: link?.qrCode ?? null, checkoutUrl: link?.checkoutUrl ?? null, expiredAt });
 		scheduleDelayedJob('order_expiry', { orderId: order.id }, PAYMENT_LINK_EXPIRY_MS);
 		return { qrCode: link?.qrCode ?? undefined, checkoutUrl: link?.checkoutUrl ?? undefined };
 	}
@@ -295,10 +283,7 @@ export class OrderService implements IOrderService {
 	// ponytail: webhook PayOS chỉ gửi về URL public — localhost không nhận được.
 	// Polling từ client gọi hàm này: hỏi PayOS status thật, nếu PAID thì áp dụng logic webhook (idempotent).
 	async verifyPayment(orderId: number, userId: number): Promise<string> {
-		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId },
-			include: { transactions: { orderBy: { id: 'desc' }, take: 1 } },
-		});
+		const order = await this.orderRepo.findOrderWithTransactions(orderId, userId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.status !== OrderStatus.PENDING_PAYMENT) return order.status;
 
@@ -317,37 +302,21 @@ export class OrderService implements IOrderService {
 			};
 			await this.webhookService.processWebhook(result);
 		}
-		const refreshed = await prisma.order.findUnique({ where: { id: order.id }, select: { status: true } });
+		const refreshed = await this.orderRepo.findOrderStatus(order.id);
 		return refreshed?.status ?? order.status;
 	}
 
 	async listMyOrders(userId: number): Promise<any[]> {
-		return prisma.order.findMany({
-			where: { userId },
-			orderBy: { createdAt: 'desc' },
-		});
+		return this.orderRepo.listMyOrders(userId);
 	}
 
 	async listAllOrders(): Promise<any[]> {
-		return prisma.order.findMany({
-			where: {},
-			orderBy: { createdAt: 'desc' },
-			include: {
-				user: { select: { id: true, name: true, email: true } },
-				supplier: { select: { id: true, name: true, contact: true, email: true } },
-			},
-		});
+		return this.orderRepo.listAllOrders();
 	}
 
 	async getOrderById(id: number): Promise<any> {
 		// ponytail: same shape as listAllOrders so the FE can merge one row in place (B1).
-		return prisma.order.findUnique({
-			where: { id },
-			include: {
-				user: { select: { id: true, name: true, email: true } },
-				supplier: { select: { id: true, name: true, contact: true, email: true } },
-			},
-		});
+		return this.orderRepo.getOrderById(id);
 	}
 
 	async adminUpdateOrder(id: number, patch: any): Promise<void> {
@@ -367,7 +336,7 @@ export class OrderService implements IOrderService {
 		}
 		if (Object.keys(data).length === 0) return;
 		try {
-			await prisma.order.update({ where: { id }, data });
+			await this.orderRepo.updateOrder(id, data);
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
 				throw new AppError(ErrorCode.NOT_FOUND, 404);
@@ -396,7 +365,7 @@ export class OrderService implements IOrderService {
 	}
 
 	async processOrderEvent(id: number, type: string, payload: any): Promise<void> {
-		const order = await prisma.order.findUnique({ where: { id } });
+		const order = await this.orderRepo.findOrderById(id);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		switch (type) {
 			case 'assign':
@@ -435,17 +404,14 @@ export class OrderService implements IOrderService {
 		// ponytail: đơn nhiều NCC → order.supplierId không thể biểu diễn 1 NCC; chỉ set khi duy nhất.
 		const supplierIds = Array.from(new Set(items.map((i: any) => i.supplierId).filter(Boolean)));
 		const orderSupplier = supplierIds.length === 1 ? supplierIds[0] : null;
-		await prisma.order.update({
-			where: { id: order.id },
-			data: { orderItems: items, supplierId: orderSupplier, status: OrderStatus.PROCESSING },
-		});
+		await this.orderRepo.updateOrder(order.id, { orderItems: items, supplierId: orderSupplier, status: OrderStatus.PROCESSING });
 	}
 
 	private async shipOrder(order: any): Promise<void> {
 		// ponytail: gán NCC đã ép ở transition PROCESSING (assertTransition). Đơn nhiều NCC có
 		// order.supplierId = null (NCC lưu per-item) nên không check ở đây.
 		this.assertTransition(order.status, OrderStatus.SHIPPING);
-		await prisma.order.update({ where: { id: order.id }, data: { status: OrderStatus.SHIPPING } });
+		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.SHIPPING });
 	}
 
 	// ponytail: giao từng kiện (itemIndices). Đơn chỉ thành DELIVERED khi TẤT CẢ kiện đã giao; còn lại giữ SHIPPING (Partially Delivered)
@@ -465,11 +431,12 @@ export class OrderService implements IOrderService {
 		if (!touched) return; // ponytail: deliver chỉ mark kiện chưa giao; không đổi status nếu chẳng có gì mới
 		const allDelivered = items.length > 0 && items.every((it) => it.deliveredAt);
 		// ponytail: ghi Income 1 lần tại DELIVERED (FULL + HALF đều vào đây). Atomic với order update.
-		await prisma.$transaction(async (tx) => {
-			await tx.order.update({
-				where: { id: order.id },
-				data: { orderItems: items, status: allDelivered ? OrderStatus.DELIVERED : OrderStatus.SHIPPING },
-			});
+		await this.orderRepo.client.$transaction(async (tx) => {
+			await this.orderRepo.updateOrder(
+				order.id,
+				{ orderItems: items, status: allDelivered ? OrderStatus.DELIVERED : OrderStatus.SHIPPING },
+				tx,
+			);
 			if (allDelivered) await this.finance.recognizeIncome(order.id, order.totalAmount, tx);
 		});
 	}
@@ -481,11 +448,9 @@ export class OrderService implements IOrderService {
 		const codAmount = order.totalAmount - order.paidAmount;
 		if (codAmount <= 0) return;
 		// ponytail: chỉ Cashflow IN (thu COD); Income đã ghi tại DELIVERED.
-		await prisma.$transaction(async (tx) => {
-			await tx.cashflow.create({
-				data: { type: 'IN', orderId: order.id, amount: codAmount, date: new Date(), note: 'Thu COD' },
-			});
-			await tx.order.update({ where: { id: order.id }, data: { codReconciledAt: new Date() } });
+		await this.orderRepo.client.$transaction(async (tx) => {
+			await this.orderRepo.createCashflow({ type: 'IN', orderId: order.id, amount: codAmount, date: new Date(), note: 'Thu COD' }, tx);
+			await this.orderRepo.updateOrder(order.id, { codReconciledAt: new Date() }, tx);
 		});
 	}
 
@@ -507,7 +472,7 @@ export class OrderService implements IOrderService {
 		const missingCost = candidates.filter(
 			({ it }) => it.costPrice == null || Number.isNaN(Number(it.costPrice)) || Number(it.costPrice) <= 0,
 		);
-		if (missingCost.length > 0) throw new AppError("MISSING_SUPPLIER_COST", 400);
+		if (missingCost.length > 0) throw new AppError('MISSING_SUPPLIER_COST', 400);
 
 		// group by supplier
 		const bySupplier = new Map<number, { amount: number; indices: number[] }>();
@@ -519,12 +484,10 @@ export class OrderService implements IOrderService {
 		}
 		if (bySupplier.size === 0) return;
 
-		await prisma.$transaction(async (tx) => {
+		await this.orderRepo.client.$transaction(async (tx) => {
 			// ponytail: batch lookup suppliers 1 lần thay vì findUnique mỗi NCC (N+1)
 			const supplierIds = [...bySupplier.keys()];
-			const sups = supplierIds.length
-				? await tx.supplier.findMany({ where: { id: { in: supplierIds } } })
-				: [];
+			const sups = supplierIds.length ? await this.orderRepo.findSuppliersByIds(supplierIds, tx) : [];
 			const supById = new Map(sups.map((s: any) => [s.id, s]));
 			for (const [supplierId, grp] of bySupplier) {
 				const sup = supById.get(supplierId);
@@ -533,7 +496,7 @@ export class OrderService implements IOrderService {
 					items[i] = { ...items[i], reconciledAt: new Date().toISOString() };
 				}
 			}
-			await tx.order.update({ where: { id: order.id }, data: { orderItems: items } });
+			await this.orderRepo.updateOrder(order.id, { orderItems: items }, tx);
 		});
 	}
 
@@ -548,27 +511,18 @@ export class OrderService implements IOrderService {
 		} catch {
 			/* best-effort */
 		}
-		await prisma.$transaction(async (tx) => {
+		await this.orderRepo.client.$transaction(async (tx) => {
 			await this.finance.recordOutflow(tx, order.id, refundAmount, 'OTHER', `Hoàn tiền khách (đơn ${order.orderCode})`);
 			// đánh dấu txn đã hoàn để reconcile_refund đối soát
-			await tx.transaction.updateMany({
-				where: { orderId: order.id, status: TransactionStatus.SUCCESS },
-				data: { status: TransactionStatus.REFUNDED },
-			});
+			await this.orderRepo.markTransactionsRefunded(order.id, tx);
 			// ponytail: status refunding chờ admin đối soát, mới thành refunded
-			await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.REFUNDING } });
+			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDING }, tx);
 		});
 	}
 
 	// ponytail: customer cancel. Refund (Expense + cashflow OUT) only if order hasn't reached PROCESSING yet.
 	async cancelOrder(orderId: number, userId: number): Promise<{ refunded: boolean; amount: number }> {
-		const order = await prisma.order.findFirst({
-			where: { id: orderId, userId },
-			include: {
-				transactions: { where: { status: TransactionStatus.SUCCESS }, orderBy: { id: 'desc' } },
-				orderItems: true,
-			},
-		});
+		const order = await this.orderRepo.findOrderWithTransactions(orderId, userId, );
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (!['pending_payment', 'paid', 'partially_paid', 'processing', 'shipping'].includes(order.status)) {
 			throw new AppError('Order cannot be cancelled', 400);
@@ -581,25 +535,22 @@ export class OrderService implements IOrderService {
 			} catch {
 				/* best-effort: PayOS link đã paid → hoàn thủ công, Expense vẫn ghi nhận */
 			}
-			await prisma.$transaction(async (tx) => {
-				await tx.transaction.updateMany({
-					where: { orderId: order.id, status: TransactionStatus.SUCCESS },
-					data: { status: TransactionStatus.REFUNDED },
-				});
+			await this.orderRepo.client.$transaction(async (tx) => {
+				await this.orderRepo.markTransactionsRefunded(order.id, tx);
 				await this.finance.recordOutflow(tx, order.id, amount, 'OTHER', `Hoàn tiền khách (đơn ${order.orderCode})`);
-				await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.REFUNDING } });
+				await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDING }, tx);
 			});
 			return { refunded: true, amount };
 		}
 		// ponytail: user huỷ trước thanh toán (PENDING_PAYMENT chưa trả) → hoàn tồn kho album (atomic với cancel)
 		if (order.status === OrderStatus.PENDING_PAYMENT) {
-			await prisma.$transaction(async (tx) => {
+			await this.orderRepo.client.$transaction(async (tx) => {
 				await restockOrderAlbums(order.orderItems, tx);
-				await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
+				await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED }, tx);
 			});
 			return { refunded: false, amount: 0 };
 		}
-		await prisma.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
+		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED });
 		return { refunded: false, amount: 0 };
 	}
 
@@ -612,7 +563,7 @@ export class OrderService implements IOrderService {
 		userId: number,
 		body: { reason?: string; items?: { index: number; quantity: number; defect?: string }[] },
 	): Promise<void> {
-		const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+		const order = await this.orderRepo.findOrderForUser(orderId, userId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.SHIPPING) {
 			throw new AppError(ErrorCode.INTERNAL, 400);
@@ -629,14 +580,11 @@ export class OrderService implements IOrderService {
 			}
 			items[r.index] = { ...items[r.index], defective: true, returnQty: r.quantity, returnDefect: r.defect ?? null };
 		}
-		await prisma.order.update({
-			where: { id: orderId },
-			data: { returnState: ReturnState.REQUESTED, returnReason: body.reason ?? null, orderItems: items },
-		});
+		await this.orderRepo.updateOrder(orderId, { returnState: ReturnState.REQUESTED, returnReason: body.reason ?? null, orderItems: items });
 	}
 
 	async approveReturn(orderId: number, body: { fault: ReturnFault }): Promise<void> {
-		const order = await prisma.order.findUnique({ where: { id: orderId } });
+		const order = await this.orderRepo.findOrderById(orderId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.returnState !== ReturnState.REQUESTED) throw new AppError(ErrorCode.INTERNAL, 400);
 
@@ -647,14 +595,11 @@ export class OrderService implements IOrderService {
 		for (const it of items) {
 			if (it.defective && fault === ReturnFault.SUPPLIER) it.returnFault = 'supplier';
 		}
-		await prisma.order.update({
-			where: { id: orderId },
-			data: { returnFault: fault, orderItems: items, returnState: ReturnState.RESHIPPING },
-		});
+		await this.orderRepo.updateOrder(orderId, { returnFault: fault, orderItems: items, returnState: ReturnState.RESHIPPING });
 	}
 
 	async markReshipped(orderId: number): Promise<void> {
-		const order = await prisma.order.findUnique({ where: { id: orderId } });
+		const order = await this.orderRepo.findOrderById(orderId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.returnState !== ReturnState.RESHIPPING) throw new AppError(ErrorCode.INTERNAL, 400);
 		// ponytail: SELF -> ghi Expense bản thay thế (reconcile chỗ đó); SUPPLIER -> nhà in chịu, không ghi
@@ -663,45 +608,42 @@ export class OrderService implements IOrderService {
 			const amount = items
 				.filter((it) => it.defective)
 				.reduce((sum, it) => sum + (Number(it.costPrice) || 0) * (Number(it.returnQty) || Number(it.quantity) || 0), 0);
-			await prisma.$transaction(async (tx) => {
+			await this.orderRepo.client.$transaction(async (tx) => {
 				if (amount > 0) {
 					await this.finance.recordOutflow(tx, order.id, amount, 'OTHER', `Bảo hành giao lại (đơn ${order.orderCode})`);
 				}
-				await tx.order.update({ where: { id: order.id }, data: { returnState: ReturnState.RESHIPPED } });
+				await this.orderRepo.updateOrder(order.id, { returnState: ReturnState.RESHIPPED }, tx);
 			});
 		} else {
-			await prisma.order.update({ where: { id: orderId }, data: { returnState: ReturnState.RESHIPPED } });
+			await this.orderRepo.updateOrder(orderId, { returnState: ReturnState.RESHIPPED });
 		}
 	}
 
 	// ponytail: hàng lỗi = 1 state (không phải status chính). KHÔNG ghi Expense tự động —
 	// admin tự tạo Expense category=DEFECTIVE ("Ship hàng lỗi"), trigger lo counters.
 	async reportDefect(orderId: number, userId: number): Promise<void> {
-		const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+		const order = await this.orderRepo.findOrderForUser(orderId, userId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.status !== OrderStatus.DELIVERED) throw new AppError(ErrorCode.INTERNAL, 400);
 		if (order.defectState && order.defectState !== DefectState.NONE) throw new AppError(ErrorCode.INTERNAL, 400);
-		await prisma.order.update({ where: { id: orderId }, data: { defectState: DefectState.REPORTED } });
+		await this.orderRepo.updateOrder(orderId, { defectState: DefectState.REPORTED });
 	}
 
 	async markDefective(orderId: number): Promise<void> {
-		const order = await prisma.order.findUnique({ where: { id: orderId } });
+		const order = await this.orderRepo.findOrderById(orderId);
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (order.status !== OrderStatus.DELIVERED) throw new AppError(ErrorCode.INTERNAL, 400);
 		if (order.defectState && order.defectState !== DefectState.NONE) throw new AppError(ErrorCode.INTERNAL, 400);
-		await prisma.order.update({ where: { id: orderId }, data: { defectState: DefectState.REPORTED } });
+		await this.orderRepo.updateOrder(orderId, { defectState: DefectState.REPORTED });
 	}
 
 	// ponytail: admin đối soát đơn đã refund — đánh dấu các txn đã hoàn (đã trả thủ công trên PayOS) đã reconciled.
 	// Dùng updateMany 1 phát thay vì loop update từng txn (N9); cờ reconciledAt là cột thật, thay vì json rawPayload.
 	private async reconcileRefund(order: any): Promise<void> {
 		if (order.status !== OrderStatus.REFUNDING) throw new AppError(ErrorCode.INTERNAL, 400);
-		await prisma.$transaction(async (tx) => {
-			await tx.transaction.updateMany({
-				where: { orderId: order.id, status: TransactionStatus.REFUNDED, reconciledAt: null },
-				data: { reconciledAt: new Date() },
-			});
-			await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.REFUNDED } });
+		await this.orderRepo.client.$transaction(async (tx) => {
+			await this.orderRepo.markTransactionsRefunded(order.id, tx);
+			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDED }, tx);
 		});
 	}
 

@@ -12,13 +12,25 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // ponytail: React dev mode needs unsafe-eval; the prod build never uses eval,
+    // so keep production CSP strict and only relax it in development.
+    const isDev = process.env.NODE_ENV !== "production";
+    const csp = [
+      "default-src 'self'",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' https://cloudfarer2.cabinetdememoire.workers.dev https://images.unsplash.com https://lh3.googleusercontent.com https://arashiyamabambooforest.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ");
     return [
       {
         source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' https://cloudfarer2.cabinetdememoire.workers.dev https://images.unsplash.com https://lh3.googleusercontent.com https://arashiyamabambooforest.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+            value: csp,
           },
           {
             key: "X-Frame-Options",
