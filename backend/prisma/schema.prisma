@@ -28,7 +28,7 @@ model User {
   password String?
   name     String?
   avatar   String?
-  phone    String?
+  phone    String? @unique
   address  String?
   city     String?
   role     String  @default("user")

@@ -49,4 +49,16 @@ export class SampleBookRepository {
 	archive(id: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.updateMany({ where: { id, isDelete: false }, data: { status: 'archive', isActive: false } });
 	}
+
+	// ponytail: stock check for cart — active + not deleted + quantity null (unlimited) or >= requested.
+	findForStock(id: number, quantity: number, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).sampleBook.findFirst({
+			where: {
+				id,
+				isDelete: false,
+				isActive: true,
+				OR: [{ quantity: null }, { quantity: { gte: quantity } }],
+			},
+		});
+	}
 }

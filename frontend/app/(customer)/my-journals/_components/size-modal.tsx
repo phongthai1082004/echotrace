@@ -8,10 +8,12 @@ export function SizeModal({
   sizes,
   loading,
   onClose,
+  target = "/studio",
 }: {
   sizes: any[];
   loading: boolean;
   onClose: () => void;
+  target?: string;
 }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -38,7 +40,7 @@ export function SizeModal({
                 key={s.code}
                 onClick={() =>
                   router.push(
-                    `/studio?format=${s.code}&w=${s.width ? s.width * 4 : ""}&h=${s.height ? s.height * 4 : ""}`,
+                    `${target}?format=${s.code}&w=${s.width ? s.width * 4 : ""}&h=${s.height ? s.height * 4 : ""}`,
                   )
                 }
                 className="w-full text-left px-4 py-3 rounded-[8px] border-2 border-[#222] bg-white hover:bg-[#FFF7D6] hover:shadow-[2px_2px_0_#222] transition-all cursor-pointer"

@@ -1,16 +1,19 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { StudioPage } from "@/features/studio-canvas/components/StudioPage";
 import { useStudioEditor } from "@/features/studio-canvas/hooks/useStudioEditor";
 import { customerAPI } from "@/features/studio-canvas/api/customer-api";
 import { apiFetch } from "@/lib/api.fetch";
+import { SizeModal } from "../my-journals/_components/size-modal";
 
 export default function StudioRouteInner() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken;
   const bookId = searchParams.get("id");
@@ -19,6 +22,20 @@ export default function StudioRouteInner() {
   const w = Number(searchParams.get("w") || "0");
   const h = Number(searchParams.get("h") || "0");
   const initialSize = w > 0 && h > 0 ? { width: w, height: h } : null;
+
+  const needsSize = !bookId && !sampleId && !format;
+  const [showSize, setShowSize] = useState(needsSize);
+  const [sizes, setSizes] = useState<any[]>([]);
+  const [sizesLoading, setSizesLoading] = useState(false);
+
+  useEffect(() => {
+    if (!showSize || sizes.length || !accessToken) return;
+    setSizesLoading(true);
+    apiFetch<any>("/api/user/suppliers/options", accessToken)
+      .then((d) => setSizes(d?.sizes ?? []))
+      .catch(() => setSizes([]))
+      .finally(() => setSizesLoading(false));
+  }, [showSize, sizes.length, accessToken]);
 
   const loadSample = async (id: string) => {
     const res = await apiFetch<Response>(`/api/user/sample-books/${id}`, accessToken, { raw: true });
@@ -34,6 +51,10 @@ export default function StudioRouteInner() {
     initialSize,
     sampleId,
   );
+
+  if (needsSize) {
+    return <SizeModal sizes={sizes} loading={sizesLoading} onClose={() => router.push("/my-journals")} />;
+  }
 
   if (loadError) {
     return (

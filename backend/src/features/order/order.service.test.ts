@@ -46,6 +46,8 @@ const svc = new OrderService(
   {} as any,
   { enqueue: vi.fn() } as any,
   new OrderRepository({ db: mocks.prisma } as any),
+  {} as any,
+  {} as any, // ICouponService
 );
 
 // ponytail: separate instance wired with cartService/paymentService mocks for createOrder
@@ -56,6 +58,8 @@ const svc2 = new OrderService(
   {} as any,
   { enqueue: vi.fn() } as any,
   new OrderRepository({ db: mocks.prisma } as any),
+  {} as any,
+  {} as any, // ICouponService
 );
 
 const pendingOrder = (extra: any = {}) => ({

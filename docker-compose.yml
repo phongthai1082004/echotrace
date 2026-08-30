@@ -6,30 +6,6 @@ x-logging: &default-logging
     max-file: "3"
 
 services:
-  database-service:
-    image: postgres:16-alpine
-    container_name: database-container
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    logging: *default-logging
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   redis-service:
     image: redis:alpine
     container_name: redis-container
@@ -60,8 +36,6 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DB_HOST: ${DB_HOST:-database-service}
-      DB_PORT: "5432"
       REDIS_URL: redis://${REDIS_HOST:-redis-service}:6379
       BACKEND_PORT: "4000"
     ports:
@@ -74,8 +48,6 @@ services:
           cpus: "0.75"
           memory: 512M
     depends_on:
-      database-service:
-        condition: service_healthy
       redis-service:
         condition: service_healthy
 

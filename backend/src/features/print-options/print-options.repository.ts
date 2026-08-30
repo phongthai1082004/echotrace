@@ -15,6 +15,14 @@ export class PrintOptionRepository {
 		return this.client.printOption.findMany({ where, orderBy });
 	}
 
+	// ponytail: raw price/dimension rows used by cart pricing; accepts tx for transactional reads.
+	listRaw(tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).printOption.findMany({
+			where: { isDelete: false },
+			select: { type: true, code: true, price: true, width: true, height: true },
+		});
+	}
+
 	createPrintOption(data: Prisma.PrintOptionUncheckedCreateInput) {
 		return this.client.printOption.create({ data });
 	}

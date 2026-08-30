@@ -5,12 +5,11 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { SkeletonCardRow } from "@/components/skeleton";
 import { useVisibleCards } from "@/lib/use-container-query";
-import { apiFetch } from "@/lib/api.fetch";
+import { useRouter } from "next/navigation";
 import { neoBtnPrimary } from "@/lib/styles";
 import { YesNoPopup } from "@/components/yes-no-popup";
 import { useMyBooks } from "./_hooks/use-my-books";
 import { JournalCard } from "./_components/journal-card";
-import { SizeModal } from "./_components/size-modal";
 
 export default function MyJournalsPage() {
   const { t } = useTranslation();
@@ -21,20 +20,7 @@ export default function MyJournalsPage() {
   const { journals, fetchError, loading, deleteTarget, setDeleteTarget, deleting, handleDelete } =
     useMyBooks(accessToken);
 
-  const [showSize, setShowSize] = useState(false);
-  const [sizes, setSizes] = useState<any[]>([]);
-  const [sizesLoading, setSizesLoading] = useState(false);
-
-  const openNewJournal = () => {
-    setShowSize(true);
-    if (!sizes.length && accessToken) {
-      setSizesLoading(true);
-      apiFetch<any>("/api/user/suppliers/options", accessToken)
-        .then((d) => setSizes(d?.sizes ?? []))
-        .catch(() => setSizes([]))
-        .finally(() => setSizesLoading(false));
-    }
-  };
+  const router = useRouter();
 
   return (
     <div className="min-h-screen pt-15">
@@ -51,7 +37,7 @@ export default function MyJournalsPage() {
           </p>
         </div>
         <button
-          onClick={openNewJournal}
+          onClick={() => router.push("/studio")}
           suppressHydrationWarning
           className={`${neoBtnPrimary} font-mono text-[10px] font-bold tracking-widest uppercase px-5 py-3 shrink-0`}
         >
@@ -80,7 +66,7 @@ export default function MyJournalsPage() {
               {t("customer.myJournals.emptyDesc")}
             </p>
             <button
-              onClick={openNewJournal}
+              onClick={() => router.push("/studio")}
               className={`${neoBtnPrimary} font-mono text-[10px] font-bold tracking-widest uppercase px-6 py-3`}
             >
               {t("customer.myJournals.openStudio")}
@@ -100,8 +86,6 @@ export default function MyJournalsPage() {
           </div>
         )}
       </div>
-
-      {showSize && <SizeModal sizes={sizes} loading={sizesLoading} onClose={() => setShowSize(false)} />}
 
       {deleteTarget && (
         <YesNoPopup

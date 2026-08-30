@@ -63,6 +63,11 @@ export class UserService implements IUserService {
 			if (error && error.code === 'P2025') {
 				throw new AppError(ErrorCode.USER_NOT_FOUND_UPDATE, 404);
 			}
+			// ponytail: DB unique index on phone catches the race that slips past the
+			// in-service findByPhone check (two concurrent requests with the same phone).
+			if (error && error.code === 'P2002') {
+				throw new AppError(ErrorCode.USER_PHONE_EXISTS, 409);
+			}
 			throw error;
 		}
 	}

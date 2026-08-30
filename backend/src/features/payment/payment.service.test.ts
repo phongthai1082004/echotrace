@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ponytail: unit test PaymentWebhookService.processWebhook — control flow only, prisma + PayOS + email mocked.
 const mocks = vi.hoisted(() => ({
 	transaction: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
-	order: { findUnique: vi.fn(), update: vi.fn() },
+	order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 	cashflow: { findFirst: vi.fn(), create: vi.fn() },
 	$transaction: vi.fn(),
 	restock: vi.fn(),
@@ -40,7 +40,12 @@ beforeEach(() => {
 	mocks.$transaction.mockImplementation(async (cb: any) => cb({ transaction: mocks.transaction, order: mocks.order, cashflow: mocks.cashflow }));
 	mocks.restock.mockResolvedValue(undefined);
 	mocks.emailSend.mockResolvedValue(undefined);
-	svc = new PaymentWebhookService({ send: mocks.emailSend } as any, new PaymentWebhookRepository({ db: mocks } as any));
+	mocks.order.updateMany.mockResolvedValue({ count: 0 }); // default: no rows matched
+	svc = new PaymentWebhookService(
+		{ send: mocks.emailSend } as any,
+		new PaymentWebhookRepository({ db: mocks } as any),
+		{ restockOrderAlbums: mocks.restock } as any,
+	);
 });
 
 describe('PaymentWebhookService.processWebhook', () => {
@@ -103,11 +108,15 @@ describe('PaymentWebhookService.processWebhook', () => {
 		mocks.order.findUnique
 			.mockResolvedValueOnce({ id: 10, status: OrderStatus.PENDING_PAYMENT, paidAmount: 0, totalAmount: 100, orderCode: '123', user: null })
 			.mockResolvedValueOnce({ orderItems: [{ bookId: 1, quantity: 2 }] });
+		mocks.order.updateMany.mockResolvedValue({ count: 1 }); // status flip succeeds → restock runs
 
 		await svc.processWebhook(baseResult({ status: TransactionStatus.CANCELLED }) as any);
 
+		expect(mocks.order.updateMany).toHaveBeenCalledWith({
+			where: { id: 10, status: OrderStatus.PENDING_PAYMENT },
+			data: { status: OrderStatus.CANCELLED },
+		});
 		expect(mocks.restock).toHaveBeenCalledTimes(1);
-		expect(mocks.order.update).toHaveBeenCalledWith({ where: { id: 10 }, data: { status: OrderStatus.CANCELLED } });
 	});
 
 	it('does not revive an already CANCELLED order on late SUCCESS webhook', async () => {

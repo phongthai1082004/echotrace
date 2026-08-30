@@ -20,7 +20,8 @@ export interface ExploreSample {
 
 const LIMIT = 12;
 
-// ponytail: cursor pagination (offset-based) theo đơn vị item; backend giữ cache full-list rồi slice.
+// ponytail: cursor pagination (ID-based) — backend returns nextCursor = last item id;
+// pass it back on the next call to get items with id < cursor (stable across catalog updates).
 export function useExplore(token?: string) {
 	const { data: session } = useSession();
 	const accessToken = token ?? (session as any)?.accessToken;

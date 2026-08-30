@@ -26,7 +26,7 @@ import { register as registerPrintOptions } from '../features/print-options/inde
 import { register as registerCart } from '../features/cart/index.js';
 import { register as registerOrder } from '../features/order/index.js';
 import { register as registerCoupons } from '../features/coupons/index.js';
-import { register as registerSampleBooks } from '../features/sample-books/index.js';
+import { register as registerSampleBooks, StockService } from '../features/sample-books/index.js';
 import { register as registerPayment } from '../features/payment/index.js';
 import { register as registerFinance } from '../features/finance/index.js';
 
@@ -35,6 +35,7 @@ container.register('CacheService', { useValue: new CacheService() });
 container.registerSingleton('IR2ImageService', R2ImageService);
 container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheService);
 container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
+container.registerSingleton('IStockService', StockService);
 container.registerSingleton('IOrderPdfRenderer', FabricRenderer);
 container.registerSingleton('IR2FileService', R2FileService);
 container.registerSingleton('PdfService', PdfService);

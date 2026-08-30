@@ -45,6 +45,17 @@ export class AuthRepository {
 			data: { email, refreshToken: hashed, tokenType: TokenType.OTP, expiresAt },
 		});
 	}
+	// ponytail: atomic replace — delete all prior OTP tokens for the email and create the
+	// new one in a single transaction so a crash between the two ops cannot leave the user
+	// with no valid OTP and no error surfaced.
+	replaceOtpToken(email: string, hashed: string, expiresAt: Date) {
+		return this.client.$transaction([
+			this.client.token.deleteMany({ where: { email, tokenType: TokenType.OTP } }),
+			this.client.token.create({
+				data: { email, refreshToken: hashed, tokenType: TokenType.OTP, expiresAt },
+			}),
+		]);
+	}
 	findValidOtp(email: string) {
 		return this.client.token.findFirst({ where: { email, tokenType: TokenType.OTP, isRevoked: false } });
 	}
@@ -69,5 +80,16 @@ export class AuthRepository {
 		return this.client.token.create({
 			data: { userId, refreshToken: rt, tokenType: TokenType.SESSION, expiresAt },
 		});
+	}
+	// ponytail: atomic single-token rotation for /refresh — deletes only the old token row
+	// (by id) and creates the new one in a single $transaction.
+	// Does NOT invalidate other device sessions (multi-device support).
+	rotateSessionToken(oldTokenId: number, userId: number, newRt: string, expiresAt: Date) {
+		return this.client.$transaction([
+			this.client.token.delete({ where: { id: oldTokenId } }),
+			this.client.token.create({
+				data: { userId, refreshToken: newRt, tokenType: TokenType.SESSION, expiresAt },
+			}),
+		]);
 	}
 }

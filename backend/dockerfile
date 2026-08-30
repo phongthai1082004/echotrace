@@ -27,6 +27,9 @@ RUN corepack enable pnpm && \
 FROM node:${NODE_VERSION} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Enforce UTC so new Date() and date boundary calculations are timezone-independent
+# regardless of the host OS setting.
+ENV TZ=UTC
 # 1. Copy các file cấu hình root để pnpm nhận diện được workspace
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-workspace.yaml ./

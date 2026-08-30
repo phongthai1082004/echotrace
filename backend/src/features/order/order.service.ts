@@ -24,9 +24,10 @@ import { PaymentService } from '../../infrastructure/payment/payment.service.js'
 import { PaymentWebhookService } from '../../features/payment/payment.service.js';
 import { IOrderFinanceService } from './order-finance.service.js';
 import { scheduleDelayedJob } from '../../infrastructure/queue/redis-delayed-queue.js';
-import { restockOrderAlbums, sumNeedBySampleBook } from '../sample-books/stock.service.js';
 import { PaymentLinkItem } from '@payos/node';
 import { IPdfQueue } from '../pdf/pdf.types.js';
+import { IStockService } from '../sample-books/stock.service.js';
+import { ICouponService } from '../coupons/coupons.service.js';
 
 // ponytail: cache PayOS status a few seconds to avoid hammering the gateway on
 // client polling. In-memory per process; swap for a shared cache if multi-instance.
@@ -80,6 +81,8 @@ export class OrderService implements IOrderService {
 		@inject('IOrderFinanceService') private finance: IOrderFinanceService,
 		@inject('IPdfQueue') private pdfQueue: IPdfQueue,
 		@inject('OrderRepository') private orderRepo: OrderRepository,
+		@inject('IStockService') private stockService: IStockService,
+		@inject('ICouponService') private couponService: ICouponService,
 	) {}
 	async createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any> {
 		const [existing, user] = await this.orderRepo.client.$transaction([
@@ -122,7 +125,7 @@ export class OrderService implements IOrderService {
 			// ponytail: check tồn kho trước khi tạo payment link (tránh orphan link khi hết hàng).
 			// Dùng chung sumNeedBySampleBook với nhánh giảm tồn kho trong tx bên dưới.
 			{
-				const need0 = await sumNeedBySampleBook(bookIds, quote.items, this.orderRepo.client);
+				const need0 = await this.stockService.sumNeedBySampleBook(bookIds, quote.items, this.orderRepo.client);
 				if (need0.size) {
 					const sms = await this.orderRepo.findSampleBooks([...need0.keys()]);
 					for (const s of sms) {
@@ -164,7 +167,7 @@ export class OrderService implements IOrderService {
 			const result = await this.orderRepo.client.$transaction(
 				async (tx) => {
 					// ponytail: giảm tồn kho atomic (WHERE quantity >= need) → không âm, race-safe.
-					const needBySample = await sumNeedBySampleBook(bookIds, quote.items, tx);
+					const needBySample = await this.stockService.sumNeedBySampleBook(bookIds, quote.items, tx);
 					if (needBySample.size) {
 						const samples = await this.orderRepo.findSampleBooks([...needBySample.keys()], tx);
 						for (const s of samples) {
@@ -219,6 +222,13 @@ export class OrderService implements IOrderService {
 						tx,
 					);
 					await this.orderRepo.deleteCartItems(userId, bookIds, tx);
+
+					// ponytail: re-validate coupon inside Serializable tx to close the race where
+				// two concurrent orders both pass the usedCount check in calculateCart (outside tx).
+				// validateAndIncrementCoupon reads usedCount fresh and throws if the limit is reached.
+				if (quote.coupon && quote.coupon.id) {
+					await this.couponService.validateAndIncrementCoupon(quote.coupon.id, tx);
+				}
 
 					const responseBody = {
 						orderId: order.id,
@@ -321,12 +331,20 @@ export class OrderService implements IOrderService {
 
 	async adminUpdateOrder(id: number, patch: any): Promise<void> {
 		const data: any = {};
+
 		if (patch.status != null) {
 			if (!Object.values(OrderStatus).includes(patch.status)) {
 				throw new AppError(ErrorCode.INTERNAL, 400);
 			}
+			// ponytail: read current status first so the transition can be validated against
+			// ALLOWED. This closes the gap where a direct PATCH could jump e.g.
+			// PENDING_PAYMENT → DELIVERED without passing through the event pipeline.
+			const current = await this.orderRepo.findOrderStatus(id);
+			if (!current) throw new AppError(ErrorCode.NOT_FOUND, 404);
+			this.assertTransition(current.status, patch.status);
 			data.status = patch.status;
 		}
+
 		if (patch.supplierId !== undefined) data.supplierId = patch.supplierId;
 		if (patch.trackingCode !== undefined) data.trackingCode = patch.trackingCode;
 		// ponytail: admin tự set defectState (resolved sau khi xử lý xong). Validate enum.
@@ -334,6 +352,7 @@ export class OrderService implements IOrderService {
 			if (!Object.values(DefectState).includes(patch.defectState)) throw new AppError(ErrorCode.INTERNAL, 400);
 			data.defectState = patch.defectState;
 		}
+
 		if (Object.keys(data).length === 0) return;
 		try {
 			await this.orderRepo.updateOrder(id, data);
@@ -382,6 +401,8 @@ export class OrderService implements IOrderService {
 				return this.refundOrder(order);
 			case 'reconcile_refund':
 				return this.reconcileRefund(order);
+			case 'force_status':
+				return this.forceStatus(order, payload ?? {});
 			default:
 				throw new AppError(ErrorCode.INTERNAL, 400);
 		}
@@ -542,11 +563,14 @@ export class OrderService implements IOrderService {
 			});
 			return { refunded: true, amount };
 		}
-		// ponytail: user huỷ trước thanh toán (PENDING_PAYMENT chưa trả) → hoàn tồn kho album (atomic với cancel)
+		// ponytail: user cancels before payment — restock albums atomic with status flip.
+		// updateOrder uses updateMany WHERE status=PENDING_PAYMENT (via markCancelled); if
+		// count=0, another path already cancelled the order — skip restock.
 		if (order.status === OrderStatus.PENDING_PAYMENT) {
 			await this.orderRepo.client.$transaction(async (tx) => {
-				await restockOrderAlbums(order.orderItems, tx);
-				await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED }, tx);
+				const { count } = await this.orderRepo.markCancelled(order.id, tx);
+				if (count === 0) return; // already cancelled concurrently — do not double-restock
+				await this.stockService.restockOrderAlbums(order.orderItems, tx);
 			});
 			return { refunded: false, amount: 0 };
 		}
@@ -645,6 +669,22 @@ export class OrderService implements IOrderService {
 			await this.orderRepo.markTransactionsRefunded(order.id, tx);
 			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDED }, tx);
 		});
+	}
+
+	// ponytail: escape hatch for stuck/corrupt orders. Bypasses ALLOWED transition map.
+	// Requires an explicit reason string — appended to the order note as an audit trail.
+	// Use only when normal event pipeline cannot recover (e.g. payment gateway inconsistency).
+	private async forceStatus(order: any, payload: any): Promise<void> {
+		const { status, reason } = payload as { status?: string; reason?: string };
+		if (!status || !Object.values(OrderStatus).includes(status as OrderStatus)) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		if (!reason || String(reason).trim().length < 5) {
+			throw new AppError('force_status requires a reason (min 5 chars)', 400);
+		}
+		const auditNote = `[FORCE ${new Date().toISOString()}] ${status.toUpperCase()}: ${String(reason).trim()}`;
+		const note = order.note ? `${order.note}\n${auditNote}` : auditNote;
+		await this.orderRepo.updateOrder(order.id, { status, note });
 	}
 
 	private createOrderCode(): number {

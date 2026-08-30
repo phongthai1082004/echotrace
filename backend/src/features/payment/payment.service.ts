@@ -7,9 +7,9 @@ import {
 	WebhookProcessResult,
 } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
-import { restockOrderAlbums } from '../sample-books/stock.service.js';
 import { EmailService } from '../email/email.service.js';
 import { PaymentWebhookRepository } from './payment.repository.js';
+import { IStockService } from '../sample-books/stock.service.js';
 
 export interface IPaymentWebhookService {
 	processWebhook(result: WebhookProcessResult): Promise<void>;
@@ -20,6 +20,7 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 	constructor(
 		@inject('IEmailService') private emailService: EmailService,
 		@inject('PaymentWebhookRepository') private paymentRepo: PaymentWebhookRepository,
+		@inject('IStockService') private stockService: IStockService,
 	) {}
 
 	async processWebhook(result: WebhookProcessResult): Promise<void> {
@@ -98,13 +99,21 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 						};
 					}
 				} else if (result.status === TransactionStatus.CANCELLED && order) {
-					// ponytail: link bị huỷ khi còn PENDING_PAYMENT → hoàn tồn kho album (đồng bộ với cancel/user + expiry)
-				if (order.status === OrderStatus.PENDING_PAYMENT) {
-					const oi = await tx.order.findUnique({ where: { id: order.id }, select: { orderItems: true } });
-					// ponytail: chạy trong tx Serializable để đồng bộ tồn kho + status order
-					await restockOrderAlbums(oi?.orderItems, tx);
-				}
-					await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
+					// ponytail: flip status first using a conditional updateMany (WHERE status=PENDING_PAYMENT).
+					// count=0 means another path (user cancel, expiry) already cancelled — skip restock
+					// to prevent double-increment of stock.
+					if (order.status === OrderStatus.PENDING_PAYMENT) {
+						const { count } = await tx.order.updateMany({
+							where: { id: order.id, status: OrderStatus.PENDING_PAYMENT },
+							data: { status: OrderStatus.CANCELLED },
+						});
+						if (count > 0) {
+							const oi = await tx.order.findUnique({ where: { id: order.id }, select: { orderItems: true } });
+							await this.stockService.restockOrderAlbums(oi?.orderItems, tx);
+						}
+					} else {
+						await tx.order.update({ where: { id: order.id }, data: { status: OrderStatus.CANCELLED } });
+					}
 				}
 			},
 			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

@@ -5,9 +5,14 @@ import { OptionCatalogCacheService } from '../../infrastructure/cache/option-cat
 import { CreatePrintOptionDTO } from '@echotrace/shared';
 import { UpdatePrintOptionDTO } from '@echotrace/shared';
 import { PrintOptionRepository } from './print-options.repository.js';
+import { Prisma } from '../../../generated/prisma/client.js';
+
+export type PrintOptionRawRow = { type: string; code: string; price: number | null; width: number | null; height: number | null };
 
 export interface IPrintOptionService {
 	list(type?: string, search?: string): Promise<PrintOptionDTO[]>;
+	/** Returns raw price/dimension rows for cart pricing; bypasses DTO mapping. */
+	listRaw(tx?: Prisma.TransactionClient): Promise<PrintOptionRawRow[]>;
 	create(dto: CreatePrintOptionDTO): Promise<PrintOptionDTO>;
 	update(id: number, dto: UpdatePrintOptionDTO): Promise<PrintOptionDTO>;
 	remove(id: number): Promise<void>;
@@ -34,6 +39,10 @@ export class PrintOptionService implements IPrintOptionService {
 			[{ type: 'asc' as const }, { code: 'asc' as const }],
 		);
 		return PrintOptionMapper.toDTOList(rows);
+	}
+
+	async listRaw(tx?: Prisma.TransactionClient): Promise<PrintOptionRawRow[]> {
+		return this.printOptionRepo.listRaw(tx);
 	}
 
 	async create(dto: CreatePrintOptionDTO) {

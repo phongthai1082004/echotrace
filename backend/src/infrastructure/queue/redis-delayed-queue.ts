@@ -1,8 +1,8 @@
 import { Redis } from "ioredis";
 import { container } from "tsyringe";
 import { OrderStatus } from "@echotrace/shared";
-import { restockOrderAlbums } from "../../features/sample-books/stock.service.js";
 import { OrderRepository } from "../../features/order/order.repository.js";
+import { IStockService } from "../../features/sample-books/stock.service.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const QUEUE_KEY = "echotrace:delayed_jobs";
@@ -43,14 +43,17 @@ async function processDue(): Promise<void> {
 
 export async function handleOrderExpiry(orderId: number): Promise<void> {
   const orderRepo = container.resolve<OrderRepository>("OrderRepository");
+  const stockService = container.resolve<IStockService>("IStockService");
   const order = await orderRepo.findForExpiry(orderId);
-  // ponytail: chỉ cancel nếu vẫn pending_payment VÀ đã qua expiredAt (link có thể được làm mới)
+  // ponytail: early exit if already handled by another path (user cancel, webhook cancel).
   if (!order || order.status !== OrderStatus.PENDING_PAYMENT) return;
   if (order.expiredAt && order.expiredAt.getTime() > Date.now()) return;
-  // ponytail: restock + cancel trong 1 transaction để tránh double-restock nếu chạy lại
+  // ponytail: markCancelled uses updateMany WHERE status=PENDING_PAYMENT — count=0 means
+  // another concurrent path already flipped the status; skip restock to prevent double-increment.
   await orderRepo.client.$transaction(async (tx) => {
-    await restockOrderAlbums(order.orderItems, tx);
-    await orderRepo.markCancelled(orderId, tx);
+    const { count } = await orderRepo.markCancelled(orderId, tx);
+    if (count === 0) return; // already cancelled by another path — do not restock
+    await stockService.restockOrderAlbums(order.orderItems, tx);
   });
 }
 

@@ -90,7 +90,13 @@ export class OrderRepository {
 		});
 	}
 	markCancelled(orderId: number, tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).order.update({ where: { id: orderId }, data: { status: OrderStatus.CANCELLED } });
+		// ponytail: conditional update — only cancels when still PENDING_PAYMENT.
+		// Returns count=0 when another path (user cancel, webhook, cron) already flipped the status,
+		// which lets the caller skip the restock and prevents double-increment of stock.
+		return (tx ?? this.client).order.updateMany({
+			where: { id: orderId, status: OrderStatus.PENDING_PAYMENT },
+			data: { status: OrderStatus.CANCELLED },
+		});
 	}
 	findExpiredForCancellation(lastId: number, limit: number) {
 		return this.client.order.findMany({

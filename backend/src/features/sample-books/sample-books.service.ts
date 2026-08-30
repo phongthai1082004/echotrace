@@ -5,6 +5,10 @@ import { SampleBookDTO, CreateSampleBookDTO, UpdateSampleBookDTO, SampleBookMapp
 import { SampleBookCacheService } from '../../infrastructure/cache/sample-book.cache.service.js';
 import { resolveContent } from '../../lib/merge-book-content.js';
 import { SampleBookRepository } from './sample-books.repository.js';
+import { Prisma } from '../../../generated/prisma/client.js';
+
+// Shape returned by findForStock — the full SampleBook row (or null).
+export type SampleBookRow = Awaited<ReturnType<SampleBookRepository['findForStock']>>;
 
 export interface ISampleBookService {
 	list(params: {
@@ -24,6 +28,12 @@ export interface ISampleBookService {
 	explore(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
 	albums(params?: { cursor?: number; limit?: number; category?: string }): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }>;
 	getPublishedById(id: number): Promise<SampleBookDTO>;
+	/**
+	 * Returns the raw SampleBook row if it exists, is active, and has sufficient stock.
+	 * Bypasses the DTO cache so callers get the full Prisma row (cover, paper, content, etc.).
+	 * Returns null when the book is not found, inactive, deleted, or out of stock.
+	 */
+	getByIdForStock(id: number, quantity: number, tx?: Prisma.TransactionClient): Promise<SampleBookRow>;
 }
 
 @injectable()
@@ -150,12 +160,20 @@ export class SampleBookService implements ISampleBookService {
 		return dtos;
 	}
 
+	// ponytail: ID-based cursor — the full list is cached ordered by id DESC.
+	// cursor is the id of the last item seen (exclusive); pass 0 or omit for the first page.
+	// This is stable: inserting or archiving items between fetches never causes skips/duplicates
+	// because the position is anchored to a real row id, not an integer offset.
 	private paginate(all: SampleBookDTO[], params: { cursor?: number; limit?: number; category?: string }) {
 		const filtered = params.category ? all.filter((b) => b.category === params.category) : all;
 		const limit = params.limit && params.limit > 0 ? params.limit : 12;
-		const start = params.cursor && params.cursor > 0 ? params.cursor : 0;
-		const items = filtered.slice(start, start + limit);
-		const nextCursor = start + limit < filtered.length ? start + limit : null;
+		// cursor = last seen id; take everything strictly before it (id < cursor).
+		// On first page (no cursor / cursor=0) take from the start of the DESC-ordered list.
+		const afterCursor = (params.cursor && params.cursor > 0)
+			? filtered.filter((b) => b.id < params.cursor!)
+			: filtered;
+		const items = afterCursor.slice(0, limit);
+		const nextCursor = items.length === limit ? items[items.length - 1].id : null;
 		return { items, nextCursor };
 	}
 
@@ -167,5 +185,11 @@ export class SampleBookService implements ISampleBookService {
 		const dto = SampleBookMapper.toDTO(book);
 		await this.sampleCache.setSample(id, dto);
 		return dto;
+	}
+
+	// ponytail: stock check for cart — goes straight to DB (no cache), returns full row so cart can
+	// copy metadata (cover, style, font, etc.) without an extra fetch.
+	async getByIdForStock(id: number, quantity: number, tx?: Prisma.TransactionClient): Promise<SampleBookRow> {
+		return this.sampleRepo.findForStock(id, quantity, tx);
 	}
 }
