@@ -29,7 +29,7 @@ export function TestimonialSection() {
         className="reveal"
         style={{ maxWidth: 900, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 2 }}
       >
-        <div className="coord-label" style={{ color: "#555", marginBottom: 24 }}>
+        <div className="coord-label text-on-dark-muted" style={{ color: "#AAAAAA", marginBottom: 24 }}>
           §06 — {t("home.testimonial.section")}
         </div>
         <div
@@ -50,7 +50,7 @@ export function TestimonialSection() {
             fontSize: "clamp(22px,3.5vw,42px)",
             fontWeight: 700,
             color: "#F8F2E5",
-            lineHeight: 1.2,
+            lineHeight: 1.4,
             margin: "0 0 32px",
             letterSpacing: "-.01em",
           }}
@@ -90,9 +90,9 @@ export function TestimonialSection() {
             <div
               style={{
                 fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                fontSize: 11,
-                color: "#666",
-                letterSpacing: ".08em",
+                fontSize: 12,
+                color: "#AAAAAA",
+                letterSpacing: ".05em",
               }}
             >
               {t("home.testimonial.detail")}

@@ -1,0 +1,58 @@
+"use client";
+
+import React from "react";
+import { useErrorHandler } from "@/lib/error-context";
+import { X, AlertCircle, AlertTriangle, Info } from "lucide-react";
+
+export function ErrorToast() {
+  const { errors, removeError } = useErrorHandler();
+
+  if (errors.length === 0) return null;
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "error":
+        return <AlertCircle className="w-5 h-5" />;
+      case "warning":
+        return <AlertTriangle className="w-5 h-5" />;
+      case "info":
+        return <Info className="w-5 h-5" />;
+      default:
+        return null;
+    }
+  };
+
+  const getColor = (type: string) => {
+    switch (type) {
+      case "error":
+        return "bg-red-50 border-red-200 text-red-800";
+      case "warning":
+        return "bg-yellow-50 border-yellow-200 text-yellow-800";
+      case "info":
+        return "bg-blue-50 border-blue-200 text-blue-800";
+      default:
+        return "bg-gray-50 border-gray-200 text-gray-800";
+    }
+  };
+
+  return (
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md pointer-events-auto">
+      {errors.map((error) => (
+        <div
+          key={error.id}
+          className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${getColor(error.type)} animate-in fade-in slide-in-from-top-2 duration-300`}
+        >
+          <div className="flex-shrink-0 mt-0.5">{getIcon(error.type)}</div>
+          <div className="flex-1 text-sm">{error.message}</div>
+          <button
+            onClick={() => removeError(error.id)}
+            className="flex-shrink-0 text-current hover:opacity-70 transition-opacity"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}

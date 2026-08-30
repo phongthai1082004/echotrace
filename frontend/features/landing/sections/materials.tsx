@@ -11,7 +11,7 @@ export function MaterialsSection() {
       style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#e8e6e0" }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div className="coord-label" style={{ marginBottom: 8 }}>
+        <div className="coord-label text-on-card" style={{ marginBottom: 8 }}>
           §04 — {t("home.materials.section")}
         </div>
         <h2
@@ -31,7 +31,7 @@ export function MaterialsSection() {
         <p
           style={{
             fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            color: "#555",
+            color: "#444444",
             marginBottom: 48,
             maxWidth: 480,
             lineHeight: 1.6,

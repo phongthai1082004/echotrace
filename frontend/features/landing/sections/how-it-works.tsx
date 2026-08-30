@@ -22,7 +22,7 @@ export function HowItWorksSection() {
           }}
         >
           <div>
-            <div className="coord-label" style={{ marginBottom: 8 }}>
+            <div className="coord-label text-on-card-muted" style={{ marginBottom: 8 }}>
               §02 — {t("home.process.section")}
             </div>
             <h2
@@ -43,7 +43,7 @@ export function HowItWorksSection() {
           <p
             style={{
               fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              color: "#666",
+              color: "#555555",
               maxWidth: 340,
               lineHeight: 1.6,
               margin: 0,
@@ -95,7 +95,7 @@ export function HowItWorksSection() {
                   <p
                     style={{
                       fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                      color: "#666",
+                      color: "#555555",
                       fontSize: 14,
                       lineHeight: 1.65,
                       margin: 0,

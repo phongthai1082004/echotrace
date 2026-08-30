@@ -38,7 +38,7 @@ export function FooterSection() {
             <p
               style={{
                 fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                color: "#888",
+                color: "#AAAAAA",
                 fontSize: 14,
                 lineHeight: 1.65,
                 maxWidth: 260,
@@ -76,11 +76,11 @@ export function FooterSection() {
             <div key={i}>
               <div
                 style={{
-                  fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                  fontSize: 10,
+                  fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
+                  fontSize: 11,
                   fontWeight: 700,
-                  letterSpacing: ".15em",
-                  color: "#666",
+                  letterSpacing: ".08em",
+                  color: "#AAAAAA",
                   textTransform: "uppercase",
                   marginBottom: 16,
                 }}
@@ -96,7 +96,7 @@ export function FooterSection() {
                       href="#"
                       style={{
                         fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                        color: "#888",
+                        color: "#999999",
                         fontSize: 14,
                         textDecoration: "none",
                         transition: "color .15s",

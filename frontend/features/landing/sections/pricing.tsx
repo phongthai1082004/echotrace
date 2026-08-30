@@ -8,9 +8,6 @@ export function PricingSection() {
     <section style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#FFF7D6" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <div className="coord-label" style={{ marginBottom: 8 }}>
-            §05 — {t("home.pricing.section")}
-          </div>
           <h2
             style={{
               fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
@@ -28,7 +25,7 @@ export function PricingSection() {
           <p
             style={{
               fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              color: "#666",
+              color: "#555555",
               fontSize: 16,
               maxWidth: 400,
               margin: "0 auto",
@@ -59,10 +56,10 @@ export function PricingSection() {
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <span
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 11,
-              color: "#888",
-              letterSpacing: ".08em",
+              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
+              fontSize: 13,
+              color: "#666666",
+              letterSpacing: ".03em",
             }}
           >
             {t("home.pricing.note")}

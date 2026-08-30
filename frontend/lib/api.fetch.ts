@@ -1,5 +1,29 @@
 const PROXY = "/api/proxy";
 
+// Track refresh in-flight to avoid race conditions
+let refreshPromise: Promise<void> | null = null;
+
+async function handleTokenRefresh() {
+  if (refreshPromise) return refreshPromise;
+  
+  refreshPromise = (async () => {
+    try {
+      // Client-side: call the proxy to refresh via session JWT
+      const res = await fetch(`${PROXY}?path=${encodeURIComponent("/api/auth/refresh")}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error("Refresh failed");
+      // Server will have updated the JWT cookie
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
+}
+
 export async function apiFetch<T = any>(
   path: string,
   token?: string,
@@ -9,9 +33,16 @@ export async function apiFetch<T = any>(
   const base = isServer
     ? process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
     : PROXY;
+  
+  // Add language code to API path for client requests
+  let apiPath = path;
+  if (!isServer && !path.startsWith("/en") && !path.startsWith("/es") && !path.startsWith("/vi")) {
+    apiPath = `/en${path}`;
+  }
+  
   // Client calls go through the same-origin proxy, which injects the bearer
   // token from the httpOnly session cookie. The token is never exposed to JS.
-  const url = isServer ? `${base}${path}` : `${PROXY}?path=${encodeURIComponent(path)}`;
+  const url = isServer ? `${base}${path}` : `${PROXY}?path=${encodeURIComponent(apiPath)}`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -20,12 +51,25 @@ export async function apiFetch<T = any>(
   // Only server-side calls attach the token directly; client relies on the proxy.
   if (isServer && token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(url, { ...options, headers });
+  let res = await fetch(url, { ...options, headers });
 
-  // Client 401 from the proxy means the session is gone → sign out centrally.
-  // Replaces the removed global fetch monkeypatch in Providers (A5).
+  // 401 from the proxy: attempt one refresh, then try again
+  if (!isServer && res.status === 401) {
+    try {
+      await handleTokenRefresh();
+      // Retry the original request after refresh
+      res = await fetch(url, { ...options, headers });
+    } catch {
+      // Refresh failed → sign out
+      import("next-auth/react").then((m) => m.signOut({ callbackUrl: "/" })).catch(() => {});
+      throw new Error("Session expired. Please sign in again.");
+    }
+  }
+
+  // Second 401 or immediate 401 on other routes → sign out
   if (!isServer && res.status === 401) {
     import("next-auth/react").then((m) => m.signOut({ callbackUrl: "/" })).catch(() => {});
+    throw new Error("Session expired. Please sign in again.");
   }
 
   if (options?.raw) return res as any;

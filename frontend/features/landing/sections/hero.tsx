@@ -10,11 +10,10 @@ export function HeroSection() {
   const { t } = useTranslation();
   return (
     <section
-      className="grid-paper"
+      className="grid-paper hero-grid"
       style={{
         minHeight: "92vh",
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
         alignItems: "center",
         position: "relative",
         overflow: "hidden",
@@ -25,7 +24,7 @@ export function HeroSection() {
         <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span className="sticker-label">{t("home.hero.booksBadge")}</span>
         </div>
-        <div className="coord-label" style={{ marginBottom: 12 }}>
+        <div className="coord-label text-on-card" style={{ marginBottom: 12 }}>
           {t("home.hero.location")}
         </div>
         <h1
@@ -49,7 +48,7 @@ export function HeroSection() {
           style={{
             fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
             fontSize: 17,
-            color: "#555",
+            color: "#444444",
             lineHeight: 1.65,
             margin: "0 0 34px",
             maxWidth: 400,
@@ -61,7 +60,7 @@ export function HeroSection() {
           <a href="/studio" className="btn-brutalist" style={{ background: "#B54843", color: "#fff" }}>
             {t("home.hero.ctaPrimary")}
           </a>
-          <a href="/explore" className="btn-brutalist" style={{ background: "#FFF7D6", color: "#222" }}>
+          <a href="/explore" className="btn-brutalist btn-brutalist-secondary">
             {t("home.hero.ctaSecondary")} <ArrowRight size={16} />
           </a>
         </div>

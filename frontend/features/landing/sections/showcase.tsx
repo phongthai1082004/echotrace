@@ -9,7 +9,7 @@ export function ShowcaseSection() {
   return (
     <section style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#F8F2E5" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div className="coord-label" style={{ marginBottom: 8 }}>
+        <div className="coord-label text-on-card" style={{ marginBottom: 8 }}>
           §03 — {t("home.showcase.section")}
         </div>
         <h2
@@ -43,7 +43,7 @@ export function ShowcaseSection() {
             <p
               style={{
                 fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                color: "#555",
+                color: "#444444",
                 fontSize: 17,
                 lineHeight: 1.75,
                 margin: "0 0 28px",

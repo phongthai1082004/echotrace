@@ -14,7 +14,7 @@
   --secondary: #FFF7D6;
   --secondary-foreground: #222222;
   --muted: #F0E8D5;
-  --muted-foreground: #666666;
+  --muted-foreground: #444444;
   --accent: #FFD93D;
   --accent-foreground: #222222;
   --destructive: #B54843;
@@ -194,11 +194,15 @@
     border-radius: 10px;
     border: 3px solid var(--border);
     box-shadow: 4px 4px 0 var(--border);
-    transition: transform 150ms, box-shadow 150ms;
+    transition: transform 150ms, box-shadow 150ms, opacity 150ms;
   }
   .neo-btn-primary:hover {
     translate: 2px 2px;
     box-shadow: 2px 2px 0 var(--border);
+    opacity: 0.9;
+  }
+  .neo-btn-primary:active {
+    transform: scale(0.98);
   }
 
   .neo-btn-sm {
@@ -227,6 +231,106 @@
     box-shadow: 1px 1px 0 var(--border);
   }
 
+  .btn-brutalist {
+    font-family: var(--font-space-grotesk, 'Space Grotesk'), sans-serif;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: opacity 150ms, transform 150ms;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .btn-brutalist:hover {
+    opacity: 0.9;
+  }
+
+  .btn-brutalist:active {
+    transform: scale(0.98);
+  }
+
+  .btn-brutalist-secondary {
+    background-color: white;
+    color: #222222;
+    border: 2px solid #222222;
+  }
+
+  .btn-brutalist-secondary:hover {
+    background-color: #F8F2E5;
+  }
+
+  .coord-label {
+    font-family: var(--font-space-grotesk, 'Space Grotesk'), sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    color: #444444;
+  }
+
+  .sticker-label {
+    display: inline-block;
+    font-family: var(--font-space-grotesk, 'Space Grotesk'), sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    background: #222222;
+    color: #F8F2E5;
+    border: 1.5px solid #222222;
+    border-radius: 4px;
+    line-height: 1.2;
+  }
+
+  .text-on-card {
+    color: #222222;
+  }
+
+  .text-on-card-muted {
+    color: #555555;
+  }
+
+  .text-on-dark {
+    color: #F8F2E5;
+  }
+
+  .text-on-dark-muted {
+    color: #AAAAAA;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-brutalist,
+    .btn-brutalist:hover,
+    .btn-brutalist:active,
+    .neo-btn,
+    .neo-btn:hover,
+    .neo-btn-primary,
+    .neo-btn-primary:hover,
+    .neo-btn-primary:active {
+      transform: none !important;
+      translate: none !important;
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 768px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
   .neo-btn-danger {
     background-color: #b54843;
     color: white;
@@ -242,22 +346,61 @@
 
   .neo-input {
     width: 100%;
-    background-color: var(--card);
+    background-color: #FFFFFF;
+    color: #222222;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     border-radius: 0.5rem;
     padding: 0.625rem 0.75rem;
-    border: 2px solid var(--border);
-    box-shadow: 2px 2px 0 var(--border);
+    border: 1.5px solid #222222;
+    box-shadow: 2px 2px 0 #222222;
     transition: transform 150ms, box-shadow 150ms;
   }
   .neo-input::placeholder {
-    color: #999;
+    color: #999999;
   }
   .neo-input:focus {
     outline: none;
     translate: 1px 1px;
-    box-shadow: 1px 1px 0 var(--border);
+    box-shadow: 1px 1px 0 #222222;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  select {
+    background-color: #FFFFFF;
+    color: #222222;
+    border: 1.5px solid #222222;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-space-grotesk, 'Space Grotesk'), sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  input[type="text"]::placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="number"]::placeholder,
+  input[type="tel"]::placeholder,
+  textarea::placeholder {
+    color: #999999;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: #222222;
+    box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.1);
   }
 
   .neo-label {
