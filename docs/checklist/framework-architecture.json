@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Full-Stack Framework Architecture",
+    "output": "framework-architecture.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [920, 520],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": ["user", "nginx", "api", "postgres", "redis"],
+        "note": "Primary HTTPS request from the browser through Nginx to the API server and data layer."
+      },
+      {
+        "id": "async-layer",
+        "label": "Async & jobs",
+        "focus": ["api", "redis", "jobs", "storage"],
+        "note": "Background job processing via Redis queues and file storage interactions."
+      },
+      {
+        "id": "cicd-pipeline",
+        "label": "CI/CD pipeline",
+        "focus": ["cicd", "docker", "nginx"],
+        "note": "GitHub Actions builds Docker images and deploys updates to the VPS."
+      },
+      {
+        "id": "observability",
+        "label": "Observability",
+        "focus": ["api", "logging", "monitor"],
+        "note": "Logs, metrics, health checks, and alerts across the application stack."
+      }
+    ]
+  },
+  "components": [
+    { "id": "user",     "type": "external",  "label": "Browser",         "sublabel": "React / TypeScript SPA",    "pos": [30,  224], "size": [126, 50] },
+    { "id": "cdn",      "type": "cloud",     "label": "CDN",             "sublabel": "CloudFlare · static assets", "pos": [30,  100], "size": [126, 50] },
+    { "id": "nginx",    "type": "cloud",     "label": "Nginx",           "sublabel": "Reverse proxy · SSL · gzip", "pos": [226, 224], "size": [126, 50] },
+    { "id": "api",      "type": "backend",   "label": "API Server",      "sublabel": "Node.js / Express :3000",    "pos": [422, 224], "size": [126, 50] },
+    { "id": "redis",    "type": "database",  "label": "Redis",           "sublabel": "cache · sessions · locks",   "pos": [422, 100], "size": [126, 50] },
+    { "id": "postgres", "type": "database",  "label": "PostgreSQL",      "sublabel": "primary DB · Prisma",        "pos": [618, 224], "size": [126, 50] },
+    { "id": "logging",  "type": "cloud",     "label": "Logging",         "sublabel": "Datadog · Sentry",           "pos": [618, 100], "size": [126, 50] },
+    { "id": "jobs",     "type": "backend",   "label": "Job Workers",     "sublabel": "Bull / BullMQ",              "pos": [618, 348], "size": [126, 50] },
+    { "id": "storage",  "type": "cloud",     "label": "File Storage",    "sublabel": "S3 / local disk",            "pos": [422, 348], "size": [126, 50] },
+    { "id": "monitor",  "type": "security",  "label": "Monitoring",      "sublabel": "Uptime · health checks",     "pos": [226, 348], "size": [126, 50] },
+    { "id": "cicd",     "type": "security",  "label": "GitHub Actions",  "sublabel": "test · build · deploy",      "pos": [30,  348], "size": [126, 50] },
+    { "id": "docker",   "type": "cloud",     "label": "Docker Registry", "sublabel": "container images",           "pos": [30,  448], "size": [126, 50] }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPS — Ubuntu Server",
+      "wraps": ["nginx", "api", "redis", "postgres", "jobs", "storage", "monitor", "logging"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Internal network (no public access)",
+      "wraps": ["api", "redis", "postgres", "jobs"]
+    }
+  ],
+  "connections": [
+    { "id": "user-cdn",     "from": "user",    "to": "cdn",      "label": "static assets",   "variant": "dashed",   "fromSide": "top",    "toSide": "bottom" },
+    { "id": "user-nginx",   "from": "user",    "to": "nginx",    "label": "HTTPS",            "variant": "emphasis" },
+    { "id": "nginx-api",    "from": "nginx",   "to": "api",      "label": "proxy /api",       "variant": "emphasis" },
+    { "id": "api-redis",    "from": "api",     "to": "redis",    "label": "cache / sessions", "fromSide": "top",    "toSide": "bottom",   "labelDx": -52 },
+    { "id": "api-postgres", "from": "api",     "to": "postgres", "label": "SQL + pool",       "variant": "emphasis" },
+    { "id": "api-logging",  "from": "api",     "to": "logging",  "label": "logs + errors",    "variant": "dashed",  "fromSide": "top",    "toSide": "bottom", "labelDx": 52 },
+    { "id": "api-jobs",     "from": "api",     "to": "jobs",     "label": "enqueue",          "variant": "dashed",  "fromSide": "right",  "toSide": "top",    "labelAt": [578, 306] },
+    { "id": "api-storage",  "from": "api",     "to": "storage",  "label": "upload",           "variant": "dashed",  "fromSide": "bottom", "toSide": "top",    "labelAt": [395, 316] },
+    { "id": "jobs-postgres","from": "jobs",    "to": "postgres", "label": "read/write",       "variant": "dashed",  "fromSide": "top",    "toSide": "bottom", "labelDx": -40 },
+    { "id": "jobs-storage", "from": "jobs",    "to": "storage",  "label": "upload files",     "fromSide": "left",   "toSide": "right",    "labelDy": -18 },
+    { "id": "nginx-monitor","from": "nginx",   "to": "monitor",  "label": "health check",     "variant": "security","fromSide": "bottom", "toSide": "top",    "labelAt": [289, 326] },
+    { "id": "cicd-docker",  "from": "cicd",    "to": "docker",   "label": "build + push",     "variant": "security","fromSide": "bottom", "toSide": "top",    "labelAt": [93,  428] },
+    { "id": "cicd-nginx",   "from": "cicd",    "to": "nginx",    "label": "deploy",           "variant": "security","fromSide": "right",  "toSide": "left" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Frontend & API",
+      "items": [
+        "React / TypeScript SPA — Vite, lazy routes, CDN cache",
+        "Express.js — JWT auth, Zod validation, rate limiting",
+        "Storybook for component library documentation"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Data & Async",
+      "items": [
+        "PostgreSQL — Prisma ORM, migrations, connection pool",
+        "Redis — read-through cache, sessions, Bull job queues",
+        "Daily automated backups with restore testing"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Infrastructure & Security",
+      "items": [
+        "Nginx — SSL termination, gzip, reverse proxy, rate limit",
+        "Firewall: UFW (22, 80, 443), fail2ban, security headers",
+        "CI/CD: lint → test → docker push → manual gate → deploy"
+      ]
+    }
+  ]
+}

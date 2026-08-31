@@ -1,4 +1,3 @@
-# ponytail: log rotation chung cho mọi container — không xoay là disk đầy trong vài tuần
 x-logging: &default-logging
   driver: json-file
   options:
@@ -9,7 +8,6 @@ services:
   redis-service:
     image: redis:alpine
     container_name: redis-container
-    # cache-only: chặn Redis nuốt RAM, đầy thì evict key cũ nhất (CacheService tự no-op khi miss)
     command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
       - "${REDIS_PORT}:6379"
@@ -96,9 +94,8 @@ services:
           cpus: "0.25"
           memory: 64M
     depends_on:
-      - frontend-service
+      - frontend-service                                                  
       - backend-service
 
 volumes:
-  pgdata:
   redis_data:
