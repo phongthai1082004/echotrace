@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL ?? `redis://localhost:${process.env.REDIS_PORT}`;
+const REDIS_URL = process.env.REDIS_URL ?? `redis://localhost:${process.env.REDIS_PORT ?? '6379'}`;
 
 export class CacheService {
 	private client: Redis;

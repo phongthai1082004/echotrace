@@ -1,14 +1,9 @@
 # =============================================================================
 # LOCAL DEVELOPMENT OVERRIDE
-# Auto-loaded by `docker compose up` — no flags needed.
+# Auto-loaded by `docker compose up` — no extra flags needed.
 #
-# What this file does:
-#   1. Adds postgres-service (local Docker PostgreSQL container)
-#   2. Overrides DATABASE_URL in backend-service to point at postgres-service
-#   3. Adds postgres-service as a dependency of backend-service
-#
-# All other services (redis, frontend, nginx) are inherited from docker-compose.yml
-# with no changes — docker compose merges them automatically.
+# Adds postgres-service và override DATABASE_URL của backend để trỏ vào
+# container postgres thay vì cloud DB.
 # =============================================================================
 
 x-logging: &default-logging
@@ -18,15 +13,16 @@ x-logging: &default-logging
     max-file: "3"
 
 services:
+
   postgres-service:
     image: postgres:16-alpine
     container_name: postgres_container
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-echotrace}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123abc"
+      POSTGRES_DB: echotrace
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -37,14 +33,15 @@ services:
           cpus: "0.5"
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-echotrace}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d echotrace"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   backend-service:
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres-service:5432/${POSTGRES_DB:-echotrace}
+      DATABASE_URL: "postgresql://postgres:123abc@postgres-service:5432/echotrace"
     depends_on:
       postgres-service:
         condition: service_healthy

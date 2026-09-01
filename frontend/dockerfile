@@ -1,4 +1,4 @@
-ARG NODE_VERSION=24.18.0-alpine
+ARG NODE_VERSION=22-alpine
 
 # Stage 1: install deps — filtered install: chỉ frontend + shared
 FROM node:${NODE_VERSION} AS dependencies
@@ -17,7 +17,6 @@ RUN apk add --no-cache \
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/package.json ./shared/
-COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 RUN corepack enable pnpm && \
     pnpm install --frozen-lockfile --filter echotrace...
