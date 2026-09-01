@@ -3,6 +3,18 @@ ARG NODE_VERSION=24.18.0-alpine
 # Stage 1: install deps — filtered install: chỉ frontend + shared
 FROM node:${NODE_VERSION} AS dependencies
 WORKDIR /app
+
+# Install build dependencies for native modules (canvas, sharp, etc.)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/

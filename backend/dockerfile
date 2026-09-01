@@ -3,11 +3,22 @@ ARG NODE_VERSION=24.18.0-alpine
 # Stage 1: install deps — filtered install: chỉ backend + shared, bỏ frontend
 FROM node:${NODE_VERSION} AS dependencies
 WORKDIR /app
+
+# Install build dependencies for native modules (canvas, esbuild, etc.)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/package.json ./shared/
 COPY backend/package.json ./backend/
 RUN corepack enable pnpm && \
-    pnpm install --frozen-lockfile --filter backend...
+    pnpm install --filter backend...
 
 # Stage 2: build shared -> prisma generate -> compile backend -> prune dev deps
 FROM node:${NODE_VERSION} AS builder

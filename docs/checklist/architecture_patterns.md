@@ -1,201 +1,201 @@
-# Architecture Patterns — Khi nào dùng cái nào
+# Architecture Patterns — When to Use What
 
-Framework architecture hiện tại phù hợp với **96% dự án web/mobile backend**. Dưới đây là guide chọn architecture theo bài toán.
+The current framework architecture is suitable for **96% of web/mobile backend projects**. Below is a guide to choosing architecture based on your problem.
 
 ---
 
-## ✅ Dùng Framework Architecture này khi:
+## ✅ Use Framework Architecture when:
 
 ### Product Web/Mobile + Backend
-- [ ] Có frontend (React, Vue, Next.js) + backend (Node.js, Express)
-- [ ] Cần user authentication (JWT, OAuth)
-- [ ] Có database relational (PostgreSQL, MySQL)
-- [ ] Cần caching layer (Redis)
-- [ ] Có background jobs (email, reports, processing)
-- [ ] Deploy trên VPS / AWS EC2 / DigitalOcean
+- [ ] Have frontend (React, Vue, Next.js) + backend (Node.js, Express)
+- [ ] Need user authentication (JWT, OAuth)
+- [ ] Have relational database (PostgreSQL, MySQL)
+- [ ] Need caching layer (Redis)
+- [ ] Have background jobs (email, reports, processing)
+- [ ] Deploy on VPS / AWS EC2 / DigitalOcean
 
-**Ví dụ:** SaaS, marketplace, e-commerce, admin dashboard, social app, project management
+**Examples:** SaaS, marketplace, e-commerce, admin dashboard, social app, project management
 
-### Mô hình kinh doanh
+### Business Model
 - Subscription / pay-as-you-go
-- Multi-user với roles & permissions
-- GDPR / compliance cần audit logs
+- Multi-user with roles & permissions
+- GDPR / compliance requiring audit logs
 - Medium traffic (1k–100k requests/day)
 
 ---
 
-## ❌ Không dùng khi:
+## ❌ Don't Use when:
 
 ### Static Sites / Blogs
-**Dùng:** Netlify + Next.js / Hugo / Jekyll (không cần backend)
+**Use instead:** Netlify + Next.js / Hugo / Jekyll (no backend needed)
 
 ### Serverless / Microservices
-**Dùng:** AWS Lambda + API Gateway, hoặc Kubernetes orchestration
+**Use instead:** AWS Lambda + API Gateway, or Kubernetes orchestration
 
-**Tín hiệu:**
-- App này là 1 phần của hệ thống lớn hơn
-- Cần scale 1 function riêng lẻ
-- Traffic = trăm triệu requests/day
+**Signals:**
+- This app is part of a larger system
+- Need to scale 1 function independently
+- Traffic = hundreds of millions requests/day
 - Team > 50 engineers
 
-### Real-time streaming / WebSocket-heavy
-**Dùng thêm:** Socket.io, Kafka, RabbitMQ
+### Real-time Streaming / WebSocket-Heavy
+**Add:** Socket.io, Kafka, RabbitMQ
 
-**Tín hiệu:**
+**Signals:**
 - Live chat, notifications, collaborative editing
 - Financial trading, IoT data ingestion
 - Video streaming
 
-### Data warehouse / Analytics
-**Dùng:** Snowflake, BigQuery, Redshift + dbt
+### Data Warehouse / Analytics
+**Use:** Snowflake, BigQuery, Redshift + dbt
 
 ### AI / ML
-**Dùng:** FastAPI + MLflow + Airflow, hoặc containerized models
+**Use:** FastAPI + MLflow + Airflow, or containerized models
 
 ---
 
-## Các biến thể của framework này (tuỳ theo bài toán)
+## Variants of This Framework (Depends on Your Problem)
 
-### Variant 1: Monolith (hiện tại)
+### Variant 1: Monolith (Current)
 ```
 1 API server + 1 Database + Redis + Jobs
 ```
-**Khi:** Startup, team nhỏ, feature chưa stable, < 50k requests/day
+**When:** Startup, small team, features not yet stable, < 50k requests/day
 
-**Ưu điểm:** Đơn giản, deploy nhanh, debugging dễ
-**Nhược điểm:** Khó scale nếu 1 feature gặp bottleneck
+**Pros:** Simple, fast deploy, easy debugging
+**Cons:** Hard to scale if 1 feature hits bottleneck
 
-### Variant 2: Micro-backend (tách API thành modules)
+### Variant 2: Micro-backend (Split API into Modules)
 ```
 API 1 (Auth) + API 2 (Orders) + API 3 (Reports)
 ↓
 Shared: PostgreSQL + Redis
 ```
-**Khi:** Team ≥ 5, các feature độc lập, deploy riêng rẽ
+**When:** Team ≥ 5, independent features, deploy separately
 
-**Cách mở rộng:** Tách `src/features/*` thành separate Node.js projects, deploy mỗi cái lên port riêng, Nginx reverse proxy đến từng port
+**How to expand:** Split `src/features/*` into separate Node.js projects, deploy each to own port, Nginx reverse proxy to each
 
-### Variant 3: Queue-heavy (dữ liệu ~ events)
+### Variant 3: Queue-Heavy (Data as Events)
 ```
 API → Message Broker (RabbitMQ / Kafka) → Workers × N
 ```
-**Khi:** Dữ liệu thay đổi liên tục, cần event sourcing, audit trail chi tiết
+**When:** Data changes continuously, need event sourcing, detailed audit trail
 
-**Thay đổi:** Replace Redis job queue → Kafka topics, thêm Event Store
+**Changes:** Replace Redis job queue → Kafka topics, add Event Store
 
-### Variant 4: Polyglot (backend ≠ Node.js)
+### Variant 4: Polyglot (Backend ≠ Node.js)
 ```
 Node.js API + Python ML Service + Go Worker
 ↓
-Message queue để communicate
+Message queue for communication
 ```
-**Khi:** Có specialized service (ML inference, video transcoding)
+**When:** Have specialized service (ML inference, video transcoding)
 
-**Thay đổi:** Keep architecture topology, swap Node.js → Python/Go/Rust
+**Changes:** Keep architecture topology, swap Node.js → Python/Go/Rust
 
-### Variant 5: Edge / CDN-first
+### Variant 5: Edge / CDN-First
 ```
-Frontend ở CDN Edge
+Frontend on CDN Edge
 ↓
-API ở 1 region duy nhất hoặc geo-replicated
+API on single region or geo-replicated
 ```
-**Khi:** Global users, cần latency < 100ms worldwide
+**When:** Global users, need latency < 100ms worldwide
 
-**Thay đổi:** Thêm geolocation routing, database replication, caching strategy
+**Changes:** Add geolocation routing, database replication, caching strategy
 
 ---
 
-## Decision tree — Chọn architecture
+## Decision Tree — Choose Your Architecture
 
 ```
 START
   ↓
-Có frontend + backend? NO → Static site (Netlify, Vercel)
+Have frontend + backend? NO → Static site (Netlify, Vercel)
   ↓ YES
-Độc lập được từ infra lớn? NO → Microservice (Kubernetes)
+Independent from larger infra? NO → Microservice (Kubernetes)
   ↓ YES
-Traffic < 100k/day? YES → Framework Monolith (hiện tại) ✓
+Traffic < 100k/day? YES → Framework Monolith (current) ✓
   ↓ NO
 ↓
-Dữ liệu chủ yếu = events? YES → Queue-heavy (Kafka, Event Store)
+Data mainly = events? YES → Queue-heavy (Kafka, Event Store)
   ↓ NO
-Có ML inference? YES → Polyglot (Python + Node.js)
+Have ML inference? YES → Polyglot (Python + Node.js)
   ↓ NO
-Global users, cần edge? YES → Edge / CDN-first
+Global users, need edge? YES → Edge / CDN-first
   ↓ NO
-Team > 5 người? YES → Micro-backend (tách features)
+Team > 5 people? YES → Micro-backend (split features)
   ↓ NO
-Quay lại Monolith ✓
+Back to Monolith ✓
 ```
 
 ---
 
-## Scaling path từ Monolith
+## Scaling Path from Monolith
 
 ```
-Bước 1: Monolith (hiện tại)
+Step 1: Monolith (current)
         ↓ (Team grows, features pile up)
-Bước 2: Tách background jobs thành separate worker container
+Step 2: Extract background jobs to separate worker container
         ↓ (Database bottleneck)
-Bước 3: Read replica database, caching strategy upgrade
-        ↓ (API đạt ceiling)
-Bước 4: Micro-backend (tách features thành services)
+Step 3: Read replica database, upgrade caching strategy
+        ↓ (API hits ceiling)
+Step 4: Micro-backend (split features into services)
         ↓ (Distributed complexity)
-Bước 5: Message queue (Kafka) thay Redis, Event sourcing
+Step 5: Message queue (Kafka) replace Redis, Event sourcing
         ↓ (Still hitting limits?)
-Bước 6: Kubernetes, Istio, observability stack (Prometheus, Grafana)
+Step 6: Kubernetes, Istio, observability stack (Prometheus, Grafana)
 ```
 
-Không cần jump đến bước 6 ngay. Monolith scale đến **5–10M requests/day** nếu optimize tốt.
+No need to jump to step 6 immediately. Monolith scales to **5–10M requests/day** with proper optimization.
 
 ---
 
-## Checklist trước khi bắt đầu dự án mới
+## Pre-Project Checklist
 
-- [ ] Team bao nhiêu người?
-- [ ] Traffic dự kiến năm 1: bao nhiêu requests/day?
-- [ ] User data: bao nhiêu GB?
-- [ ] Cần real-time? (chat, notifications)
-- [ ] Cần ML inference?
-- [ ] Cần geo-replicated?
-- [ ] Budget infra/tháng?
-- [ ] Timeline đến MVP?
+- [ ] How many people on team?
+- [ ] Expected year 1 traffic: how many requests/day?
+- [ ] User data: how many GB?
+- [ ] Need real-time? (chat, notifications)
+- [ ] Need ML inference?
+- [ ] Need geo-replicated?
+- [ ] Infrastructure budget/month?
+- [ ] Timeline to MVP?
 
-**Trả lời** → Dùng architecture nào ở trên.
+**Answer these** → Pick your architecture above.
 
 ---
 
-## Dùng checklist như thế nào
+## How to Use the Checklist
 
-### Nếu bài toán phù hợp (monolith):
+### If Problem Fits (Monolith):
 ```bash
 git clone <repo> my-new-project
 cp docs/checklist/* my-new-project/docs/
 # Follow backend_checklist.md + frontend_checklist.md
 ```
 
-### Nếu bài toán khác:
-1. **Đọc decision tree** → xác định variant
-2. **Điều chỉnh checklist:** 
-   - Variant 2 (Micro): Bỏ `src/features/*`, thêm API boundaries
-   - Variant 3 (Queue): Bỏ Redis, thêm Kafka setup
-   - Variant 4 (Polyglot): Thêm section riêng cho Python/Go service
-3. **Vẽ lại architecture.json** với archify (đổi components, connections)
-4. **Lưu vào git** (`docs/checklist/variant-*.md`)
+### If Problem Different:
+1. **Read decision tree** → identify variant
+2. **Adjust checklist:**
+   - Variant 2 (Micro): Remove `src/features/*`, add API boundaries
+   - Variant 3 (Queue): Remove Redis, add Kafka setup
+   - Variant 4 (Polyglot): Add separate section for Python/Go service
+3. **Redraw architecture.json** with archify (change components, connections)
+4. **Save to git** (`docs/checklist/variant-*.md`)
 
 ---
 
-## Khi nào cần redesign architecture
+## When to Redesign Architecture
 
-🚨 **Red flags:**
-- Database query time > 500ms (index? N+1? needs denormalization?)
+🚨 **Red Flags:**
+- Database query time > 500ms (missing index? N+1 problem? needs denormalization?)
 - API response time > 1s (need caching? need CDN?)
 - Redis memory > 90% allocated
-- Background jobs queing faster than processing (need horizontal scale)
+- Background jobs queuing faster than processing (need horizontal scale)
 - Nginx CPU > 80% (need load balancer scale-out?)
 - 404 / 500 errors spike → (need graceful degradation?)
 
-✅ **Hành động:**
+✅ **Action:**
 1. Profile bottleneck (APM: Datadog, New Relic)
 2. Optimize at current architecture (cache strategy, query optimization, indexing)
 3. Only redesign if optimization hits ceiling
@@ -205,10 +205,10 @@ cp docs/checklist/* my-new-project/docs/
 
 ## Recommendation
 
-**Với project mới:**
-1. Bắt đầu từ **Monolith** (framework hiện tại)
-2. Lưu checklist vào git → base cho dự án sau
-3. Khi scale issue xuất hiện → xem decision tree, chọn variant
-4. Cập nhật checklist, update git
+**For New Project:**
+1. Start with **Monolith** (current framework)
+2. Save checklist to git → base for next project
+3. When scaling issues appear → check decision tree, pick variant
+4. Update checklist, push to git
 
-**Không cần** complex infrastructure ngay từ đầu. 80% dự án không bao giờ vượt quá monolith.
+**Don't need** complex infrastructure from day one. 80% of projects never outgrow monolith.

@@ -10,7 +10,7 @@ services:
     container_name: redis-container
     command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -31,11 +31,14 @@ services:
       context: .
       dockerfile: backend/dockerfile
     container_name: backend_service
-    env_file:
-      - ./backend/.env
     environment:
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://${REDIS_HOST:-redis-service}:6379
       BACKEND_PORT: "4000"
+      TZ: UTC
+      # Pass-through: all other backend vars come from env_file in override
+    env_file:
+      - ${BACKEND_ENV_FILE:-./backend/.env.development}
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     restart: unless-stopped
@@ -54,12 +57,12 @@ services:
       context: .
       dockerfile: frontend/dockerfile
       args:
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:${BACKEND_PORT:-4000}}
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
     container_name: frontend_service
-    env_file:
-      - ./frontend/.env
     environment:
       BACKEND_URL: http://${BACKEND_HOST:-backend-service}:4000
+    env_file:
+      - ${FRONTEND_ENV_FILE:-./frontend/.env.development}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     restart: unless-stopped
@@ -85,7 +88,7 @@ services:
       BACKEND_HOST: ${BACKEND_HOST:-backend-service}
       BACKEND_PORT: "4000"
     ports:
-      - "${NGINX_PORT}:${NGINX_PORT}"
+      - "${NGINX_PORT:-80}:${NGINX_PORT:-80}"
     restart: always
     logging: *default-logging
     deploy:
@@ -94,7 +97,7 @@ services:
           cpus: "0.25"
           memory: 64M
     depends_on:
-      - frontend-service                                                  
+      - frontend-service
       - backend-service
 
 volumes:
