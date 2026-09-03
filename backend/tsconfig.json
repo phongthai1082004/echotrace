@@ -8,9 +8,20 @@
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
 		"skipLibCheck": true,
-		"types": ["node"],
+		"types": ["node", "jest", "@jest/globals"],
 		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true
+		"emitDecoratorMetadata": true,
+		"ignoreDeprecations": "6.0",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"],
+			"@features/*": ["src/features/*"],
+			"@middleware/*": ["src/middleware/*"],
+			"@lib/*": ["src/lib/*"],
+			"@utils/*": ["src/utils/*"],
+			"@di/*": ["src/di/*"]
+		}
 	},
-	"include": ["src/**/*", "lib/**/*"]
+	"include": ["src/**/*", "tests/**/*", "lib/**/*"]
 }
+

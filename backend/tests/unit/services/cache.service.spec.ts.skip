@@ -1,0 +1,513 @@
+/**
+ * Cache Service Unit Tests
+ * Test coverage: Redis operations with EP (Equivalence Partitioning) and BVA (Boundary Value Analysis)
+ * Methodology: test.md skill - EP, BVA, validation testing, atomic operations
+ */
+
+import { CacheService } from '../../../src/infrastructure/cache/cache.service';
+import { RedisMock } from '../../mocks/redis.mock';
+
+describe('CacheService - Redis Operations Unit Tests', () => {
+  let cacheService: CacheService;
+  let redisMock: RedisMock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Create a fresh mock instance for each test
+    redisMock = new RedisMock();
+    
+    // Create CacheService normally, then replace its Redis client with our mock
+    cacheService = new CacheService(600);
+    // Replace the internal Redis client with our RedisMock
+    (cacheService as any).client = redisMock;
+    
+    // Verify the mock was injected
+    console.log('Mock injected, incr is:', typeof (cacheService as any).client.incr);
+  });
+
+  afterEach(() => {
+    redisMock.clear();
+  });
+
+  // ===========================
+  // SECTION 1: BASIC GET/SET OPERATIONS
+  // ===========================
+
+  describe('1. GET/SET Operations - EP (Equivalence Partitioning)', () => {
+    
+    describe('1.1 EP: Valid Partition - Successfully store and retrieve data', () => {
+      test('EP: Should store and retrieve string value', async () => {
+        await cacheService.set('key1', 'value1');
+        const result = await cacheService.get<string>('key1');
+        expect(result).toBe('value1');
+      });
+
+      test('EP: Should store and retrieve object value', async () => {
+        const testObj = { id: 1, name: 'Test', active: true };
+        await cacheService.set('key2', testObj);
+        const result = await cacheService.get<typeof testObj>('key2');
+        expect(result).toEqual(testObj);
+      });
+
+      test('EP: Should store and retrieve array value', async () => {
+        const testArray = [1, 2, 3, { nested: 'object' }];
+        await cacheService.set('key3', testArray);
+        const result = await cacheService.get<typeof testArray>('key3');
+        expect(result).toEqual(testArray);
+      });
+
+      test('EP: Should store and retrieve numeric value', async () => {
+        await cacheService.set('key4', 42);
+        const result = await cacheService.get<number>('key4');
+        expect(result).toBe(42);
+      });
+
+      test('EP: Should store and retrieve boolean value', async () => {
+        await cacheService.set('key5', true);
+        const result = await cacheService.get<boolean>('key5');
+        expect(result).toBe(true);
+      });
+
+      test('EP: Should store and retrieve null value', async () => {
+        await cacheService.set('key6', null);
+        const result = await cacheService.get<null>('key6');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('1.2 EP: Invalid Partition - Non-existent keys', () => {
+      test('EP: Should return undefined for non-existent key', async () => {
+        const result = await cacheService.get<string>('non-existent-key');
+        expect(result).toBeUndefined();
+      });
+
+      test('EP: Should return undefined for deleted key', async () => {
+        await cacheService.set('key_to_delete', 'value');
+        await cacheService.delete('key_to_delete');
+        const result = await cacheService.get<string>('key_to_delete');
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('1.3 EP: Malformed/Corrupted Data in Cache', () => {
+      test('EP: Should gracefully handle corrupted JSON in cache', async () => {
+        // Simulate corrupted data by directly setting invalid JSON
+        await (redisMock as any).set('corrupted', '{invalid json}');
+        const result = await cacheService.get<any>('corrupted');
+        expect(result).toBeUndefined();
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 2: BOUNDARY VALUE ANALYSIS (BVA)
+  // ===========================
+
+  describe('2. Boundary Value Analysis (BVA) - TTL Expiration', () => {
+    describe('2.1 BVA: TTL Boundaries - Default 600 seconds', () => {
+      test('BVA: Should set value with default TTL (600 seconds)', async () => {
+        await cacheService.set('key_ttl_default', 'value');
+        // TTL should be set (check internal state)
+        const ttl = await redisMock.ttl('key_ttl_default');
+        expect(ttl).toBeGreaterThan(0);
+      });
+
+      test('BVA: Should set value with custom TTL (300 seconds)', async () => {
+        await cacheService.set('key_ttl_custom', 'value', 300);
+        const ttl = await redisMock.ttl('key_ttl_custom');
+        expect(ttl).toBeGreaterThan(0);
+        expect(ttl).toBeLessThanOrEqual(300);
+      });
+
+      test('BVA: Should set value with minimum TTL (1 second)', async () => {
+        await cacheService.set('key_ttl_min', 'value', 1);
+        const ttl = await redisMock.ttl('key_ttl_min');
+        expect(ttl).toBeGreaterThan(0);
+      });
+
+      test('BVA: Should set value with maximum TTL (24 hours = 86400 seconds)', async () => {
+        await cacheService.set('key_ttl_max', 'value', 86400);
+        const ttl = await redisMock.ttl('key_ttl_max');
+        expect(ttl).toBeGreaterThan(0);
+      });
+    });
+
+    describe('2.2 BVA: TTL Zero and Negative Edge Cases', () => {
+      test('BVA: Should handle zero TTL (expires immediately)', async () => {
+        await cacheService.set('key_ttl_zero', 'value', 0);
+        // Redis should treat 0 TTL specially; the key should expire
+        const ttl = await redisMock.ttl('key_ttl_zero');
+        expect([0, -2]).toContain(ttl); // Either expired or doesn't exist
+      });
+
+      test('BVA: Should handle negative TTL (should not set or auto-expire)', async () => {
+        // Negative TTL behavior depends on Redis; typically treated as immediate expiry
+        await cacheService.set('key_ttl_negative', 'value', -1);
+        const ttl = await redisMock.ttl('key_ttl_negative');
+        // Expect key to be expired or non-existent
+        expect(ttl).toBeLessThanOrEqual(-1);
+      });
+    });
+
+    describe('2.3 BVA: Expiration Time Boundaries', () => {
+      test('BVA: Should expire key after TTL elapses', async () => {
+        await cacheService.set('expiring_key', 'value', 1); // 1 second TTL
+        // Value should exist immediately after set
+        let result = await cacheService.get<string>('expiring_key');
+        expect(result).toBe('value');
+
+        // Wait for expiration
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+
+        // Value should be gone after TTL expires
+        result = await cacheService.get<string>('expiring_key');
+        expect(result).toBeUndefined();
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 3: ATOMIC INCREMENT OPERATION
+  // ===========================
+
+  describe('3. Atomic Increment - OTP Brute-Force Protection', () => {
+    describe('3.1 EP: Valid Increment Scenarios', () => {
+      test('EP: Should increment counter from 0 to 1 on first call', async () => {
+        const result = await cacheService.increment('otp_attempts:user1', 300);
+        expect(result).toBe(1);
+      });
+
+      test('EP: Should increment counter sequentially', async () => {
+        const key = 'otp_attempts:user2';
+        const result1 = await cacheService.increment(key, 300);
+        const result2 = await cacheService.increment(key, 300);
+        const result3 = await cacheService.increment(key, 300);
+
+        expect(result1).toBe(1);
+        expect(result2).toBe(2);
+        expect(result3).toBe(3);
+      });
+
+      test('EP: Should return counter value after multiple increments', async () => {
+        const key = 'otp_attempts:user3';
+        for (let i = 1; i <= 5; i++) {
+          const result = await cacheService.increment(key, 300);
+          expect(result).toBe(i);
+        }
+      });
+    });
+
+    describe('3.2 BVA: Increment Boundaries - OTP Brute-Force Limits', () => {
+      test('BVA: Should lock after exactly 5 attempts (max attempts threshold)', async () => {
+        const key = 'otp_attempts:user4';
+        for (let i = 1; i <= 5; i++) {
+          const result = await cacheService.increment(key, 300);
+          expect(result).toBe(i);
+        }
+        // 5th attempt should trigger lock
+        const finalAttempt = await cacheService.increment(key, 300);
+        expect(finalAttempt).toBe(6); // Counter incremented, but should be checked in auth logic
+      });
+
+      test('BVA: Should allow attempt at exactly 4 attempts (one before lock)', async () => {
+        const key = 'otp_attempts:user5';
+        for (let i = 1; i <= 4; i++) {
+          const result = await cacheService.increment(key, 300);
+          expect(result).toBe(i);
+        }
+        // Should still be allowed to try
+        const result = await cacheService.increment(key, 300);
+        expect(result).toBe(5);
+      });
+
+      test('BVA: Should reset to 1 after TTL expires', async () => {
+        const key = 'otp_attempts:user6';
+        
+        // Increment 3 times
+        for (let i = 1; i <= 3; i++) {
+          await cacheService.increment(key, 1); // 1 second TTL
+        }
+        
+        // Wait for TTL to expire
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+        
+        // Next increment should start from 1 (counter reset by TTL)
+        const result = await cacheService.increment(key, 300);
+        expect(result).toBe(1);
+      });
+    });
+
+    describe('3.3 BVA: Large Counter Values', () => {
+      test('BVA: Should handle large counter values', async () => {
+        const key = 'large_counter';
+        // Simulate existing large value
+        await (redisMock as any).set(key, 999999);
+        
+        const result = await cacheService.increment(key, 300);
+        expect(result).toBe(1000000);
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 4: DELETE OPERATION
+  // ===========================
+
+  describe('4. DELETE Operation - Multiple Keys', () => {
+    describe('4.1 EP: Valid Delete Scenarios', () => {
+      test('EP: Should delete single key', async () => {
+        await cacheService.set('key_to_delete', 'value');
+        await cacheService.delete('key_to_delete');
+        const result = await cacheService.get<string>('key_to_delete');
+        expect(result).toBeUndefined();
+      });
+
+      test('EP: Should delete multiple keys', async () => {
+        await cacheService.set('key1', 'value1');
+        await cacheService.set('key2', 'value2');
+        await cacheService.set('key3', 'value3');
+
+        await cacheService.delete('key1', 'key2', 'key3');
+
+        expect(await cacheService.get<string>('key1')).toBeUndefined();
+        expect(await cacheService.get<string>('key2')).toBeUndefined();
+        expect(await cacheService.get<string>('key3')).toBeUndefined();
+      });
+
+      test('EP: Should handle delete of non-existent keys gracefully', async () => {
+        // Should not throw error
+        await expect(cacheService.delete('non_existent_key')).resolves.toBeUndefined();
+      });
+
+      test('EP: Should handle delete with empty keys array', async () => {
+        // Should not throw error
+        await expect(cacheService.delete()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('4.2 BVA: Delete Boundary Cases', () => {
+      test('BVA: Should delete maximum number of keys in single call', async () => {
+        const keysToDelete: string[] = [];
+        for (let i = 0; i < 100; i++) {
+          const key = `bulk_key_${i}`;
+          keysToDelete.push(key);
+          await cacheService.set(key, `value_${i}`);
+        }
+
+        await cacheService.delete(...keysToDelete);
+
+        for (const key of keysToDelete) {
+          const result = await cacheService.get(key);
+          expect(result).toBeUndefined();
+        }
+      });
+
+      test('BVA: Should delete with mix of existing and non-existing keys', async () => {
+        await cacheService.set('existing_key', 'value');
+        
+        // Delete mix of existing and non-existing keys
+        await cacheService.delete('existing_key', 'non_existing_key_1', 'non_existing_key_2');
+
+        const result = await cacheService.get<string>('existing_key');
+        expect(result).toBeUndefined();
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 5: REDIS CONNECTION FAILURE - FAIL-OPEN STRATEGY
+  // ===========================
+
+  describe('5. Redis Failure Handling - Fail-Open Strategy', () => {
+    describe('5.1 EP: Redis Down Behavior', () => {
+      test('EP: GET should return undefined when Redis is down', async () => {
+        redisMock.simulateFailure();
+        const result = await cacheService.get<string>('any_key');
+        expect(result).toBeUndefined();
+      });
+
+      test('EP: SET should silently fail when Redis is down', async () => {
+        redisMock.simulateFailure();
+        // Should not throw error
+        await expect(cacheService.set('key', 'value')).resolves.toBeUndefined();
+      });
+
+      test('EP: DELETE should silently fail when Redis is down', async () => {
+        redisMock.simulateFailure();
+        // Should not throw error
+        await expect(cacheService.delete('key')).resolves.toBeUndefined();
+      });
+
+      test('EP: INCREMENT should return Infinity when Redis is down (fail-open)', async () => {
+        redisMock.simulateFailure();
+        const result = await cacheService.increment('otp_attempts', 300);
+        expect(result).toBe(Infinity);
+      });
+    });
+
+    describe('5.2 BVA: Redis Recovery After Failure', () => {
+      test('BVA: Should recover and work normally after Redis comes back online', async () => {
+        // First, simulate failure
+        redisMock.simulateFailure();
+        let result = await cacheService.increment('counter', 300);
+        expect(result).toBe(Infinity);
+
+        // Redis comes back online
+        redisMock.clear();
+        
+        // Should work normally now
+        result = await cacheService.increment('counter', 300);
+        expect(result).toBe(1);
+
+        // Subsequent increments should work
+        result = await cacheService.increment('counter', 300);
+        expect(result).toBe(2);
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 6: VALIDATION TESTING - INPUT EDGE CASES
+  // ===========================
+
+  describe('6. Validation Testing - Input Edge Cases', () => {
+    describe('6.1 Key Name Validation', () => {
+      test('Validation: Should handle empty string key', async () => {
+        await cacheService.set('', 'value');
+        const result = await cacheService.get<string>('');
+        expect(result).toBe('value'); // Redis allows empty key
+      });
+
+      test('Validation: Should handle very long key name', async () => {
+        const longKey = 'k'.repeat(512); // 512 character key
+        await cacheService.set(longKey, 'value');
+        const result = await cacheService.get<string>(longKey);
+        expect(result).toBe('value');
+      });
+
+      test('Validation: Should handle special characters in key', async () => {
+        const specialKey = 'key:with:colons:and_underscores-and-dashes';
+        await cacheService.set(specialKey, 'value');
+        const result = await cacheService.get<string>(specialKey);
+        expect(result).toBe('value');
+      });
+    });
+
+    describe('6.2 Value Type Validation', () => {
+      test('Validation: Should handle deeply nested objects', async () => {
+        const deepObj = {
+          level1: {
+            level2: {
+              level3: {
+                level4: {
+                  value: 'deep',
+                },
+              },
+            },
+          },
+        };
+        await cacheService.set('deep_key', deepObj);
+        const result = await cacheService.get<typeof deepObj>('deep_key');
+        expect(result).toEqual(deepObj);
+      });
+
+      test('Validation: Should handle large objects (> 1MB)', async () => {
+        // Create 2MB object
+        const largeArray = new Array(1000000).fill('x');
+        const largeObj = { data: largeArray };
+        
+        await cacheService.set('large_key', largeObj);
+        const result = await cacheService.get<typeof largeObj>('large_key');
+        expect(result?.data).toHaveLength(1000000);
+      });
+
+      test('Validation: Should handle circular reference gracefully', async () => {
+        const obj: any = { name: 'test' };
+        obj.self = obj; // Circular reference
+        
+        // Should handle JSON serialization error gracefully
+        // (circular references typically fail in JSON.stringify)
+        await expect(cacheService.set('circular_key', obj)).rejects.toThrow();
+      });
+    });
+
+    describe('6.3 Concurrency Testing', () => {
+      test('Validation: Should handle concurrent GET operations', async () => {
+        await cacheService.set('concurrent_key', 'value');
+        
+        const promises = Array.from({ length: 100 }).map(() =>
+          cacheService.get<string>('concurrent_key')
+        );
+        
+        const results = await Promise.all(promises);
+        results.forEach((result) => {
+          expect(result).toBe('value');
+        });
+      });
+
+      test('Validation: Should handle concurrent INCREMENT operations (race-safe)', async () => {
+        const key = 'concurrent_counter';
+        const promises = Array.from({ length: 100 }).map(() =>
+          cacheService.increment(key, 300)
+        );
+        
+        const results = await Promise.all(promises);
+        const uniqueResults = new Set(results);
+        
+        // Should have 100 unique incremented values (1-100)
+        expect(uniqueResults.size).toBe(100);
+      });
+
+      test('Validation: Should handle concurrent SET operations', async () => {
+        const promises = Array.from({ length: 50 }).map((_, i) =>
+          cacheService.set(`concurrent_key_${i}`, `value_${i}`)
+        );
+        
+        await expect(Promise.all(promises)).resolves.toBeDefined();
+      });
+    });
+  });
+
+  // ===========================
+  // SECTION 7: INTEGRATION WITH OTP RATE LIMITING
+  // ===========================
+
+  describe('7. Integration Test - OTP Rate Limiting Scenario', () => {
+    test('Should track OTP attempts and lock after max attempts', async () => {
+      const userEmail = 'user@example.com';
+      const attemptKey = `otp_attempts:${userEmail}`;
+      const maxAttempts = 5;
+
+      // Simulate 6 failed OTP verification attempts
+      let attempts = 0;
+      let locked = false;
+
+      for (let i = 0; i < 6; i++) {
+        attempts = await cacheService.increment(attemptKey, 300);
+        if (attempts > maxAttempts) {
+          locked = true;
+        }
+      }
+
+      expect(attempts).toBe(6);
+      expect(locked).toBe(true);
+    });
+
+    test('Should reset attempts after TTL expires', async () => {
+      const userEmail = 'user@example.com';
+      const attemptKey = `otp_attempts:${userEmail}`;
+
+      // First attempt
+      let attempts = await cacheService.increment(attemptKey, 1);
+      expect(attempts).toBe(1);
+
+      // Wait for TTL expiration
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      // Should reset after TTL
+      attempts = await cacheService.increment(attemptKey, 300);
+      expect(attempts).toBe(1);
+    });
+  });
+});

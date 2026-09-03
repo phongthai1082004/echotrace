@@ -7,10 +7,10 @@ x-logging: &default-logging
 services:
   redis-service:
     image: redis:alpine
-    container_name: redis-container
-    command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
+    container_name: ${REDIS_HOST}
+    command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -25,67 +25,88 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
   backend-service:
     build:
       context: .
       dockerfile: backend/dockerfile
-    container_name: backend_service
+    container_name: ${BACKEND_HOST}
     environment:
-      REDIS_URL: "redis://redis-service:6379"
-      BACKEND_PORT: "4000"
-      TZ: UTC
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis-service:6379   
+      - BACKEND_PORT=${BACKEND_PORT}
+      - TZ=UTC
     env_file:
-      - ./backend/.env.development
+      - ${BACKEND_ENV_FILE}
     ports:
-      - "4000:4000"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     restart: unless-stopped
     logging: *default-logging
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: 512M
+          cpus: "1.50"
+          memory: 2048M   
     depends_on:
       redis-service:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${BACKEND_PORT}/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
   frontend-service:
     build:
       context: .
       dockerfile: frontend/dockerfile
       args:
-        NEXT_PUBLIC_BACKEND_URL: "http://localhost:4000"
-    container_name: frontend_service
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+    container_name: ${FRONTEND_HOST}
     environment:
-      BACKEND_URL: "http://backend-service:4000"
-      PORT: "3000"
-      HOSTNAME: "0.0.0.0"
+      - BACKEND_URL=http://${BACKEND_HOST}:${BACKEND_PORT}
+      - PORT=${FRONTEND_PORT}
+      - HOSTNAME=0.0.0.0
     env_file:
-      - ./frontend/.env.development
+      - ${FRONTEND_ENV_FILE}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     restart: unless-stopped
     logging: *default-logging
     deploy:
       resources:
         limits:
-          cpus: "0.75"
+          cpus: "0.50"
           memory: 512M
     depends_on:
-      - backend-service
+      backend-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${FRONTEND_PORT}').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   nginx-service:
     build:
       context: ./nginx
       dockerfile: dockerfile
     container_name: nginx-container
     environment:
-      NGINX_PORT: "80"
-      SERVER_DOMAIN: "localhost"
-      FRONTEND_HOST: "frontend-service"
-      FRONTEND_PORT: "3000"
-      BACKEND_HOST: "backend-service"
-      BACKEND_PORT: "4000"
+      - SERVER_DOMAIN=${SERVER_DOMAIN}
+      - FRONTEND_HOST=${FRONTEND_HOST}
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - BACKEND_HOST=${BACKEND_HOST}
+      - BACKEND_PORT=${BACKEND_PORT}
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      # Mount SSL certs từ VPS (generated 1 lần bằng certbot, tự renew)
+      # Không commit certs vào repo, chỉ tồn tại trên VPS
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     restart: always
     logging: *default-logging
     deploy:
@@ -94,8 +115,10 @@ services:
           cpus: "0.25"
           memory: 64M
     depends_on:
-      - frontend-service
-      - backend-service
+      frontend-service:
+        condition: service_started
+      backend-service:
+        condition: service_started
 
 volumes:
   redis_data:

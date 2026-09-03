@@ -29,7 +29,7 @@ function run(request: Request, envMock: unknown) {
 }
 
 describe("GET cache headers", () => {
-	it("original -> immutable vĩnh viễn", async () => {
+	it("original -> immutable long-term cache", async () => {
 		const req = new IncomingRequest("http://x.com/echotrace/gallery/u1/abc");
 		const { p, ctx } = run(req, ENV_BASE);
 		const res = await p;
@@ -37,7 +37,7 @@ describe("GET cache headers", () => {
 		expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
 	});
 
-	it("HEAD cũng mang Cache-Control", async () => {
+	it("HEAD request also includes Cache-Control", async () => {
 		const req = new IncomingRequest("http://x.com/echotrace/gallery/u1/abc", { method: "HEAD" });
 		const { p, ctx } = run(req, ENV_BASE);
 		const res = await p;
@@ -45,7 +45,7 @@ describe("GET cache headers", () => {
 		expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
 	});
 
-	it("transform /w_N/ -> TTL ngắn để ảnh xoá hết hạn trong ngày", async () => {
+	it("transform /w_N/ -> short TTL for image expiration within day", async () => {
 		const envMock = {
 			...ENV_BASE,
 			IMAGES: {

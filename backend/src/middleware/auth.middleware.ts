@@ -25,7 +25,6 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 	}
 };
 
-// ponytail: 1 guard thay adminMiddleware lồng authMiddleware; authMiddleware vẫn dùng nội bộ.
 export const authGuard = (...roles: string[]) =>
 	(req: AuthRequest, res: Response, next: NextFunction) =>
 		authMiddleware(req, res, (err?: unknown) => {

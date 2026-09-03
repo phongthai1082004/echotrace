@@ -65,7 +65,7 @@ container.register('PayOS', {
 	}),
 });
 
-// ponytail: mỗi feature tự đăng ký service của nó; file này chỉ dài thêm khi THÊM FEATURE MỚI.
+
 [registerAuth, registerBooks, registerUsers, registerUploads, registerSuppliers,
 	registerPrintOptions, registerCart, registerOrder, registerCoupons,
 	registerSampleBooks, registerPayment, registerFinance].forEach((r) => r(container));
