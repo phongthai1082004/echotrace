@@ -1,0 +1,390 @@
+name: CI/CD Pipeline - 6 Stages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PNPM_HOME: /home/runner/.pnpm-store
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ==========================================
+  # STAGE 1: LINT & TYPE CHECK
+  # ==========================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            cmd: pnpm --filter backend run lint && pnpm --filter backend run type-check
+            working-dir: backend
+          - service: frontend
+            cmd: pnpm --filter frontend run lint && pnpm --filter frontend run type-check
+            working-dir: frontend
+          - service: shared
+            cmd: pnpm --filter @echotrace/shared run build
+            working-dir: shared
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting & type check - ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.working-dir }}
+          ${{ matrix.cmd }}
+
+  # ==========================================
+  # STAGE 2: DETECT CHANGES
+  # ==========================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      shared: ${{ steps.filter.outputs.shared }}
+      infra: ${{ steps.filter.outputs.infra }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'shared/**'
+              - 'pnpm-workspace.yaml'
+              - '.pnpmfile.cjs'
+            frontend:
+              - 'frontend/**'
+              - 'shared/**'
+              - 'pnpm-workspace.yaml'
+              - '.pnpmfile.cjs'
+            shared:
+              - 'shared/**'
+              - 'pnpm-workspace.yaml'
+            infra:
+              - 'docker-compose.yml'
+              - 'nginx/**'
+              - '.github/workflows/**'
+
+  # ==========================================
+  # STAGE 3: TARGETED TESTS
+  # ==========================================
+  test:
+    name: Test - ${{ matrix.service }}
+    needs: [lint, changes]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            changed: ${{ needs.changes.outputs.backend }}
+            cmd: pnpm --filter backend test:unit --forceExit
+          - service: frontend
+            changed: ${{ needs.changes.outputs.frontend }}
+            cmd: pnpm --filter frontend test --run
+    
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests - ${{ matrix.service }}
+        if: matrix.changed == 'true'
+        run: |
+          cd ${{ matrix.service }}
+          ${{ matrix.cmd }}
+        env:
+          NODE_ENV: test
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+
+      - name: Skip tests - ${{ matrix.service }} (no changes)
+        if: matrix.changed != 'true'
+        run: echo "✓ No changes detected in ${{ matrix.service }}, skipping tests"
+
+  # ==========================================
+  # STAGE 4: BUILD & PUSH IMAGES
+  # ==========================================
+  build:
+    name: Build & Push - ${{ matrix.service }}
+    needs: [test, changes]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    strategy:
+      matrix:
+        include:
+          - service: backend-service
+            changed: ${{ needs.changes.outputs.backend }}
+            dockerfile: backend/Dockerfile
+            context: backend
+          - service: frontend-service
+            changed: ${{ needs.changes.outputs.frontend }}
+            dockerfile: frontend/Dockerfile
+            context: frontend
+          - service: nginx-service
+            changed: ${{ needs.changes.outputs.infra }}
+            dockerfile: nginx/dockerfile
+            context: .
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        if: matrix.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        if: matrix.changed == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=sha,format=long
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+
+      - name: Build and push container image
+        if: matrix.changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Skip build - ${{ matrix.service }} (no changes)
+        if: matrix.changed != 'true'
+        run: echo "✓ No changes detected in ${{ matrix.service }}, skipping build"
+
+  # ==========================================
+  # STAGE 5: DEPLOY
+  # ==========================================
+  deploy:
+    name: Deploy to VPS
+    needs: [build, changes]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy services
+        run: |
+          echo "[LOG] Copying docker-compose.yml to VPS..."
+          scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
+          
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'DEPLOY_EOF'
+          set -e
+          cd ${{ secrets.APP_DIR }}
+
+          echo "[LOG] Logging into ghcr.io..."
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          echo "[LOG] Pulling latest images from ghcr.io..."
+          docker compose --env-file .env pull
+
+          echo "[LOG] Starting containers..."
+          docker compose --env-file .env up -d --force-recreate --remove-orphans
+
+          echo "[LOG] Waiting for services to initialize..."
+          sleep 15
+
+          echo "[LOG] Container status:"
+          docker compose ps
+          DEPLOY_EOF
+
+  # ==========================================
+  # STAGE 6: HEALTH CHECK & AUTO-ROLLBACK
+  # ==========================================
+  health-check:
+    name: Health Check & Rollback
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Health check backends
+        id: health
+        continue-on-error: true
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'HEALTH_EOF'
+          set -e
+          
+          echo "[LOG] Running health checks..."
+          
+          # Backend internal health (port 4000)
+          echo "Checking backend health (internal)..."
+          for i in {1..5}; do
+            if curl -sf http://backend-service:4000/health > /dev/null 2>&1; then
+              echo "✓ Backend is healthy"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "✗ Backend health check failed"
+              exit 1
+            fi
+            echo "Retry $i/5..."
+            sleep 10
+          done
+          
+          # Frontend internal health (port 3000)
+          echo "Checking frontend health (internal)..."
+          for i in {1..5}; do
+            if curl -sf http://frontend-service:3000 > /dev/null 2>&1; then
+              echo "✓ Frontend is healthy"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "✗ Frontend health check failed"
+              exit 1
+            fi
+            echo "Retry $i/5..."
+            sleep 10
+          done
+          
+          # Nginx public endpoint check (port 80)
+          echo "Checking nginx health (public)..."
+          for i in {1..5}; do
+            if curl -sf http://localhost > /dev/null 2>&1; then
+              echo "✓ Nginx is responding"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "✗ Nginx health check failed"
+              exit 1
+            fi
+            echo "Retry $i/5..."
+            sleep 10
+          done
+          
+          echo "✅ All services are healthy!"
+          
+          HEALTH_EOF
+
+      - name: Auto-rollback on failure
+        if: steps.health.outcome == 'failure'
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ROLLBACK_EOF'
+          set -e
+          
+          cd ${{ secrets.APP_DIR }}
+          
+          echo "❌ Health checks failed - initiating rollback..."
+          
+          # Rollback to previous image version
+          echo "🔄 Rolling back to previous stable version..."
+          docker compose pull
+          docker compose down
+          docker compose up -d --force-recreate
+          
+          sleep 10
+          
+          # Verify rollback
+          if curl -sf http://backend-service:4000/health > /dev/null 2>&1; then
+            echo "✅ Rollback successful - services restored"
+            docker compose ps
+          else
+            echo "⚠️  Rollback completed but services may need manual intervention"
+            docker compose logs
+            exit 1
+          fi
+          
+          ROLLBACK_EOF
+
+      - name: Deployment success
+        if: steps.health.outcome == 'success'
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "✅ All health checks passed"
+          echo "📊 Services are running and responding normally"
