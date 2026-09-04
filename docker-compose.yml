@@ -27,9 +27,7 @@ services:
       retries: 3
 
   backend-service:
-    build:
-      context: .
-      dockerfile: backend/dockerfile
+    image: ghcr.io/phongthai1082004/echotrace/backend-service:latest
     container_name: ${BACKEND_HOST}
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -58,11 +56,7 @@ services:
       start_period: 20s
 
   frontend-service:
-    build:
-      context: .
-      dockerfile: frontend/dockerfile
-      args:
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+    image: ghcr.io/phongthai1082004/echotrace/frontend-service:latest
     container_name: ${FRONTEND_HOST}
     environment:
       - BACKEND_URL=http://${BACKEND_HOST}:${BACKEND_PORT}
@@ -90,9 +84,7 @@ services:
       start_period: 15s
 
   nginx-service:
-    build:
-      context: ./nginx
-      dockerfile: dockerfile
+    image: ghcr.io/phongthai1082004/echotrace/nginx-service:latest
     container_name: nginx-container
     environment:
       - SERVER_DOMAIN=${SERVER_DOMAIN}
