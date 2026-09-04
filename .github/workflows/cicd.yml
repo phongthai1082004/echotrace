@@ -268,7 +268,7 @@ jobs:
             sleep 15
 
             echo '[LOG] Container status:'
-            docker compose ps
+            docker compose --env-file ${APP_DIR}/.env.production ps
           "
 
   # ==========================================
@@ -363,9 +363,9 @@ jobs:
           
           # Rollback to previous image version
           echo "🔄 Rolling back to previous stable version..."
-          docker compose pull
-          docker compose down
-          docker compose up -d --force-recreate
+          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production pull
+          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production down
+          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production up -d --force-recreate
           
           sleep 10
           
