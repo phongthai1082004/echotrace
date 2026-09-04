@@ -150,9 +150,7 @@ jobs:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
 
-      - name: Skip tests - ${{ matrix.service }} (no changes)
-        if: matrix.changed != 'true'
-        run: echo "✓ No changes detected in ${{ matrix.service }}, skipping tests"
+
 
   # ==========================================
   # STAGE 4: BUILD & PUSH IMAGES
@@ -209,7 +207,6 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push container image
-        if: matrix.changed == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
@@ -222,9 +219,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Skip build - ${{ matrix.service }} (no changes)
-        if: matrix.changed != 'true'
-        run: echo "✓ No changes detected in ${{ matrix.service }}, skipping build"
+
 
   # ==========================================
   # STAGE 5: DEPLOY
