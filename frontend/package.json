@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "echo 'No tests configured for frontend'",
+    "test:run": "echo 'No tests configured for frontend'"
   },
   "dependencies": {
     "@echotrace/shared": "workspace:*",

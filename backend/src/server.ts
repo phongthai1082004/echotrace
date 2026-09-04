@@ -77,11 +77,6 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 	app.use('/:lang/api', apiRouter);
 	app.use('/api', apiRouter);
 
-	// Health check endpoint
-	app.get('/health', (_req: Request, res: Response) => {
-		res.json({ status: 'ok', timestamp: new Date().toISOString() });
-	});
-
 	app.use(errorMiddleware);
 
 	const server = app.listen(PORT, () => {
