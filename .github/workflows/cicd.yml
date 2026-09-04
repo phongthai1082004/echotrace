@@ -236,31 +236,40 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Deploy services
+        env:
+          APP_DIR: ${{ secrets.APP_DIR }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          GITHUB_TOKEN_VAL: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR_VAL: ${{ github.actor }}
         run: |
           echo "[LOG] Copying docker-compose.yml and nginx config to VPS..."
-          scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
-          scp -r nginx ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
+          scp docker-compose.yml ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
+          scp -r nginx ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
           
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'DEPLOY_EOF'
-          set -e
-          cd ${{ secrets.APP_DIR }}
+          ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_HOST} "
+            set -e
+            cd ${APP_DIR}
 
-          echo "[LOG] Logging into ghcr.io..."
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo '[LOG] Logging into ghcr.io...'
+            echo '${GITHUB_TOKEN_VAL}' | docker login ghcr.io -u ${GITHUB_ACTOR_VAL} --password-stdin
 
-          echo "[LOG] Pulling latest images from ghcr.io..."
-          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production pull
+            echo '[LOG] Checking env file...'
+            ls -la ${APP_DIR}/
+            head -3 ${APP_DIR}/.env.production || echo 'FILE NOT FOUND'
 
-          echo "[LOG] Starting containers..."
-          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production up -d --force-recreate --remove-orphans
+            echo '[LOG] Pulling latest images from ghcr.io...'
+            docker compose --env-file ${APP_DIR}/.env.production pull
 
-          echo "[LOG] Waiting for services to initialize..."
-          sleep 15
+            echo '[LOG] Starting containers...'
+            docker compose --env-file ${APP_DIR}/.env.production up -d --force-recreate --remove-orphans
 
-          echo "[LOG] Container status:"
-          docker compose ps
-          DEPLOY_EOF
+            echo '[LOG] Waiting for services to initialize...'
+            sleep 15
+
+            echo '[LOG] Container status:'
+            docker compose ps
+          "
 
   # ==========================================
   # STAGE 6: HEALTH CHECK & AUTO-ROLLBACK
