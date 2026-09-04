@@ -250,10 +250,10 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
           echo "[LOG] Pulling latest images from ghcr.io..."
-          docker compose --env-file .env.production pull
+          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production pull
 
           echo "[LOG] Starting containers..."
-          docker compose --env-file .env.production up -d --force-recreate --remove-orphans
+          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production up -d --force-recreate --remove-orphans
 
           echo "[LOG] Waiting for services to initialize..."
           sleep 15
