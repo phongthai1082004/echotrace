@@ -298,13 +298,13 @@ jobs:
           ssh -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'HEALTH_EOF'
           set -e
-          
+
           echo "[LOG] Running health checks..."
-          
-          # Backend internal health (port 4000)
-          echo "Checking backend health (internal)..."
+
+          # Check via localhost ports (VPS host level)
+          echo "Checking backend health..."
           for i in {1..5}; do
-            if curl -sf http://backend-service:4000/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:4000/health > /dev/null 2>&1; then
               echo "✓ Backend is healthy"
               break
             fi
@@ -315,11 +315,10 @@ jobs:
             echo "Retry $i/5..."
             sleep 10
           done
-          
-          # Frontend internal health (port 3000)
-          echo "Checking frontend health (internal)..."
+
+          echo "Checking frontend health..."
           for i in {1..5}; do
-            if curl -sf http://frontend-service:3000 > /dev/null 2>&1; then
+            if curl -sf http://localhost:3000 > /dev/null 2>&1; then
               echo "✓ Frontend is healthy"
               break
             fi
@@ -330,9 +329,8 @@ jobs:
             echo "Retry $i/5..."
             sleep 10
           done
-          
-          # Nginx public endpoint check (port 80)
-          echo "Checking nginx health (public)..."
+
+          echo "Checking nginx health..."
           for i in {1..5}; do
             if curl -sf http://localhost > /dev/null 2>&1; then
               echo "✓ Nginx is responding"
@@ -345,41 +343,41 @@ jobs:
             echo "Retry $i/5..."
             sleep 10
           done
-          
-          echo "✅ All services are healthy!"
-          
+
+          echo "All services are healthy!"
           HEALTH_EOF
 
       - name: Auto-rollback on failure
         if: steps.health.outcome == 'failure'
+        env:
+          APP_DIR: ${{ secrets.APP_DIR }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          GITHUB_TOKEN_VAL: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR_VAL: ${{ github.actor }}
         run: |
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ROLLBACK_EOF'
-          set -e
-          
-          cd ${{ secrets.APP_DIR }}
-          
-          echo "❌ Health checks failed - initiating rollback..."
-          
-          # Rollback to previous image version
-          echo "🔄 Rolling back to previous stable version..."
-          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production pull
-          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production down
-          docker compose --env-file ${{ secrets.APP_DIR }}/.env.production up -d --force-recreate
-          
-          sleep 10
-          
-          # Verify rollback
-          if curl -sf http://backend-service:4000/health > /dev/null 2>&1; then
-            echo "✅ Rollback successful - services restored"
-            docker compose ps
-          else
-            echo "⚠️  Rollback completed but services may need manual intervention"
-            docker compose logs
-            exit 1
-          fi
-          
-          ROLLBACK_EOF
+          ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_HOST} "
+            set -e
+            cd ${APP_DIR}
+
+            echo 'Health checks failed - initiating rollback...'
+            echo '${GITHUB_TOKEN_VAL}' | docker login ghcr.io -u ${GITHUB_ACTOR_VAL} --password-stdin
+
+            docker compose --env-file ${APP_DIR}/.env.production pull
+            docker compose --env-file ${APP_DIR}/.env.production down
+            docker compose --env-file ${APP_DIR}/.env.production up -d --force-recreate
+
+            sleep 10
+
+            if curl -sf http://localhost:4000/health > /dev/null 2>&1; then
+              echo 'Rollback successful'
+              docker compose --env-file ${APP_DIR}/.env.production ps
+            else
+              echo 'Rollback completed - manual intervention may be needed'
+              docker compose --env-file ${APP_DIR}/.env.production logs --tail=50
+              exit 1
+            fi
+          "
 
       - name: Deployment success
         if: steps.health.outcome == 'success'
