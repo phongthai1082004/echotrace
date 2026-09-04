@@ -165,15 +165,12 @@ jobs:
       matrix:
         include:
           - service: backend-service
-            changed: ${{ needs.changes.outputs.backend }}
             dockerfile: backend/Dockerfile
-            context: backend
+            context: .
           - service: frontend-service
-            changed: ${{ needs.changes.outputs.frontend }}
             dockerfile: frontend/Dockerfile
-            context: frontend
+            context: .
           - service: nginx-service
-            changed: ${{ needs.changes.outputs.infra }}
             dockerfile: nginx/dockerfile
             context: .
 
