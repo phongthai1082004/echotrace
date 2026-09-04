@@ -7,10 +7,10 @@ x-logging: &default-logging
 services:
   redis-service:
     image: redis:alpine
-    container_name: ${REDIS_HOST}
+    container_name: ${REDIS_HOST:-redis-service}
     command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -28,16 +28,16 @@ services:
 
   backend-service:
     image: ghcr.io/phongthai1082004/echotrace/backend-service:latest
-    container_name: ${BACKEND_HOST}
+    container_name: ${BACKEND_HOST:-backend-service}
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis-service:6379   
-      - BACKEND_PORT=${BACKEND_PORT}
+      - BACKEND_PORT=${BACKEND_PORT:-4000}
       - TZ=UTC
     env_file:
-      - ${BACKEND_ENV_FILE}
+      - ${BACKEND_ENV_FILE:-./backend/.env.production}
     ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     restart: unless-stopped
     logging: *default-logging
     deploy:
@@ -49,7 +49,7 @@ services:
       redis-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${BACKEND_PORT}/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -57,15 +57,15 @@ services:
 
   frontend-service:
     image: ghcr.io/phongthai1082004/echotrace/frontend-service:latest
-    container_name: ${FRONTEND_HOST}
+    container_name: ${FRONTEND_HOST:-frontend-service}
     environment:
-      - BACKEND_URL=http://${BACKEND_HOST}:${BACKEND_PORT}
-      - PORT=${FRONTEND_PORT}
+      - BACKEND_URL=http://${BACKEND_HOST:-backend-service}:${BACKEND_PORT:-4000}
+      - PORT=${FRONTEND_PORT:-3000}
       - HOSTNAME=0.0.0.0
     env_file:
-      - ${FRONTEND_ENV_FILE}
+      - ${FRONTEND_ENV_FILE:-./frontend/.env.production}
     ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     restart: unless-stopped
     logging: *default-logging
     deploy:
@@ -77,7 +77,7 @@ services:
       backend-service:
         condition: service_started
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${FRONTEND_PORT}').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 20s
       timeout: 5s
       retries: 3
@@ -87,11 +87,11 @@ services:
     image: ghcr.io/phongthai1082004/echotrace/nginx-service:latest
     container_name: nginx-container
     environment:
-      - SERVER_DOMAIN=${SERVER_DOMAIN}
-      - FRONTEND_HOST=${FRONTEND_HOST}
-      - FRONTEND_PORT=${FRONTEND_PORT}
-      - BACKEND_HOST=${BACKEND_HOST}
-      - BACKEND_PORT=${BACKEND_PORT}
+      - SERVER_DOMAIN=${SERVER_DOMAIN:-bettermemoire.com}
+      - FRONTEND_HOST=${FRONTEND_HOST:-frontend-service}
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_HOST=${BACKEND_HOST:-backend-service}
+      - BACKEND_PORT=${BACKEND_PORT:-4000}
     ports:
       - "80:80"
       - "443:443"
