@@ -7,10 +7,8 @@ async function main() {
 	const supplierCount = await prisma.supplier.count();
 
 	if (userCount === 0) {
-		const adminPassword = process.env.SEED_ADMIN_PASSWORD || randomBytes(12).toString('hex');
-		const adminHash = await bcrypt.hash(adminPassword, 10);
+		const adminHash = await bcrypt.hash("123", 10);
 		const userHash = await bcrypt.hash('user123', 10);
-		console.log(`Seeded admin password: ${adminPassword}`);
 
 		await prisma.user.createMany({
 			data: [
