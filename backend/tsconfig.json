@@ -11,7 +11,8 @@
         "types": ["node", "jest", "@jest/globals"],
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-    "baseUrl": ".",
+        "isolatedModules": true,
+        "baseUrl": ".",
         "paths": {
             "@/*": ["src/*"],
             "@features/*": ["src/features/*"],
