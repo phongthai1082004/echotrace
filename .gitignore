@@ -44,4 +44,6 @@ pnpm-debug.log*
 # Turbo
 .turbo/
 
-# md
+# test
+tests/
+test-result/

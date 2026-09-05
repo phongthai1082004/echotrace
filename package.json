@@ -14,12 +14,19 @@
     "seed": "pnpm --filter backend exec tsx prisma/seed-admin.ts"
   },
   "devDependencies": {
-    "prisma": "^7.8.0"
+    "prisma": "^7.8.0",
+    "typescript": "^6.0.3"
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["react", "react-dom"],
-      "allowAny": ["react", "react-dom"]
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ],
+      "allowAny": [
+        "react",
+        "react-dom"
+      ]
     }
   }
 }

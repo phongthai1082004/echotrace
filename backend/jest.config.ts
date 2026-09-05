@@ -1,7 +1,7 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   rootDir: '.',
   roots: ['<rootDir>/tests', '<rootDir>/src'],
@@ -10,18 +10,18 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: '<rootDir>/tsconfig.test.json',
-      babelConfig: false,
+      useESM: true,
     }],
   },
   moduleNameMapper: {
-    '^@echotrace/shared$': '<rootDir>/tests/mocks/shared.mock.ts',
-    '^@prisma/client$': '<rootDir>/tests/mocks/prisma.mock.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@middleware/(.*)$': '<rootDir>/src/middleware/$1',
     '^@lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@di/(.*)$': '<rootDir>/src/di/$1',
+    '^@echotrace/shared$': '<rootDir>/tests/mocks/shared.mock.ts',
+    '^@prisma/client$': '<rootDir>/tests/mocks/prisma.mock.ts',
     '^(.+)\\.js$': '$1',
   },
   moduleDirectories: ['node_modules', '<rootDir>/src'],

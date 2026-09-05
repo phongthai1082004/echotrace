@@ -1,7 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "baseUrl": ".",
+    "rootDir": ".",
+    "isolatedModules": true,
     "paths": {
       "@/*": ["src/*"],
       "@features/*": ["src/features/*"],
