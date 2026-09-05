@@ -1,9 +1,9 @@
-import { UploadsService } from '../../../src/features/uploads/uploads.service';
+import { UserImagesService } from '../../../src/features/uploads/user-images.service';
 import { UserImagesRepository } from '../../../src/features/uploads/user-images.repository';
 import { IR2ImageService } from '../../../src/infrastructure/upload/r2-image.service';
 
-describe('UploadsService - Unit Tests', () => {
-  let service: UploadsService;
+describe('UserImagesService - Unit Tests', () => {
+  let service: UserImagesService;
   let mockRepository: jest.Mocked<UserImagesRepository>;
   let mockR2Service: jest.Mocked<IR2ImageService>;
 
@@ -20,7 +20,7 @@ describe('UploadsService - Unit Tests', () => {
       deleteAsset: jest.fn(),
     } as any;
 
-    service = new UploadsService(mockRepository, mockR2Service);
+    service = new UserImagesService(mockRepository, mockR2Service);
   });
 
   describe('getById', () => {
