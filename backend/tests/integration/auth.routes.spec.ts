@@ -16,7 +16,6 @@
  * Total Tests: 30+
  */
 
-import request from 'supertest';
 import { Express } from 'express';
 import jwt from 'jsonwebtoken';
 

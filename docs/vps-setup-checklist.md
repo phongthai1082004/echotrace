@@ -76,7 +76,7 @@ cd /opt/echotrace
 Run from **local machine (PowerShell)**:
 
 ```powershell
-scp .env.production root@<VPS_IP>:/opt/echotrace/.env
+scp .env.production root@<VPS_IP>:/opt/echotrace/.env.production
 scp backend/.env.production root@<VPS_IP>:/opt/echotrace/backend/.env.production
 scp frontend/.env.production root@<VPS_IP>:/opt/echotrace/frontend/.env.production
 ```
@@ -84,7 +84,7 @@ scp frontend/.env.production root@<VPS_IP>:/opt/echotrace/frontend/.env.producti
 Verify on VPS:
 
 ```bash
-ls -la /opt/echotrace/.env
+ls -la /opt/echotrace/.env.production
 ls -la /opt/echotrace/backend/.env.production
 ls -la /opt/echotrace/frontend/.env.production
 ```
@@ -141,7 +141,7 @@ sudo certbot certonly --standalone \
   -d www.bettermemoire.com \
   -d api.bettermemoire.com \
   --agree-tos \
-  --email admin@bettermemoire.com \
+  --email phongthai1082004@gmail.com \
   --non-interactive
 
 # Verify certs exist

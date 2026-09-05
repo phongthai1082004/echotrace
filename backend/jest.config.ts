@@ -3,24 +3,13 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  rootDir: '.',
   roots: ['<rootDir>/tests', '<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts?(x)', '**/?(*.)+(spec|test).ts?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        baseUrl: '.',
-        paths: {
-          '@/*': ['src/*'],
-          '@features/*': ['src/features/*'],
-          '@middleware/*': ['src/middleware/*'],
-          '@lib/*': ['src/lib/*'],
-          '@utils/*': ['src/utils/*'],
-          '@di/*': ['src/di/*'],
-        },
-      },
+      tsconfig: '<rootDir>/tsconfig.test.json',
       babelConfig: false,
     }],
   },

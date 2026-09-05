@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@features/*": ["src/features/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@lib/*": ["src/lib/*"],
+      "@utils/*": ["src/utils/*"],
+      "@di/*": ["src/di/*"],
+      "@echotrace/shared": ["tests/mocks/shared.mock.ts"]
+    }
+  },
+  "include": ["tests/**/*", "src/**/*"]
+}
