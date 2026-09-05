@@ -1,390 +1,358 @@
-name: CI/CD Pipeline - 6 Stages
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  PNPM_HOME: /home/runner/.pnpm-store
+  IMAGE_PREFIX: ghcr.io/phongthai1082004/echotrace
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  # ==========================================
+  # ============================================================
   # STAGE 1: LINT & TYPE CHECK
-  # ==========================================
+  # ============================================================
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - service: backend
-            cmd: pnpm --filter backend run lint && pnpm --filter backend run type-check
-            working-dir: backend
-          - service: frontend
-            cmd: pnpm --filter frontend run lint && pnpm --filter frontend run type-check
-            working-dir: frontend
           - service: shared
-            cmd: pnpm --filter @echotrace/shared run build
-            working-dir: shared
+            cmd: pnpm --filter @echotrace/shared build
+          - service: backend
+            cmd: pnpm --filter backend lint && pnpm --filter backend type-check
+          - service: frontend
+            cmd: pnpm --filter frontend lint && pnpm --filter frontend type-check
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 11
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: Run linting & type check - ${{ matrix.service }}
-        run: |
-          cd ${{ matrix.working-dir }}
-          ${{ matrix.cmd }}
+      - name: ${{ matrix.service }}
+        run: ${{ matrix.cmd }}
 
-  # ==========================================
+  # ============================================================
   # STAGE 2: DETECT CHANGES
-  # ==========================================
+  # ============================================================
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      shared: ${{ steps.filter.outputs.shared }}
-      infra: ${{ steps.filter.outputs.infra }}
-
+      nginx: ${{ steps.filter.outputs.nginx }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Detect changed paths
-        uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
             backend:
               - 'backend/**'
               - 'shared/**'
+              - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - '.pnpmfile.cjs'
             frontend:
               - 'frontend/**'
               - 'shared/**'
+              - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - '.pnpmfile.cjs'
-            shared:
-              - 'shared/**'
-              - 'pnpm-workspace.yaml'
-            infra:
-              - 'docker-compose.yml'
+            nginx:
               - 'nginx/**'
-              - '.github/workflows/**'
 
-  # ==========================================
-  # STAGE 3: TARGETED TESTS (SKIPPED - FIX LATER)
-  # ==========================================
-  # test:
-  #   name: Test - ${{ matrix.service }}
-  #   needs: [lint, changes]
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - service: backend
-  #           changed: ${{ needs.changes.outputs.backend }}
-  #           cmd: pnpm --filter backend test:unit --forceExit
-  #         - service: frontend
-  #           changed: ${{ needs.changes.outputs.frontend }}
-  #           cmd: pnpm --filter frontend test --run
-  #   
-  #   if: |
-  #     github.event_name == 'pull_request' ||
-  #     (github.event_name == 'push' && github.ref == 'refs/heads/main')
-  #
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup pnpm
-  #       uses: pnpm/action-setup@v2
-  #       with:
-  #         version: 8
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #         cache: pnpm
-  #
-  #     - name: Install dependencies
-  #       run: pnpm install --no-frozen-lockfile
-  #
-  #     - name: Run tests - ${{ matrix.service }}
-  #       if: matrix.changed == 'true'
-  #       run: |
-  #         cd ${{ matrix.service }}
-  #         ${{ matrix.cmd }}
-  #       env:
-  #         NODE_ENV: test
-  #         JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
-  #         JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-
-
-
-  # ==========================================
-  # STAGE 4: BUILD & PUSH IMAGES
-  # ==========================================
-  build:
-    name: Build & Push - ${{ matrix.service }}
+  # ============================================================
+  # STAGE 3: TEST (bỏ qua nếu không có test files)
+  # ============================================================
+  test:
+    name: Test
     needs: [lint, changes]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    strategy:
-      matrix:
-        include:
-          - service: backend-service
-            dockerfile: backend/Dockerfile
-            context: .
-          - service: frontend-service
-            dockerfile: frontend/Dockerfile
-            context: .
-          - service: nginx-service
-            dockerfile: nginx/dockerfile
-            context: .
-
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.backend == 'true'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: pnpm/action-setup@v2
         with:
-          driver-options: image=moby/buildkit:master
+          version: 11
 
-      - name: Login to Container Registry
-        uses: docker/login-action@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run backend unit tests
+        run: pnpm --filter backend test:unit --passWithNoTests
+        env:
+          NODE_ENV: test
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+
+  # ============================================================
+  # STAGE 4: BUILD & PUSH — chỉ build service có thay đổi
+  # ============================================================
+  build-backend:
+    name: Build Backend
+    needs: [lint, changes]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - uses: docker/metadata-action@v5
         id: meta
-        uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          images: ${{ env.IMAGE_PREFIX }}/backend-service
           tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=sha,format=long
-            type=semver,pattern={{version}}
             type=raw,value=latest
+            type=sha,prefix=sha-
 
-      - name: Build and push container image
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: .
+          file: backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  build-frontend:
+    name: Build Frontend
+    needs: [lint, changes]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.frontend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/frontend-service
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
           build-args: |
             NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
 
+  build-nginx:
+    name: Build Nginx
+    needs: [lint, changes]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.nginx == 'true'
+    steps:
+      - uses: actions/checkout@v4
 
+      - uses: docker/setup-buildx-action@v3
 
-  # ==========================================
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/nginx-service
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: nginx/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+
+  # ============================================================
   # STAGE 5: DEPLOY
-  # ==========================================
+  # Chạy khi ít nhất 1 service thay đổi (build jobs skipped = OK)
+  # ============================================================
   deploy:
     name: Deploy to VPS
-    needs: [build, changes]
+    needs: [changes, build-backend, build-frontend, build-nginx]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      (needs.changes.outputs.backend == 'true' ||
+       needs.changes.outputs.frontend == 'true' ||
+       needs.changes.outputs.nginx == 'true') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup SSH Connection
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy services
+      - name: Copy configs to VPS
+        run: |
+          scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
+          scp -r nginx ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
+
+      - name: Deploy
         env:
           APP_DIR: ${{ secrets.APP_DIR }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
-          GITHUB_TOKEN_VAL: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR_VAL: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
         run: |
-          echo "[LOG] Copying docker-compose.yml and nginx config to VPS..."
-          scp docker-compose.yml ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
-          scp -r nginx ${VPS_USER}@${VPS_HOST}:${APP_DIR}/
-          
           ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_HOST} "
             set -e
             cd ${APP_DIR}
 
-            echo '[LOG] Logging into ghcr.io...'
-            echo '${GITHUB_TOKEN_VAL}' | docker login ghcr.io -u ${GITHUB_ACTOR_VAL} --password-stdin
+            echo '${GH_TOKEN}' | docker login ghcr.io -u ${GH_ACTOR} --password-stdin
 
-            echo '[LOG] Checking env file...'
-            ls -la ${APP_DIR}/
-            head -3 ${APP_DIR}/.env.production || echo 'FILE NOT FOUND'
+            echo '[LOG] Pulling updated images...'
+            docker compose pull
 
-            echo '[LOG] Pulling latest images from ghcr.io...'
-            docker compose --env-file ${APP_DIR}/.env.production pull
+            echo '[LOG] Restarting containers...'
+            docker compose up -d --force-recreate --remove-orphans
 
-            echo '[LOG] Starting containers...'
-            docker compose --env-file ${APP_DIR}/.env.production up -d --force-recreate --remove-orphans
-
-            echo '[LOG] Waiting for services to initialize...'
+            echo '[LOG] Waiting for startup...'
             sleep 40
 
-            echo '[LOG] Container status:'
-            docker compose --env-file ${APP_DIR}/.env.production ps
+            docker compose ps
           "
 
-  # ==========================================
+  # ============================================================
   # STAGE 6: HEALTH CHECK & AUTO-ROLLBACK
-  # ==========================================
+  # ============================================================
   health-check:
-    name: Health Check & Rollback
+    name: Health Check
     needs: deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      needs.deploy.result == 'success'
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup SSH Connection
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Health check backends
+      - name: Health check
         id: health
         continue-on-error: true
         run: |
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'HEALTH_EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
           set -e
 
-          echo "[LOG] Waiting 40s for services to fully start (migrations + workers)..."
-          sleep 40
+          check() {
+            local url=$1 name=$2 retries=${3:-5} wait=${4:-10}
+            for i in $(seq 1 $retries); do
+              if curl -sf "$url" > /dev/null 2>&1; then
+                echo "✓ $name healthy"
+                return 0
+              fi
+              echo "  $name retry $i/$retries..."
+              sleep $wait
+            done
+            echo "✗ $name failed"
+            return 1
+          }
 
-          echo "[LOG] Checking backend /health..."
-          for i in {1..5}; do
-            if curl -sf http://localhost:4000/health > /dev/null 2>&1; then
-              echo "✓ Backend is healthy"
-              break
-            fi
-            if [ $i -eq 5 ]; then
-              echo "✗ Backend health check failed"
-              docker logs backend-service --tail=30
-              exit 1
-            fi
-            echo "Retry $i/5 (waiting 10s)..."
-            sleep 10
-          done
+          check http://localhost:4000/health "Backend" 5 10
+          check http://localhost:3000/api/health "Frontend" 5 10
+          check http://localhost "Nginx" 3 5
 
-          echo "[LOG] Checking frontend /api/health..."
-          for i in {1..5}; do
-            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
-              echo "✓ Frontend is healthy"
-              break
-            fi
-            if [ $i -eq 5 ]; then
-              echo "✗ Frontend health check failed"
-              docker logs frontend-service --tail=30
-              exit 1
-            fi
-            echo "Retry $i/5 (waiting 10s)..."
-            sleep 10
-          done
+          echo "All services healthy!"
+          EOF
 
-          echo "[LOG] Checking nginx port 80..."
-          for i in {1..3}; do
-            if curl -sf http://localhost > /dev/null 2>&1; then
-              echo "✓ Nginx is responding"
-              break
-            fi
-            if [ $i -eq 3 ]; then
-              echo "✗ Nginx health check failed"
-              docker logs nginx-container --tail=20
-              exit 1
-            fi
-            echo "Retry $i/3 (waiting 5s)..."
-            sleep 5
-          done
-
-          echo "All services are healthy!"
-          HEALTH_EOF
-
-      - name: Auto-rollback on failure
+      - name: Auto-rollback
         if: steps.health.outcome == 'failure'
-        env:
-          APP_DIR: ${{ secrets.APP_DIR }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          GITHUB_TOKEN_VAL: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR_VAL: ${{ github.actor }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_HOST} "
-            set -e
-            cd ${APP_DIR}
-
-            echo 'Health checks failed - initiating rollback...'
-            echo '${GITHUB_TOKEN_VAL}' | docker login ghcr.io -u ${GITHUB_ACTOR_VAL} --password-stdin
-
-            docker compose --env-file ${APP_DIR}/.env.production pull
-            docker compose --env-file ${APP_DIR}/.env.production down
-            docker compose --env-file ${APP_DIR}/.env.production up -d --force-recreate
-
-            sleep 10
-
-            if curl -sf http://localhost:4000/health > /dev/null 2>&1; then
-              echo 'Rollback successful'
-              docker compose --env-file ${APP_DIR}/.env.production ps
-            else
-              echo 'Rollback completed - manual intervention may be needed'
-              docker compose --env-file ${APP_DIR}/.env.production logs --tail=50
-              exit 1
-            fi
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd ${{ secrets.APP_DIR }}
+            echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose down
+            docker compose pull
+            docker compose up -d --force-recreate
+            sleep 15
+            docker compose ps
+            echo 'Rollback completed - manual intervention may be needed'
           "
+          exit 1
 
-      - name: Deployment success
+      - name: Success
         if: steps.health.outcome == 'success'
-        run: |
-          echo "🎉 Deployment completed successfully!"
-          echo "✅ All health checks passed"
-          echo "📊 Services are running and responding normally"
+        run: echo "🎉 Deployment successful! All health checks passed."

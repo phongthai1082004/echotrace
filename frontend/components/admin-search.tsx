@@ -10,7 +10,7 @@ interface Props {
 
 export function AdminSearch({ value, onChange, placeholder }: Props) {
   return (
-    <div className="flex items-center gap-2 bg-white rounded-lg border-2 border-[#222] px-3 w-full lg:w-72 shrink-0">
+    <div className="flex items-center gap-2 bg-white rounded-lg px-3 w-full lg:w-72 shrink-0">
       <Search size={13} className="text-[#999] shrink-0" />
       <input
         type="text"

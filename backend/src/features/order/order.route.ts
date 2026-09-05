@@ -16,6 +16,7 @@ const orderRepo = container.resolve<OrderRepository>('OrderRepository');
 const orderLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, message: 'Too many order requests' });
 router.post('/orders', authGuard(), orderLimiter, asyncHandler((req, res) => orderCtrl.createOrder(req, res)));
 router.get('/orders', authGuard(), asyncHandler((req, res) => orderCtrl.listMyOrders(req, res)));
+router.get('/config/webhook', asyncHandler((req, res) => orderCtrl.getWebhookConfig(req, res)));
 router.post('/orders/:id/payment-link', authGuard(), asyncHandler((req, res) => orderCtrl.createPaymentLink(req, res)));
 router.post('/orders/:id/verify', authGuard(), asyncHandler((req, res) => orderCtrl.verifyPayment(req, res)));
 router.post('/orders/:id/cancel', authGuard(), asyncHandler((req, res) => orderCtrl.cancelOrder(req, res)));

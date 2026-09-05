@@ -926,6 +926,7 @@
       "general": "General Information",
       "joined": "Joined",
       "noUsers": "No users found",
+      "createFirstUser": "No users yet. Create the first admin user to get started",
       "tokenInvalid": "Token is invalid!",
       "fetchFailed": "Fetch users failed!",
       "ban": "Ban User",

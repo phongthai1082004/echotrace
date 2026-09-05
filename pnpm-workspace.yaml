@@ -6,7 +6,9 @@ allowBuilds:
   '@prisma/engines': true
   bcrypt: set this to true or false
   canvas: true
+  cloudflared: true
   esbuild: true
+  ngrok: true
   prisma: true
   sharp: true
   unrs-resolver: true

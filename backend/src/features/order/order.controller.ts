@@ -39,6 +39,12 @@ export class OrderController {
 		res.json(ApiResponse.success({ status }));
 	};
 
+	getWebhookConfig = async (req: AuthRequest, res: Response) => {
+		res.json(ApiResponse.success({ 
+			webhookUrl: process.env.WEBHOOK_URL || 'Not configured'
+		}));
+	};
+
 	cancelOrder = async (req: AuthRequest, res: Response) => {
 		const result = await this.orderService.cancelOrder(parseInt(req.params.id as string), parseInt(req.userId!));
 		res.json(ApiResponse.success(result));

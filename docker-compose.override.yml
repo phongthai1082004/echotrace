@@ -1,50 +1,54 @@
 # =============================================================================
 # LOCAL DEVELOPMENT OVERRIDE
-# Auto-loaded by `docker compose up` — no extra flags needed.
+# Tự động load khi chạy `docker compose up` ở local
+# KHÔNG commit file này nếu có thông tin nhạy cảm
 #
-# Adds postgres-service và override DATABASE_URL của backend để trỏ vào
-# container postgres thay vì cloud DB.
+# Usage:
+#   docker compose up -d --build          # local, build từ source
+#   docker compose --profile dev up -d    # local + ngrok tunnel
 # =============================================================================
 
-x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "3"
-
 services:
+  backend-service:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    image: echotrace-backend:local
+    env_file:
+      - ./backend/.env.development
 
-  postgres-service:
-    image: postgres:16-alpine
-    container_name: postgres_container
+  frontend-service:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    image: echotrace-frontend:local
+    env_file:
+      - ./frontend/.env.development
+
+  # Không dùng nginx local (truy cập trực tiếp qua port)
+  nginx-service:
+    profiles:
+      - production
+
+  # Expose backend ra internet cho PayOS webhook testing
+  # Lấy URL: docker compose logs ngrok-tunnel | grep "url="
+  # Dashboard: http://localhost:4040
+  ngrok-tunnel:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-tunnel
+    profiles:
+      - dev
+    command: http backend-service:4000 --log stdout
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123abc"
-      POSTGRES_DB: echotrace
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "4040:4040"
     restart: unless-stopped
-    logging: *default-logging
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 256M
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d echotrace"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  backend-service:
-    environment:
-      DATABASE_URL: "postgresql://postgres:123abc@postgres-service:5432/echotrace"
+          cpus: "0.1"
+          memory: 64M
     depends_on:
-      postgres-service:
-        condition: service_healthy
-
-volumes:
-  postgres_data:
+      backend-service:
+        condition: service_started

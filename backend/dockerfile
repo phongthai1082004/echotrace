@@ -1,77 +1,57 @@
 # =============================================================================
-# BACKEND DOCKERFILE — tsx runtime (no tsc build)
-#
-# Dùng tsx để chạy TypeScript trực tiếp, tránh ERR_INTERNAL_ASSERTION
-# xảy ra khi node ESM loader gặp emitDecoratorMetadata + NodeNext module.
-#
-# 2 stages:
-#   1. deps    — cài native build tools + pnpm install + prisma generate
-#   2. runner  — copy artifacts, chạy tsx src/server.ts
+# BACKEND DOCKERFILE
+# Stage 1: deps  — install + prisma generate
+# Stage 2: runner — copy artifacts, run tsx
 # =============================================================================
 
 FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Native build deps cho canvas (pdf generation)
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev
+RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
 
-# Copy workspace manifests trước để tận dụng layer cache
+# Copy workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY shared/package.json              ./shared/
-COPY backend/package.json             ./backend/
+COPY shared/package.json ./shared/
+COPY backend/package.json ./backend/
 
-# Cài tất cả deps (bao gồm devDeps vì tsx là devDependency)
-RUN corepack enable pnpm && \
+# Install với pnpm store cache + mirror registry
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    corepack enable pnpm && \
+    pnpm config set registry https://registry.npmmirror.com && \
+    pnpm config set network-timeout 300000 && \
     pnpm install --frozen-lockfile --filter backend...
 
-# Build shared (backend import từ @echotrace/shared dist/)
+# Build shared
 COPY shared/ ./shared/
 RUN corepack enable pnpm && pnpm --filter @echotrace/shared build
 
-# Copy backend source + prisma schema rồi generate Prisma Client
+# Copy backend source + generate Prisma Client
 COPY backend/ ./backend/
-RUN pnpm --filter backend exec prisma generate
+RUN corepack enable pnpm && pnpm --filter backend exec prisma generate
 
 # =============================================================================
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ENV TZ=UTC
+ENV NODE_ENV=production TZ=UTC
 
-# Runtime cần thư viện shared object của cairo/pango để canvas hoạt động
-RUN apk add --no-cache \
-    cairo \
-    jpeg \
-    pango \
-    giflib
+# Runtime libs cho canvas
+RUN apk add --no-cache cairo jpeg pango giflib
 
-# Workspace manifests
-COPY --from=deps /app/package.json        ./
+# Copy toàn bộ workspace từ deps stage
+COPY --from=deps /app/package.json ./
 COPY --from=deps /app/pnpm-workspace.yaml ./
-COPY --from=deps /app/pnpm-lock.yaml      ./
-
-# node_modules (pnpm virtual store + symlinks)
-COPY --from=deps /app/node_modules        ./node_modules
+COPY --from=deps /app/pnpm-lock.yaml ./
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
-
-# shared dist (compiled — backend imports @echotrace/shared)
 COPY --from=deps /app/shared ./shared
-
-# backend source + runtime files
-COPY --from=deps /app/backend/src           ./backend/src
-COPY --from=deps /app/backend/lib           ./backend/lib
-COPY --from=deps /app/backend/generated     ./backend/generated
-COPY --from=deps /app/backend/locales       ./backend/locales
-COPY --from=deps /app/backend/prisma        ./backend/prisma
-COPY --from=deps /app/backend/package.json  ./backend/package.json
+COPY --from=deps /app/backend/src ./backend/src
+COPY --from=deps /app/backend/lib ./backend/lib
+COPY --from=deps /app/backend/generated ./backend/generated
+COPY --from=deps /app/backend/locales ./backend/locales
+COPY --from=deps /app/backend/prisma ./backend/prisma
+COPY --from=deps /app/backend/package.json ./backend/package.json
 COPY --from=deps /app/backend/tsconfig.json ./backend/tsconfig.json
 COPY --from=deps /app/backend/prisma.config.ts ./backend/prisma.config.ts
 
@@ -80,5 +60,4 @@ EXPOSE 4000
 
 RUN corepack enable pnpm && corepack prepare pnpm@11.9.0 --activate
 
-# prisma migrate deploy trước khi start để đảm bảo schema đồng bộ
 CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm exec tsx src/server.ts"]
