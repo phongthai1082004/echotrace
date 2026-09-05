@@ -299,7 +299,8 @@ export class OrderService implements IOrderService {
 
 		const gateway = (order.transactions[0]?.gateway ?? PaymentGateway.PAYOS) as PaymentGateway;
 		const remote = await getCachedPaymentStatus((g, c) => this.paymentService.getPaymentStatus(g, c), gateway, Number(order.orderCode));
-		if (remote === 'PAID') {
+		console.log(`[verifyPayment] orderId=${orderId} orderCode=${order.orderCode} remote=${remote}`);
+		if (remote?.toUpperCase() === 'PAID') {
 			const result: WebhookProcessResult = {
 				orderCode: String(order.orderCode),
 				gateway,
