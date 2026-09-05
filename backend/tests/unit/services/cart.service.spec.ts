@@ -662,11 +662,6 @@ describe('CartService - Unit Tests', () => {
       expect(payNow + payLater).toBe(total);
     });
   });
-});
-
-      });
-    });
-  });
 
   // ===========================
   // SECTION 5: COUPON DISCOUNT COMBINATIONS

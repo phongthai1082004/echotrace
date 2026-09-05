@@ -772,9 +772,6 @@ describe('AuthService - Unit Tests', () => {
       });
     });
   });
-});
-
-      });
 
       test('Should logout from all devices when requested', async () => {
         const userId = 1;
@@ -797,7 +794,6 @@ describe('AuthService - Unit Tests', () => {
         expect(mockAuthRepo.revokeToken).toHaveBeenCalled();
       });
     });
-  });
 
   // ===========================
   // SECTION 5: TOKEN EXPIRY & REFRESH EDGE CASES

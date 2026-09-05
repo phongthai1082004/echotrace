@@ -799,9 +799,6 @@ describe('FinanceService - Unit Tests', () => {
       expect(mockFinanceRepo.listExpenses).toHaveBeenCalled();
     });
   });
-});
-
-    });
 
     test('BVA: Both from and to → bounded range', async () => {
       mockFinanceRepo.listExpenses.mockResolvedValue([]);
