@@ -13,7 +13,7 @@
 		"test:coverage": "jest --coverage",
 		"test:unit": "jest tests/unit",
 		"test:integration": "jest tests/integration",
-		"seed": "tsx prisma/seed-admin.ts",
+		"seed": "tsx --env-file=.env.development prisma/seed-admin.ts",
 		"db:seed": "prisma db seed"
 	},
 	"dependencies": {
