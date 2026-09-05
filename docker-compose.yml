@@ -27,7 +27,10 @@ services:
       retries: 3
 
   backend-service:
-    image: ghcr.io/phongthai1082004/echotrace/backend-service:latest
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    image: echotrace-backend:latest
     container_name: ${BACKEND_HOST:-backend-service}
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -50,13 +53,16 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:4000/').then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   frontend-service:
-    image: ghcr.io/phongthai1082004/echotrace/frontend-service:latest
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    image: echotrace-frontend:latest
     container_name: ${FRONTEND_HOST:-frontend-service}
     environment:
       - BACKEND_URL=http://${BACKEND_HOST:-backend-service}:${BACKEND_PORT:-4000}
@@ -78,13 +84,16 @@ services:
         condition: service_started
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 20s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   nginx-service:
-    image: ghcr.io/phongthai1082004/echotrace/nginx-service:latest
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    image: echotrace-nginx:latest
     container_name: nginx-container
     environment:
       - SERVER_DOMAIN=${SERVER_DOMAIN:-bettermemoire.com}
@@ -99,6 +108,7 @@ services:
       # Mount SSL certs từ VPS (generated 1 lần bằng certbot, tự renew)
       # Không commit certs vào repo, chỉ tồn tại trên VPS
       - /etc/letsencrypt:/etc/letsencrypt:ro
+    # nginx không cần healthcheck vì nó just proxy
     restart: always
     logging: *default-logging
     deploy:
