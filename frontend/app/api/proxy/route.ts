@@ -18,6 +18,10 @@ async function proxy(req: NextRequest) {
   if (ct) headers.set("content-type", ct);
   if (token?.accessToken) headers.set("authorization", `Bearer ${token.accessToken}`);
 
+  // Forward custom headers from client
+  const idempotencyKey = req.headers.get("idempotency-key");
+  if (idempotencyKey) headers.set("idempotency-key", idempotencyKey);
+
   const method = req.method;
   const body = method === "GET" || method === "HEAD" ? undefined : await req.arrayBuffer();
 
