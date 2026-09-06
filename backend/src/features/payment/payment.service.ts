@@ -63,7 +63,7 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 					// ponytail: chặn đúp paidAmount/Income khi có ≥2 mã giao dịch SUCCESS khác nhau
 					// (renew link, webhook retransmit mã khác). txn hiện tại chưa SUCCESS (đã qua guard dòng 28)
 					// nên count chỉ đếm mã khác → >0 nghĩa là trùng, bỏ qua. Serializable → race-safe.
-					const dupPaid = await tx.transaction.count({ where: { orderId: order.id, status: TransactionStatus.SUCCESS } });
+					const dupPaid = await tx.transaction.count({ where: { orderId: order.id, status: TransactionStatus.SUCCESS, id: { not: txn.id } } });
 					if (dupPaid > 0) return;
 					const paidAmount = order.paidAmount + result.amount;
 					// Đủ tiền (FULL) → PAID; thiếu (cọc) → PARTIALLY_PAID, gán NCC mới thành PROCESSING

@@ -34,6 +34,9 @@ const DEFAULT_LANG = 'en';
 async function bootstrap() {
 	const app = express();
 
+	// behind nginx (1 hop) — lets express-rate-limit see real client IPs from X-Forwarded-For
+	app.set('trust proxy', 1);
+
 	// Health check - must work even if dependencies fail
 	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 	app.get('/', (req, res) => res.status(200).send('ok'));
