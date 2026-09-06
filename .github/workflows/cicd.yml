@@ -207,6 +207,9 @@ jobs:
             set -e
             cd ${APP_DIR}
 
+            echo '[LOG] Logging in to GHCR...'
+            echo '${GH_TOKEN}' | docker login ghcr.io -u ${GH_ACTOR} --password-stdin
+
             echo '[LOG] Pulling updated images...'
             docker compose pull
 
