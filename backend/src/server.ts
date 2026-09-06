@@ -52,6 +52,8 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 	app.use(express.json({ limit: '1mb' }));
 	app.use(handle(i18next));
 
+	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
 	const apiRouter = express.Router({ mergeParams: true });
 
 	apiRouter.use((req: Request, res: Response, next: NextFunction) => {
