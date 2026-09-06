@@ -25,11 +25,6 @@ services:
     env_file:
       - ./frontend/.env.development
 
-  # Không dùng nginx local (truy cập trực tiếp qua port)
-  nginx-service:
-    profiles:
-      - production
-
   # Expose backend ra internet cho PayOS webhook testing
   # Lấy URL: docker compose logs ngrok-tunnel | grep "url="
   # Dashboard: http://localhost:4040

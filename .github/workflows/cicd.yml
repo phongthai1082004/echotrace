@@ -76,7 +76,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        service: [backend, frontend, nginx]
+        service: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -129,7 +129,6 @@ jobs:
       - name: Copy configs to VPS
         run: |
           scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
-          scp -r nginx ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
 
       - name: Setup environment files
         run: |
@@ -206,7 +205,6 @@ jobs:
 
           check http://localhost:4000/health "Backend" 5 10
           check http://localhost:3000/api/health "Frontend" 5 10
-          check http://localhost "Nginx" 3 5
 
           echo "All services healthy!"
           EOF
