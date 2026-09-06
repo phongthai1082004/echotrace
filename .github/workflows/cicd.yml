@@ -16,42 +16,7 @@ permissions:
 
 jobs:
   # ============================================================
-  # STAGE 1: LINT & TYPE CHECK
-  # ============================================================
-  lint:
-    name: Lint & Type Check
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - service: shared
-            cmd: pnpm --filter @echotrace/shared build
-          - service: backend
-            cmd: pnpm --filter backend lint && pnpm --filter backend type-check
-          - service: frontend
-            cmd: pnpm --filter frontend lint && pnpm --filter frontend type-check
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 11
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: ${{ matrix.service }}
-        run: ${{ matrix.cmd }}
-
-  # ============================================================
-  # STAGE 2: DETECT CHANGES
+  # STAGE 1: DETECT CHANGES
   # ============================================================
   changes:
     name: Detect Changes
@@ -82,6 +47,42 @@ jobs:
               - 'pnpm-workspace.yaml'
             nginx:
               - 'nginx/**'
+
+  # ============================================================
+  # STAGE 2: CHECK (LINT & TYPE CHECK)
+  # ============================================================
+  lint:
+    name: Lint & Type Check
+    needs: [changes]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: shared
+            cmd: pnpm --filter @echotrace/shared build
+          - service: backend
+            cmd: pnpm --filter backend type-check
+          - service: frontend
+            cmd: pnpm --filter frontend lint && pnpm --filter frontend type-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ${{ matrix.service }}
+        run: ${{ matrix.cmd }}
 
   # ============================================================
   # STAGE 3: TEST (bỏ qua nếu không có test files)
