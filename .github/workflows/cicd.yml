@@ -87,12 +87,9 @@ jobs:
   # ============================================================
   test:
     name: Test
-    needs: [lint, changes]
+    needs: [lint]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.backend == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -121,12 +118,9 @@ jobs:
   # ============================================================
   build-backend:
     name: Build Backend
-    needs: [lint, changes]
+    needs: [lint]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.backend == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -158,12 +152,9 @@ jobs:
 
   build-frontend:
     name: Build Frontend
-    needs: [lint, changes]
+    needs: [lint]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.frontend == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -197,12 +188,9 @@ jobs:
 
   build-nginx:
     name: Build Nginx
-    needs: [lint, changes]
+    needs: [lint]
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.nginx == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -238,15 +226,12 @@ jobs:
   # ============================================================
   deploy:
     name: Deploy to VPS
-    needs: [changes, build-backend, build-frontend, build-nginx]
+    needs: [build-backend, build-frontend, build-nginx]
     runs-on: ubuntu-latest
     if: |
       always() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      (needs.changes.outputs.backend == 'true' ||
-       needs.changes.outputs.frontend == 'true' ||
-       needs.changes.outputs.nginx == 'true') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
