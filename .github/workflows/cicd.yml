@@ -16,44 +16,15 @@ permissions:
 
 jobs:
   # ============================================================
-  # STAGE 1: DETECT CHANGES (DISABLED)
-  # ============================================================
-  # changes:
-  #   name: Detect Changes
-  #   runs-on: ubuntu-latest
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   outputs:
-  #     backend: ${{ steps.filter.outputs.backend }}
-  #     frontend: ${{ steps.filter.outputs.frontend }}
-  #     nginx: ${{ steps.filter.outputs.nginx }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #
-  #     - uses: dorny/paths-filter@v2
-  #       id: filter
-  #       with:
-  #         filters: |
-  #           backend:
-  #             - 'backend/**'
-  #             - 'shared/**'
-  #             - 'pnpm-lock.yaml'
-  #             - 'pnpm-workspace.yaml'
-  #           frontend:
-  #             - 'frontend/**'
-  #             - 'shared/**'
-  #             - 'pnpm-lock.yaml'
-  #             - 'pnpm-workspace.yaml'
-  #           nginx:
-  #             - 'nginx/**'
-
-  # ============================================================
-  # STAGE 2: CHECK (LINT & TYPE CHECK)
+  # STAGE 1: LINT & TYPE CHECK
   # ============================================================
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -73,22 +44,39 @@ jobs:
         run: pnpm --filter @echotrace/shared build
 
       - name: Generate Prisma client
+        if: matrix.service == 'backend'
         run: pnpm db:generate
 
       - name: Type check backend
+        if: matrix.service == 'backend'
         run: pnpm --filter backend type-check
 
       - name: Lint & type check frontend
+        if: matrix.service == 'frontend'
         run: pnpm --filter frontend lint && pnpm --filter frontend type-check
 
   # ============================================================
-  # STAGE 3: TEST (bỏ qua nếu không có test files)
+  # STAGE 2: UNIT TESTS
   # ============================================================
   test:
     name: Test
-    needs: [lint]
     runs-on: ubuntu-latest
+    needs: lint
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -104,22 +92,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run migrations
+        run: pnpm --filter backend db:push
+        env:
+          DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/testdb
+
       - name: Run backend unit tests
         run: pnpm --filter backend test:unit --passWithNoTests
         env:
           NODE_ENV: test
-          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
-          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          JWT_ACCESS_SECRET: test-secret
+          JWT_REFRESH_SECRET: test-secret
+          DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/testdb
 
   # ============================================================
-  # STAGE 4: BUILD & PUSH — chỉ build service có thay đổi
+  # STAGE 3: BUILD & PUSH IMAGES
   # ============================================================
-  build-backend:
-    name: Build Backend
-    needs: [lint]
+  build:
+    name: Build & Push
     runs-on: ubuntu-latest
+    needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        service: [backend, frontend, nginx]
     steps:
       - uses: actions/checkout@v4
 
@@ -134,7 +130,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ env.IMAGE_PREFIX }}/backend-service
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}-service
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-
@@ -142,98 +138,23 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           context: .
-          file: backend/Dockerfile
+          file: ${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
-
-  build-frontend:
-    name: Build Frontend
-    needs: [lint]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: ${{ env.IMAGE_PREFIX }}/frontend-service
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=sha-
-
-      - uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
           build-args: |
             NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
 
-  build-nginx:
-    name: Build Nginx
-    needs: [lint]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: ${{ env.IMAGE_PREFIX }}/nginx-service
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=sha-
-
-      - uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: nginx/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=nginx
-          cache-to: type=gha,mode=max,scope=nginx
-
   # ============================================================
-  # STAGE 5: DEPLOY
-  # Chạy khi ít nhất 1 service thay đổi (build jobs skipped = OK)
+  # STAGE 4: DEPLOY TO VPS
   # ============================================================
   deploy:
     name: Deploy to VPS
-    needs: [build-backend, build-frontend, build-nginx]
     runs-on: ubuntu-latest
-    if: |
-      always() &&
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
-
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -286,16 +207,13 @@ jobs:
           "
 
   # ============================================================
-  # STAGE 6: HEALTH CHECK & AUTO-ROLLBACK
+  # STAGE 5: HEALTH CHECK & AUTO-ROLLBACK
   # ============================================================
   health-check:
     name: Health Check
-    needs: deploy
     runs-on: ubuntu-latest
-    if: |
-      always() &&
-      needs.deploy.result == 'success'
-
+    needs: deploy
+    if: always() && needs.deploy.result == 'success'
     steps:
       - name: Setup SSH
         run: |
@@ -350,5 +268,3 @@ jobs:
       - name: Success
         if: steps.health.outcome == 'success'
         run: echo "🎉 Deployment successful! All health checks passed."
-
-
