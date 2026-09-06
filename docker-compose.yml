@@ -33,10 +33,9 @@ services:
       - REDIS_URL=redis://redis-service:6379
       - BACKEND_PORT=${BACKEND_PORT:-4000}
       - TZ=UTC
+      - DATABASE_URL=${DATABASE_URL}
     env_file:
       - ./backend/.env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     restart: unless-stopped
