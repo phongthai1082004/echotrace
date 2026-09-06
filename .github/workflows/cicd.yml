@@ -16,37 +16,37 @@ permissions:
 
 jobs:
   # ============================================================
-  # STAGE 1: DETECT CHANGES
+  # STAGE 1: DETECT CHANGES (DISABLED)
   # ============================================================
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      nginx: ${{ steps.filter.outputs.nginx }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'shared/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-            frontend:
-              - 'frontend/**'
-              - 'shared/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-            nginx:
-              - 'nginx/**'
+  # changes:
+  #   name: Detect Changes
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   outputs:
+  #     backend: ${{ steps.filter.outputs.backend }}
+  #     frontend: ${{ steps.filter.outputs.frontend }}
+  #     nginx: ${{ steps.filter.outputs.nginx }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - uses: dorny/paths-filter@v2
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           backend:
+  #             - 'backend/**'
+  #             - 'shared/**'
+  #             - 'pnpm-lock.yaml'
+  #             - 'pnpm-workspace.yaml'
+  #           frontend:
+  #             - 'frontend/**'
+  #             - 'shared/**'
+  #             - 'pnpm-lock.yaml'
+  #             - 'pnpm-workspace.yaml'
+  #           nginx:
+  #             - 'nginx/**'
 
   # ============================================================
   # STAGE 2: CHECK (LINT & TYPE CHECK)
