@@ -74,7 +74,7 @@ jobs:
         run: pnpm --filter @echotrace/shared build
 
       - name: Generate Prisma client
-        run: pnpm --filter backend db:generate
+        run: pnpm db:generate
 
       - name: Type check backend
         run: pnpm --filter backend type-check
