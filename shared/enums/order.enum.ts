@@ -6,7 +6,7 @@ export const OrderStatus = {
   SHIPPING: 'shipping',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
-  REFUNDING: 'refunding',
+  PENDING_REFUND: 'pending_refund',
   REFUNDED: 'refunded',
 } as const;
 

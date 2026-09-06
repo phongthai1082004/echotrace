@@ -73,7 +73,7 @@ export default function AdminAssetsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("admin.stickers.searchPlaceholder")}
-                className="flex-1 text-sm font-bold py-2 placeholder:text-[#999] focus:outline-none bg-transparent"
+                className="flex-1 text-sm font-bold py-2 placeholder:text-[#999] focus:outline-none bg-transparent border-none! shadow-none! focus:shadow-none! focus:translate-x-0! focus:translate-y-0!"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70">

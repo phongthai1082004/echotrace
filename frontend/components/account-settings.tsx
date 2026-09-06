@@ -196,12 +196,12 @@ export function AccountSettings() {
                   {t("account.email")}
                 </label>
                 {profile?.email ? (
-                  <div className={`flex items-center justify-between py-2.5 px-3 ${infoBox}`}>
-                    <span className="text-sm font-bold">{profile.email}</span>
-                    <span className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 bg-[#5A8F4A] text-white rounded-md">
-                      {t("account.connected")}
-                    </span>
-                  </div>
+                  <input
+                    readOnly
+                    value={profile.email}
+                    aria-label={t("account.email")}
+                    className={`${input} cursor-default`}
+                  />
                 ) : (
                   <button className={`w-full flex items-center justify-between py-2.5 px-3 ${infoBox} hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[border-color,box-shadow,transform] cursor-pointer`}>
                     <span className="text-sm text-[#999]">{t("account.notConnected")}</span>

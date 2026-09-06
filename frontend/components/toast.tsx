@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 type ToastType = "success" | "info" | "warning" | "error";
 
@@ -31,28 +32,29 @@ let toastId = 0;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const { t } = useTranslation();
 
   const showToast = useCallback((message: string, type: ToastType = "info") => {
     const id = ++toastId;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
+      setToasts((prev) => prev.filter((x) => x.id !== id));
     }, 3500);
   }, []);
 
   const dismiss = (id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToasts((prev) => prev.filter((x) => x.id !== id));
   };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div className="fixed top-20 right-0 z-[100] flex flex-col gap-2 px-4 pointer-events-none">
-        {toasts.map((t) => {
-          const s = typeStyles[t.type];
+        {toasts.map((toast) => {
+          const s = typeStyles[toast.type];
           return (
             <div
-              key={t.id}
+              key={toast.id}
               className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-[10px] border-[3px] shadow-[4px_4px_0_#222] animate-slide-in"
               style={{ background: s.bg, borderColor: s.border, color: s.text }}
             >
@@ -62,8 +64,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               >
                 {s.icon}
               </span>
-              <p className="text-sm font-bold whitespace-pre-wrap break-words max-w-[320px]">{t.message}</p>
-              <button onClick={() => dismiss(t.id)} className="ml-2 opacity-40 hover:opacity-70 font-bold">
+              {/* ponytail: SCREAMING_SNAKE messages are backend ErrorCodes → translate via errorCodes.*, plain text passes through t() unchanged */}
+              <p className="text-sm font-bold whitespace-pre-wrap break-words max-w-[320px]">
+                {/^[A-Z][A-Z0-9_]+$/.test(toast.message)
+                  ? t(`errorCodes.${toast.message}`, { defaultValue: toast.message })
+                  : t(toast.message)}
+              </p>
+              <button onClick={() => dismiss(toast.id)} className="ml-2 opacity-40 hover:opacity-70 font-bold">
                 ✕
               </button>
             </div>

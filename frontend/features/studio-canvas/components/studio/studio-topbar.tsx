@@ -128,8 +128,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       ? activeObj.getObjects().find((o: any) => isFrameObject(o))
       : activeObj
     : null;
-  const frames = canvas ? canvas.getObjects().filter((o: any) => isFrameObject(o)) : [];
-  const allFramesHidden = frames.length > 0 && frames.every((f: any) => f.customProperties?.borderHidden);
   const frameWidth = selectedFrame?.customProperties?.strokeWidth || 1;
 
   const handleUndo = () => {
@@ -376,7 +374,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
             if (e.key === "Enter") commitTitle();
             if (e.key === "Escape") setEditingTitle(false);
           }}
-          className="font-bold text-sm bg-transparent border-b-2 border-[#222] outline-none w-40"
+          className="font-bold text-sm bg-transparent border-b-2 border-[#222] outline-none w-40 shadow-none!"
         />
       ) : (
         <span
@@ -478,31 +476,19 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       />
       {frameToolsOn && (
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
-          <button
-            onClick={() => {
-              pushUndo();
-              if (canvas) setAllFramesBorder(canvas, { hidden: !allFramesHidden });
-              useCanvasStore.getState().incrementSelectionVersion();
-            }}
-            className="px-2.5 py-1.5 font-mono text-[9px] font-bold tracking-widest uppercase bg-white hover:bg-[#e8e6e0] transition-colors border-r-2 border-[#222]"
-          >
-            {allFramesHidden ? t("customer.studio.showAllFrames") : t("customer.studio.hideAllFrames")}
-          </button>
-          <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((w) => (
-              <button
-                key={w}
-                onClick={() => {
-                  pushUndo();
-                  if (canvas) setAllFramesBorder(canvas, { width: w });
-                  useCanvasStore.getState().incrementSelectionVersion();
-                }}
-                className={`px-1.5 py-1.5 font-mono text-[9px] font-bold transition-colors ${w < 5 ? "border-r border-[#222]/30" : ""} ${frameWidth === w ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"}`}
-              >
-                {w}
-              </button>
-            ))}
-          </div>
+          {[1, 2, 3, 4, 5].map((w) => (
+            <button
+              key={w}
+              onClick={() => {
+                pushUndo();
+                if (canvas) setAllFramesBorder(canvas, { width: w });
+                useCanvasStore.getState().incrementSelectionVersion();
+              }}
+              className={`px-1.5 py-1.5 font-mono text-[9px] font-bold transition-colors ${w < 5 ? "border-r border-[#222]/30" : ""} ${frameWidth === w ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"}`}
+            >
+              {w}
+            </button>
+          ))}
         </div>
       )}
       <div className="ml-auto flex items-center gap-2">

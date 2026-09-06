@@ -107,7 +107,7 @@ export function OrderAdminActions({
             {t("admin.dispatch.refund")}
           </button>
         )}
-        {order.status === "refunding" && (
+        {order.status === "pending_refund" && (
           <button onClick={() => onEvent?.("reconcile_refund")} className={`${neoBtn} py-2.5`}>
             {t("admin.dispatch.reconcileRefund")}
           </button>

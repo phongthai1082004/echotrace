@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { ToastProvider } from "@/components/toast";
 import { I18nProvider } from "./i18n-provider";
@@ -29,9 +29,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const lang = await cookies().then((c) => c.get("i18nextLng")?.value ?? "en");
+  const langs = ["en", "vi", "es"];
+  // middleware rewrites /{lang}/... and stamps the lang on the request; cookie covers direct hits
+  const raw = (await headers()).get("x-i18n-lang") ?? (await cookies()).get("i18nextLng")?.value;
+  const lang = langs.includes(raw ?? "") ? raw! : "en";
   return (
-    <html lang="en" className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html lang={lang} className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">
         <Providers>
           <ToastProvider>

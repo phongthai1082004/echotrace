@@ -9,7 +9,7 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, { color: string; text: str
   shipping: { color: "#5A8F4A", text: "#fff" },
   delivered: { color: "#222", text: "#fff" },
   cancelled: { color: "#B54843", text: "#fff" },
-  refunding: { color: "#F2C14E", text: "#222" },
+  pending_refund: { color: "#F2C14E", text: "#222" },
   refunded: { color: "#999999", text: "#fff" },
 };
 
@@ -41,7 +41,7 @@ const STAGE_OF: Record<OrderStatus, number> = {
   shipping: 3,
   delivered: 4,
   cancelled: 0,
-  refunding: 4,
+  pending_refund: 4,
   refunded: 4,
 };
 
@@ -50,7 +50,7 @@ export function mockTimeline(
   createdAt?: string,
 ): { labelKey: string; date: string; done: boolean }[] {
   const stage = STAGE_OF[status];
-  if (status === "cancelled" || status === "refunding" || status === "refunded") {
+  if (status === "cancelled" || status === "pending_refund" || status === "refunded") {
     return [
       { labelKey: `customer.orders.timeline.placed`, date: createdAt ?? "", done: true },
       { labelKey: `orderStatuses.${status}`, date: "", done: true },

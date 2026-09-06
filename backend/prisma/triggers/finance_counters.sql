@@ -50,11 +50,11 @@ DECLARE v_period text;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     v_period := to_char(OLD."receivedAt", 'YYYY-MM');
-    PERFORM fn_period_upsert(v_period, 0, -OLD.amount, 0, 0, 0, 0, 0, 0);
+    PERFORM fn_period_upsert(v_period, 0, -OLD.amount::numeric, 0, 0, 0, 0, 0, 0);
     RETURN OLD;
   ELSE
     v_period := to_char(NEW."receivedAt", 'YYYY-MM');
-    PERFORM fn_period_upsert(v_period, 0, NEW.amount, 0, 0, 0, 0, 0, 0);
+    PERFORM fn_period_upsert(v_period, 0, NEW.amount::numeric, 0, 0, 0, 0, 0, 0);
     RETURN NEW;
   END IF;
 END;
@@ -74,13 +74,13 @@ DECLARE v_period text; v_sup numeric;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     v_period := to_char(OLD."date", 'YYYY-MM');
-    v_sup := CASE WHEN OLD."category" = 'SUPPLIER' THEN -OLD.amount ELSE 0 END;
-    PERFORM fn_period_upsert(v_period, 0, 0, -OLD.amount, v_sup, 0, 0, 0, 0);
+    v_sup := CASE WHEN OLD."category" = 'SUPPLIER' THEN -OLD.amount::numeric ELSE 0 END;
+    PERFORM fn_period_upsert(v_period, 0, 0, -OLD.amount::numeric, v_sup, 0, 0, 0, 0);
     RETURN OLD;
   ELSE
     v_period := to_char(NEW."date", 'YYYY-MM');
-    v_sup := CASE WHEN NEW."category" = 'SUPPLIER' THEN NEW.amount ELSE 0 END;
-    PERFORM fn_period_upsert(v_period, 0, 0, NEW.amount, v_sup, 0, 0, 0, 0);
+    v_sup := CASE WHEN NEW."category" = 'SUPPLIER' THEN NEW.amount::numeric ELSE 0 END;
+    PERFORM fn_period_upsert(v_period, 0, 0, NEW.amount::numeric, v_sup, 0, 0, 0, 0);
     RETURN NEW;
   END IF;
 END;
@@ -101,14 +101,14 @@ DECLARE v_period text; v_in numeric; v_out numeric;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     v_period := to_char(OLD."date", 'YYYY-MM');
-    v_in  := CASE WHEN OLD."type" = 'IN'  THEN -OLD.amount ELSE 0 END;
-    v_out := CASE WHEN OLD."type" = 'OUT' THEN -OLD.amount ELSE 0 END;
+    v_in  := CASE WHEN OLD."type" = 'IN'  THEN -OLD.amount::numeric ELSE 0 END;
+    v_out := CASE WHEN OLD."type" = 'OUT' THEN -OLD.amount::numeric ELSE 0 END;
     PERFORM fn_period_upsert(v_period, 0, 0, 0, 0, v_in, v_out, 0, 0);
     RETURN OLD;
   ELSE
     v_period := to_char(NEW."date", 'YYYY-MM');
-    v_in  := CASE WHEN NEW."type" = 'IN'  THEN NEW.amount ELSE 0 END;
-    v_out := CASE WHEN NEW."type" = 'OUT' THEN NEW.amount ELSE 0 END;
+    v_in  := CASE WHEN NEW."type" = 'IN'  THEN NEW.amount::numeric ELSE 0 END;
+    v_out := CASE WHEN NEW."type" = 'OUT' THEN NEW.amount::numeric ELSE 0 END;
     PERFORM fn_period_upsert(v_period, 0, 0, 0, 0, v_in, v_out, 0, 0);
     RETURN NEW;
   END IF;

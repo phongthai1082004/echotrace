@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -242,7 +242,7 @@ export function StudioProperties() {
                     selected.set({ fontSize: Number(e.target.value) });
                     canvas?.renderAll();
                   }}
-                  className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white"
+                  className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white shadow-none! focus:shadow-none! focus:translate-x-0! focus:translate-y-0!"
                 />
               </div>
             )}
@@ -312,7 +312,7 @@ export function StudioProperties() {
                   }}
                   maxLength={6}
                   placeholder="000000"
-                  className="flex-1 font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white uppercase"
+                  className="flex-1 font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white uppercase shadow-none! focus:shadow-none! focus:translate-x-0! focus:translate-y-0!"
                 />
               </div>
             </div>
@@ -367,7 +367,7 @@ export function StudioProperties() {
         </p>
         {[
           [t("customer.studio.format"), `${fmt.cm} cm`],
-          [t("customer.studio.size"), `${fmt.width} × ${fmt.height} px`],
+          [t("customer.studio.size"), `${fmt.width} Ã— ${fmt.height} px`],
           [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)],
         ].map(([k, v]) => (
           <div key={k} className="mb-2.5">

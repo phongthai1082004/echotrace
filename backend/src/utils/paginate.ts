@@ -12,7 +12,12 @@ export async function paginate(
 ): Promise<{ items: any[]; nextCursor: number | null }> {
 	const q: any = new QueryProcessor(config, options).build();
 	q.where = Object.assign({}, q.where, { isDelete: false }, extraWhere);
-	const items = await delegate.findMany(q);
-	const nextCursor = items.length === (config.limit as number) ? (items[items.length - 1]?.id ?? null) : null;
-	return { items, nextCursor };
+	// ponytail: fetch limit+1 to probe for a next page — a full page no longer advertises
+	// nextCursor (which used to make "Next" show an empty table on exact-multiple totals).
+	const limit = Number(config.limit);
+	const items = await delegate.findMany({ ...q, take: limit + 1 });
+	const hasNext = items.length > limit;
+	const page = hasNext ? items.slice(0, limit) : items;
+	const nextCursor = hasNext ? (page[page.length - 1]?.id ?? null) : null;
+	return { items: page, nextCursor };
 }

@@ -5,7 +5,7 @@ import { CloseButton } from "@/components/ui/close-button";
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { ReactNode } from "react";
-import { infoBox, neoBtn, chip } from "@/lib/styles";
+import { infoBox, neoBtn, chip, neoBtnDanger } from "@/lib/styles";
 import type { OrderDTO, OrderStatus } from "@/lib/order.dto";
 import { STATUS_META, mockTimeline, formatCurrency } from "@/lib/order-status";
 import { OrderItems } from "@/components/order-items";
@@ -69,7 +69,7 @@ export function OrderDetailDrawer({
   const { t } = useTranslation();
   const admin = variant === "admin";
   const meta = STATUS_META(t);
-  const m = meta[order.status];
+  const m = meta[order.status] ?? { label: order.status, color: "#e8e6e0", text: "#222" };
   const remaining = Math.max(0, order.totalAmount - order.paidAmount);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
@@ -274,10 +274,7 @@ export function OrderDetailDrawer({
         {/* Footer — user cancel */}
         {!admin && cancellable && onCancelOrder && (
           <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
-            <button
-              onClick={() => setCancelOpen(true)}
-              className="w-full py-3 border-2 border-[#B54843] text-[#B54843] font-bold rounded hover:bg-[#B54843]/10"
-            >
+            <button onClick={() => setCancelOpen(true)} className={`${neoBtnDanger} w-full py-3`}>
               {t("customer.orders.cancelOrder")}
             </button>
           </div>
@@ -330,7 +327,7 @@ export function OrderDetailDrawer({
                   setCancelOpen(false);
                   await onCancelOrder?.(order.id);
                 }}
-                className="flex-1 py-2.5 border-2 border-[#B54843] text-[#B54843] font-bold rounded hover:bg-[#B54843]/10"
+                className={`${neoBtnDanger} flex-1 py-2.5`}
               >
                 {t("customer.orders.confirm")}
               </button>

@@ -380,6 +380,8 @@
     font-family: var(--font-space-grotesk, 'Space Grotesk'), sans-serif;
     font-size: 0.875rem;
     font-weight: 500;
+    box-shadow: 2px 2px 0 #222222;
+    transition: transform 150ms, box-shadow 150ms;
   }
 
   input[type="text"]::placeholder,
@@ -399,8 +401,8 @@
   textarea:focus,
   select:focus {
     outline: none;
-    border-color: #222222;
-    box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.1);
+    translate: 1px 1px;
+    box-shadow: 1px 1px 0 #222222;
   }
 
   .neo-label {

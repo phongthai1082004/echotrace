@@ -30,16 +30,23 @@ export function useCustomerOrders() {
 
   const cancelOrder = useCallback(async (id: number) => {
     try {
-      const r = await apiFetch<{ refunded: boolean; amount: number }>(`/api/orders/${id}/cancel`, token!, {
+      const r = await apiFetch<{ status: string; refunded: boolean; amount: number }>(`/api/orders/${id}/cancel`, token!, {
         method: "POST",
       });
-      const status = r?.refunded ? "refunded" : "cancelled";
-      showToast(r?.refunded ? "customer.orders.cancelledRefunded" : "customer.orders.cancelled", "success");
-      updateOrder(id, { status: status as OrderDTO["status"] });
+      const status = (r?.status ?? "cancelled") as OrderDTO["status"];
+      showToast(
+        status === "pending_refund"
+          ? "customer.orders.cancelPendingRefund"
+          : status === "refunded"
+            ? "customer.orders.cancelledRefunded"
+            : "customer.orders.cancelled",
+        "success",
+      );
+      updateOrder(id, { status });
       return r;
     } catch (e: any) {
       showToast(e?.message || "customer.orders.cancelledRefunded", "error");
-      return { refunded: false, amount: 0 };
+      return { status: "cancelled", refunded: false, amount: 0 };
     }
   }, [token, updateOrder, showToast]);
 

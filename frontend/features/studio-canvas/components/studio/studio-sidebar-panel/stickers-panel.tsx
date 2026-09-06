@@ -72,7 +72,7 @@ export function StickersPanel() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("customer.studio.searchStickers")}
-          className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent"
+          className="flex-1 text-[10px] font-bold py-1.5 placeholder:text-[#999] focus:outline-none bg-transparent border-none! shadow-none!"
         />
         {search && (
           <button onClick={() => setSearch("")} className="opacity-40 hover:opacity-70">

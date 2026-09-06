@@ -13,6 +13,6 @@ export const ORDER_STATUSES: OrderStatus[] = [
   "shipping",
   "delivered",
   "cancelled",
-  "refunding",
+  "pending_refund",
   "refunded",
 ];

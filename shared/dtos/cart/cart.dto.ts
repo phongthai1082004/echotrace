@@ -149,7 +149,13 @@ export function computeCouponDiscount(coupon: CartCoupon | null | undefined, sub
       : subtotal >= (coupon.minOrderAmount ?? 0);
   if (!meetsMin) return 0;
   const type = (coupon.discountType || "").toLowerCase();
-  const raw = type === DiscountType.PERCENTAGE ? (subtotal * (coupon.discountValue ?? 0)) / 100 : coupon.discountValue ?? 0;
-  const capped = coupon.maxDiscountAmount ? Math.min(raw, coupon.maxDiscountAmount) : raw;
-  return Math.max(0, capped);
+  // ponytail: integer money — percentage discounts would otherwise leak fractions into
+  // totals and PayOS rejects non-integer amounts. Also never discount more than the
+  // subtotal (oversized FIXED coupons would corrupt order.discountAmount reporting).
+  let raw =
+    type === DiscountType.PERCENTAGE
+      ? Math.round((subtotal * (coupon.discountValue ?? 0)) / 100)
+      : Math.round(coupon.discountValue ?? 0);
+  if (coupon.maxDiscountAmount) raw = Math.min(raw, coupon.maxDiscountAmount);
+  return Math.max(0, Math.min(raw, subtotal));
 }

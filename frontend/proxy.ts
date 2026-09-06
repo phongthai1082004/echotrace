@@ -11,7 +11,10 @@ export function proxy(request: NextRequest) {
   if (SUPPORTED_LANGS.includes(firstSegment)) {
     const url = new URL(pathname.replace(`/${firstSegment}`, "") || "/", request.url);
     url.search = search;
-    const response = NextResponse.rewrite(url);
+    // expose the lang to server components on this request (cookie only lands on the response)
+    const headers = new Headers(request.headers);
+    headers.set("x-i18n-lang", firstSegment);
+    const response = NextResponse.rewrite(url, { request: { headers } });
     response.cookies.set("i18nextLng", firstSegment, { path: "/" });
     return response;
   }

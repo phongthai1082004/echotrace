@@ -60,7 +60,7 @@ export interface IOrderService {
 	processOrderEvent(id: number, type: string, payload: any): Promise<void>;
 	createPaymentLink(orderId: number, userId: number): Promise<{ qrCode?: string; checkoutUrl?: string }>;
 	verifyPayment(orderId: number, userId: number): Promise<string>;
-	cancelOrder(orderId: number, userId: number): Promise<{ refunded: boolean; amount: number }>;
+	cancelOrder(orderId: number, userId: number): Promise<{ status: string; refunded: boolean; amount: number }>;
 	requestReturn(
 		orderId: number,
 		userId: number,
@@ -374,7 +374,7 @@ export class OrderService implements IOrderService {
 		shipping: ['delivered'],
 		delivered: [],
 		cancelled: [],
-		refunding: ['refunded'],
+		pending_refund: ['refunded'],
 		refunded: [],
 	};
 
@@ -526,24 +526,13 @@ export class OrderService implements IOrderService {
 		if (order.status !== OrderStatus.PAID && order.status !== OrderStatus.PARTIALLY_PAID) {
 			throw new AppError(ErrorCode.INTERNAL, 400); // hoàn tiền chỉ khi paid hoặc partially_paid
 		}
-		const refundAmount = order.paidAmount;
-		// ponytail: PayOS SDK chỉ cancel đc link đang pending; đã thanh toán thì cần hoàn thủ công trên PayOS
-		try {
-			await this.paymentService.refund(PaymentGateway.PAYOS, Number(order.orderCode));
-		} catch {
-			/* best-effort */
-		}
-		await this.orderRepo.client.$transaction(async (tx) => {
-			await this.finance.recordOutflow(tx, order.id, refundAmount, 'OTHER', `Hoàn tiền khách (đơn ${order.orderCode})`);
-			// đánh dấu txn đã hoàn để reconcile_refund đối soát
-			await this.orderRepo.markTransactionsRefunded(order.id, tx);
-			// ponytail: status refunding chờ admin đối soát, mới thành refunded
-			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDING }, tx);
-		});
+		// ponytail: chỉ đánh dấu pending_refund — tiền/l Expense chỉ ghi khi admin reconcile
+		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.PENDING_REFUND });
 	}
 
-	// ponytail: customer cancel. Refund (Expense + cashflow OUT) only if order hasn't reached PROCESSING yet.
-	async cancelOrder(orderId: number, userId: number): Promise<{ refunded: boolean; amount: number }> {
+	// ponytail: customer cancel. Refund (Expense + cashflow OUT) chỉ diễn ra khi admin
+	// reconcile_refund; cancel ở đây chỉ đặt pending_refund để chờ đối soát.
+	async cancelOrder(orderId: number, userId: number): Promise<{ status: string; refunded: boolean; amount: number }> {
 		const order = await this.orderRepo.findOrderWithTransactions(orderId, userId, );
 		if (!order) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		if (!['pending_payment', 'paid', 'partially_paid', 'processing', 'shipping'].includes(order.status)) {
@@ -551,18 +540,8 @@ export class OrderService implements IOrderService {
 		}
 		const beforeProcess = order.status === OrderStatus.PENDING_PAYMENT || order.status === OrderStatus.PAID || order.status === OrderStatus.PARTIALLY_PAID;
 		if (beforeProcess && order.paidAmount > 0) {
-			const amount = order.paidAmount;
-			try {
-				await this.paymentService.refund(PaymentGateway.PAYOS, Number(order.orderCode));
-			} catch {
-				/* best-effort: PayOS link đã paid → hoàn thủ công, Expense vẫn ghi nhận */
-			}
-			await this.orderRepo.client.$transaction(async (tx) => {
-				await this.orderRepo.markTransactionsRefunded(order.id, tx);
-				await this.finance.recordOutflow(tx, order.id, amount, 'OTHER', `Hoàn tiền khách (đơn ${order.orderCode})`);
-				await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDING }, tx);
-			});
-			return { refunded: true, amount };
+			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.PENDING_REFUND });
+			return { status: OrderStatus.PENDING_REFUND, refunded: false, amount: order.paidAmount };
 		}
 		// ponytail: user cancels before payment — restock albums atomic with status flip.
 		// updateOrder uses updateMany WHERE status=PENDING_PAYMENT (via markCancelled); if
@@ -573,10 +552,10 @@ export class OrderService implements IOrderService {
 				if (count === 0) return; // already cancelled concurrently — do not double-restock
 				await this.stockService.restockOrderAlbums(order.orderItems, tx);
 			});
-			return { refunded: false, amount: 0 };
+			return { status: OrderStatus.CANCELLED, refunded: false, amount: 0 };
 		}
 		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED });
-		return { refunded: false, amount: 0 };
+		return { status: OrderStatus.CANCELLED, refunded: false, amount: 0 };
 	}
 
 	// ===== Return / Warranty (bảo hành = giao lại quyển khác) =====
@@ -662,12 +641,21 @@ export class OrderService implements IOrderService {
 		await this.orderRepo.updateOrder(orderId, { defectState: DefectState.REPORTED });
 	}
 
-	// ponytail: admin đối soát đơn đã refund — đánh dấu các txn đã hoàn (đã trả thủ công trên PayOS) đã reconciled.
-	// Dùng updateMany 1 phát thay vì loop update từng txn (N9); cờ reconciledAt là cột thật, thay vì json rawPayload.
+	// ponytail: admin xác nhận đã hoàn tiền (thủ công trên PayOS / chuyển khoản).
+	// DUY NHẤT ghi Cashflow OUT + mark txn refunded — hoàn tiền KHÔNG ghi Expense.
 	private async reconcileRefund(order: any): Promise<void> {
-		if (order.status !== OrderStatus.REFUNDING) throw new AppError(ErrorCode.INTERNAL, 400);
+		if (order.status !== OrderStatus.PENDING_REFUND) throw new AppError(ErrorCode.INTERNAL, 400);
+		const amount = order.paidAmount;
+		try {
+			await this.paymentService.refund(PaymentGateway.PAYOS, Number(order.orderCode));
+		} catch {
+			/* best-effort: PayOS link đã paid → hoàn thủ công, Expense vẫn ghi nhận */
+		}
 		await this.orderRepo.client.$transaction(async (tx) => {
 			await this.orderRepo.markTransactionsRefunded(order.id, tx);
+			// ponytail: refund = tiền rời khỏi tay → chỉ Cashflow OUT; KHÔNG ghi Expense
+			// (hoàn tiền không phải chi phí kinh doanh, chỉ là dòng tiền âm).
+			await this.orderRepo.createCashflow({ type: 'OUT', orderId: order.id, amount, date: new Date(), note: `Hoàn tiền khách (đơn ${order.orderCode})` }, tx);
 			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDED }, tx);
 		});
 	}

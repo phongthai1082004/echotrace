@@ -22,7 +22,6 @@ import { EditOptionsModal } from "./components/edit-options-modal";
 import { DeliveryStep } from "./components/delivery-step";
 import { DeliverySidebar } from "./components/delivery-sidebar";
 import { PaymentStep } from "./components/payment-step";
-import { ConfirmStep } from "./components/confirm-step";
 
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation();
@@ -115,9 +114,9 @@ export default function CheckoutPage() {
         }),
       });
       if (order?.checkoutUrl) {
-        setOrderInfo(order); // hiện QR, poll trạng thái → webhook xác nhận xong tự nhảy step confirm
+        setOrderInfo(order); // hiện QR, poll trạng thái → webhook/verify xác nhận xong nhảy /orders
       } else {
-        setStep("confirm");
+        router.push("/orders");
       }
     } catch (e: any) {
       showToast(e?.message || t("customer.checkout.placeOrderFailed"), "error");
@@ -149,10 +148,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen pt-15">
       <StepHeader step={step} />
 
-      {step === "confirm" ? (
-        <ConfirmStep form={form} orderCode={orderInfo?.orderCode} status={orderInfo?.status} />
-      ) : (
-        <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-10 max-[1600px]:py-8 max-[1440px]:py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 max-[1600px]:gap-8 max-[1440px]:gap-6">
+      <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-10 max-[1600px]:py-8 max-[1440px]:py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 max-[1600px]:gap-8 max-[1440px]:gap-6">
           {!loaded ? (
             <>
               <CheckoutSkeletonCards />
@@ -306,8 +302,7 @@ export default function CheckoutPage() {
               )}
             </>
           )}
-        </div>
-      )}
+      </div>
 
       <DiscountModal
         open={showDiscount}

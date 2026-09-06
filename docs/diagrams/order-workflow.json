@@ -1,0 +1,306 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EchoTrace Order Workflow — Payment & Finance Recognition",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-flow",
+        "label": "Order to payment",
+        "focus": [
+          "place",
+          "create-order",
+          "payos-link",
+          "pay",
+          "webhook",
+          "verify"
+        ],
+        "note": "Customer order becomes a PayOS link; the webhook confirms money moved."
+      },
+      {
+        "id": "admin-lifecycle",
+        "label": "Admin events",
+        "focus": [
+          "verify",
+          "admin-events",
+          "income",
+          "done"
+        ],
+        "note": "assign → ship → deliver; Income is recognized at DELIVERED."
+      },
+      {
+        "id": "finance-books",
+        "label": "Finance recognition",
+        "focus": [
+          "income",
+          "refund",
+          "done"
+        ],
+        "note": "Ledger rows fire the FinancePeriod counter triggers (fn_period_upsert)."
+      }
+    ],
+    "output": "docs/diagrams/order-workflow.html"
+  },
+  "lanes": [
+    {
+      "id": "customer",
+      "label": "Customer"
+    },
+    {
+      "id": "payos",
+      "label": "PayOS Gateway",
+      "variant": "exception"
+    },
+    {
+      "id": "backend",
+      "label": "Backend Order Service"
+    },
+    {
+      "id": "finance",
+      "label": "Finance Ledger"
+    }
+  ],
+  "phases": [
+    {
+      "id": "order",
+      "label": "Create + link",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "payment",
+      "label": "Pay + webhook",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "fulfillment",
+      "label": "Fulfill + recognize",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "link_group",
+      "label": "Payment link",
+      "lane": "payos",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "fulfil_group",
+      "label": "Fulfillment pipeline",
+      "lane": "backend",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ledger_group",
+      "label": "Ledger writes",
+      "lane": "finance",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "place",
+    "create-order",
+    "payos-link",
+    "pay",
+    "webhook",
+    "verify",
+    "admin-events",
+    "income",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "place",
+      "lane": "customer",
+      "col": 0,
+      "type": "external",
+      "label": "Checkout",
+      "sublabel": "POST /orders",
+      "width": 124
+    },
+    {
+      "id": "done",
+      "lane": "finance",
+      "col": 5,
+      "type": "frontend",
+      "label": "Delivered + settled",
+      "width": 124,
+      "sublabel": "FinancePeriod ↑"
+    },
+    {
+      "id": "create-order",
+      "lane": "backend",
+      "col": 0,
+      "type": "backend",
+      "label": "createOrder",
+      "sublabel": "txn PENDING · stock −",
+      "width": 124
+    },
+    {
+      "id": "admin-events",
+      "lane": "backend",
+      "col": 5,
+      "type": "backend",
+      "label": "Admin events",
+      "sublabel": "assign · ship · deliver",
+      "width": 136
+    },
+    {
+      "id": "payos-link",
+      "lane": "payos",
+      "col": 1,
+      "type": "external",
+      "label": "createPaymentLink",
+      "sublabel": "checkoutUrl + QR",
+      "width": 124
+    },
+    {
+      "id": "webhook",
+      "lane": "payos",
+      "col": 3,
+      "type": "external",
+      "label": "PayOS webhook",
+      "sublabel": "HMAC payload",
+      "width": 124
+    },
+    {
+      "id": "pay",
+      "lane": "customer",
+      "col": 1,
+      "type": "frontend",
+      "label": "Pay QR",
+      "sublabel": "QR / bank app",
+      "width": 124
+    },
+    {
+      "id": "verify",
+      "lane": "backend",
+      "col": 4,
+      "type": "backend",
+      "label": "processWebhook",
+      "sublabel": "txn SUCCESS + Cashflow IN",
+      "tag": "dupPaid guard",
+      "width": 136
+    },
+    {
+      "id": "income",
+      "lane": "finance",
+      "col": 5,
+      "type": "database",
+      "label": "Income",
+      "sublabel": "Income @ DELIVERED",
+      "width": 120,
+      "yOffset": 64
+    },
+    {
+      "id": "refund",
+      "lane": "finance",
+      "col": 4,
+      "type": "database",
+      "label": "refund / cancel",
+      "sublabel": "Cashflow OUT on reconcile",
+      "width": 150,
+      "yOffset": 64
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-place",
+      "from": "place",
+      "to": "create-order",
+      "label": "submit cart",
+      "variant": "default"
+    },
+    {
+      "id": "e-link",
+      "from": "create-order",
+      "to": "payos-link",
+      "label": "create link",
+      "variant": "default"
+    },
+    {
+      "id": "e-pay",
+      "from": "payos-link",
+      "to": "pay",
+      "label": "QR + returnUrl",
+      "variant": "default"
+    },
+    {
+      "id": "e-webhook",
+      "from": "pay",
+      "to": "webhook",
+      "label": "money moved",
+      "variant": "default"
+    },
+    {
+      "id": "e-verify",
+      "from": "webhook",
+      "to": "verify",
+      "label": "POST /api/payments/webhooks/payos",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-admin",
+      "from": "verify",
+      "to": "admin-events",
+      "label": "PAID / PARTIALLY_PAID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-income",
+      "from": "admin-events",
+      "to": "income",
+      "label": "deliver (all items)",
+      "variant": "default"
+    },
+    {
+      "id": "e-done",
+      "from": "income",
+      "to": "done",
+      "label": "DELIVERED",
+      "variant": "default",
+      "width": 1.2
+    },
+    {
+      "id": "e-refund",
+      "from": "verify",
+      "to": "refund",
+      "label": "cancel / refund (paid) → PENDING_REFUND",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Payment truth",
+      "items": [
+        "Webhook verifies the PayOS HMAC before trusting the payload",
+        "dupPaid guard + Serializable transaction prevent double counting",
+        "verifyPayment polls PayOS as a fallback when webhooks are late"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Finance recognition",
+      "items": [
+        "Cashflow IN at webhook (real money received)",
+        "Income at DELIVERED (revenue recognition, once)",
+        "Refund reconcile records Cashflow OUT only (no Expense)",
+        "Every row fires Postgres triggers → fn_period_upsert → FinancePeriod"
+      ]
+    }
+  ]
+}

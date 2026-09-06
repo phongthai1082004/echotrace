@@ -3,7 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { label } from "@/lib/styles";
 
-const steps = ["cart", "delivery", "payment", "confirm"] as const;
+const steps = ["cart", "delivery", "payment"] as const;
 export type CheckoutStep = (typeof steps)[number];
 
 export function StepHeader({ step }: { step: CheckoutStep }) {
