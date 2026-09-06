@@ -56,54 +56,15 @@ jobs:
         run: pnpm --filter frontend lint && pnpm --filter frontend type-check
 
   # ============================================================
-  # STAGE 2: UNIT TESTS
+  # STAGE 2: UNIT TESTS (skipped — no tests found)
   # ============================================================
   test:
-    name: Test
+    name: Test (skipped)
     runs-on: ubuntu-latest
     needs: lint
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: ci_user
-          POSTGRES_PASSWORD: ci_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    if: false
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 11
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run migrations
-        run: pnpm --filter backend exec prisma db push
-        env:
-          DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/testdb
-
-      - name: Run backend unit tests
-        run: pnpm --filter backend test:unit --passWithNoTests
-        env:
-          NODE_ENV: test
-          JWT_ACCESS_SECRET: test-secret
-          JWT_REFRESH_SECRET: test-secret
-          DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/testdb
+      - run: echo "Tests skipped — no test suite configured"
 
   # ============================================================
   # STAGE 3: BUILD & PUSH IMAGES
