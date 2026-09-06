@@ -8,14 +8,16 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 
+# Canvas cần build tools dù là frontend (pnpm workspace install chung)
+RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
 RUN --mount=type=cache,id=pnpm-store-frontend,target=/root/.local/share/pnpm/store \
-    corepack enable pnpm && \
+    npm install -g pnpm@11.9.0 --registry https://registry.npmmirror.com && \
     pnpm config set registry https://registry.npmmirror.com && \
-    pnpm config set network-timeout 300000 && \
     pnpm install --frozen-lockfile --filter echotrace...
 
 # =============================================================================
@@ -31,7 +33,7 @@ COPY frontend/ ./frontend/
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 
-RUN corepack enable pnpm && \
+RUN npm install -g pnpm@11.9.0 --registry https://registry.npmmirror.com && \
     pnpm --filter @echotrace/shared build && \
     pnpm --filter echotrace build
 

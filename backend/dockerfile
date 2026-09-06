@@ -17,18 +17,17 @@ COPY backend/package.json ./backend/
 
 # Install với pnpm store cache + mirror registry
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    corepack enable pnpm && \
+    npm install -g pnpm@11.9.0 --registry https://registry.npmmirror.com && \
     pnpm config set registry https://registry.npmmirror.com && \
-    pnpm config set network-timeout 300000 && \
     pnpm install --frozen-lockfile --filter backend...
 
 # Build shared
 COPY shared/ ./shared/
-RUN corepack enable pnpm && pnpm --filter @echotrace/shared build
+RUN pnpm --filter @echotrace/shared build
 
 # Copy backend source + generate Prisma Client
 COPY backend/ ./backend/
-RUN corepack enable pnpm && pnpm --filter backend exec prisma generate
+RUN pnpm --filter backend exec prisma generate
 
 # =============================================================================
 
@@ -58,6 +57,7 @@ COPY --from=deps /app/backend/prisma.config.ts ./backend/prisma.config.ts
 WORKDIR /app/backend
 EXPOSE 4000
 
-RUN corepack enable pnpm && corepack prepare pnpm@11.9.0 --activate
+# pnpm đã được install vào runner stage qua node_modules global của npm
+RUN npm install -g pnpm@11.9.0 --registry https://registry.npmmirror.com
 
 CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm exec tsx src/server.ts"]
