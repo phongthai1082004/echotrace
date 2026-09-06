@@ -55,17 +55,6 @@ jobs:
     name: Lint & Type Check
     needs: [changes]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - service: shared
-            cmd: pnpm --filter @echotrace/shared build
-          - service: backend
-            cmd: pnpm --filter backend type-check
-          - service: frontend
-            cmd: pnpm --filter frontend lint && pnpm --filter frontend type-check
-
     steps:
       - uses: actions/checkout@v4
 
@@ -81,8 +70,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ${{ matrix.service }}
-        run: ${{ matrix.cmd }}
+      - name: Build shared
+        run: pnpm --filter @echotrace/shared build
+
+      - name: Generate Prisma client
+        run: pnpm --filter backend db:generate
+
+      - name: Type check backend
+        run: pnpm --filter backend type-check
+
+      - name: Lint & type check frontend
+        run: pnpm --filter frontend lint && pnpm --filter frontend type-check
 
   # ============================================================
   # STAGE 3: TEST (bỏ qua nếu không có test files)
