@@ -30,7 +30,6 @@ services:
     image: ghcr.io/phongthai1082004/echotrace/backend-service:latest
     container_name: ${BACKEND_HOST:-backend-service}
     environment:
-      - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis-service:6379
       - BACKEND_PORT=${BACKEND_PORT:-4000}
       - TZ=UTC
