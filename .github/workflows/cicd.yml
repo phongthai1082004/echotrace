@@ -93,7 +93,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run migrations
-        run: pnpm --filter backend db:push
+        run: pnpm --filter backend exec prisma db push
         env:
           DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/testdb
 
