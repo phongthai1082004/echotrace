@@ -33,6 +33,10 @@ const DEFAULT_LANG = 'en';
 async function bootstrap() {
 	const app = express();
 
+	// Health check first, before any middleware
+	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+	app.get('/', (req, res) => res.status(200).send('ok'));
+
 	await i18next
 		.use(Backend)
 		.use(LanguageDetector)
@@ -51,8 +55,6 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 	// ponytail: global JSON body cap lowered from 10mb; uploads use R2 presigned URLs (metadata only), so 1mb is ample.
 	app.use(express.json({ limit: '1mb' }));
 	app.use(handle(i18next));
-
-	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 	const apiRouter = express.Router({ mergeParams: true });
 
