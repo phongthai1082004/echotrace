@@ -1,8 +1,27 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
     "moduleResolution": "node",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "types": ["node", "jest", "@jest/globals"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "isolatedModules": false,
-    "noImplicitAny": false
-  }
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@features/*": ["src/features/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@lib/*": ["src/lib/*"],
+      "@utils/*": ["src/utils/*"],
+      "@di/*": ["src/di/*"]
+    },
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/**/*", "tests/**/*", "lib/**/*"]
 }
