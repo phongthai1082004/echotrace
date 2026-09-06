@@ -9,8 +9,6 @@ import { TestimonialSection } from "@/features/landing/sections/testimonial";
 import { CtaSection } from "@/features/landing/sections/cta";
 import { FooterSection } from "@/features/landing/sections/footer";
 
-export const dynamic = "force-static";
-
 export default function HomePage() {
 	return (
 		<LandingReveal>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Providers } from "@/components/providers";
 import { ToastProvider } from "@/components/toast";
 import { I18nProvider } from "./i18n-provider";
@@ -23,17 +24,18 @@ export const metadata: Metadata = {
   description: "Design bespoke travel journals with editorial-grade layouts.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lang = await cookies().then((c) => c.get("i18nextLng")?.value ?? "en");
   return (
     <html lang="en" className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">
         <Providers>
           <ToastProvider>
-            <I18nProvider>{children}</I18nProvider>
+            <I18nProvider lang={lang}>{children}</I18nProvider>
           </ToastProvider>
         </Providers>
       </body>

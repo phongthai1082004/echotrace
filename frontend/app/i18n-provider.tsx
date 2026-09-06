@@ -1,20 +1,15 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import i18n from "@/lib/i18n";
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+// ponytail: changeLanguage runs during render (not useEffect) so SSR + hydration
+// emit the same language; render-time singleton mutation is fine at this scale.
+export function I18nProvider({ lang, children }: { lang: string; children: ReactNode }) {
   const pathname = usePathname();
-  const synced = useRef(false);
-
-  useEffect(() => {
-    if (synced.current) return;
-    synced.current = true;
-    const detected = pathname.split("/")[1];
-    const lang = ["en", "vi", "es"].includes(detected) ? detected : "en";
-    if (lang !== i18n.language) i18n.changeLanguage(lang);
-  }, [pathname]);
-
+  const seg = pathname.split("/")[1];
+  const target = ["en", "vi", "es"].includes(seg) ? seg : lang;
+  if (i18n.language !== target) i18n.changeLanguage(target);
   return <>{children}</>;
 }

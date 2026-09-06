@@ -25,6 +25,7 @@ import { startOrderExpiryCron } from './infrastructure/queue/order-expiry-cron.j
 import paymentRoutes from './features/payment/payment.route.js';
 import financeRoutes from './features/finance/finance.route.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
+import { healthRoutes } from './infrastructure/health/health.routes.js';
 
 const PORT = process.env.BACKEND_PORT;
 const SUPPORTED_LANGS = ['en', 'vi', 'es'];
@@ -63,6 +64,8 @@ async function bootstrap() {
 			app.use(express.json({ limit: '1mb' }));
 			app.use(handle(i18next));
 
+			app.use('/health', healthRoutes); // deep check (DB + Redis); shallow /health handled above
+
 			const apiRouter = express.Router({ mergeParams: true });
 
 			apiRouter.use((req: Request, res: Response, next: NextFunction) => {
@@ -70,6 +73,10 @@ async function bootstrap() {
 				req.i18n?.changeLanguage(SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG);
 				next();
 			});
+
+			// Webhook MUST be mounted first: several routers call router.use(authGuard()) and are
+			// mounted on '/' — a later mount would 401 the PayOS webhook before it matches.
+			apiRouter.use('/', paymentRoutes);
 
 			apiRouter.use('/auth', authRoutes);
 			apiRouter.use('/', usersRoutes);
@@ -82,7 +89,6 @@ async function bootstrap() {
 			apiRouter.use('/', stickersRoutes);
 			apiRouter.use('/', uploadsRoutes);
 			apiRouter.use('/', orderRoutes);
-			apiRouter.use('/', paymentRoutes);
 			apiRouter.use('/', financeRoutes);
 
 			app.use('/:lang/api', apiRouter);
@@ -94,6 +100,25 @@ async function bootstrap() {
 			startDelayedWorker();
 			startOrderExpiryCron();
 			container.resolve(PdfWorker).start();
+
+			// Register webhook URL with PayOS (idempotent). Re-run on deploy or URL change,
+			// otherwise payment notifications are never sent. Requires WEBHOOK_URL publicly reachable.
+			if (process.env.WEBHOOK_URL) {
+				const { PayOS } = await import('@payos/node');
+				const payos = new PayOS({
+					clientId: process.env.PAYOS_CLIENT_ID!,
+					apiKey: process.env.PAYOS_API_KEY!,
+					checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
+				});
+				try {
+					await payos.webhooks.confirm(process.env.WEBHOOK_URL);
+					console.log('? PayOS webhook registered:', process.env.WEBHOOK_URL);
+				} catch (e: any) {
+					console.error('? PayOS webhook registration failed:', e?.message || e);
+				}
+			} else {
+				console.warn('? WEBHOOK_URL not set - PayOS webhooks will not be delivered');
+			}
 		} catch (err) {
 			console.error('Failed to initialize app features:', err);
 			// Keep server running with health checks only

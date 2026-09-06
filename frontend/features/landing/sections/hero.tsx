@@ -21,9 +21,6 @@ export function HeroSection() {
       }}
     >
       <div style={{ padding: "80px 56px", position: "relative", zIndex: 2 }}>
-        <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <span className="sticker-label">{t("home.hero.booksBadge")}</span>
-        </div>
         <div className="coord-label text-on-card" style={{ marginBottom: 12 }}>
           {t("home.hero.location")}
         </div>

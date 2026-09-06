@@ -17,7 +17,8 @@ export class PaymentController {
 		try {
 			result = await this.paymentService.handleWebhook('PAYOS', req.body);
 		} catch (e: any) {
-			// Chữ ký sai → 400 để PayOS biết endpoint bị giả mạo
+			// Chữ ký sai ðể 400 ðể PayOS biðt endpoint bị giả mạo
+			console.error('[payos-webhook] signature invalid:', e?.message || e, 'payload code:', req.body?.code);
 			res.status(400).json(ApiResponse.error('Invalid webhook signature', 400));
 			return;
 		}

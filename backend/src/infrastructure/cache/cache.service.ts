@@ -10,6 +10,15 @@ export class CacheService {
 		this.client.on('error', (err: Error) => console.error('[redis] connection error:', err.message));
 	}
 
+	async ping(): Promise<boolean> {
+		try {
+			await this.client.ping();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	async get<T>(key: string): Promise<T | undefined> {
 		try {
 			const raw = await this.client.get(key);
