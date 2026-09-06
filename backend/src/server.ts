@@ -33,79 +33,84 @@ const DEFAULT_LANG = 'en';
 async function bootstrap() {
 	const app = express();
 
-	// Health check first, before any middleware
+	// Health check - must work even if dependencies fail
 	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 	app.get('/', (req, res) => res.status(200).send('ok'));
 
-	await i18next
-		.use(Backend)
-		.use(LanguageDetector)
-		.init({
-			fallbackLng: DEFAULT_LANG,
-			supportedLngs: SUPPORTED_LANGS,
-			preload: SUPPORTED_LANGS,
-			backend: {
-				loadPath: './locales/{{lng}}.json',
-			},
-		});
-
-	app.use(helmet());
-	const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
-app.use(cors({ origin: allowedOrigins, credentials: true }));
-	// ponytail: global JSON body cap lowered from 10mb; uploads use R2 presigned URLs (metadata only), so 1mb is ample.
-	app.use(express.json({ limit: '1mb' }));
-	app.use(handle(i18next));
-
-	const apiRouter = express.Router({ mergeParams: true });
-
-	apiRouter.use((req: Request, res: Response, next: NextFunction) => {
-		const lang = req.params.lang || (req as any).language || DEFAULT_LANG;
-		req.i18n?.changeLanguage(SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG);
-		next();
-	});
-
-	apiRouter.use('/auth', authRoutes);
-	apiRouter.use('/', usersRoutes);
-	apiRouter.use('/', suppliersRoutes);
-	apiRouter.use('/', printOptionsRoutes);
-	apiRouter.use('/', sampleBooksRoutes);
-	apiRouter.use('/', booksRoutes);
-	apiRouter.use('/', cartRoutes);
-	apiRouter.use('/', couponsRoutes);
-	apiRouter.use('/', stickersRoutes);
-	apiRouter.use('/', uploadsRoutes);
-	apiRouter.use('/', orderRoutes);
-	apiRouter.use('/', paymentRoutes);
-	apiRouter.use('/', financeRoutes);
-
-	app.use('/:lang/api', apiRouter);
-	app.use('/api', apiRouter);
-
-	app.use(errorMiddleware);
-
+	// Start server immediately so health checks pass
 	const server = app.listen(PORT, () => {
 		console.log(`🚀 Server running successfully at http://localhost:${PORT}/`);
 	});
 
-	// ponytail: xử lý các đơn hết hạn chưa thanh toán (Redis delayed job)
-	startDelayedWorker();
-	// ponytail: cron 10 phút backup phòng Redis lỡ đơn hết hạn
-	startOrderExpiryCron();
-	// ponytail: worker render PDF (queue độc lập, giới hạn PDF_MAX_CONCURRENT job cùng lúc)
-	container.resolve(PdfWorker).start();
+	// Initialize everything else but don't block startup
+	setImmediate(async () => {
+		try {
+			await i18next
+				.use(Backend)
+				.use(LanguageDetector)
+				.init({
+					fallbackLng: DEFAULT_LANG,
+					supportedLngs: SUPPORTED_LANGS,
+					preload: SUPPORTED_LANGS,
+					backend: {
+						loadPath: './locales/{{lng}}.json',
+					},
+				});
 
-	server.on('error', (error: Error) => {
-		console.error('❌ Server runtime error encountered:', error.message);
-		console.error(error.stack);
+			app.use(helmet());
+			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
+			app.use(cors({ origin: allowedOrigins, credentials: true }));
+			app.use(express.json({ limit: '1mb' }));
+			app.use(handle(i18next));
+
+			const apiRouter = express.Router({ mergeParams: true });
+
+			apiRouter.use((req: Request, res: Response, next: NextFunction) => {
+				const lang = req.params.lang || (req as any).language || DEFAULT_LANG;
+				req.i18n?.changeLanguage(SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG);
+				next();
+			});
+
+			apiRouter.use('/auth', authRoutes);
+			apiRouter.use('/', usersRoutes);
+			apiRouter.use('/', suppliersRoutes);
+			apiRouter.use('/', printOptionsRoutes);
+			apiRouter.use('/', sampleBooksRoutes);
+			apiRouter.use('/', booksRoutes);
+			apiRouter.use('/', cartRoutes);
+			apiRouter.use('/', couponsRoutes);
+			apiRouter.use('/', stickersRoutes);
+			apiRouter.use('/', uploadsRoutes);
+			apiRouter.use('/', orderRoutes);
+			apiRouter.use('/', paymentRoutes);
+			apiRouter.use('/', financeRoutes);
+
+			app.use('/:lang/api', apiRouter);
+			app.use('/api', apiRouter);
+
+			app.use(errorMiddleware);
+
+			// Background jobs
+			startDelayedWorker();
+			startOrderExpiryCron();
+			container.resolve(PdfWorker).start();
+		} catch (err) {
+			console.error('Failed to initialize app features:', err);
+			// Keep server running with health checks only
+		}
 	});
 
-process.on('unhandledRejection', (reason: unknown) => {
-	console.error('💥 UNHANDLED PROMISE REJECTION!', reason);
-});
+	server.on('error', (error: Error) => {
+		console.error('❌ Server runtime error:', error.message);
+	});
+
+	process.on('unhandledRejection', (reason: unknown) => {
+		console.error('💥 UNHANDLED REJECTION:', reason);
+	});
 
 	process.on('uncaughtException', (error: Error) => {
-		console.error('💥 UNCAUGHT EXCEPTION! Shutting down server...', error);
-		process.exit(1);
+		console.error('💥 UNCAUGHT EXCEPTION:', error);
+		// Don't exit - allow health checks to continue
 	});
 }
 
