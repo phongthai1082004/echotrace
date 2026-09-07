@@ -20,9 +20,15 @@ const config: Config = {
     '^@lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@di/(.*)$': '<rootDir>/src/di/$1',
+    // deep imports hit the real shared TS sources (ts-jest transforms them); the bare specifier maps to the mock
+    '^@echotrace/shared/(.*)$': '<rootDir>/../shared/$1',
+    // ESM-only / generated prisma modules — must precede the generic .js mapper
+    '^(.*generated/prisma/client)(\\.js)?$': '<rootDir>/tests/mocks/prisma.generated.mock.ts',
+    '^@prisma/adapter-pg$': '<rootDir>/tests/mocks/prisma-adapter.mock.ts',
     '^@echotrace/shared$': '<rootDir>/tests/mocks/shared.mock.ts',
     '^@prisma/client$': '<rootDir>/tests/mocks/prisma.mock.ts',
-    '^(.+)\\.js$': '$1',
+    // .js suffix → real module (TS sources); keeps the ./ / ../ prefix, bare deps untouched
+    '^(\\.{1,2}/.+)\\.js$': '$1',
   },
   moduleDirectories: ['node_modules', '<rootDir>/src'],
   collectCoverageFrom: [

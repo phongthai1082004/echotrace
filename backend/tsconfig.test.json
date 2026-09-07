@@ -5,7 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "baseUrl": ".",
-    "rootDir": ".",
+    "rootDir": "..",
     "isolatedModules": true,
     "paths": {
       "@/*": ["src/*"],
@@ -14,8 +14,9 @@
       "@lib/*": ["src/lib/*"],
       "@utils/*": ["src/utils/*"],
       "@di/*": ["src/di/*"],
-      "@echotrace/shared": ["tests/mocks/shared.mock.ts"]
+      "@echotrace/shared": ["tests/mocks/shared.mock.ts"],
+      "@echotrace/shared/*": ["../shared/*"]
     }
   },
-  "include": ["tests/**/*", "src/**/*"]
+  "include": ["tests/**/*", "src/**/*", "../shared/**/*"]
 }

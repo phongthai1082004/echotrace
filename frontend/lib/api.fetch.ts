@@ -1,27 +1,15 @@
 const PROXY = "/api/proxy";
 
-// Track refresh in-flight to avoid race conditions
-let refreshPromise: Promise<void> | null = null;
-
-async function handleTokenRefresh() {
-  if (refreshPromise) return refreshPromise;
-  
-  refreshPromise = (async () => {
-    try {
-      // Client-side: call the proxy to refresh via session JWT
-      const res = await fetch(`${PROXY}?path=${encodeURIComponent("/api/auth/refresh")}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      if (!res.ok) throw new Error("Refresh failed");
-      // Server will have updated the JWT cookie
-    } finally {
-      refreshPromise = null;
-    }
-  })();
-  
-  return refreshPromise;
+// ponytail: the real token refresh happens inside the NextAuth jwt callback — every
+// proxy request calls getToken(), which rotates an expired access token automatically.
+// Here we only retry once (fresh cookie) and hard-fail to /auth when it's still 401.
+function expireSession() {
+  import("next-auth/react")
+    .then(async (m) => {
+      await m.signOut({ redirect: false });
+      window.location.href = "/auth?error=expired";
+    })
+    .catch(() => {});
 }
 
 export async function apiFetch<T = any>(
@@ -33,13 +21,13 @@ export async function apiFetch<T = any>(
   const base = isServer
     ? process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
     : PROXY;
-  
+
   // Add language code to API path for client requests
   let apiPath = path;
   if (!isServer && !path.startsWith("/en") && !path.startsWith("/es") && !path.startsWith("/vi")) {
     apiPath = `/en${path}`;
   }
-  
+
   // Client calls go through the same-origin proxy, which injects the bearer
   // token from the httpOnly session cookie. The token is never exposed to JS.
   const url = isServer ? `${base}${path}` : `${PROXY}?path=${encodeURIComponent(apiPath)}`;
@@ -53,22 +41,14 @@ export async function apiFetch<T = any>(
 
   let res = await fetch(url, { ...options, headers });
 
-  // 401 from the proxy: attempt one refresh, then try again
+  // 401 → the proxy's getToken() may have just rotated the access token; retry once
   if (!isServer && res.status === 401) {
-    try {
-      await handleTokenRefresh();
-      // Retry the original request after refresh
-      res = await fetch(url, { ...options, headers });
-    } catch {
-      // Refresh failed → sign out
-      import("next-auth/react").then((m) => m.signOut({ callbackUrl: "/" })).catch(() => {});
-      throw new Error("Session expired. Please sign in again.");
-    }
+    res = await fetch(url, { ...options, headers });
   }
 
-  // Second 401 or immediate 401 on other routes → sign out
+  // Still 401 → refresh token is dead (expired/revoked) → sign out → /auth
   if (!isServer && res.status === 401) {
-    import("next-auth/react").then((m) => m.signOut({ callbackUrl: "/" })).catch(() => {});
+    expireSession();
     throw new Error("Session expired. Please sign in again.");
   }
 

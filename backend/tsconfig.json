@@ -23,7 +23,7 @@
         },
         "ignoreDeprecations": "6.0"
     },
-    "include": ["src/**/*", "tests/**/*", "lib/**/*"],
+    "include": ["src/**/*", "lib/**/*", "generated/**/*"],
     "ts-node": {
         "compilerOptions": {
             "module": "commonjs"

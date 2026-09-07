@@ -46,7 +46,7 @@ export default function AdminSampleBooksPage() {
 
   const [editing, setEditing] = useState<SampleBookDTO | null>(null);
 
-  const handleSave = async (body: { type: "ALBUM" | "TEMPLATE"; quantity: number | null; status: string }) => {
+  const handleSave = async (body: { type: "ALBUM" | "TEMPLATE"; quantity: number | null; status: string; category: string | null }) => {
     if (!editing) return;
     try {
       const updated = await apiFetch<SampleBookDTO>(`/api/admin/sample-books/${editing.id}`, accessToken, {

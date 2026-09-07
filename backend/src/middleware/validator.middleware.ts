@@ -8,7 +8,9 @@ export function validateDto(dtoClass: any) {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		const dtoObj = plainToInstance(dtoClass, req.body);
 
-		const errors: ValidationError[] = await validate(dtoObj);
+		// ponytail: whitelist strips properties that have no validation decorators —
+		// without it, crafted extra fields flow into req.body and blow up at Prisma with 500s.
+		const errors: ValidationError[] = await validate(dtoObj, { whitelist: true });
 
 		if (errors.length > 0) {
 			const formattedErrors: Record<string, string[]> = {};

@@ -20,8 +20,7 @@ import {
   serializeCanvasState,
   enforceZLayers,
   placePhotoInFrame,
-  applyFrameClip,
-  setAllFramesBorder,
+  applyFrameClip
 } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 
@@ -117,18 +116,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   };
 
   const iconSize = 14;
-
-  const activeObj = canvas?.getActiveObject() as any;
-  const frameToolsOn =
-    !!activeObj &&
-    (isFrameObject(activeObj) ||
-      (activeObj.type === "activeselection" && activeObj.getObjects().some((o: any) => isFrameObject(o))));
-  const selectedFrame = frameToolsOn
-    ? activeObj.type === "activeselection"
-      ? activeObj.getObjects().find((o: any) => isFrameObject(o))
-      : activeObj
-    : null;
-  const frameWidth = selectedFrame?.customProperties?.strokeWidth || 1;
 
   const handleUndo = () => {
     if (!canvas || undoStack.length === 0) return;
@@ -474,23 +461,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
         label={t("customer.studio.flipV")}
         onClick={handleFlipV}
       />
-      {frameToolsOn && (
-        <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
-          {[1, 2, 3, 4, 5].map((w) => (
-            <button
-              key={w}
-              onClick={() => {
-                pushUndo();
-                if (canvas) setAllFramesBorder(canvas, { width: w });
-                useCanvasStore.getState().incrementSelectionVersion();
-              }}
-              className={`px-1.5 py-1.5 font-mono text-[9px] font-bold transition-colors ${w < 5 ? "border-r border-[#222]/30" : ""} ${frameWidth === w ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0] text-[#666]"}`}
-            >
-              {w}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="ml-auto flex items-center gap-2">
         <div className="flex items-center rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] overflow-hidden">
           {(["left", "spread", "right"] as const).map((v) => (
@@ -524,7 +494,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
             onClick={() => handleZoom(-1)}
             className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors"
           >
-            −
+            âˆ’
           </button>
           <button className="px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest border-x-[2px] border-[#222] flex items-center gap-1 hover:bg-[#e8e6e0] transition-colors">
             <svg
@@ -623,7 +593,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 const s = useCanvasStore.getState();
                 const meta = s.bookMeta;
 
-                // ponytail: chỉ gửi tham chiếu + option — title/thumbnail/pages server đọc từ Book.
+                // ponytail: chá»‰ gá»­i tham chiáº¿u + option â€” title/thumbnail/pages server Ä‘á»c tá»« Book.
                 const item = {
                   bookId: meta.id,
                   cover: "softcover",

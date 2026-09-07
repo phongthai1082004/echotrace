@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -13,7 +13,7 @@ export function useSampleBooks() {
   const accessToken = (session as any)?.accessToken;
 
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 1000);
+  const debouncedSearch = useDebounce(search, 500);
   const [type, setType] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");

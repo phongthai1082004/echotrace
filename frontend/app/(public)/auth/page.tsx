@@ -29,6 +29,13 @@ export default function AuthPage() {
   const otpValue = otp.join("");
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error") === "expired") {
+      showToast("errorCodes.AUTH_TOKEN_EXPIRED", "error");
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
     if (status === "authenticated") {
       window.location.href = roleHome((session?.user as { role?: string } | undefined)?.role);
     }

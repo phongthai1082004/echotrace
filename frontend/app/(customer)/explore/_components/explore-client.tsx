@@ -1,14 +1,13 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SAMPLE_BOOK_CATEGORIES } from "@echotrace/shared";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { SkeletonGrid } from "@/components/skeleton";
 import { neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { useExplore } from "../_hooks/use-explore";
 import { SampleCard } from "./sample-card";
-
-const ALL_CATEGORIES = ["NATURE", "URBAN", "CLASSIC", "MINIMAL", "ADVENTURE", "CULTURAL", "CUSTOM"] as const;
 
 export function ExploreClient() {
 	const { t } = useTranslation();
@@ -54,7 +53,7 @@ export function ExploreClient() {
 		<div className="flex flex-col lg:flex-row px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4">
 			<SidebarNav
 				title={t("customer.explore.categories")}
-				items={ALL_CATEGORIES.map((cat) => ({ value: cat, label: t(`customer.explore.${cat.toLowerCase()}`) }))}
+				items={SAMPLE_BOOK_CATEGORIES.map((cat) => ({ value: cat, label: t(`customer.explore.${cat.toLowerCase()}`) }))}
 				activeItem={selectedCategory}
 				onSelect={onSelect}
 			/>

@@ -1,10 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../lib/db.service.js';
 import { Prisma } from '../../../generated/prisma/client.js';
-import { PDF_MAX_ATTEMPTS } from './pdf.types.js';
 
-// ponytail: repository layer — tách truy cập Prisma của feature pdf ra khỏi service.
-// Các method trả PrismaPromise (dùng this.client) để gộp vào $transaction array form.
+// ponytail: repository layer â€” tÃ¡ch truy cáº­p Prisma cá»§a feature pdf ra khá»i service.
+// CÃ¡c method tráº£ PrismaPromise (dÃ¹ng this.client) Ä‘á»ƒ gá»™p vÃ o $transaction array form.
 @injectable()
 export class PdfRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}
@@ -35,7 +34,7 @@ export class PdfRepository {
 		});
 	}
 
-	// ponytail: idempotent enqueue — 1 order = 1 pdf job (unique orderId). Reset về PENDING để replay.
+	// ponytail: idempotent enqueue â€” 1 order = 1 pdf job (unique orderId). Reset vá» PENDING Ä‘á»ƒ replay.
 	upsertPdfJob(orderId: number) {
 		return this.client.orderPdfJob.upsert({
 			where: { orderId },
@@ -44,24 +43,23 @@ export class PdfRepository {
 		});
 	}
 
-	// ponytail: claim nguyên tử — lấy PENDING / FAILED(chưa đủ attempts) / PROCESSING bị kẹt(stale).
-	claimPdfJob() {
-		const stale = new Date(Date.now() - 10 * 60 * 1000);
-		return this.client.$transaction(async (tx) => {
-			const job = await tx.orderPdfJob.findFirst({
-				where: {
-					OR: [
-						{ status: 'PENDING' },
-						{ status: 'FAILED', attempts: { lt: PDF_MAX_ATTEMPTS } },
-						{ status: 'PROCESSING', lockedAt: { lt: stale } },
-					],
-				},
-				orderBy: { createdAt: 'asc' },
-			});
-			if (!job) return null;
-			await tx.orderPdfJob.update({ where: { id: job.id }, data: { status: 'PROCESSING', lockedAt: new Date() } });
-			return job;
-		});
+	// ponytail: claim nguyÃªn tá»­ â€” láº¥y PENDING / FAILED(chÆ°a Ä‘á»§ attempts) / PROCESSING bá»‹ káº¹t(stale).
+	async claimPdfJob() {
+		// ponytail: atomic single-statement claim (FOR UPDATE SKIP LOCKED) - the previous
+		// findFirst+update let two backend instances claim the same job concurrently.
+		const rows = await this.prismaService.db.$queryRaw<any[]>(Prisma.sql`
+			UPDATE "OrderPdfJob" SET status = 'PROCESSING', "lockedAt" = now(), "updatedAt" = now()
+			WHERE id = (
+				SELECT id FROM "OrderPdfJob"
+				WHERE status = 'PENDING'
+				   OR (status = 'FAILED' AND attempts < 5)
+				   OR (status = 'PROCESSING' AND "lockedAt" < now() - interval '10 minutes')
+				ORDER BY "createdAt" ASC
+				LIMIT 1
+				FOR UPDATE SKIP LOCKED
+			)
+			RETURNING *`);
+		return rows[0] ?? null;
 	}
 
 	findPdfJob(id: number) {

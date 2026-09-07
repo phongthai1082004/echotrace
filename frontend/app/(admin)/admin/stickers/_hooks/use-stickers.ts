@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -25,7 +25,7 @@ export function useStickers() {
   const [uploading, setUploading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<"all" | AssetCategory>("all");
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 1000);
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchAssets = async () => {
     if (!token) {

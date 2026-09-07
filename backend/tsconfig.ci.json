@@ -1,7 +1,7 @@
 {
-  "compilerOptions": {
+    "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -21,7 +21,8 @@
       "@utils/*": ["src/utils/*"],
       "@di/*": ["src/di/*"]
     },
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "rootDir": ".."
   },
-  "include": ["src/**/*", "tests/**/*", "lib/**/*"]
+  "include": ["src/**/*", "tests/**/*", "lib/**/*", "../shared/**/*"]
 }

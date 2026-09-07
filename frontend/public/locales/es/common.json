@@ -1185,6 +1185,7 @@
 		"TOO_MANY_REQUEST": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
 		"NOT_FOUND": "Recurso no encontrado",
 		"INTERNAL": "Algo salió mal. Inténtalo de nuevo.",
-		"VALIDATION_FAILED": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo."
+		"VALIDATION_FAILED": "Algunos campos no son válidos. Revísalos e inténtalo de nuevo.",
+		"AUTH_TOKEN_EXPIRED": "Tu sesión ha expirado. Inicia sesión de nuevo."
 	}
 }

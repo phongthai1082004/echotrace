@@ -1188,6 +1188,7 @@
 		"TOO_MANY_REQUEST": "Too many requests. Please wait a moment and try again.",
 		"NOT_FOUND": "Resource not found",
 		"INTERNAL": "Something went wrong. Please try again.",
-		"VALIDATION_FAILED": "Some fields are invalid. Please check and retry."
+		"VALIDATION_FAILED": "Some fields are invalid. Please check and retry.",
+		"AUTH_TOKEN_EXPIRED": "Your session has expired. Please sign in again."
 	}
 }

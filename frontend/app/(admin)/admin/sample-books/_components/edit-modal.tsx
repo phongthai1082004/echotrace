@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SampleBookDTO, SampleBookType, SampleBookStatus } from "@echotrace/shared";
+import { SampleBookDTO, SampleBookType, SampleBookStatus, SAMPLE_BOOK_CATEGORIES } from "@echotrace/shared";
 import { Modal } from "@/components/ui/modal";
 import { input, label, neoBtn, neoBtnPrimary } from "@/lib/styles";
 
@@ -15,14 +15,15 @@ export function EditModal({
   onClose,
 }: {
   book: SampleBookDTO;
-  onSave: (body: { type: "ALBUM" | "TEMPLATE"; quantity: number | null; status: string }) => Promise<void>;
+  onSave: (body: { type: "ALBUM" | "TEMPLATE"; quantity: number | null; status: string; category: string | null }) => Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [editForm, setEditForm] = useState<{ type: "ALBUM" | "TEMPLATE"; quantity: number; status: string }>({
+  const [editForm, setEditForm] = useState<{ type: "ALBUM" | "TEMPLATE"; quantity: number; status: string; category: string | null }>({
     type: book.type,
     quantity: book.quantity ?? 0,
     status: book.status,
+    category: book.category ?? null,
   });
   const [saving, setSaving] = useState(false);
 
@@ -31,7 +32,7 @@ export function EditModal({
     setSaving(true);
     try {
       const quantity = editForm.type === "ALBUM" ? editForm.quantity : null;
-      await onSave({ type: editForm.type, quantity, status: editForm.status });
+      await onSave({ type: editForm.type, quantity, status: editForm.status, category: editForm.category });
     } finally {
       setSaving(false);
     }
@@ -70,6 +71,22 @@ export function EditModal({
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <p className={`${label} mb-1`}>{t("customer.explore.categories")}</p>
+          <select
+            value={editForm.category ?? ""}
+            onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value || null }))}
+            className={`${input} capitalize`}
+          >
+            <option value="">—</option>
+            {SAMPLE_BOOK_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {t(`customer.explore.${cat.toLowerCase()}`)}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

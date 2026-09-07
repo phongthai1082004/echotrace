@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsIn, IsInt, IsBoolean, Min } from 'class-validator';
+import { SAMPLE_BOOK_CATEGORIES } from '../../constants/sample-book-category.js';
 
 const SAMPLE_BOOK_TYPES = ['TEMPLATE', 'ALBUM'] as const;
 const SAMPLE_BOOK_STATUSES = ['draft', 'published', 'archive'] as const;
@@ -38,7 +39,7 @@ export class CreateSampleBookDTO {
   @IsOptional()
   type?: (typeof SAMPLE_BOOK_TYPES)[number];
 
-  @IsString()
+  @IsIn(SAMPLE_BOOK_CATEGORIES as unknown as string[])
   @IsOptional()
   category?: string | null;
 
@@ -98,7 +99,7 @@ export class UpdateSampleBookDTO {
   @IsOptional()
   type?: (typeof SAMPLE_BOOK_TYPES)[number];
 
-  @IsString()
+  @IsIn(SAMPLE_BOOK_CATEGORIES as unknown as string[])
   @IsOptional()
   category?: string | null;
 

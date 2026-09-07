@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -15,7 +15,7 @@ export function useUsers() {
   const token = isAuthenticated ? session.accessToken : undefined;
 
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 1000);
+  const debouncedSearch = useDebounce(search, 500);
   const [filter, setFilter] = useState<UserStatus | "all">("all");
   const [cursor, setCursor] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export function useUsers() {
 
   // Reset pagination whenever search/filter changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phân trang khi filter đổi
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phÃ¢n trang khi filter Ä‘á»•i
     setCursor(null);
     setCursorStack([]);
   }, [debouncedSearch, filter]);

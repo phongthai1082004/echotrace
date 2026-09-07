@@ -108,7 +108,7 @@ export class FabricRenderer implements IOrderPdfRenderer {
 			for (const page of pages) {
 				const json = parseCanvasJson(page?.canvasJson);
 				if (!json) continue;
-				const png = await this.renderPage(json);
+				const png = await this.renderPage(json, book);
 				const img = await pdf.embedPng(png);
 				// ponytail: mỗi trang fabric = 1 trang PDF, kích thước = canvas.
 				const p = pdf.addPage([img.width, img.height]);
@@ -121,9 +121,13 @@ export class FabricRenderer implements IOrderPdfRenderer {
 	}
 
 	// ponytail: render 1 trang fabric JSON → PNG buffer.
-	private async renderPage(json: any): Promise<Buffer> {
-		const width = Number(json.width) || 800;
-		const height = Number(json.height) || 600;
+	private async renderPage(json: any, book?: { paperWidth?: number | null; paperHeight?: number | null }): Promise<Buffer> {
+		// ponytail: old saves have no width/height -> derive page px from book paper (4 px/mm,
+		// same scale as the studio FORMATS: 150mm -> 600px). json.width wins when present.
+		const mmW = Number(book?.paperWidth) || 150;
+		const mmH = Number(book?.paperHeight) || 150;
+		const width = Number(json.width) || Math.round(mmW * 4);
+		const height = Number(json.height) || Math.round(mmH * 4);
 		const srcs = collectImageSrcs(json);
 
 		// TẢI TỪNG ẢNH 1 (sequential) — không ngợp băng thông. Retry chỉ ảnh đó.

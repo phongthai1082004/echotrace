@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,7 @@ export default function AdminSuppliersPage() {
   const isAuthenticated = isAuthenticatedSession(session);
 
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 1000);
+  const debouncedSearch = useDebounce(search, 500);
   const [filter, setFilter] = useState<string>("all");
   const [cursor, setCursor] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
@@ -64,7 +64,7 @@ export default function AdminSuppliersPage() {
 
   // Reset pagination whenever search/filter changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phân trang khi filter đổi
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phÃ¢n trang khi filter Ä‘á»•i
     setCursor(null);
     setCursorStack([]);
   }, [debouncedSearch, filter]);
@@ -143,10 +143,10 @@ export default function AdminSuppliersPage() {
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
-                  {s.totalDebt ? `₫${s.totalDebt.toLocaleString()}` : "—"}
+                  {s.totalDebt ? `â‚«${s.totalDebt.toLocaleString()}` : "â€”"}
                 </div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
-                  {s.monthDebt ? `₫${s.monthDebt.toLocaleString()}` : "—"}
+                  {s.monthDebt ? `â‚«${s.monthDebt.toLocaleString()}` : "â€”"}
                 </div>
                 <div className="px-2 flex justify-center whitespace-nowrap">
                   <StatusBadge status={s.banned ? "banned" : "active"} />
