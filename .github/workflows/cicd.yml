@@ -183,12 +183,9 @@ jobs:
 
       - name: Copy configs to VPS
         run: |
-          # backend/.env and frontend/.env are tracked in git and are the source of truth.
-          # Do NOT regenerate env files here — overwriting them strips PAYOS_*/JWT secrets
-          # and crash-loops the backend.
+          # Deploy ONLY the compose file + images. The .env files on the VPS are managed
+          # there manually — never overwrite them from CI.
           scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
-          scp backend/.env ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/backend/.env
-          scp frontend/.env ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/frontend/.env
 
       - name: Deploy
         env:
