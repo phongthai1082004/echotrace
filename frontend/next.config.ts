@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV !== "production";
     const csp = [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://static.cloudflareinsights.com`,
       "style-src 'self' 'unsafe-inline'",
       "connect-src 'self' https://cloudfarer2.cabinetdememoire.workers.dev",
       "img-src 'self' data: https://cloudfarer2.cabinetdememoire.workers.dev https://images.unsplash.com https://lh3.googleusercontent.com https://arashiyamabambooforest.com",
