@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   # ============================================================
-  # STAGE 0: CHANGE DETECTION — build only what changed
+  # STAGE 0: CHANGE DETECTION â€” build only what changed
   # ============================================================
   changes:
     name: Detect Changes
@@ -87,7 +87,7 @@ jobs:
         run: pnpm --filter frontend lint && pnpm --filter frontend type-check
 
   # ============================================================
-  # STAGE 2: BUILD & PUSH — only services whose sources changed
+  # STAGE 2: BUILD & PUSH â€” only services whose sources changed
   # ============================================================
   build-backend:
     name: Build & Push Backend
@@ -160,7 +160,7 @@ jobs:
             NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
 
   # ============================================================
-  # STAGE 3: DEPLOY TO VPS — runs when nothing failed and something built
+  # STAGE 3: DEPLOY TO VPS â€” runs when nothing failed and something built
   # ============================================================
   deploy:
     name: Deploy to VPS
@@ -184,7 +184,7 @@ jobs:
       - name: Copy configs to VPS
         run: |
           # Deploy ONLY the compose file + images. The .env files on the VPS are managed
-          # there manually — never overwrite them from CI.
+          # there manually â€” never overwrite them from CI.
           scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.APP_DIR }}/
 
       - name: Deploy
@@ -213,67 +213,3 @@ jobs:
 
             docker compose ps
           "
-
-  # ============================================================
-  # STAGE 4: HEALTH CHECK & AUTO-ROLLBACK
-  # ============================================================
-  health-check:
-    name: Health Check
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: always() && needs.deploy.result == 'success'
-    steps:
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Health check
-        id: health
-        continue-on-error: true
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-          set -e
-
-          check() {
-            local url=$1 name=$2 retries=${3:-5} wait=${4:-10}
-            for i in $(seq 1 $retries); do
-              if curl -sf "$url" > /dev/null 2>&1; then
-                echo "✓ $name healthy"
-                return 0
-              fi
-              echo "  $name retry $i/$retries..."
-              sleep $wait
-            done
-            echo "✗ $name failed"
-            return 1
-          }
-
-          check http://localhost:4000/health "Backend" 5 10
-          check http://localhost:3000/api/health "Frontend" 5 10
-
-          echo "All services healthy!"
-          EOF
-
-      - name: Auto-rollback
-        if: steps.health.outcome == 'failure'
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd ${{ secrets.APP_DIR }}
-            echo '--- backend-service logs (tail) ---'
-            docker logs --tail 80 backend-service 2>&1 || true
-            echo '--- rolling back ---'
-            docker compose down
-            docker compose pull
-            docker compose up -d --force-recreate
-            sleep 15
-            docker compose ps
-            echo 'Rollback completed - manual intervention may be needed'
-          "
-          exit 1
-
-      - name: Success
-        if: steps.health.outcome == 'success'
-        run: echo "🎉 Deployment successful! All health checks passed."
