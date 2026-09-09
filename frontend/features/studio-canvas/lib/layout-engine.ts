@@ -171,7 +171,7 @@ export function nextFrameZ(canvas: fabric.Canvas): number {
 
 export function serializeCanvasState(canvas: fabric.Canvas): string {
   const liveObjs = canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport);
-  const parsed = (canvas as any).toJSON(SERIALIZE_KEYS) as { objects: any[] };
+  const parsed = (canvas as any).toJSON(SERIALIZE_KEYS) as { objects: any[]; width?: number; height?: number };
 	// PDF render needs the real page ratio — fabric toJSON drops viewport dims
 	parsed.width = canvas.getWidth();
 	parsed.height = canvas.getHeight();
