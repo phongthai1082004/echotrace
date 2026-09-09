@@ -36,7 +36,9 @@ export function OptionFormModal({
 
   const handleSave = async () => {
     setSaving(true);
-    const ok = await onSave(option, form);
+    // ponytail: paperSize price is derived from width×height — never send an override
+    const payload = form.type === "paperSize" ? { ...form, price: null } : form;
+    const ok = await onSave(option, payload);
     setSaving(false);
     if (ok) onClose();
   };
@@ -123,17 +125,19 @@ export function OptionFormModal({
           </div>
         )}
 
-        <div>
-          <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.printOptions.price")}</p>
-          <input
-            className={input}
-            value={num(form.price)}
-            onChange={(e) => {
-              const n = e.target.value.trim() === "" ? null : Number(e.target.value);
-              upd({ price: Number.isNaN(n) ? null : n });
-            }}
-          />
-        </div>
+        {form.type !== "paperSize" && (
+          <div>
+            <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.printOptions.price")}</p>
+            <input
+              className={input}
+              value={num(form.price)}
+              onChange={(e) => {
+                const n = e.target.value.trim() === "" ? null : Number(e.target.value);
+                upd({ price: Number.isNaN(n) ? null : n });
+              }}
+            />
+          </div>
+        )}
       </div>
     </Modal>
   );

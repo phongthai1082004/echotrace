@@ -5,11 +5,11 @@ yt# Nginx Checklist
 ## Installation & Setup
 
 ### Basic Installation
-- [ ] Install Nginx: `apt install nginx`
-- [ ] Enable Nginx service: `systemctl enable nginx`
-- [ ] Start Nginx: `systemctl start nginx`
-- [ ] Verify installation: `nginx -v`
-- [ ] Test configuration: `nginx -t`
+- [x] Install Nginx: `apt install nginx`
+- [x] Enable Nginx service: `systemctl enable nginx`
+- [x] Start Nginx: `systemctl start nginx`
+- [x] Verify installation: `nginx -v`
+- [x] Test configuration: `nginx -t`
 
 ### Directory Structure
 ```
@@ -34,215 +34,215 @@ yt# Nginx Checklist
 ## Core Nginx Configuration
 
 ### Main Configuration (nginx.conf)
-- [ ] Set worker processes: `worker_processes auto;`
-- [ ] Set worker connections: `worker_connections 1024;`
-- [ ] Enable keepalive: `keepalive_timeout 65;`
-- [ ] Set client max body size: `client_max_body_size 50M;`
-- [ ] Include site-specific configs: `include /etc/nginx/sites-enabled/*;`
+- [o] Set worker processes: `worker_processes auto;`
+- [o] Set worker connections: `worker_connections 1024;`
+- [o] Enable keepalive: `keepalive_timeout 65;`
+- [o] Set client max body size: `client_max_body_size 50M;`
+- [x] Include site-specific configs: `include /etc/nginx/sites-enabled/*;`
 
 ### Site Configuration (sites-available/your-domain.conf)
-- [ ] Configure upstream backend: `upstream backend { server localhost:3000; }`
-- [ ] Setup server block for HTTP
-- [ ] Setup server block for HTTPS
-- [ ] Redirect HTTP to HTTPS
-- [ ] Configure default server
+- [x] Configure upstream backend: `upstream backend { server localhost:3000; }`
+- [x] Setup server block for HTTP
+- [x] Setup server block for HTTPS
+- [x] Redirect HTTP to HTTPS
+- [o] Configure default server
 
 ---
 
 ## Security Configuration
 
 ### HTTP Headers Security
-- [ ] Add X-Content-Type-Options: `add_header X-Content-Type-Options "nosniff" always;`
-- [ ] Add X-Frame-Options: `add_header X-Frame-Options "SAMEORIGIN" always;`
-- [ ] Add X-XSS-Protection: `add_header X-XSS-Protection "1; mode=block" always;`
-- [ ] Add Referrer-Policy: `add_header Referrer-Policy "strict-origin-when-cross-origin" always;`
-- [ ] Add Permissions-Policy: `add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;`
-- [ ] Add Content-Security-Policy: `add_header Content-Security-Policy "default-src 'self';" always;`
+- [o] Add X-Content-Type-Options: `add_header X-Content-Type-Options "nosniff" always;`
+- [o] Add X-Frame-Options: `add_header X-Frame-Options "SAMEORIGIN" always;`
+- [o] Add X-XSS-Protection: `add_header X-XSS-Protection "1; mode=block" always;`
+- [o] Add Referrer-Policy: `add_header Referrer-Policy "strict-origin-when-cross-origin" always;`
+- [o] Add Permissions-Policy: `add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;`
+- [o] Add Content-Security-Policy: `add_header Content-Security-Policy "default-src 'self';" always;`
 
 ### SSL/TLS Configuration
-- [ ] Enable HTTPS only (redirect HTTP to HTTPS)
-- [ ] Set SSL certificate path: `ssl_certificate /etc/letsencrypt/live/your-domain/fullchain.pem;`
-- [ ] Set SSL key path: `ssl_certificate_key /etc/letsencrypt/live/your-domain/privkey.pem;`
-- [ ] Set SSL protocols: `ssl_protocols TLSv1.2 TLSv1.3;`
-- [ ] Set strong SSL ciphers (prefer AEAD ciphers)
-- [ ] Enable SSL session caching: `ssl_session_cache shared:SSL:10m;`
-- [ ] Set SSL session timeout: `ssl_session_timeout 10m;`
-- [ ] Enable HSTS header: `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`
-- [ ] Enable OCSP stapling (optional)
+- [x] Enable HTTPS only (redirect HTTP to HTTPS)
+- [x] Set SSL certificate path: `ssl_certificate /etc/letsencrypt/live/your-domain/fullchain.pem;`
+- [x] Set SSL key path: `ssl_certificate_key /etc/letsencrypt/live/your-domain/privkey.pem;`
+- [o] Set SSL protocols: `ssl_protocols TLSv1.2 TLSv1.3;`
+- [o] Set strong SSL ciphers (prefer AEAD ciphers)
+- [o] Enable SSL session caching: `ssl_session_cache shared:SSL:10m;`
+- [o] Set SSL session timeout: `ssl_session_timeout 10m;`
+- [o] Enable HSTS header: `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`
+- [-] Enable OCSP stapling (optional)
 
 ### Rate Limiting
-- [ ] Define rate limiting zone: `limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;`
-- [ ] Apply rate limiting: `limit_req zone=general burst=20 nodelay;`
-- [ ] Different zones for different endpoints (API, public, etc.)
+- [o] Define rate limiting zone: `limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;`
+- [o] Apply rate limiting: `limit_req zone=general burst=20 nodelay;`
+- [o] Different zones for different endpoints (API, public, etc.)
 
 ---
 
 ## Performance Configuration
 
 ### Gzip Compression
-- [ ] Enable gzip: `gzip on;`
-- [ ] Set compression level: `gzip_comp_level 6;`
-- [ ] Set minimum compression size: `gzip_min_length 1000;`
-- [ ] Configure types to compress: `gzip_types text/plain text/css text/javascript application/json;`
-- [ ] Disable for older browsers: `gzip_disable "msie6";`
-- [ ] Add Vary header: `gzip_vary on;`
+- [o] Enable gzip: `gzip on;`
+- [o] Set compression level: `gzip_comp_level 6;`
+- [o] Set minimum compression size: `gzip_min_length 1000;`
+- [o] Configure types to compress: `gzip_types text/plain text/css text/javascript application/json;`
+- [-] Disable for older browsers: `gzip_disable "msie6";`
+- [o] Add Vary header: `gzip_vary on;`
 
 ### Caching Configuration
-- [ ] Create cache zones for static files
-- [ ] Set cache levels: `proxy_cache_levels 1:2;`
-- [ ] Set cache sizes: `proxy_cache_max_size 10g;` 
-- [ ] Set cache validity for static assets (1 year for versioned files)
-- [ ] Set cache validity for HTML (no-cache)
-- [ ] Add cache status header: `add_header X-Cache-Status $upstream_cache_status;`
-- [ ] Setup cache bypass for certain requests
+- [-] Create cache zones for static files
+- [-] Set cache levels: `proxy_cache_levels 1:2;`
+- [-] Set cache sizes: `proxy_cache_max_size 10g;` 
+- [o] Set cache validity for static assets (1 year for versioned files)
+- [o] Set cache validity for HTML (no-cache)
+- [-] Add cache status header: `add_header X-Cache-Status $upstream_cache_status;`
+- [-] Setup cache bypass for certain requests
 
 ### Buffer Configuration
-- [ ] Set proxy buffer size: `proxy_buffer_size 128k;`
-- [ ] Set proxy buffers: `proxy_buffers 4 256k;`
-- [ ] Set proxy busy buffers: `proxy_busy_buffers_size 256k;`
+- [o] Set proxy buffer size: `proxy_buffer_size 128k;`
+- [o] Set proxy buffers: `proxy_buffers 4 256k;`
+- [o] Set proxy busy buffers: `proxy_busy_buffers_size 256k;`
 
 ### Timeouts
-- [ ] Set client body timeout: `client_body_timeout 10s;`
-- [ ] Set client header timeout: `client_header_timeout 10s;`
-- [ ] Set proxy connect timeout: `proxy_connect_timeout 30s;`
-- [ ] Set proxy send timeout: `proxy_send_timeout 30s;`
-- [ ] Set proxy read timeout: `proxy_read_timeout 30s;`
+- [o] Set client body timeout: `client_body_timeout 10s;`
+- [o] Set client header timeout: `client_header_timeout 10s;`
+- [o] Set proxy connect timeout: `proxy_connect_timeout 30s;`
+- [o] Set proxy send timeout: `proxy_send_timeout 30s;`
+- [o] Set proxy read timeout: `proxy_read_timeout 30s;`
 
 ---
 
 ## Reverse Proxy Configuration
 
 ### Backend Proxy Setup
-- [ ] Configure upstream servers
-- [ ] Enable keepalive connections: `keepalive 32;`
-- [ ] Setup load balancing (round-robin, least-conn, etc.)
-- [ ] Configure proxy headers: `proxy_set_header Host $host;`
-- [ ] Configure forwarded IP: `proxy_set_header X-Real-IP $remote_addr;`
-- [ ] Configure proxy protocol: `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`
-- [ ] Configure X-Forwarded-Proto: `proxy_set_header X-Forwarded-Proto $scheme;`
-- [ ] Pass request body: `proxy_pass_request_body on;`
-- [ ] Pass request headers: `proxy_pass_request_headers on;`
+- [x] Configure upstream servers
+- [o] Enable keepalive connections: `keepalive 32;`
+- [-] Setup load balancing (round-robin, least-conn, etc.)
+- [x] Configure proxy headers: `proxy_set_header Host $host;`
+- [x] Configure forwarded IP: `proxy_set_header X-Real-IP $remote_addr;`
+- [x] Configure proxy protocol: `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`
+- [x] Configure X-Forwarded-Proto: `proxy_set_header X-Forwarded-Proto $scheme;`
+- [x] Pass request body: `proxy_pass_request_body on;`
+- [x] Pass request headers: `proxy_pass_request_headers on;`
 
 ### Error Handling
-- [ ] Configure error pages (404, 500, etc.)
-- [ ] Setup fallback error page
-- [ ] Log error details to separate file
-- [ ] Configure try_files for SPA routing: `try_files $uri $uri/ /index.html;`
+- [o] Configure error pages (404, 500, etc.)
+- [o] Setup fallback error page
+- [o] Log error details to separate file
+- [-] Configure try_files for SPA routing: `try_files $uri $uri/ /index.html;`
 
 ---
 
 ## Logging Configuration
 
 ### Access Logging
-- [ ] Setup access log format with custom variables
-- [ ] Configure access log path: `/var/log/nginx/access.log`
-- [ ] Disable logging for health checks (optional)
-- [ ] Setup log rotation in logrotate
+- [x] Setup access log format with custom variables
+- [x] Configure access log path: `/var/log/nginx/access.log`
+- [-] Disable logging for health checks (optional)
+- [o] Setup log rotation in logrotate
 
 ### Error Logging
-- [ ] Configure error log path: `/var/log/nginx/error.log`
-- [ ] Set error log level: `error_log /var/log/nginx/error.log warn;`
-- [ ] Setup separate error logs for each site
+- [x] Configure error log path: `/var/log/nginx/error.log`
+- [x] Set error log level: `error_log /var/log/nginx/error.log warn;`
+- [o] Setup separate error logs for each site
 
 ### Log Rotation
-- [ ] Create `/etc/logrotate.d/nginx` configuration
-- [ ] Set rotation frequency: `daily`
-- [ ] Set retention: `rotate 14`
-- [ ] Enable compression: `compress`
-- [ ] Enable delaycompress
-- [ ] Reload Nginx after rotation: `postrotate ... systemctl reload nginx ... endscript`
+- [o] Create `/etc/logrotate.d/nginx` configuration
+- [o] Set rotation frequency: `daily`
+- [o] Set retention: `rotate 14`
+- [o] Enable compression: `compress`
+- [o] Enable delaycompress
+- [o] Reload Nginx after rotation: `postrotate ... systemctl reload nginx ... endscript`
 
 ---
 
 ## Static File Serving
 
 ### Frontend Assets
-- [ ] Define root directory: `root /var/www/your-domain/public;`
-- [ ] Setup expires for versioned files (hash in filename): `expires 1y;`
-- [ ] Setup no-cache for HTML: `expires -1; add_header Cache-Control "no-cache, no-store, must-revalidate";`
-- [ ] Setup no-cache for service worker
-- [ ] Enable sendfile: `sendfile on;`
-- [ ] Enable tcp_nopush: `tcp_nopush on;`
-- [ ] Configure MIME types correctly
+- [-] Define root directory: `root /var/www/your-domain/public;`
+- [-] Setup expires for versioned files (hash in filename): `expires 1y;`
+- [-] Setup no-cache for HTML: `expires -1; add_header Cache-Control "no-cache, no-store, must-revalidate";`
+- [-] Setup no-cache for service worker
+- [x] Enable sendfile: `sendfile on;`
+- [o] Enable tcp_nopush: `tcp_nopush on;`
+- [x] Configure MIME types correctly
 
 ### Compression Exclusions
-- [ ] Don't compress already compressed files (jpg, png, zip, etc.)
-- [ ] Don't compress small files (less than 1KB)
+- [o] Don't compress already compressed files (jpg, png, zip, etc.)
+- [o] Don't compress small files (less than 1KB)
 
 ---
 
 ## Monitoring & Maintenance
 
 ### Health Monitoring
-- [ ] Setup upstream health checks (if using Nginx Plus)
-- [ ] Monitor Nginx process: `ps aux | grep nginx`
-- [ ] Monitor port 80 and 443: `netstat -tlnp | grep nginx`
-- [ ] Check Nginx status: `systemctl status nginx`
+- [-] Setup upstream health checks (if using Nginx Plus)
+- [o] Monitor Nginx process: `ps aux | grep nginx`
+- [o] Monitor port 80 and 443: `netstat -tlnp | grep nginx`
+- [o] Check Nginx status: `systemctl status nginx`
 
 ### Regular Maintenance
-- [ ] Test configuration regularly: `nginx -t`
-- [ ] Reload config without downtime: `systemctl reload nginx`
-- [ ] Monitor log files for errors
-- [ ] Check disk space for logs
-- [ ] Monitor SSL certificate expiration
+- [o] Test configuration regularly: `nginx -t`
+- [o] Reload config without downtime: `systemctl reload nginx`
+- [o] Monitor log files for errors
+- [o] Check disk space for logs
+- [o] Monitor SSL certificate expiration
 
 ### Troubleshooting
-- [ ] Check error log for issues: `tail -f /var/log/nginx/error.log`
-- [ ] Check access log: `tail -f /var/log/nginx/access.log`
-- [ ] Verify port binding: `lsof -i :80,443`
-- [ ] Check file permissions for static files
-- [ ] Verify backend upstream connectivity
+- [o] Check error log for issues: `tail -f /var/log/nginx/error.log`
+- [o] Check access log: `tail -f /var/log/nginx/access.log`
+- [o] Verify port binding: `lsof -i :80,443`
+- [o] Check file permissions for static files
+- [x] Verify backend upstream connectivity
 
 ---
 
 ## Advanced Configuration
 
 ### Load Balancing
-- [ ] Configure multiple upstream servers
-- [ ] Setup round-robin load balancing (default)
-- [ ] Use least-conn for connection-based distribution
-- [ ] Setup IP-hash for sticky sessions
-- [ ] Configure server weights for uneven distribution
-- [ ] Setup health check intervals
-- [ ] Configure unhealthy server behavior
-- [ ] Test load balancing across servers
-- [ ] Monitor upstream server status
+- [-] Configure multiple upstream servers
+- [-] Setup round-robin load balancing (default)
+- [-] Use least-conn for connection-based distribution
+- [-] Setup IP-hash for sticky sessions
+- [-] Configure server weights for uneven distribution
+- [-] Setup health check intervals
+- [-] Configure unhealthy server behavior
+- [-] Test load balancing across servers
+- [-] Monitor upstream server status
 
 ### Multi-Service Reverse Proxy
-- [ ] Route different paths to different services
-- [ ] Configure `/api/` to Node.js backend
-- [ ] Configure `/admin/` to admin service
-- [ ] Configure `/static/` to CDN or separate server
-- [ ] Setup service discovery (if using microservices)
-- [ ] Configure service-to-service communication
-- [ ] Test service routing and failover
+- [x] Route different paths to different services
+- [x] Configure `/api/` to Node.js backend
+- [-] Configure `/admin/` to admin service
+- [-] Configure `/static/` to CDN or separate server
+- [-] Setup service discovery (if using microservices)
+- [-] Configure service-to-service communication
+- [o] Test service routing and failover
 
 ### WebSocket Support
-- [ ] Configure WebSocket upgrade headers
-- [ ] Add `Connection: Upgrade` header
-- [ ] Add `Upgrade: websocket` header
-- [ ] Configure `proxy_read_timeout` for long connections
-- [ ] Configure `proxy_set_header` for WebSocket headers
-- [ ] Setup WebSocket load balancing
-- [ ] Test WebSocket connections and reconnection
+- [-] Configure WebSocket upgrade headers
+- [-] Add `Connection: Upgrade` header
+- [-] Add `Upgrade: websocket` header
+- [-] Configure `proxy_read_timeout` for long connections
+- [-] Configure `proxy_set_header` for WebSocket headers
+- [-] Setup WebSocket load balancing
+- [-] Test WebSocket connections and reconnection
 
 ### Docker Container
-- [ ] Create Dockerfile for Nginx
-- [ ] Build Nginx image: `docker build -t nginx:custom .`
-- [ ] Configure volume mounts for config files
-- [ ] Configure volume mounts for logs
-- [ ] Setup container health checks
-- [ ] Configure container restart policy
-- [ ] Test container deployment
+- [-] Create Dockerfile for Nginx
+- [-] Build Nginx image: `docker build -t nginx:custom .`
+- [-] Configure volume mounts for config files
+- [-] Configure volume mounts for logs
+- [-] Setup container health checks
+- [-] Configure container restart policy
+- [-] Test container deployment
 
 ### CDN Integration
-- [ ] Configure CDN provider (CloudFlare, Akamai, etc.)
-- [ ] Setup origin server configuration
-- [ ] Configure cache rules for CDN
-- [ ] Setup purge/invalidation endpoint
-- [ ] Configure DDoS protection
-- [ ] Setup WAF rules
-- [ ] Monitor CDN performance
+- [o] Configure CDN provider (CloudFlare, Akamai, etc.)
+- [o] Setup origin server configuration
+- [o] Configure cache rules for CDN
+- [-] Setup purge/invalidation endpoint
+- [o] Configure DDoS protection
+- [o] Setup WAF rules
+- [-] Monitor CDN performance
 
 ---
 

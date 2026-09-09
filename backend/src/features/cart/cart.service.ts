@@ -33,7 +33,10 @@ function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	const paper = optByKey.get(`paper:${item.paper}`)?.price;
 	const size = optByKey.get(`paperSize:${item.paperSize}`);
 	if (cover == null || paper == null) return { ...item, price: null };
-	const factor = size?.price ?? (size?.width && size?.height ? (size.width * size.height) / (210 * 297) : 1);
+	// ponytail: paperSize multiplier is ALWAYS derived from dimensions (A4-area ratio).
+	// The admin price field on paperSize rows is ignored — it's not a cost, it used to be
+	// a hidden override that silently beat the dimension math.
+	const factor = size?.width && size?.height ? (size.width * size.height) / (210 * 297) : 1;
 	return { ...item, price: computeItemPrice(item.pages ?? 0, cover, paper, factor) };
 }
 
