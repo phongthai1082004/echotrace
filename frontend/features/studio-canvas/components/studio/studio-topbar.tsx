@@ -494,7 +494,7 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
             onClick={() => handleZoom(-1)}
             className="px-2 py-1.5 font-mono text-xs font-bold hover:bg-[#e8e6e0] transition-colors"
           >
-            âˆ’
+            -
           </button>
           <button className="px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest border-x-[2px] border-[#222] flex items-center gap-1 hover:bg-[#e8e6e0] transition-colors">
             <svg
@@ -593,7 +593,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
                 const s = useCanvasStore.getState();
                 const meta = s.bookMeta;
 
-                // ponytail: chá»‰ gá»­i tham chiáº¿u + option â€” title/thumbnail/pages server Ä‘á»c tá»« Book.
                 const item = {
                   bookId: meta.id,
                   cover: "softcover",

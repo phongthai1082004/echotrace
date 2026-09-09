@@ -6,7 +6,7 @@ import { mock } from "jest-mock-extended";
 import { PaymentWebhookService } from "../../src/features/payment/payment.service.js";
 import { PaymentWebhookRepository } from "../../src/features/payment/payment.repository.js";
 import { PayOSGateway } from "../../src/infrastructure/payment/payos.service.js";
-import { EmailService } from "../../src/features/email/email.service.js";
+import { IEmailService } from "@echotrace/shared";
 import type { IStockService } from "../../src/features/sample-books/stock.service.js";
 import type { PayOS } from "@payos/node";
 import { TransactionStatus } from "@echotrace/shared";
@@ -29,7 +29,7 @@ const buildWebhook = () => {
   };
   (prisma as any).db = { $transaction: jest.fn((fn: any) => fn(tx)) };
   const repo = new PaymentWebhookRepository(prisma);
-  const email = mock<EmailService>();
+  const email = mock<IEmailService>();
   const stock = mock<IStockService>();
   const svc = new PaymentWebhookService(email, repo, stock);
   return { svc, tx, email, stock, prisma };

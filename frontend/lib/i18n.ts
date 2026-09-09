@@ -21,4 +21,11 @@ if (typeof document !== "undefined") {
   if (cookie && LANGS.includes(cookie) && i18n.language !== cookie) i18n.changeLanguage(cookie);
 }
 
+// W4 diagnostic: dev-only — logs every language flip with the caller stack
+if (process.env.NODE_ENV !== "production") {
+  i18n.on("languageChanged", (lng) => {
+    console.warn("[i18n] languageChanged ->", lng, new Error("caller").stack?.split("\n").slice(1, 5).join("\n"));
+  });
+}
+
 export default i18n;

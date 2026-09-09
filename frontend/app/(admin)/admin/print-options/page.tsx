@@ -28,7 +28,7 @@ export default function AdminPrintOptionsPage() {
 
   const [modal, setModal] = useState<{ option: PrintOption | null } | null>(null);
 
-  const lng = (i18n.language?.split("-")[0] as keyof L10NText) || "vi";
+  const lng = ((i18n.resolvedLanguage || i18n.language || "vi").split("-")[0] as keyof L10NText) || "vi";
 
   return (
     <div className="h-screen flex flex-col">

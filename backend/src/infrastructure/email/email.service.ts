@@ -1,14 +1,10 @@
 import { injectable } from 'tsyringe';
+import { IEmailService, EmailMessage } from '@echotrace/shared';
 
-export interface EmailMessage {
-	to: string;
-	subject: string;
-	html: string;
-	from?: string;
-}
-
+// ponytail: implements the shared IEmailService port — consumers depend on the
+// token, never on this class. Transport = Resend HTTP API.
 @injectable()
-export class EmailService {
+export class EmailService implements IEmailService {
 	async send(msg: EmailMessage): Promise<void> {
 		try {
 			const res = await fetch('https://api.resend.com/emails', {

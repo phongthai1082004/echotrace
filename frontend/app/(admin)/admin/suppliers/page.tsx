@@ -143,10 +143,10 @@ export default function AdminSuppliersPage() {
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.email}</div>
                 <div className="px-2 text-sm font-bold whitespace-nowrap min-w-0 truncate">{s.contact}</div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#22C55E] whitespace-nowrap">
-                  {s.totalDebt ? `â‚«${s.totalDebt.toLocaleString()}` : "â€”"}
+                  {s.totalDebt ? `${s.totalDebt.toLocaleString()}` : "0"}
                 </div>
                 <div className="px-2 font-mono text-[11px] font-bold text-[#D97706] whitespace-nowrap">
-                  {s.monthDebt ? `â‚«${s.monthDebt.toLocaleString()}` : "â€”"}
+                  {s.monthDebt ? `${s.monthDebt.toLocaleString()}` : "0"}
                 </div>
                 <div className="px-2 flex justify-center whitespace-nowrap">
                   <StatusBadge status={s.banned ? "banned" : "active"} />

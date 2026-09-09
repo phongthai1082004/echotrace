@@ -73,7 +73,7 @@ export default function AdminSampleStudioPage() {
               </p>
             ) : (
               sizes.map((s) => {
-                const lang = (i18n.language || "en").slice(0, 2) as "vi" | "en" | "es";
+                const lang = ((i18n.resolvedLanguage || i18n.language || "en").slice(0, 2)) as "vi" | "en" | "es";
                 const label = s.name?.[lang] || s.name?.en || s.code;
                 const desc = s.description?.[lang] || s.description?.en || "";
                 const cm = s.width && s.height ? `${s.width / 10}×${s.height / 10} cm` : "";

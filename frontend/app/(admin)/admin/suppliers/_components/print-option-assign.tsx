@@ -28,7 +28,7 @@ export function PrintOptionAssign({ supplierId, assigned, onChanged }: Props) {
   const [q, setQ] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const lng = (i18n.language?.split("-")[0] as keyof L10NText) || "vi";
+  const lng = ((i18n.resolvedLanguage || i18n.language || "vi").split("-")[0] as keyof L10NText) || "vi";
 
   const assignedCodes = useMemo(() => {
     const set = new Set<string>();
@@ -135,7 +135,7 @@ export function PrintOptionAssign({ supplierId, assigned, onChanged }: Props) {
                   {option.price != null ? ` — ₫${option.price.toLocaleString()}` : ""}
                 </p>
                 {option.description?.[lng]?.trim() && (
-                  <p className="text-[11px] text-[#999] truncate">{option.description[lng]}</p>
+                  <p className="text-[11px] text-[#999] truncate">{option.description[lng] ?? option.description.vi ?? option.description.en}</p>
                 )}
               </div>
               <button
@@ -210,7 +210,7 @@ export function PrintOptionAssign({ supplierId, assigned, onChanged }: Props) {
                             <div className="flex-1 min-w-0">
                               <span className="text-[11px] text-[#666] truncate block">{nameOf(o)}</span>
                               {o.description?.[lng]?.trim() && (
-                                <span className="text-[10px] text-[#999] truncate block">{o.description[lng]}</span>
+                                <span className="text-[10px] text-[#999] truncate block">{o.description[lng] ?? o.description.vi ?? o.description.en}</span>
                               )}
                             </div>
                             {o.price != null && (

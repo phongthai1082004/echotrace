@@ -7,7 +7,7 @@ import { R2ImageService } from '../infrastructure/r2/r2.service.js';
 import { PaymentService } from '../infrastructure/payment/payment.service.js';
 import { PayOSGateway } from '../infrastructure/payment/payos.service.js';
 import { PayOS } from '@payos/node';
-import { EmailService } from '../features/email/email.service.js';
+import { EmailService } from '../infrastructure/email/email.service.js';
 import { FabricRenderer } from '../features/pdf/fabric.renderer.js';
 import { R2FileService } from '../features/pdf/r2-file.service.js';
 import { PdfService } from '../features/pdf/pdf.service.js';

@@ -36,6 +36,7 @@ import {
   ungroupSelectedObjects,
   syncFrameBorders,
 } from "../../../lib/layout-engine";
+import { attachSmartGuides } from "../../../lib/smart-guides";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
@@ -163,7 +164,7 @@ export function StudioWorkspace() {
   const effectiveView = isCover ? "spread" : viewMode;
   const cw = isCover ? pageW : pageW * 2;
 
-  const loadPage = (c: fabric.Canvas) => {
+  const loadPageNow = (c: fabric.Canvas) => {
     const s = useCanvasStore.getState();
     const { pages, activePageIndex: idx } = s;
     const n = pages.length;
@@ -199,7 +200,7 @@ export function StudioWorkspace() {
           void c
             .loadFromJSON(JSON.parse(coverJson), reviveObject)
             .then(() => {
-              if (destroyedRef.current || epochRef.current !== epoch) return;
+				if (destroyedRef.current) return;
               c.backgroundColor = "#fff";
               reclipPhotos(c);
               c.renderAll();
@@ -235,7 +236,7 @@ export function StudioWorkspace() {
           void c
             .loadFromJSON(merged, reviveObject)
             .then(() => {
-              if (destroyedRef.current || epochRef.current !== epoch) return;
+				if (destroyedRef.current) return;
               c.backgroundColor = "#fff";
               // Remove old spine line if exists
               c.getObjects()
@@ -266,6 +267,22 @@ export function StudioWorkspace() {
       }
     }
   };
+
+	// W-opt: canvas-create effect AND page-change effect both call loadPage in the same
+	// commit on cover<->inner switches — the double call bumped the load epoch and skipped
+	// the render, leaving the previous page painted until a click. Dedupe: one load per
+	// frame, latest canvas wins.
+	const pendingLoad: { canvas: fabric.Canvas | null; raf: number | null } = { canvas: null, raf: null };
+	const loadPage = (c: fabric.Canvas) => {
+		pendingLoad.canvas = c;
+		if (pendingLoad.raf != null) return;
+		pendingLoad.raf = requestAnimationFrame(() => {
+			pendingLoad.raf = null;
+			const cc = pendingLoad.canvas;
+			pendingLoad.canvas = null;
+			if (cc) loadPageNow(cc);
+		});
+	};
 
   // create canvas once, resize on width change
   useEffect(() => {
@@ -429,34 +446,44 @@ export function StudioWorkspace() {
         setCtxMenu(null);
       }
     });
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if ((e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "TEXTAREA") return;
-        const sel = c.getActiveObjects();
-        if (!sel.length) return;
-
-        useCanvasStore.getState().pushUndo();
-        sel.forEach((a: any) => {
+    // W2: single delete routine for keyboard Delete/Backspace and Ctrl+X.
+    // Per-object try/catch so one broken object can't silently kill the whole delete.
+    const deleteSelectedObjects = (canvas: fabric.Canvas) => {
+      const sel = canvas.getActiveObjects();
+      if (!sel.length) return;
+      sel.forEach((a: any) => {
+        try {
+          if (a._dragOverlay) return; // overlays are managed by drag logic
           if (isFrameObject(a)) {
             const frameId = (a as any)._selId;
-            c.getObjects()
+            canvas.getObjects()
               .filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === frameId)
-              .forEach((photo: any) => c.remove(photo));
+              .forEach((photo: any) => canvas.remove(photo));
           }
           if (a.customProperties?.layer === "photo") {
-            // edit mode: the deleted photo is the only interactive object — restore
-            // the rest of the canvas or nothing can be selected afterwards
-            resetCanvasInteractions(c);
-            const fr: any = resolveFrameForPhoto(c, a);
+            resetCanvasInteractions(canvas);
+            const fr: any = resolveFrameForPhoto(canvas, a);
             if (fr) {
               (fr as any).__savedEvented = undefined;
               fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);
             }
           }
-          c.remove(a);
-        });
-        c.discardActiveObject();
-        c.renderAll();
+          canvas.remove(a);
+        } catch (err) {
+          console.error("[delete] object removal failed", err);
+        }
+      });
+      canvas.discardActiveObject();
+      canvas.renderAll();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const t = e.target as HTMLElement;
+        if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || t?.isContentEditable) return;
+        if (!c.getActiveObjects().length) return;
+        useCanvasStore.getState().pushUndo();
+        deleteSelectedObjects(c);
         useCanvasStore.getState().clearRedo();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
@@ -514,16 +541,7 @@ export function StudioWorkspace() {
           useCanvasStore.getState().setClipboard(serializeSel(c, a2));
           useCanvasStore.getState().resetPasteCount();
           useCanvasStore.getState().pushUndo();
-          if (isFrameObject(a2)) {
-            const fid = (a2 as any)._selId;
-            c.getObjects()
-              .filter((o: any) => o.customProperties?.layer === "photo" && o.customProperties?.frameId === fid)
-              .forEach((p) => c.remove(p));
-          }
-          if ((a2 as any).customProperties?.layer === "photo") resetCanvasInteractions(c);
-          c.remove(a2);
-          c.discardActiveObject();
-          c.renderAll();
+          deleteSelectedObjects(c);
         }
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
@@ -544,8 +562,10 @@ export function StudioWorkspace() {
     c.backgroundColor = "#fff";
     c.renderAll();
     setCanvas(c);
+    const smartGuides = attachSmartGuides(c);
     loadPage(c);
     return () => {
+      smartGuides.detach();
       destroyedRef.current = true;
       loadedPageRef.current = -1;
       window.removeEventListener("keydown", onKeyDown);

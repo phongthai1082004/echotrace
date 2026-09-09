@@ -7,7 +7,7 @@ import {
 	WebhookProcessResult,
 } from '@echotrace/shared';
 import { AppError } from '../../middleware/app.error.js';
-import { EmailService } from '../email/email.service.js';
+import { IEmailService } from '@echotrace/shared';
 import { PaymentWebhookRepository } from './payment.repository.js';
 import { IStockService } from '../sample-books/stock.service.js';
 
@@ -18,7 +18,7 @@ export interface IPaymentWebhookService {
 @injectable()
 export class PaymentWebhookService implements IPaymentWebhookService {
 	constructor(
-		@inject('IEmailService') private emailService: EmailService,
+		@inject('IEmailService') private emailService: IEmailService,
 		@inject('PaymentWebhookRepository') private paymentRepo: PaymentWebhookRepository,
 		@inject('IStockService') private stockService: IStockService,
 	) {}

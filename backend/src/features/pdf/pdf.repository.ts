@@ -2,8 +2,6 @@ import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../lib/db.service.js';
 import { Prisma } from '../../../generated/prisma/client.js';
 
-// ponytail: repository layer â€” tÃ¡ch truy cáº­p Prisma cá»§a feature pdf ra khá»i service.
-// CÃ¡c method tráº£ PrismaPromise (dÃ¹ng this.client) Ä‘á»ƒ gá»™p vÃ o $transaction array form.
 @injectable()
 export class PdfRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}
@@ -34,7 +32,6 @@ export class PdfRepository {
 		});
 	}
 
-	// ponytail: idempotent enqueue â€” 1 order = 1 pdf job (unique orderId). Reset vá» PENDING Ä‘á»ƒ replay.
 	upsertPdfJob(orderId: number) {
 		return this.client.orderPdfJob.upsert({
 			where: { orderId },
@@ -43,7 +40,6 @@ export class PdfRepository {
 		});
 	}
 
-	// ponytail: claim nguyÃªn tá»­ â€” láº¥y PENDING / FAILED(chÆ°a Ä‘á»§ attempts) / PROCESSING bá»‹ káº¹t(stale).
 	async claimPdfJob() {
 		// ponytail: atomic single-statement claim (FOR UPDATE SKIP LOCKED) - the previous
 		// findFirst+update let two backend instances claim the same job concurrently.
