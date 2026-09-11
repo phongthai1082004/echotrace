@@ -66,22 +66,32 @@ const SERIALIZE_KEYS = [
 
 
 export function serializeCanvasState(canvas: fabric.Canvas): string {
-  const liveObjs = canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport);
   const parsed = (canvas as any).toJSON(SERIALIZE_KEYS) as { objects: any[]; width?: number; height?: number };
 	// PDF render needs the real page ratio — fabric toJSON drops viewport dims
 	parsed.width = canvas.getWidth();
 	parsed.height = canvas.getHeight();
-  parsed.objects.forEach((o: any, i: number) => {
+  // ponytail: toJSON neither propagates SERIALIZE_KEYS into group children nor
+  // drops helpers there — backfill recursively so grouped nodes keep identity.
+  backfillCustomProps(
+    parsed.objects,
+    canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport),
+  );
+  return JSON.stringify(parsed);
+}
+
+function backfillCustomProps(parsedObjs: any[], liveObjs: any[]) {
+  parsedObjs.forEach((o: any, i: number) => {
     for (const k of Object.keys(DROP_IF_DEFAULT)) {
       if (o[k] === DROP_IF_DEFAULT[k]) delete o[k];
     }
     const live = liveObjs[i];
-    if (live) {
-      o.customProperties = (live as any).customProperties;
-      o._selId = (live as any)._selId;
+    if (!live) return;
+    o.customProperties = (live as any).customProperties;
+    o._selId = (live as any)._selId;
+    if (Array.isArray(o.objects) && Array.isArray((live as any)._objects)) {
+      backfillCustomProps(o.objects, (live as any)._objects);
     }
   });
-  return JSON.stringify(parsed);
 }
 
 

@@ -260,18 +260,29 @@ export function ungroupSelectedObjects(canvas: fabric.Canvas) {
     if (frame) applyFrameClip(frame, o as fabric.FabricImage);
   });
   // ponytail: restore the per-child transform locks saved at group time.
+  // No saved state (e.g. group loaded from a save) → photos stay locked, rest unlock.
   children.forEach((c: any) => {
     const s = (c as any).__groupSavedLocks;
-    if (!s) return;
-    c.set({
-      lockMovementX: s.lockMovementX,
-      lockMovementY: s.lockMovementY,
-      lockScalingX: s.lockScalingX,
-      lockScalingY: s.lockScalingY,
-      lockRotation: s.lockRotation,
-      hasControls: s.hasControls,
-    } as any);
-    delete (c as any).__groupSavedLocks;
+    if (s) {
+      c.set({
+        lockMovementX: s.lockMovementX,
+        lockMovementY: s.lockMovementY,
+        lockScalingX: s.lockScalingX,
+        lockScalingY: s.lockScalingY,
+        lockRotation: s.lockRotation,
+        hasControls: s.hasControls,
+      } as any);
+      delete (c as any).__groupSavedLocks;
+    } else if ((c as any).customProperties?.layer !== "photo") {
+      c.set({
+        lockMovementX: false,
+        lockMovementY: false,
+        lockScalingX: false,
+        lockScalingY: false,
+        lockRotation: false,
+        hasControls: true,
+      } as any);
+    }
   });
   const sel = new (fabric.ActiveSelection as any)(children, { canvas: canvas as any });
   canvas.setActiveObject(sel);
@@ -814,12 +825,39 @@ export function showGuides(
 
 // Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
 // ponytail: use Fabric v7's built-in reviver instead of post-processing
+// ponytail: loadFromJSON's reviver only fires for top-level objects — group children
+// would lose customProperties/_selId on every reload. Walk JSON + live side by side.
+export function reviveDeep(jsonObjs: any[], liveObjs: any[]) {
+  jsonObjs.forEach((o: any, i: number) => {
+    const live = liveObjs[i];
+    if (!live) return;
+    reviveObject(o, live, null);
+    if (Array.isArray(o.objects) && Array.isArray((live as any)._objects)) {
+      reviveDeep(o.objects, (live as any)._objects);
+    }
+  });
+}
+
 export function reviveObject(o: any, object: any, _err: any) {
   if (!object) return;
   if (o.customProperties) (object as any).customProperties = o.customProperties;
   if (o._selId) (object as any)._selId = o._selId;
   if (o.customProperties?.layer === "photo") {
     object.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+  }
+  // ponytail: child locks don't serialize — re-lock group children on every load,
+  // otherwise a reloaded group lets children drift and breaks their clips.
+  if (object.type === "group" && typeof object.getObjects === "function") {
+    object.getObjects().forEach((c: any) => {
+      c.set({
+        lockMovementX: true,
+        lockMovementY: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockRotation: true,
+        hasControls: false,
+      } as any);
+    });
   }
 }
 

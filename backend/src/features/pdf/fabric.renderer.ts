@@ -92,18 +92,31 @@ function parseCanvasJson(canvasJson: unknown): any {
 }
 
 // ponytail: chỉ lấy src http(s) của image object (và background) để tải.
+// Đệ quy qua objects lồng nhau — ảnh trong group không nằm top-level, bỏ sót là PDF mất ảnh.
+function eachImageObject(json: any, fn: (o: any) => void) {
+	if (Array.isArray(json?.objects)) {
+		for (const o of json.objects) {
+			// ponytail: saved JSON uses capitalized types ("Image"), live objects lowercase.
+			if (String(o?.type || '').toLowerCase() === 'image') fn(o);
+			if (Array.isArray((o as any)?.objects)) eachImageObject(o, fn);
+		}
+	}
+}
+
 function collectImageSrcs(json: any): string[] {
 	const srcs: string[] = [];
 	const push = (src?: string) => {
 		if (typeof src === 'string' && /^https?:\/\//i.test(src)) srcs.push(src);
 	};
-	if (Array.isArray(json?.objects)) for (const o of json.objects) push(o?.src);
+	eachImageObject(json, (o) => push(o?.src));
 	push(json?.backgroundImage?.src);
 	return srcs;
 }
 
 function replaceSrc(json: any, from: string, to: string) {
-	if (Array.isArray(json?.objects)) for (const o of json.objects) if (o?.src === from) o.src = to;
+	eachImageObject(json, (o) => {
+		if (o?.src === from) o.src = to;
+	});
 	if (json?.backgroundImage?.src === from) json.backgroundImage.src = to;
 }
 

@@ -79,7 +79,9 @@ export function serializePage(canvasJson: string | null, index: number): PageCon
 		const ew = r2(w / PX_PER_MM);
 		const eh = r2(h / PX_PER_MM);
 
-		if (o.type === "image") {
+		// ponytail: saved JSON uses capitalized types ("Image"), live objects lowercase.
+		const t = String(o.type || "").toLowerCase();
+		if (t === "image") {
 			if (!o.src) continue;
 			elements.push({
 				type: "image",
@@ -92,7 +94,7 @@ export function serializePage(canvasJson: string | null, index: number): PageCon
 				opacity: o.opacity ?? 1,
 				rotation: o.angle || 0,
 			});
-		} else if (o.type === "text" || o.type === "i-text" || o.type === "textbox") {
+		} else if (t === "text" || t === "i-text" || t === "textbox") {
 			elements.push({
 				type: "text",
 				x: ex,
@@ -105,7 +107,7 @@ export function serializePage(canvasJson: string | null, index: number): PageCon
 				color: typeof o.fill === "string" ? o.fill : "#000",
 				align: o.textAlign || "left",
 			});
-		} else if (o.type === "rect") {
+		} else if (t === "rect") {
 			if (layer === "frame") continue; // guide frames are invisible in print
 			const fill = typeof o.fill === "string" && o.fill !== "rgba(0,0,0,0.01)" ? o.fill : undefined;
 			const stroke = typeof o.stroke === "string" && o.stroke !== "transparent" ? o.stroke : undefined;

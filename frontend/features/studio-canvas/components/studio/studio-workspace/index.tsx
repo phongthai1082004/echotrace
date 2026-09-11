@@ -15,6 +15,7 @@ import {
   addFrameDragOverlays,
   placePhotoInFrame,
   relocalizeClipToPhoto,
+  reviveDeep,
   movePhotoWithFrame,
   unlockPhotoInFrame,
   lockPhotoInFrame,
@@ -202,6 +203,11 @@ export function StudioWorkspace() {
             .then(() => {
 				if (destroyedRef.current) return;
               c.backgroundColor = "#fff";
+              try {
+                reviveDeep(JSON.parse(coverJson).objects || [], c.getObjects());
+              } catch {
+                /* keep top-level revive only */
+              }
               reclipPhotos(c);
               c.renderAll();
             })
@@ -238,6 +244,7 @@ export function StudioWorkspace() {
             .then(() => {
 				if (destroyedRef.current) return;
               c.backgroundColor = "#fff";
+              reviveDeep(merged.objects || [], c.getObjects());
               // Remove old spine line if exists
               c.getObjects()
                 .filter((o: any) => (o as any)._spine)
