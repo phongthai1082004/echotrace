@@ -81,8 +81,9 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 			}
 		}
 		const line = new fabric.Line([0, 0, 0, 0], {
-			stroke: "#E5484D",
+			stroke: "#4A90D9",
 			strokeWidth: 1,
+			strokeDashArray: [4, 4],
 			selectable: false,
 			evented: false,
 			excludeFromExport: true,
@@ -96,17 +97,22 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		return line;
 	};
 
+	// ponytail: one dashed segment per gap, same visual language as align lines.
 	const drawXGap = (x1: number, x2: number, cy: number) => {
-		ensureGap().set({ x1, y1: cy, x2, y2: cy, visible: true });
-		ensureGap().set({ x1, y1: cy - 4, x2, y2: cy + 4, visible: true });
-		ensureGap().set({ x1: x2, y1: cy - 4, x2, y2: cy + 4, visible: true });
+		const a = Math.min(x1, x2),
+			b = Math.max(x1, x2);
+		ensureGap().set({ x1: a, y1: cy, x2: b, y2: cy, visible: true });
 	};
 
 	const drawYGap = (y1: number, y2: number, cx: number) => {
-		ensureGap().set({ x1: cx, y1, x2: cx, y2, visible: true });
-		ensureGap().set({ x1: cx - 4, y1, x2: cx + 4, y2, visible: true });
-		ensureGap().set({ x1: cx - 4, y1: y2, x2: cx + 4, y2, visible: true });
+		const a = Math.min(y1, y2),
+			b = Math.max(y1, y2);
+		ensureGap().set({ x1: cx, y1: a, x2: cx, y2: b, visible: true });
 	};
+
+	// ponytail: whole pixels everywhere — default strokeWidth pads bboxes by fractions
+	// and stale oCoords shift edges by 0.5px, which silently breaks threshold math.
+	const snapRound = (n: number): number => Math.round(n);
 
 	const collectCandidates = (moving: fabric.FabricObject): GuideCache => {
 		const cw = canvas.getWidth();
@@ -121,11 +127,16 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		const all = canvas.getObjects().filter((o: any) => !movingSet.has(o) && !isHelper(o));
 		if (all.length <= MAX_CANDIDATE_OBJECTS) {
 			for (const o of all) {
-				const b = o.getBoundingRect();
-				const rect = { left: b.left, top: b.top, right: b.left + b.width, bottom: b.top + b.height };
+				const b = (o as any).getBoundingRect(true, true);
+				const rect = {
+					left: snapRound(b.left),
+					top: snapRound(b.top),
+					right: snapRound(b.left + b.width),
+					bottom: snapRound(b.top + b.height),
+				};
 				others.push({ obj: o, rect });
-				v.push(b.left, b.left + b.width / 2, b.left + b.width);
-				h.push(b.top, b.top + b.height / 2, b.top + b.height);
+				v.push(rect.left, (rect.left + rect.right) / 2, rect.right);
+				h.push(rect.top, (rect.top + rect.bottom) / 2, rect.bottom);
 			}
 		}
 		return { v, h, others };
@@ -145,20 +156,29 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 
 	const doSnap = (e: any) => {
 		const target = e.target as fabric.FabricObject;
-		if (!target || isHelper(target) || !cache) {
+		if (!target || isHelper(target)) {
 			clear();
 			return;
 		}
-		if (dirty) cache = collectCandidates(target);
+		// ponytail: build on first run too (!cache) — the old order checked !cache
+		// before the dirty rebuild, so cache stayed null forever and nothing snapped.
+		if (dirty || !cache) {
+			cache = collectCandidates(target);
+			dirty = false;
+		}
+		// ponytail: hide last frame's gap lines + reuse pool from zero — without this
+		// stale red segments pile up on canvas and spacing looks random.
+		gapPool.forEach((l) => l.set({ visible: false }));
+		gapUsed = 0;
 
-		const rect = target.getBoundingRect();
+		const rect = (target as any).getBoundingRect(true, true);
 		const mb = {
-			left: rect.left,
-			top: rect.top,
-			right: rect.left + rect.width,
-			bottom: rect.top + rect.height,
-			width: rect.width,
-			height: rect.height,
+			left: snapRound(rect.left),
+			top: snapRound(rect.top),
+			right: snapRound(rect.left + rect.width),
+			bottom: snapRound(rect.top + rect.height),
+			width: snapRound(rect.width),
+			height: snapRound(rect.height),
 		};
 		const cy = mb.top + mb.height / 2;
 		const cx = mb.left + mb.width / 2;
@@ -167,6 +187,8 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		let dy = 0;
 		let showAlignV: number | null = null;
 		let showAlignH: number | null = null;
+		// ponytail: spacing feedback takes over — one line only, no align clutter.
+		let spacingShown = false;
 
 		// ===== DISTRIBUTE first (equal gaps beat alignment) =====
 		// X axis: neighbors with vertical overlap, nearest left + nearest right
@@ -190,13 +212,58 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 				distrX = true;
 				const targetLeft = (rightN.rect.left + leftN.rect.right - mb.width) / 2;
 				const d = targetLeft - mb.left;
+				// ponytail: bbox delta only — the single apply at the end handles any
+				// origin (direct left= assignment breaks center-origin objects).
 				if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
 					dx = d;
-					target.set({ left: targetLeft });
 				}
+				// ponytail: ONE line spanning both gaps, same blue dashed style as align.
 				if (Math.abs(gapL - gapR) <= DISTRIBUTE_THRESHOLD) {
-					drawXGap(leftN.rect.right, mb.left + dx, cy);
-					drawXGap(mb.right + dx, rightN.rect.left, cy);
+					drawXGap(leftN.rect.right, rightN.rect.left, cy);
+					spacingShown = true;
+				}
+			}
+		}
+
+		// ===== ONE-SIDED distribute: approaching a row from outside =====
+		// Only inner neighbor exists — snap the new gap to the row's own gap and
+		// draw the chain: existing row gap + new gap (Canva-style).
+		if (!distrX && ((leftN && !rightN) || (!leftN && rightN))) {
+			const inner = (leftN || rightN) as GuideCache["others"][number];
+			const toRight = !!leftN; // moving sits right of inner
+			let outer: GuideCache["others"][number] | null = null;
+			for (const o of cache.others) {
+				if (o === inner) continue;
+				const b = o.rect;
+				if (b.bottom < mb.top - SNAP_THRESHOLD || b.top > mb.bottom + SNAP_THRESHOLD) continue;
+				if (toRight) {
+					if (b.right <= inner.rect.left + SNAP_THRESHOLD && b.right > inner.rect.left - NEIGHBOR_SEARCH) {
+						if (!outer || b.right > outer.rect.right) outer = o;
+					}
+				} else if (b.left >= inner.rect.right - SNAP_THRESHOLD && b.left < inner.rect.right + NEIGHBOR_SEARCH) {
+					if (!outer || b.left < outer.rect.left) outer = o;
+				}
+			}
+			if (outer) {
+				const refGap = toRight ? inner.rect.left - outer.rect.right : outer.rect.left - inner.rect.right;
+				if (refGap >= -SNAP_THRESHOLD && refGap <= NEIGHBOR_SEARCH) {
+					distrX = true;
+					const targetLeft = toRight ? inner.rect.right + refGap : inner.rect.left - refGap - mb.width;
+					const d = targetLeft - mb.left;
+					if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
+						dx = d;
+					}
+					const gapMoving = toRight ? mb.left - inner.rect.right : inner.rect.left - mb.right;
+					if (Math.abs(gapMoving - refGap) <= DISTRIBUTE_THRESHOLD) {
+						if (toRight) {
+							drawXGap(outer.rect.right, inner.rect.left, cy);
+							drawXGap(inner.rect.right, mb.left + dx, cy);
+						} else {
+							drawXGap(mb.right + dx, inner.rect.left, cy);
+							drawXGap(inner.rect.right, outer.rect.left, cy);
+						}
+						spacingShown = true;
+					}
 				}
 			}
 		}
@@ -222,13 +289,55 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 				distrY = true;
 				const targetTop = (bottomN.rect.top + topN.rect.bottom - mb.height) / 2;
 				const d = targetTop - mb.top;
+				// ponytail: same as X — delta only, applied once at the end.
 				if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
 					dy = d;
-					target.set({ top: targetTop });
 				}
+				// ponytail: ONE line spanning both gaps, same blue dashed style as align.
 				if (Math.abs(gapT - gapB) <= DISTRIBUTE_THRESHOLD) {
-					drawYGap(topN.rect.bottom, mb.top + dy, cx);
-					drawYGap(mb.bottom + dy, bottomN.rect.top, cx);
+					drawYGap(topN.rect.bottom, bottomN.rect.top, cx);
+					spacingShown = true;
+				}
+			}
+		}
+
+		// ===== ONE-SIDED distribute (Y): approaching a column from outside =====
+		if (!distrY && ((topN && !bottomN) || (!topN && bottomN))) {
+			const inner = (topN || bottomN) as GuideCache["others"][number];
+			const toBelow = !!topN; // moving sits below inner
+			let outer: GuideCache["others"][number] | null = null;
+			for (const o of cache.others) {
+				if (o === inner) continue;
+				const b = o.rect;
+				if (b.right < mb.left - SNAP_THRESHOLD || b.left > mb.right + SNAP_THRESHOLD) continue;
+				if (toBelow) {
+					if (b.bottom <= inner.rect.top + SNAP_THRESHOLD && b.bottom > inner.rect.top - NEIGHBOR_SEARCH) {
+						if (!outer || b.bottom > outer.rect.bottom) outer = o;
+					}
+				} else if (b.top >= inner.rect.bottom - SNAP_THRESHOLD && b.top < inner.rect.bottom + NEIGHBOR_SEARCH) {
+					if (!outer || b.top < outer.rect.top) outer = o;
+				}
+			}
+			if (outer) {
+				const refGap = toBelow ? inner.rect.top - outer.rect.bottom : outer.rect.top - inner.rect.bottom;
+				if (refGap >= -SNAP_THRESHOLD && refGap <= NEIGHBOR_SEARCH) {
+					distrY = true;
+					const targetTop = toBelow ? inner.rect.bottom + refGap : inner.rect.top - refGap - mb.height;
+					const d = targetTop - mb.top;
+					if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
+						dy = d;
+					}
+					const gapMoving = toBelow ? mb.top - inner.rect.bottom : inner.rect.top - mb.bottom;
+					if (Math.abs(gapMoving - refGap) <= DISTRIBUTE_THRESHOLD) {
+						if (toBelow) {
+							drawYGap(outer.rect.bottom, inner.rect.top, cx);
+							drawYGap(inner.rect.bottom, mb.top + dy, cx);
+						} else {
+							drawYGap(mb.bottom + dy, inner.rect.top, cx);
+							drawYGap(inner.rect.bottom, outer.rect.top, cx);
+						}
+						spacingShown = true;
+					}
 				}
 			}
 		}
@@ -266,12 +375,12 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 			target.setCoords();
 		}
 
-		if (showAlignV != null) {
+		if (!spacingShown && showAlignV != null) {
 			ensureAlign(true).set({ x1: showAlignV, y1: 0, x2: showAlignV, y2: canvas.getHeight(), visible: true });
 		} else {
 			alignV?.set({ visible: false });
 		}
-		if (showAlignH != null) {
+		if (!spacingShown && showAlignH != null) {
 			ensureAlign(false).set({ x1: 0, y1: showAlignH, x2: canvas.getWidth(), y2: showAlignH, visible: true });
 		} else {
 			alignH?.set({ visible: false });

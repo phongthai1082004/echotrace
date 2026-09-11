@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Canvas as FabricCanvas } from "fabric";
 
-import type { PageState, FormatKey } from "../types";
+import type { PageState } from "../types";
 import type { LayoutConfig } from "../types/layout";
 import { serializeCanvasState } from "../lib/layout-engine";
 

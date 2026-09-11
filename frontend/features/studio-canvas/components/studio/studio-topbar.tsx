@@ -69,7 +69,7 @@ type Props = {
   isAdmin?: boolean;
 };
 
-export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
+export function StudioTopbar({ hideOrder }: Props = {}) {
   const { t } = useTranslation();
   const TEXT_PRESETS = useTextPresets(t);
   const canvas = useCanvasStore((s) => s.canvas);
@@ -115,7 +115,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       canvas,
       s.popUndo,
       s.pushRedo,
-      s.pushUndoPages,
       { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode },
       s.setPage,
       s.setPages,
@@ -134,7 +133,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
       s.popRedo,
       s.pushUndo,
       s.pushUndoPages,
-      { pages: s.pages, activePageIndex: s.activePageIndex, activeLayout: s.activeLayout, viewMode: s.viewMode },
       s.setPage,
       s.setPages,
       s.setActivePageIndex,

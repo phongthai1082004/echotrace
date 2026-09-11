@@ -12,19 +12,6 @@ const DIM_OVERLAY_KEY = "_dimOverlay";
 
 fabric.config.NUM_FRACTION_DIGITS = 2;
 
-const DROP_IF_DEFAULT: Record<string, unknown> = {
-	visible: true,
-	shadow: null,
-	strokeDashArray: null,
-	backgroundColor: "",
-	paintFirst: "fill",
-	fillRule: "nonzero",
-	strokeUniform: false,
-	objectCaching: true,
-	flipX: false,
-	flipY: false,
-};
-
 function makeFrame(
   left: number,
   top: number,
@@ -231,6 +218,26 @@ export function groupSelectedObjects(canvas: fabric.Canvas) {
     );
     if (frame) relocalizeClipToPhoto(o, frame);
   });
+  // ponytail: grouped children stay selectable (hit-test/drop/panel) but only the
+  // whole group may move — lock every child transform, restore on ungroup.
+  all.forEach((o: any) => {
+    (o as any).__groupSavedLocks = {
+      lockMovementX: o.lockMovementX,
+      lockMovementY: o.lockMovementY,
+      lockScalingX: o.lockScalingX,
+      lockScalingY: o.lockScalingY,
+      lockRotation: o.lockRotation,
+      hasControls: o.hasControls,
+    };
+    o.set({
+      lockMovementX: true,
+      lockMovementY: true,
+      lockScalingX: true,
+      lockScalingY: true,
+      lockRotation: true,
+      hasControls: false,
+    } as any);
+  });
   canvas.setActiveObject(group);
   canvas.requestRenderAll();
   enforceZLayers(canvas);
@@ -251,6 +258,20 @@ export function ungroupSelectedObjects(canvas: fabric.Canvas) {
     if (o.customProperties?.layer !== "photo") return;
     const frame = resolveFrameForPhoto(canvas, o as fabric.FabricImage);
     if (frame) applyFrameClip(frame, o as fabric.FabricImage);
+  });
+  // ponytail: restore the per-child transform locks saved at group time.
+  children.forEach((c: any) => {
+    const s = (c as any).__groupSavedLocks;
+    if (!s) return;
+    c.set({
+      lockMovementX: s.lockMovementX,
+      lockMovementY: s.lockMovementY,
+      lockScalingX: s.lockScalingX,
+      lockScalingY: s.lockScalingY,
+      lockRotation: s.lockRotation,
+      hasControls: s.hasControls,
+    } as any);
+    delete (c as any).__groupSavedLocks;
   });
   const sel = new (fabric.ActiveSelection as any)(children, { canvas: canvas as any });
   canvas.setActiveObject(sel);

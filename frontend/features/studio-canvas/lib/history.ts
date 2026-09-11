@@ -1,6 +1,5 @@
 import * as fabric from "fabric";
 import type { PageState } from "../types";
-import type { LayoutConfig } from "../types/layout";
 import type { UndoEntry } from "../hooks/useCanvasState";
 import { splitCanvasByMidpoint, serializeCanvasState, isCoverPage } from "./layout-engine";
 import { removeDragOverlays, removePhotoDimOverlays } from "./frames";
@@ -17,7 +16,6 @@ export function applyUndo(
   canvas: fabric.Canvas,
   popUndo: () => UndoEntry | undefined,
   pushRedoForCanvas: (entry: UndoEntry) => void,
-  pushUndoPages: () => void,
   stateSnapshot: {
     pages: PageState[];
     activePageIndex: number;
@@ -71,12 +69,6 @@ export function applyRedo(
   popRedo: () => UndoEntry | undefined,
   pushUndo: () => void,
   pushUndoPages: () => void,
-  stateSnapshot: {
-    pages: PageState[];
-    activePageIndex: number;
-    activeLayout: any;
-    viewMode: "left" | "right" | "spread";
-  },
   setPage: (i: number, p: Partial<PageState>) => void,
   setPages: (p: PageState[]) => void,
   setActivePageIndex: (i: number) => void,

@@ -7,8 +7,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { useElementControls } from "../../../hooks/useElementControls";
 import { useStudioKeyboard } from "../../../hooks/useStudioKeyboard";
 import { useCanvasThumbnail } from "../../../hooks/useCanvasThumbnail";
-import { usePageManager } from "../../../hooks/usePageManager";
-import { FORMATS, ZOOM_LEVELS, resolveFormat } from "../../../types";
+import { ZOOM_LEVELS, resolveFormat } from "../../../types";
 import { isFrameObject, styleFrame, enforceZLayers, canvasPointer, syncFrameBorders } from "../../../lib/fabric-core";
 import {
   hitTestFrame,
@@ -22,7 +21,6 @@ import {
   addPhotoDimOverlays,
   resolveFrameForPhoto,
   findPhotoInFrame,
-  resetCanvasInteractions,
   reclipPhotos,
   reviveObject,
   applyInteractionLock,
@@ -51,7 +49,6 @@ export function StudioWorkspace() {
   const viewMode = useCanvasStore((s) => s.viewMode);
   const undoVersion = useCanvasStore((s) => s.undoVersion);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; objects: fabric.FabricObject[] } | null>(null);
-  const thumbnailVersion = useCanvasStore((s) => s.layerVersion);
 
   useElementControls();
   useStudioKeyboard();
@@ -188,7 +185,7 @@ export function StudioWorkspace() {
       return;
     }
 
-    const epoch = ++epochRef.current;
+    ++epochRef.current;
     (c as any)._pageIdx = idx;
     loadedPageRef.current = idx;
     loadedUndoVerRef.current = undoVersion;
@@ -452,8 +449,12 @@ export function StudioWorkspace() {
     c.backgroundColor = "#fff";
     c.renderAll();
     setCanvas(c);
+    // ponytail: without this call the import above is dead — no object:moving
+    // handler, no snapping. Detach on cleanup to avoid duplicate handlers.
+    const smartGuides = attachSmartGuides(c);
     loadPage(c);
     return () => {
+      smartGuides.detach();
       destroyedRef.current = true;
       loadedPageRef.current = -1;
       canvasRef.current?.removeEventListener("contextmenu", onContextMenu);

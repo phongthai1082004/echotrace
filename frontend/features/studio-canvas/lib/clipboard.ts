@@ -1,6 +1,23 @@
 import * as fabric from "fabric";
 import { isFrameObject, enforceZLayers } from "./fabric-core";
-import { findPhotoInFrame } from "./frames";
+import { findPhotoInFrame, applyFrameClip } from "./frames";
+
+// ponytail: enlivened photos lose their lock flags (not in toJSON keys) and keep a
+// stale absolute clip — without this the pasted photo is invisible AND blocks its frame.
+function restorePastedPhoto(photo: any, frame: any) {
+  photo.set({
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockScalingX: true,
+    lockScalingY: true,
+    lockRotation: true,
+    selectable: false,
+    evented: false,
+  } as any);
+  applyFrameClip(frame, photo);
+}
 
 export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): string {
 	const SEL_KEYS = ["z", "layer", "customProperties", "_selId"];
@@ -63,33 +80,35 @@ export function pasteClipboard(
   // W1: multi-object paste (from ActiveSelection/group copies)
 	if (parsed._multi) {
 		const off = 20 + pasteCount * 20;
-		const enlivened = parsed.objects.map((entry: any) => {
-			if (entry._composite) {
-				return Promise.all([
-					fabric.util.enlivenObjects([entry.frame]),
-					fabric.util.enlivenObjects([entry.photo]),
-				]).then(([f, p]: any[][]) => ({ frame: f[0], photo: p[0] }));
-			}
-			return fabric.util.enlivenObjects([entry]).then((arr: any[]) => ({ obj: arr[0] }));
-		});
+	const enlivened = parsed.objects.map((entry: any) => {
+		if (entry._composite) {
+			return Promise.all([
+				fabric.util.enlivenObjects([entry.frame]),
+				fabric.util.enlivenObjects([entry.photo]),
+			]).then(([f, p]: any[][]) => ({ frame: f[0], photo: p[0], entry }));
+		}
+		return fabric.util.enlivenObjects([entry]).then((arr: any[]) => ({ obj: arr[0], entry }));
+	});
 		Promise.all(enlivened).then((items) => {
 			const added: fabric.FabricObject[] = [];
 			const baseZ = Date.now();
 			items.forEach((it: any, i: number) => {
 				if (it.frame && it.photo) {
 					const selId = `frame-${Date.now()}-${i}`;
+					// ponytail: read customProperties from JSON — enlivenObjects drops them.
 					it.frame.set({
 						left: (it.frame.left || 0) + off,
 						top: (it.frame.top || 0) + off,
-						customProperties: { ...it.frame.customProperties, z: baseZ - i * 2 },
+						customProperties: { layer: "frame", ...it.entry?.frame?.customProperties, z: baseZ - i * 2 },
 					} as any);
 					(it.frame as any)._selId = selId;
 					it.photo.set({
 						left: (it.photo.left || 0) + off,
 						top: (it.photo.top || 0) + off,
-						customProperties: { ...it.photo.customProperties, z: baseZ - i * 2 - 1, frameId: selId },
+						customProperties: { layer: "photo", ...it.entry?.photo?.customProperties, z: baseZ - i * 2 - 1, frameId: selId },
 					} as any);
 					(it.photo as any)._selId = `photo-${Date.now()}-${i}`;
+					restorePastedPhoto(it.photo, it.frame);
 					canvas.add(it.frame);
 					canvas.add(it.photo);
 					added.push(it.frame);
@@ -97,7 +116,9 @@ export function pasteClipboard(
 					it.obj.set({
 						left: (it.obj.left || 0) + off,
 						top: (it.obj.top || 0) + off,
-						customProperties: it.obj.customProperties ?? { z: baseZ - i * 2, layer: "element" },
+						// ponytail: enlivened objects lose customProperties — restore from JSON
+						// or an empty pasted frame stops being a frame (can't drop photos in).
+						customProperties: { layer: "element", ...it.entry?.customProperties, z: baseZ - i * 2 },
 					} as any);
 					(it.obj as any)._selId = `paste-${Date.now()}-${i}`;
 					canvas.add(it.obj);
@@ -129,15 +150,16 @@ export function pasteClipboard(
         frame.set({
           left: (frame.left || 0) + off,
           top: (frame.top || 0) + off,
-          customProperties: { ...frame.customProperties, z: Date.now() },
+          customProperties: { layer: "frame", ...parsed.frame.customProperties, z: Date.now() },
         } as any);
         (frame as any)._selId = selId;
         photo.set({
           left: (photo.left || 0) + off,
           top: (photo.top || 0) + off,
-          customProperties: { ...photo.customProperties, z: Date.now() - 1, frameId: selId },
+          customProperties: { layer: "photo", ...parsed.photo.customProperties, z: Date.now() - 1, frameId: selId },
         } as any);
         (photo as any)._selId = `photo-${Date.now()}`;
+        restorePastedPhoto(photo, frame);
         canvas.add(frame);
         canvas.add(photo);
         canvas.setActiveObject(frame);
