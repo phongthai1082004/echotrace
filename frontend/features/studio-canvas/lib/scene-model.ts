@@ -108,5 +108,3 @@ export interface FontRecord {
   bytes: Uint8Array;
   cssUrl?: string;
 }
-
-export const fontKey = (family: string, weight: string, style: string): string => `${family}|${weight}|${style}`;

@@ -370,27 +370,13 @@ function absoluteRect(o: any): { left: number; top: number; width: number; heigh
   return { left: o.left ?? 0, top: o.top ?? 0, width, height };
 }
 
-// ponytail: top-level photos + photos nested one level inside groups.
-function allPhotos(canvas: fabric.Canvas): any[] {
-  const out: any[] = [];
-  canvas.getObjects().forEach((o: any) => {
-    if (o.customProperties?.layer === "photo") out.push(o);
-    if ((o.type === "group" || o.type === "activeselection") && Array.isArray(o._objects)) {
-      o._objects.forEach((c: any) => {
-        if (c.customProperties?.layer === "photo") out.push(c);
-      });
-    }
-  });
-  return out;
-}
-
 export function addFrameDragOverlays(canvas: fabric.Canvas) {
   // ponytail: inline removal to batch into single renderAll instead of two
   canvas
     .getObjects()
     .filter((o: any) => o[OVERLAY_KEY] === true)
     .forEach((o) => canvas.remove(o));
-  const photos = allPhotos(canvas);
+  const photos = allPhotoCandidates(canvas).filter((o: any) => o.customProperties?.layer === "photo");
   const visit = (obj: any) => {
     if (obj.customProperties?.layer === "frame") {
       const r = absoluteRect(obj);
@@ -726,10 +712,6 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
 // Exits photo edit mode even when the edited photo is gone (e.g. it was just deleted).
 // Without this, canvas.selection stays false and every other object stays
 // evented:false/selectable:false → nothing can be selected afterwards.
-
-// Exits photo edit mode even when the edited photo is gone (e.g. it was just deleted).
-// Without this, canvas.selection stays false and every other object stays
-// evented:false/selectable:false → nothing can be selected afterwards.
 export function resetCanvasInteractions(canvas: fabric.Canvas) {
   removePhotoDimOverlays(canvas);
   canvas.selection = true;
@@ -832,9 +814,6 @@ export function showGuides(
 
 // Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
 // ponytail: use Fabric v7's built-in reviver instead of post-processing
-
-// Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
-// ponytail: use Fabric v7's built-in reviver instead of post-processing
 export function reviveObject(o: any, object: any, _err: any) {
   if (!object) return;
   if (o.customProperties) (object as any).customProperties = o.customProperties;
@@ -845,11 +824,6 @@ export function reviveObject(o: any, object: any, _err: any) {
 }
 
 
-
-// Re-apply each photo's frame clip after a reload. Undo/redo snapshots can be
-// taken while a photo is in edit mode (clipPath null), and reviveObject locks
-// the photo back without restoring the clip — leaving the frame unable to mask
-// the photo overflow.
 
 // Re-apply each photo's frame clip after a reload. Undo/redo snapshots can be
 // taken while a photo is in edit mode (clipPath null), and reviveObject locks

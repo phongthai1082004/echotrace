@@ -35,8 +35,8 @@ export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): s
 		if (photo) {
 			return JSON.stringify({
 				_composite: true,
-				frame: (obj as any).toJSON(SEL_KEYS),
-				photo: (photo as any).toJSON(PHOTO_KEYS),
+				frame: (obj as any).toObject(SEL_KEYS),
+				photo: (photo as any).toObject(PHOTO_KEYS),
 				frameSelId: (obj as any)._selId,
 				photoFrameId: (photo as any).customProperties?.frameId,
 			});
@@ -52,19 +52,19 @@ export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): s
 				if (photo) {
 					return {
 						_composite: true,
-						frame: o.toJSON(SEL_KEYS),
-						photo: (photo as any).toJSON(PHOTO_KEYS),
+						frame: o.toObject(SEL_KEYS),
+						photo: (photo as any).toObject(PHOTO_KEYS),
 						frameSelId: (o as any)._selId,
 						photoFrameId: photo.customProperties?.frameId,
 					};
 				}
 			}
-			return o.toJSON(SEL_KEYS);
+			return o.toObject(SEL_KEYS);
 		});
 		return JSON.stringify({ _multi: true, objects });
 	}
 
-	return JSON.stringify((obj as any).toJSON(SEL_KEYS));
+	return JSON.stringify((obj as any).toObject(SEL_KEYS));
 }
 
 
