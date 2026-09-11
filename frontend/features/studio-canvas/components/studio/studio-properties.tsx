@@ -67,40 +67,20 @@ export function StudioProperties() {
     }
   };
 
-  const applyFont = (fontFamily: string) => {
+  const applyText = (patch: Record<string, unknown> | ((txt: fabric.IText) => Record<string, unknown>)) => {
     if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
-    txt.set({ fontFamily });
+    txt.set(typeof patch === "function" ? patch(txt) : patch);
     canvas?.renderAll();
   };
 
-  const applyBold = () => {
-    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
-    const txt = selected as fabric.IText;
-    txt.set({ fontWeight: (txt.fontWeight === "bold" ? "normal" : "bold") as any });
-    canvas?.renderAll();
-  };
-
-  const applyItalic = () => {
-    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
-    const txt = selected as fabric.IText;
-    txt.set({ fontStyle: txt.fontStyle === "italic" ? "normal" : "italic" });
-    canvas?.renderAll();
-  };
-
-  const applyUnderline = () => {
-    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
-    const txt = selected as fabric.IText;
-    txt.set({ underline: !txt.underline });
-    canvas?.renderAll();
-  };
-
-  const applyColor = (color: string) => {
-    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
-    const txt = selected as fabric.IText;
-    txt.set({ fill: color });
-    canvas?.renderAll();
-  };
+  const applyFont = (fontFamily: string) => applyText({ fontFamily });
+  const applyBold = () =>
+    applyText((txt) => ({ fontWeight: txt.fontWeight === "bold" ? "normal" : "bold" }));
+  const applyItalic = () =>
+    applyText((txt) => ({ fontStyle: txt.fontStyle === "italic" ? "normal" : "italic" }));
+  const applyUnderline = () => applyText((txt) => ({ underline: !txt.underline }));
+  const applyColor = (color: string) => applyText({ fill: color });
 
   const toHex = (color: string): string => {
     if (color.startsWith("#"))

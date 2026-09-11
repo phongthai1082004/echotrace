@@ -1,12 +1,7 @@
 import * as fabric from "fabric";
+import { PX_PER_MM, mmToPx } from "./unit-conversion";
 
 fabric.config.NUM_FRACTION_DIGITS = 2;
-
-const MM_TO_PX = 4;
-
-function mmToPx(mm: number): number {
-  return mm * MM_TO_PX;
-}
 
 export const DESIGN_W = 840,
   DESIGN_H = 1188,
@@ -16,7 +11,7 @@ export const DESIGN_W = 840,
 function layoutMargin(pageW: number, pageH: number): number {
   const targetMin = Math.min(pageW, pageH);
   const mm = Math.max(8, 15 * Math.min(1, targetMin / DESIGN_W));
-  return mm * MM_TO_PX;
+  return mm * PX_PER_MM;
 }
 
 

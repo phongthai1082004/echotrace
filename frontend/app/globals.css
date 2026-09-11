@@ -423,3 +423,21 @@
     line-height: 1.4;
   }
 }
+
+/* Mobile studio sub-panel: item grids become one horizontal scroll strip.
+   Unlayered on purpose: Tailwind's utilities layer would otherwise beat
+   .grid even with lower specificity. Scoped under .mobile-sheet so the
+   desktop sidebar panels are untouched. */
+.mobile-sheet .mobile-strip {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.mobile-sheet .mobile-strip > * {
+  flex: 0 0 auto;
+  width: 7rem;
+}
+.mobile-sheet .mobile-strip.mobile-strip-auto > * {
+  width: auto;
+}

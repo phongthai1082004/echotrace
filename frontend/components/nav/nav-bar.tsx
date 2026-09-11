@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { neoBtnSm } from "@/lib/styles";
+import { apiFetch } from "@/lib/api.fetch";
 import { LangMenu } from "./lang-menu";
 import { CartFlyout } from "./cart-flyout";
 import { AccountMenu } from "./account-menu";
@@ -59,6 +60,7 @@ export function Nav({ user }: NavProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const { data: session, status } = useSession();
   const wasAuth = useRef(false);
 
@@ -69,6 +71,23 @@ export function Nav({ user }: NavProps) {
 
   const token = (session as any)?.accessToken;
   const currentUser = user ?? session?.user ?? null;
+
+  useEffect(() => {
+    if (!open || !token) return;
+    apiFetch<any>("/api/cart", token)
+      .then((d) => {
+        const items: any[] = d?.parsedItems ?? [];
+        setCartCount(items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0));
+      })
+      .catch(() => {});
+  }, [open, token]);
+
+  const logout = async () => {
+    if (token) {
+      await apiFetch("/api/auth/logout", token, { method: "POST" }).catch(() => {});
+    }
+    signOut({ callbackUrl: "/" });
+  };
 
   if (pathname === "/auth" || pathname.match(/^\/(en|vi|es)\/auth$/)) return null;
 
@@ -108,7 +127,11 @@ export function Nav({ user }: NavProps) {
 
         <div className="flex items-center gap-3 shrink-0">
           <LangMenu />
+          <button type="button" aria-label={t("nav.menu")} className="md:hidden shrink-0" onClick={() => setOpen(!open)}>
+            {open ? <XIcon size={18} /> : <MenuIcon size={18} />}
+          </button>
           {currentUser && (
+            <div className="hidden md:contents">
             <div className="relative" onMouseEnter={() => setNotifOpen(true)} onMouseLeave={() => setNotifOpen(false)}>
               <button
                 type="button"
@@ -145,24 +168,29 @@ export function Nav({ user }: NavProps) {
                 </div>
               )}
             </div>
+            </div>
           )}
-          {currentUser && <CartFlyout token={token} />}
+          {currentUser && (
+            <div className="hidden md:contents">
+              <CartFlyout token={token} />
+            </div>
+          )}
           {currentUser ? (
-            <AccountMenu user={currentUser} token={token} />
+            <div className="hidden md:contents">
+              <AccountMenu user={currentUser} token={token} />
+            </div>
           ) : (
-            <Link
-              href="/auth"
-              suppressHydrationWarning
-              className={`${neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2`}
-            >
-              {t("nav.signIn")}
-            </Link>
+            <div className="hidden md:contents">
+              <Link
+                href="/auth"
+                suppressHydrationWarning
+                className={`${neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2`}
+              >
+                {t("nav.signIn")}
+              </Link>
+            </div>
           )}
         </div>
-
-        <button type="button" aria-label={t("nav.menu")} className="md:hidden shrink-0 ml-4" onClick={() => setOpen(!open)}>
-          {open ? <XIcon size={18} /> : <MenuIcon size={18} />}
-        </button>
       </div>
 
       {open && (
@@ -179,6 +207,49 @@ export function Nav({ user }: NavProps) {
                 {link.label}
               </Link>
             ))}
+          {token && (
+            <>
+              <div className="mx-2 h-[2px] bg-[#222]/10" />
+              <Link
+                href="/checkout"
+                suppressHydrationWarning
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+                {t("nav.cart", { count: cartCount })}
+              </Link>
+              <Link
+                href="/account"
+                suppressHydrationWarning
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                {t("nav.account")}
+              </Link>
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={logout}
+                className="flex items-center gap-2.5 w-full text-left font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                {t("nav.signOut")}
+              </button>
+            </>
+          )}
           {!token && (
             <Link
               href="/auth"

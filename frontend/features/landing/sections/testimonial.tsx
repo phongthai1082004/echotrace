@@ -7,11 +7,11 @@ export function TestimonialSection() {
   const { t } = useTranslation();
   return (
     <section
+      className="px-5 py-14 sm:px-8 md:px-14 md:py-20"
       style={{
         background: "#222",
         borderTop: "2.5px solid #222",
         borderBottom: "2.5px solid #222",
-        padding: "80px 56px",
         position: "relative",
         overflow: "hidden",
       }}
@@ -107,10 +107,8 @@ export function TestimonialSection() {
           </div>
         </div>
         <div
+          className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-px"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 1,
             marginTop: 64,
             borderTop: "1px solid rgba(248,242,229,.15)",
             paddingTop: 48,
@@ -121,14 +119,14 @@ export function TestimonialSection() {
             { val: "4.9★", icon: <Star size={16} /> },
             { val: "98%", icon: <Users size={16} /> },
           ].map((stat, i) => (
-            <div
-              key={i}
-              style={{
-                textAlign: "center",
-                padding: "0 20px",
-                borderLeft: i > 0 ? "1px solid rgba(248,242,229,.15)" : "none",
-              }}
-            >
+              <div
+                key={i}
+                className="md:border-l md:border-[rgba(248,242,229,.15)] md:first:border-l-0"
+                style={{
+                  textAlign: "center",
+                  padding: "0 20px",
+                }}
+              >
               <div style={{ color: "#D97706", marginBottom: 6 }}>{stat.icon}</div>
               <div
                 style={{

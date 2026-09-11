@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { useDrop } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
@@ -35,6 +35,7 @@ import { attachSmartGuides } from "../../../lib/smart-guides";
 import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
+import { StudioSelectionTooltip } from "../studio-selection-tooltip";
 
 export function StudioWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +52,8 @@ export function StudioWorkspace() {
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
   const viewMode = useCanvasStore((s) => s.viewMode);
   const undoVersion = useCanvasStore((s) => s.undoVersion);
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; objects: fabric.FabricObject[] } | null>(null);
+  const ctxMenu = useCanvasStore((s) => s.ctxMenu);
+  const setCtxMenu = useCanvasStore((s) => s.setCtxMenu);
 
   useElementControls();
   useStudioKeyboard();
@@ -445,13 +447,14 @@ export function StudioWorkspace() {
     canvasRef.current!.addEventListener("contextmenu", onContextMenu);
     c.on("mouse:down", (ev: any) => {
       const native = ev.e as MouseEvent;
+      const setMenu = useCanvasStore.getState().setCtxMenu;
       if (native.button === 2) {
         const sel = c.getActiveObjects();
         if (sel.length) {
-          setCtxMenu({ x: native.clientX, y: native.clientY, objects: sel });
+          setMenu({ x: native.clientX, y: native.clientY, objects: sel });
         }
       } else {
-        setCtxMenu(null);
+        setMenu(null);
       }
     });
 
@@ -553,6 +556,7 @@ export function StudioWorkspace() {
           }}
         >
           <div style={{ width: cw * zoom, height: ch * zoom, position: "relative", flexShrink: 0 }}>
+            <StudioSelectionTooltip />
             <div
               style={{
                 position: "absolute",
@@ -588,7 +592,9 @@ export function StudioWorkspace() {
         </div>
       </div>
       <FiltersBar />
-      <PagesSlider />
+      <div className="hidden lg:contents">
+        <PagesSlider />
+      </div>
       {ctxMenu && (
         <ContextMenu x={ctxMenu.x} y={ctxMenu.y} objects={ctxMenu.objects} onClose={() => setCtxMenu(null)} />
       )}

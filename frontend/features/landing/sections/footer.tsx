@@ -6,9 +6,15 @@ import { InstagramIcon, TwitterIcon, YoutubeIcon } from "@/features/landing/icon
 export function FooterSection() {
   const { t } = useTranslation();
   return (
-    <footer style={{ background: "#222", borderTop: "2.5px solid #222", padding: "56px 56px 32px" }}>
+    <footer
+      className="px-5 pt-10 pb-8 sm:px-8 md:px-14 md:pt-14"
+      style={{ background: "#222", borderTop: "2.5px solid #222" }}
+    >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 48, marginBottom: 48 }}>
+        <div
+          className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-12"
+          style={{ marginBottom: 48 }}
+        >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <div
@@ -73,7 +79,7 @@ export function FooterSection() {
             </div>
           </div>
           {(t("home.footer.cols", { returnObjects: true }) as { title: string; links: string[] }[]).map((col, i) => (
-            <div key={i}>
+            <div key={i} className="text-center md:text-left">
               <div
                 style={{
                   fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
@@ -133,7 +139,7 @@ export function FooterSection() {
           >
             {t("home.footer.legal")}
           </div>
-          <div style={{ display: "flex", gap: 20 }}>
+          <div style={{ display: "flex", gap: 20 }} className="mx-auto md:mx-0">
             {(t("home.footer.links", { returnObjects: true }) as string[]).map((link, i) => (
               <a
                 key={i}

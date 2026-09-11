@@ -7,7 +7,10 @@ import { ShowcaseSlider } from "@/features/landing/sections/showcase-slider";
 export function ShowcaseSection() {
   const { t } = useTranslation();
   return (
-    <section style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#F8F2E5" }}>
+    <section
+      className="px-5 py-14 sm:px-8 md:px-14 md:py-20 lg:py-24"
+      style={{ borderBottom: "2.5px solid #222", background: "#F8F2E5" }}
+    >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div className="coord-label text-on-card" style={{ marginBottom: 8 }}>
           §03 — {t("home.showcase.section")}
@@ -26,7 +29,7 @@ export function ShowcaseSection() {
           <br />
           <span style={{ color: "#D97706" }}>{t("home.showcase.titleLine2")}</span>
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "start" }}>
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12" style={{ alignItems: "start" }}>
           <div className="reveal">
             <span
               className="sticker-label"
@@ -52,13 +55,11 @@ export function ShowcaseSection() {
               {t("home.showcase.galleryBody")}
             </p>
             <ul
+              className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-3"
               style={{
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
-                display: "grid",
-                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
-                gap: 12,
               }}
             >
               {["point1", "point2", "point3", "point4", "point5", "point6", "point7"].map((k) => (

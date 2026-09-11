@@ -10,7 +10,7 @@ export function HeroSection() {
   const { t } = useTranslation();
   return (
     <section
-      className="grid-paper hero-grid"
+      className="grid-paper hero-grid md:grid-cols-2"
       style={{
         minHeight: "92vh",
         display: "grid",
@@ -20,7 +20,10 @@ export function HeroSection() {
         borderBottom: "2.5px solid #222",
       }}
     >
-      <div style={{ padding: "80px 56px", position: "relative", zIndex: 2 }}>
+      <div
+        className="px-5 py-12 sm:px-8 md:px-14 md:py-20"
+        style={{ position: "relative", zIndex: 2 }}
+      >
         <div className="coord-label text-on-card" style={{ marginBottom: 12 }}>
           {t("home.hero.location")}
         </div>
@@ -64,12 +67,12 @@ export function HeroSection() {
       </div>
 
       <div
+        className="p-6 md:py-[60px] md:pl-0 md:pr-10"
         style={{
           position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "60px 40px 60px 0",
         }}
       >
         <Book3D autoRotate={false} height={500} coverUrl={parisImg.src} />

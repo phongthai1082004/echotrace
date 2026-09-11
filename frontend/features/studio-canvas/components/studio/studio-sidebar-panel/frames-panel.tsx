@@ -41,7 +41,7 @@ export function FramesPanel() {
   return (
     <div className="p-4">
       <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">Frames</p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 mobile-strip">
         {SHAPE_NAMES.map((name) => (
           <button
             key={name}

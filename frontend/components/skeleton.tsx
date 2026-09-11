@@ -41,9 +41,9 @@ export function SkeletonTable({ rows = 6, cols }: { rows?: number; cols: string[
     </>
   );
 }
-
-export function SkeletonGrid({ count = 12, aspect = "square" }: { count?: number; aspect?: string }) {
-  const aspectClass = aspect === "portrait" ? "aspect-[3/4]" : "aspect-square";
+export function SkeletonGrid({ count = 12, aspect = "square" }: { count?: number;
+  aspect?: string }) {
+  const aspectClass = aspect === "portrait" ? "aspect-[3/4]" : aspect === "landscape" ? "aspect-[4/3]" : "aspect-square";
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
       {Array.from({ length: count }).map((_, i) => (

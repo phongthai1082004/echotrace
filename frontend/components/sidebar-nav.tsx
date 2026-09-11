@@ -22,11 +22,11 @@ export function SidebarNav({
 }) {
   const { t } = useTranslation();
   return (
-    <aside className="lg:w-48 shrink-0 py-8 lg:py-10 lg:pr-8 border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#222]">
+    <aside className="md:w-48 shrink-0 py-8 md:py-10 md:pr-8 border-b-[3px] md:border-b-0 md:border-r-[3px] border-[#222]">
       <p suppressHydrationWarning className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
         {title}
       </p>
-      <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+      <div className="flex flex-wrap md:flex-col gap-2 md:gap-1 md:overflow-visible pb-2 md:pb-0">
         {!hideAll && (
           <button
             suppressHydrationWarning

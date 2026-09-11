@@ -116,7 +116,7 @@ export function FilterPanel() {
           </p>
         </div>
       </button>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 mobile-strip">
         {FILTER_PRESETS.map((f) => (
           <button
             key={f.name}

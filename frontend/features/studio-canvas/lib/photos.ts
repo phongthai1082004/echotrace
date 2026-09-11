@@ -85,6 +85,40 @@ export function relocalizeClipToPhoto(photo: any, frame: any) {
 }
 
 
+export function isCoarsePointer(): boolean {
+  return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
+}
+
+export async function placeFreeImage(
+  canvas: fabric.Canvas,
+  url: string,
+  opts?: { maxSize?: number; extraProps?: Record<string, any>; prefix?: string },
+): Promise<boolean> {
+  const maxSize = opts?.maxSize ?? 300;
+  let img: fabric.FabricImage;
+  try {
+    img = await fabric.FabricImage.fromURL(url, { crossOrigin: "anonymous" });
+  } catch {
+    return false;
+  }
+  const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
+  img.set({
+    left: (canvas.getWidth() || 840) / 2,
+    top: (canvas.getHeight() || 0) / 2,
+    originX: "center",
+    originY: "center",
+    scaleX: s,
+    scaleY: s,
+    customProperties: { z: Date.now(), layer: "element", ...(opts?.extraProps ?? {}) },
+  } as any);
+  (img as any)._selId = `${opts?.prefix ?? "photo"}-${Date.now()}`;
+  canvas.add(img);
+  canvas.setActiveObject(img);
+  canvas.renderAll();
+  enforceZLayers(canvas);
+  return true;
+}
+
 export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const canvas = (frame as any).canvas;
   if (canvas && findPhotoInFrame(canvas, frame)) return false;

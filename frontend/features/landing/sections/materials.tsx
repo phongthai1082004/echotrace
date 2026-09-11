@@ -7,8 +7,8 @@ export function MaterialsSection() {
   const { t } = useTranslation();
   return (
     <section
-      className="grid-paper"
-      style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#e8e6e0" }}
+      className="grid-paper px-5 py-14 sm:px-8 md:px-14 md:py-20 lg:py-24"
+      style={{ borderBottom: "2.5px solid #222", background: "#e8e6e0" }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div className="coord-label text-on-card" style={{ marginBottom: 8 }}>
@@ -39,7 +39,7 @@ export function MaterialsSection() {
         >
           {t("home.materials.desc")}
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-4 lg:gap-6">
           {(
             t("home.materials.items", { returnObjects: true }) as {
               name: string;

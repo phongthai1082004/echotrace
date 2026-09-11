@@ -9,14 +9,10 @@ export function CtaSection() {
   const { t } = useTranslation();
   return (
     <section
-      className="grid-paper"
+      className="grid-paper grid grid-cols-1 gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 md:gap-12 md:px-14 md:py-20 lg:gap-[60px] lg:py-[100px]"
       style={{
-        padding: "100px 56px",
         background: "#F8F2E5",
         borderBottom: "2.5px solid #222",
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 60,
         alignItems: "center",
       }}
     >

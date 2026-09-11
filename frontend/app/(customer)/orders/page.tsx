@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { SkeletonCardRow } from "@/components/skeleton";
+import { SkeletonGrid } from "@/components/skeleton";
 import { OrderCard } from "./_components/order-card";
 import { OrderDetailDrawer } from "@/components/order-detail-drawer";
 import { useCustomerOrders } from "./_hooks/use-customer-orders";
@@ -39,13 +39,13 @@ export default function OrdersPage() {
         <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]">
           {t("customer.orders.history")}
         </p>
-        <div className="overflow-x-auto -mx-4 px-4 sm:-mx-8 sm:px-8 pb-8" style={{ scrollbarWidth: "none" }}>
+        <div className="pb-8">
           {orders === null ? (
-            <SkeletonCardRow count={2} aspect="landscape" />
+            <SkeletonGrid count={6} aspect="landscape" />
           ) : orders.length === 0 ? (
             <p className="text-sm font-bold text-[#999] py-10">{t("customer.orders.empty")}</p>
           ) : (
-            <div className="flex gap-3 sm:gap-5" style={{ width: "max-content" }}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
               {orders.map((order) => (
                 <OrderCard key={order.id} order={order} onOpen={setSelectedOrder} />
               ))}

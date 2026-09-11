@@ -76,6 +76,8 @@ interface CanvasStore {
   setAutoPlaced: (v: boolean) => void;
   viewMode: "left" | "right" | "spread";
   setViewMode: (v: "left" | "right" | "spread") => void;
+  ctxMenu: { x: number; y: number; objects: import("fabric").FabricObject[] } | null;
+  setCtxMenu: (m: { x: number; y: number; objects: import("fabric").FabricObject[] } | null) => void;
   resetStore: () => void;
 }
 
@@ -178,5 +180,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   incrementUndoVersion: () => set((s) => ({ undoVersion: s.undoVersion + 1 })),
   setAutoPlaced: (v) => set({ autoPlaced: v }),
   setViewMode: (v) => set({ viewMode: v }),
-  resetStore: () => set({ ...INITIAL_STATE }),
+  ctxMenu: null,
+  setCtxMenu: (m) => set({ ctxMenu: m }),
+  resetStore: () => set({ ...INITIAL_STATE, ctxMenu: null }),
 }));

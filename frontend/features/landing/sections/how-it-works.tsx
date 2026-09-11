@@ -7,8 +7,8 @@ export function HowItWorksSection() {
   const { t } = useTranslation();
   return (
     <section
-      className="grid-paper-sm"
-      style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#FFF7D6" }}
+      className="grid-paper-sm px-5 py-14 sm:px-8 md:px-14 md:py-20 lg:py-24"
+      style={{ borderBottom: "2.5px solid #222", background: "#FFF7D6" }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div
@@ -52,7 +52,7 @@ export function HowItWorksSection() {
             {t("home.process.desc")}
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {(t("home.process.steps", { returnObjects: true }) as { label: string; title: string; desc: string }[]).map(
             (step, i) => {
               const meta = [

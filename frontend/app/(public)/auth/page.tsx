@@ -167,7 +167,7 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="flex flex-col px-8 lg:px-14 py-12 lg:w-[45%] bg-[#F8F2E5]">
+      <div className="flex flex-col px-4 sm:px-8 lg:px-14 py-8 sm:py-12 lg:w-[45%] bg-[#F8F2E5]">
         <p className="lg:hidden text-2xl font-bold mb-10">Cabinet Memoir</p>
 
         <div className="flex gap-2 mb-8">

@@ -148,7 +148,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen pt-15">
       <StepHeader step={step} />
 
-      <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 sm:gap-10 max-[1600px]:gap-8 max-[1440px]:gap-6">
+      <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6 grid grid-cols-1 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px] gap-6 sm:gap-10 max-[1600px]:gap-8 max-[1440px]:gap-6">
           {!loaded ? (
             <>
               <CheckoutSkeletonCards />

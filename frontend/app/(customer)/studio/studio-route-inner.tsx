@@ -24,7 +24,7 @@ export default function StudioRouteInner() {
   const initialSize = w > 0 && h > 0 ? { width: w, height: h } : null;
 
   const needsSize = !bookId && !sampleId && !format;
-  const [showSize, setShowSize] = useState(needsSize);
+  const [showSize] = useState(needsSize);
   const [sizes, setSizes] = useState<any[]>([]);
   const [sizesLoading, setSizesLoading] = useState(false);
 

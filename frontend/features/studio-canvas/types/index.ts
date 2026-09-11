@@ -102,8 +102,6 @@ export const FORMATS: Record<FormatKey, PaperFormat> = {
   },
 };
 
-export const CATEGORY_ORDER: PaperSizeCategory[] = ["square", "landscape", "portrait"];
-
 export function resolveFormat(meta: { format: string; width?: number | null; height?: number | null }): PaperFormat {
   const f = FORMATS[meta.format as FormatKey];
   const hasSize = (meta.width ?? null) != null && (meta.height ?? null) != null;

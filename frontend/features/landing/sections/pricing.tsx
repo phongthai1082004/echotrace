@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 export function PricingSection() {
   const { t } = useTranslation();
   return (
-    <section style={{ padding: "96px 56px", borderBottom: "2.5px solid #222", background: "#FFF7D6" }}>
+    <section
+      className="px-5 py-14 sm:px-8 md:px-14 md:py-20 lg:py-24"
+      style={{ borderBottom: "2.5px solid #222", background: "#FFF7D6" }}
+    >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <h2

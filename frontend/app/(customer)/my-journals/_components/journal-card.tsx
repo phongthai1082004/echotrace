@@ -11,7 +11,7 @@ export function JournalCard({ j, onDelete }: { j: JournalBook; onDelete: (j: Jou
   const thumb = j.thumbnailUrl ?? j.coverUrl;
 
   return (
-    <div className={`shrink-0 w-44 sm:w-64 group ${card} ${cardHover} overflow-hidden`}>
+    <div className={`w-full group ${card} ${cardHover} overflow-hidden`}>
       <Link href={`/studio?id=${j.id}`} className="block">
         <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
           {thumb ? (

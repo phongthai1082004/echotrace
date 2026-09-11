@@ -126,7 +126,7 @@ export function LayoutsPanel() {
       <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
         {t("customer.studio.layouts")}
       </p>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 mobile-strip mobile-strip-auto">
         {layouts.map((layout: AnyLayout) => (
           <button
             key={layout.layoutId}

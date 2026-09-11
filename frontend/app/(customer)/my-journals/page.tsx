@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
-import { SkeletonCardRow } from "@/components/skeleton";
-import { useVisibleCards } from "@/lib/use-container-query";
+import { SkeletonGrid } from "@/components/skeleton";
 import { useRouter } from "next/navigation";
 import { neoBtnPrimary } from "@/lib/styles";
 import { YesNoPopup } from "@/components/yes-no-popup";
@@ -15,7 +14,6 @@ export default function MyJournalsPage() {
   const { t } = useTranslation();
   const { data: session } = useSession();
   const accessToken = (session as any)?.accessToken;
-  const { ref: skeletonRef, visibleCount } = useVisibleCards<HTMLDivElement>(280, 20);
 
   const { journals, fetchError, loading, deleteTarget, setDeleteTarget, deleting, handleDelete } =
     useMyBooks(accessToken);
@@ -73,16 +71,12 @@ export default function MyJournalsPage() {
             </button>
           </div>
         ) : loading ? (
-          <div className="overflow-x-auto -mx-4 px-4 sm:-mx-8 sm:px-8 pb-8" style={{ scrollbarWidth: "none" }} ref={skeletonRef}>
-            <SkeletonCardRow count={Math.max(visibleCount, 2)} aspect="portrait" />
-          </div>
+          <SkeletonGrid count={8} aspect="portrait" />
         ) : (
-          <div className="overflow-x-auto -mx-4 px-4 sm:-mx-8 sm:px-8 pb-8" style={{ scrollbarWidth: "none" }}>
-            <div className="flex gap-3 sm:gap-5" style={{ width: "max-content" }}>
-              {journals.map((j) => (
-                <JournalCard key={j.id} j={j} onDelete={setDeleteTarget} />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+            {journals.map((j) => (
+              <JournalCard key={j.id} j={j} onDelete={setDeleteTarget} />
+            ))}
           </div>
         )}
       </div>
