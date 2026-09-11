@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { SidebarItem } from "./sidebar-item";
-import { navItems } from "../../../types/menu";
+import { navItems } from "./nav-items";
 
 const iconSize = 16;
 

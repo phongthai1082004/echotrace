@@ -8,20 +8,14 @@ import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { usePageManager } from "../../hooks/usePageManager";
-import { isCoverPage } from "../../lib/layout-engine";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
 import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 import { ZOOM_LEVELS, FONTS } from "../../types";
-import {
-  applyUndo,
-  applyRedo,
-  isFrameObject,
-  serializeCanvasState,
-  enforceZLayers,
-  placePhotoInFrame,
-  applyFrameClip
-} from "../../lib/layout-engine";
+import { isCoverPage, serializeCanvasState } from "../../lib/layout-engine";
+import { applyUndo, applyRedo } from "../../lib/history";
+import { isFrameObject, enforceZLayers } from "../../lib/fabric-core";
+import { placePhotoInFrame, applyFrameClip } from "../../lib/frames";
 import * as fabric from "fabric";
 
 function useTextPresets(t: any) {
@@ -82,9 +76,6 @@ export function StudioTopbar({ hideOrder, isAdmin }: Props = {}) {
   const undoStack = useCanvasStore((s) => s.undoStack);
   const redoStack = useCanvasStore((s) => s.redoStack);
   const pushUndo = useCanvasStore((s) => s.pushUndo);
-  const popUndo = useCanvasStore((s) => s.popUndo);
-  const popRedo = useCanvasStore((s) => s.popRedo);
-  const pushRedo = useCanvasStore((s) => s.pushRedo);
   const clearRedo = useCanvasStore((s) => s.clearRedo);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const setBookMeta = useCanvasStore((s) => s.setBookMeta);

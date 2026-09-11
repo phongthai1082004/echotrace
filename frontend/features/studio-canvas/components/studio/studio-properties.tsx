@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NeoSelect } from "@/components/neo-select";
 import { useCanvasStore } from "../../hooks/useCanvasState";
-import { FONTS, resolveFormat } from "../../types";
+import { FONTS, TEXT_COLOR_PRESETS, resolveFormat } from "../../types";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
-import { toggleFrameBorder, setFrameBorderWidth } from "../../lib/layout-engine";
+import { toggleFrameBorder, setFrameBorderWidth } from "../../lib/frames";
 
 const SLIDER_KEYS = ["sliderBrightness", "sliderContrast", "sliderSaturation", "sliderVibrance"] as const;
 const defaultVals = { Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 };
@@ -18,23 +18,7 @@ const SLIDER_FILTER: Record<(typeof SLIDER_KEYS)[number], keyof typeof defaultVa
   sliderVibrance: "Vibrance",
 };
 
-const PRESET_COLORS = [
-  "#000000",
-  "#FFFFFF",
-  "#FF0000",
-  "#FF6B00",
-  "#FFD600",
-  "#4CAF50",
-  "#2196F3",
-  "#9C27B0",
-  "#E91E63",
-  "#795548",
-  "#607D8B",
-  "#FF5722",
-  "#8BC34A",
-  "#00BCD4",
-  "#3F51B5",
-];
+const PRESET_COLORS = TEXT_COLOR_PRESETS;
 
 export function StudioProperties() {
   const { t } = useTranslation();
@@ -84,35 +68,35 @@ export function StudioProperties() {
   };
 
   const applyFont = (fontFamily: string) => {
-    if (!selected || selected.type !== "i-text") return;
+    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set({ fontFamily });
     canvas?.renderAll();
   };
 
   const applyBold = () => {
-    if (!selected || selected.type !== "i-text") return;
+    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set({ fontWeight: (txt.fontWeight === "bold" ? "normal" : "bold") as any });
     canvas?.renderAll();
   };
 
   const applyItalic = () => {
-    if (!selected || selected.type !== "i-text") return;
+    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set({ fontStyle: txt.fontStyle === "italic" ? "normal" : "italic" });
     canvas?.renderAll();
   };
 
   const applyUnderline = () => {
-    if (!selected || selected.type !== "i-text") return;
+    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set({ underline: !txt.underline });
     canvas?.renderAll();
   };
 
   const applyColor = (color: string) => {
-    if (!selected || selected.type !== "i-text") return;
+    if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set({ fill: color });
     canvas?.renderAll();
@@ -367,7 +351,7 @@ export function StudioProperties() {
         </p>
         {[
           [t("customer.studio.format"), `${fmt.cm} cm`],
-          [t("customer.studio.size"), `${fmt.width} Ã— ${fmt.height} px`],
+          [t("customer.studio.size"), `${fmt.width} px — ${fmt.height} px`],
           [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)],
         ].map(([k, v]) => (
           <div key={k} className="mb-2.5">

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useCanvasStore } from "./useCanvasState";
-import { normalizeFormat } from "../types";
 
 export function useStudioEditor(
   bookId: string | null,

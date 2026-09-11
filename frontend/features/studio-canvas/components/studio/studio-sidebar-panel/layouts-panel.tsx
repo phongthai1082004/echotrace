@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { LAYOUT_LIST, SPREAD_LAYOUT_LIST } from "../../../types/layout";
 import type { LayoutConfig } from "../../../types/layout";
-import { clearLayoutFrames, showGuides, enforceZLayers } from "../../../lib/layout-engine";
+import { clearLayoutFrames, showGuides } from "../../../lib/frames";
+import { enforceZLayers } from "../../../lib/fabric-core";
 
 type AnyLayout = LayoutConfig;
 

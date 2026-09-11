@@ -3,15 +3,9 @@
 import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../../hooks/useCanvasState";
-import {
-  isFrameObject,
-  enforceZLayers,
-  resolveFrameForPhoto,
-  resetCanvasInteractions,
-  serializeSel,
-  groupSelectedObjects,
-  ungroupSelectedObjects,
-} from "../../lib/layout-engine";
+import { isFrameObject, enforceZLayers } from "../../lib/fabric-core";
+import { groupSelectedObjects, ungroupSelectedObjects, deleteSelectedObjects } from "../../lib/frames";
+import { serializeSel } from "../../lib/clipboard";
 
 interface Props {
   x: number;
@@ -229,26 +223,7 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
               const json = serializeSel(canvas, obj);
               useCanvasStore.getState().setClipboard(json);
               useCanvasStore.getState().resetPasteCount();
-              objects.forEach((o) => {
-                if (cp(o).layer === "frame") {
-                  const fid = (o as any)._selId;
-                  canvas
-                    .getObjects()
-                    .filter((p: any) => cp(p).frameId === fid)
-                    .forEach((p) => canvas.remove(p));
-                }
-                if (cp(o).layer === "photo") {
-                  // edit mode — restore canvas interactivity or nothing is selectable afterwards
-                  resetCanvasInteractions(canvas);
-                  const fr = resolveFrameForPhoto(canvas, o as any);
-                  if (fr) {
-                    fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);
-                  }
-                }
-                canvas.remove(o);
-              });
-              canvas.discardActiveObject();
-              canvas.renderAll();
+              deleteSelectedObjects(canvas);
             }),
         },
         {
@@ -256,26 +231,7 @@ export function ContextMenu({ x, y, objects, onClose }: Props) {
           fn: () =>
             act(() => {
               useCanvasStore.getState().pushUndo();
-              objects.forEach((o) => {
-                if (cp(o).layer === "frame") {
-                  const fid = (o as any)._selId;
-                  canvas
-                    .getObjects()
-                    .filter((p: any) => cp(p).frameId === fid)
-                    .forEach((p) => canvas.remove(p));
-                }
-                if (cp(o).layer === "photo") {
-                  // edit mode — restore canvas interactivity or nothing is selectable afterwards
-                  resetCanvasInteractions(canvas);
-                  const fr = resolveFrameForPhoto(canvas, o as any);
-                  if (fr) {
-                    fr.set({ evented: true, selectable: true, hasControls: true, hasBorders: true } as any);
-                  }
-                }
-                canvas.remove(o);
-              });
-              canvas.discardActiveObject();
-              canvas.renderAll();
+              deleteSelectedObjects(canvas);
             }),
         },
       ],

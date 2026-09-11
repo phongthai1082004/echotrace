@@ -14,12 +14,34 @@ const GRAY_1X1 =
 const PDF_FONT_FAMILY = process.env.PDF_FONT_FAMILY || 'PDFVi';
 let fontReady = false;
 
+// ponytail: export raster at 300 DPI, not the 4px/mm (~101 DPI) edit scale.
+const EXPORT_PX_PER_MM = 300 / 25.4;
+const MM_TO_PT = 2.834645669;
+
 // ponytail: tiếng Việt cần font có glyph dấu. Ưu tiên PDF_FONT_PATH env;
 // thiếu → thử font hệ thống có hỗ trợ tiếng Việt (Arial Win / DejaVuSans Linux / Arial macOS).
-const CANDIDATE_FONTS: { path: string; family: string }[] = [
-	{ path: 'C:/Windows/Fonts/arial.ttf', family: 'PDFVi' },
-	{ path: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', family: 'PDFVi' },
-	{ path: '/Library/Fonts/Arial.ttf', family: 'PDFVi' },
+// Variants optional — thiếu file nào thì canvas fallback về regular, không crash.
+const CANDIDATE_FONT_SETS: { family: string; regular: string; bold?: string; italic?: string; boldItalic?: string }[] = [
+	{
+		family: 'PDFVi',
+		regular: 'C:/Windows/Fonts/arial.ttf',
+		bold: 'C:/Windows/Fonts/arialbd.ttf',
+		italic: 'C:/Windows/Fonts/ariali.ttf',
+		boldItalic: 'C:/Windows/Fonts/arialbi.ttf',
+	},
+	{
+		family: 'PDFVi',
+		regular: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+		bold: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+		italic: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf',
+	},
+	{
+		family: 'PDFVi',
+		regular: '/Library/Fonts/Arial.ttf',
+		bold: '/Library/Fonts/Arial Bold.ttf',
+		italic: '/Library/Fonts/Arial Italic.ttf',
+		boldItalic: '/Library/Fonts/Arial Bold Italic.ttf',
+	},
 ];
 
 function ensureFont() {
@@ -35,15 +57,18 @@ function ensureFont() {
 			/* fall through to candidate fonts */
 		}
 	}
-	for (const c of CANDIDATE_FONTS) {
-		if (existsSync(c.path)) {
-			try {
-				registerFont(c.path, { family: c.family });
-				fontReady = true;
-				return;
-			} catch {
-				/* try next */
-			}
+	for (const s of CANDIDATE_FONT_SETS) {
+		if (!existsSync(s.regular)) continue;
+		try {
+			registerFont(s.regular, { family: s.family });
+			if (s.bold && existsSync(s.bold)) registerFont(s.bold, { family: s.family, weight: 'bold' });
+			if (s.italic && existsSync(s.italic)) registerFont(s.italic, { family: s.family, style: 'italic' });
+			if (s.boldItalic && existsSync(s.boldItalic))
+				registerFont(s.boldItalic, { family: s.family, weight: 'bold', style: 'italic' });
+			fontReady = true;
+			return;
+		} catch {
+			/* try next */
 		}
 	}
 	// ponytail: không có font tiếng Việt → node-canvas dùng fallback mặc định (dấu có thể vỡ).
@@ -108,11 +133,14 @@ export class FabricRenderer implements IOrderPdfRenderer {
 			for (const page of pages) {
 				const json = parseCanvasJson(page?.canvasJson);
 				if (!json) continue;
-				const png = await this.renderPage(json, book);
+				const png = await this.renderPage(json, book ?? undefined);
 				const img = await pdf.embedPng(png);
-				// ponytail: mỗi trang fabric = 1 trang PDF, kích thước = canvas.
-				const p = pdf.addPage([img.width, img.height]);
-				p.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+				// ponytail: page size must be real mm→pt, not raster px — px-as-pt made an
+				// 8-inch page out of 150mm of paper.
+				const pw = (Number(book?.paperWidth) || 150) * MM_TO_PT;
+				const ph = (Number(book?.paperHeight) || 150) * MM_TO_PT;
+				const p = pdf.addPage([pw, ph]);
+				p.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
 			}
 		}
 
@@ -122,12 +150,15 @@ export class FabricRenderer implements IOrderPdfRenderer {
 
 	// ponytail: render 1 trang fabric JSON → PNG buffer.
 	private async renderPage(json: any, book?: { paperWidth?: number | null; paperHeight?: number | null }): Promise<Buffer> {
-		// ponytail: old saves have no width/height -> derive page px from book paper (4 px/mm,
+		// ponytail: old saves have no width/height -> derive base px from book paper (4 px/mm,
 		// same scale as the studio FORMATS: 150mm -> 600px). json.width wins when present.
 		const mmW = Number(book?.paperWidth) || 150;
 		const mmH = Number(book?.paperHeight) || 150;
-		const width = Number(json.width) || Math.round(mmW * 4);
-		const height = Number(json.height) || Math.round(mmH * 4);
+		const baseW = Number(json.width) || Math.round(mmW * 4);
+		const baseH = Number(json.height) || Math.round(mmH * 4);
+		// ponytail: load at base size, then zoom the viewport to 300 DPI. Bigger PNGs =
+		// bigger PDFs + slower render; the price of print-sharp output without a vector rewrite.
+		const zoom = EXPORT_PX_PER_MM / 4;
 		const srcs = collectImageSrcs(json);
 
 		// TẢI TỪNG ẢNH 1 (sequential) — không ngợp băng thông. Retry chỉ ảnh đó.
@@ -136,9 +167,11 @@ export class FabricRenderer implements IOrderPdfRenderer {
 			replaceSrc(json, src, dataUrl);
 		}
 
-		const canvas = new StaticCanvas(undefined, { width, height });
+		const canvas = new StaticCanvas(undefined, { width: Math.round(baseW * zoom), height: Math.round(baseH * zoom) });
 		await canvas.loadFromJSON(json);
+		canvas.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
 		// ponytail: ép font có dấu tiếng Việt cho mọi text object (fix font tiếng việt).
+		// Weight/style pass through from JSON — bold/italic variants registered in ensureFont.
 		const family = process.env.PDF_FONT_FAMILY || PDF_FONT_FAMILY;
 		for (const obj of canvas.getObjects()) {
 			const t = (obj as any).type?.toLowerCase?.() ?? '';

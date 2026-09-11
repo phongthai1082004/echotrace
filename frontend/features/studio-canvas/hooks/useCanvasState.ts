@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import type { Canvas as FabricCanvas } from "fabric";
-import { navItems } from "../types/menu";
+
 import type { PageState, FormatKey } from "../types";
 import type { LayoutConfig } from "../types/layout";
 import { serializeCanvasState } from "../lib/layout-engine";
@@ -81,7 +81,7 @@ interface CanvasStore {
 
 const INITIAL_STATE: Partial<CanvasStore> = {
   canvas: null,
-  activeMenu: navItems[0]?.label || "Templates",
+  activeMenu: "Layouts",
   activePageIndex: 0,
   pages: [
     { index: 0, canvasJson: null, thumbnailUrl: null, layout: null, spreadLayout: null },

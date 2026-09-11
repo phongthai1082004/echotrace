@@ -2,7 +2,7 @@
 
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { SHAPE_NAMES, makeShapeFrame } from "../../../lib/shapes";
-import { nextFrameZ, enforceZLayers } from "../../../lib/layout-engine";
+import { nextFrameZ, enforceZLayers } from "../../../lib/fabric-core";
 
 export function FramesPanel() {
   const canvas = useCanvasStore((s) => s.canvas);

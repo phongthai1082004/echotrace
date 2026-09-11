@@ -64,7 +64,7 @@ export default function AdminSuppliersPage() {
 
   // Reset pagination whenever search/filter changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset phÃ¢n trang khi filter Ä‘á»•i
+
     setCursor(null);
     setCursorStack([]);
   }, [debouncedSearch, filter]);

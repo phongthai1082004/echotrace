@@ -104,9 +104,6 @@ export const FORMATS: Record<FormatKey, PaperFormat> = {
 
 export const CATEGORY_ORDER: PaperSizeCategory[] = ["square", "landscape", "portrait"];
 
-
-
-
 export function resolveFormat(meta: { format: string; width?: number | null; height?: number | null }): PaperFormat {
   const f = FORMATS[meta.format as FormatKey];
   const hasSize = (meta.width ?? null) != null && (meta.height ?? null) != null;
@@ -127,18 +124,6 @@ export function paperSizeLabel(code: string, lang: "vi" | "en" | "es" = "en"): s
   return `${fmt.cm} cm · ${fmt.name[lang] ?? fmt.name.en}`;
 }
 
-// ponytail: legacy A4_PORTRAIT/SQUARE/LANDSCAPE from before the real-size catalog.
-const OLD_FORMAT_MAP: Record<string, FormatKey> = {
-  A4_PORTRAIT: "PORTRAIT_A4",
-  SQUARE: "SQUARE_20",
-  LANDSCAPE: "LANDSCAPE_A4",
-};
-
-export function normalizeFormat(code?: string | null): FormatKey {
-  if (code && FORMATS[code as FormatKey]) return code as FormatKey;
-  if (code && OLD_FORMAT_MAP[code]) return OLD_FORMAT_MAP[code];
-  return "PORTRAIT_A4";
-}
 
 export type PageState = {
   index: number;
@@ -172,3 +157,21 @@ export const FONTS: { name: string; css: string; preview: string }[] = [
 ];
 
 export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+export const TEXT_COLOR_PRESETS = [
+  "#000000",
+  "#FFFFFF",
+  "#FF0000",
+  "#FF6B00",
+  "#FFD600",
+  "#4CAF50",
+  "#2196F3",
+  "#9C27B0",
+  "#E91E63",
+  "#795548",
+  "#607D8B",
+  "#FF5722",
+  "#8BC34A",
+  "#00BCD4",
+  "#3F51B5",
+] as const;

@@ -2,7 +2,7 @@
 
 import * as fabric from "fabric";
 import type { PageState, PaperFormat } from "../studio-canvas/types";
-import { reviveObject } from "../studio-canvas/lib/layout-engine";
+import { reviveObject } from "../studio-canvas/lib/frames";
 
 export type BookPageImage = { src: string; width: number; height: number };
 

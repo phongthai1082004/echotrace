@@ -1,8 +1,7 @@
 // ponytail: normalize Fabric canvasJson -> mm-based, top-left-origin element list so pdf-lib
 // can render without parsing Fabric internals. canvasJson is kept for the editor (old optimization).
-export const PX_PER_MM = 4;
-export const PT_PER_MM = 2.834645;
-export const PT_PER_PX = PT_PER_MM / PX_PER_MM;
+import { PX_PER_MM, PT_PER_PX } from "./unit-conversion";
+export { PX_PER_MM, PT_PER_MM, PT_PER_PX } from "./unit-conversion";
 
 export type BookElement =
 	| {
