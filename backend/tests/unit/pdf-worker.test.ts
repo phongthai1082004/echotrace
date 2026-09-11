@@ -2,9 +2,9 @@
  * Plan section 2.7 (Q-12) — PdfWorker concurrency cap (PDF_MAX_CONCURRENT).
  * PdfService.process and PdfRepository are mocked; the worker's poll loop is driven for real.
  */
-import { PdfWorker } from '../../src/features/pdf/pdf.worker.js';
-import type { PdfService } from '../../src/features/pdf/pdf.service.js';
-import type { PdfRepository } from '../../src/features/pdf/pdf.repository.js';
+import { PdfWorker } from '../../src/modules/pdf/pipeline/pdf.worker.js';
+import type { PdfService } from '../../src/modules/pdf/pipeline/pdf.service.js';
+import type { PdfRepository } from '../../src/modules/pdf/storage/pdf.repository.js';
 
 describe('Q-12: PdfWorker respects PDF_MAX_CONCURRENT', () => {
 	it('never claims a third job while two renders are in flight', async () => {

@@ -3,10 +3,10 @@
  */
 import fs from "fs";
 import path from "path";
-import { OrderFinanceService } from "../../src/features/order/order-finance.service.js";
-import { FinanceRepository } from "../../src/features/finance/finance.repository.js";
+import { OrderFinanceService } from "../../src/modules/financial/settlement/order-finance.bridge.js";
+import { FinanceRepository } from "../../src/modules/financial/ledger/finance.repository.js";
 import { PrismaService } from "../../lib/db.service.js";
-import { StockService } from "../../src/features/sample-books/stock.service.js";
+import { StockService } from "../../src/modules/product/sample-books/stock.service.js";
 
 const buildFinance = () => {
   const tx = {
@@ -51,10 +51,10 @@ describe("OrderFinanceService (S-30..S-31)", () => {
 
 describe("S-32 refund regression guard (source contract)", () => {
   it("reconcileRefund writes Cashflow OUT directly and never calls recordOutflow", () => {
-    const src = fs.readFileSync(path.resolve("src/features/order/order.service.ts"), "utf8");
+    const src = fs.readFileSync(path.resolve("src/modules/order-cart/lifecycle/order-lifecycle.service.ts"), "utf8");
     const start = src.indexOf("private async reconcileRefund");
     expect(start).toBeGreaterThan(0);
-    const body = src.slice(start, src.indexOf("private createOrderCode", start));
+    const body = src.slice(start, src.indexOf("private async forceStatus", start));
     expect(body).toContain("createCashflow");
     expect(body).toContain("type: 'OUT'");
     expect(body).not.toContain("recordOutflow");

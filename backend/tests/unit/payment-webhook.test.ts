@@ -3,11 +3,11 @@
  * PaymentWebhookService with a mocked Prisma client; PayOSGateway with a mocked SDK client.
  */
 import { mock } from "jest-mock-extended";
-import { PaymentWebhookService } from "../../src/features/payment/payment.service.js";
-import { PaymentWebhookRepository } from "../../src/features/payment/payment.repository.js";
-import { PayOSGateway } from "../../src/infrastructure/payment/payos.service.js";
+import { PaymentWebhookService } from "../../src/modules/financial/payments/payment.service.js";
+import { PaymentWebhookRepository } from "../../src/modules/financial/payments/payment.repository.js";
+import { PayOSGateway } from "../../src/modules/financial/payments/gateways/payos.service.js";
 import { IEmailService } from "@echotrace/shared";
-import type { IStockService } from "../../src/features/sample-books/stock.service.js";
+import type { IStockService } from "../../src/modules/product/sample-books/stock.service.js";
 import type { PayOS } from "@payos/node";
 import { TransactionStatus } from "@echotrace/shared";
 import { PrismaService } from "../../lib/db.service.js";

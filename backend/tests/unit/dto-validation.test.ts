@@ -2,7 +2,7 @@
  * Plan section 3 — DTO validation (V-1..V-9) through the real `validateDto` middleware:
  * plainToInstance + class-validator whitelist + grouped `errors{field: msg[]}` shape.
  */
-import { validateDto } from '../../src/middleware/validator.middleware.js';
+import { validateDto } from '../../src/shared/middleware/validator.middleware.js';
 import { UpdateSampleBookDTO } from '../../../shared/dtos/sample-book/sample-book.dto.js';
 import { CreateCouponDTO } from '../../../shared/dtos/coupon/coupon.dto.js';
 import { SAMPLE_BOOK_CATEGORIES } from '../../../shared/constants/sample-book-category.js';
@@ -71,13 +71,13 @@ describe('V-3/V-4: CreateCouponDTO', () => {
 
 describe('V-5/V-6: profile & password validation (users.service — plain interfaces, no decorators)', () => {
 	it('V-5: malformed phone → USER_INVALID_PHONE; duplicate phone → USER_PHONE_EXISTS 409', async () => {
-		const { UserService } = await import('../../src/features/users/users.service.js');
+		const { ProfileService } = await import('../../src/modules/user/profile/profile.service.js');
 		const repo = mock<any>();
 		repo.client = { user: {} };
 		repo.findByPhone.mockResolvedValue(null);
 		repo.updateUser.mockResolvedValue({});
 		repo.findByIdFull.mockResolvedValue({ id: 5, email: 'a@b.c', name: 'A', role: 'user' });
-		const svc = new UserService(repo);
+		const svc = new ProfileService(repo);
 
 		await expect(svc.updateProfile('5', { phone: '12345' } as any)).rejects.toMatchObject({ statusCode: 400, errorCode: 'USER_INVALID_PHONE' });
 
@@ -89,11 +89,11 @@ describe('V-5/V-6: profile & password validation (users.service — plain interf
 	});
 
 	it('V-6: missing/wrong current password → 400; short new password → 400', async () => {
-		const { UserService } = await import('../../src/features/users/users.service.js');
+		const { ProfileService } = await import('../../src/modules/user/profile/profile.service.js');
 		const repo = mock<any>();
 		repo.findByIdForPassword.mockResolvedValue({ id: 5, password: bcrypt.hashSync('current', 4) });
 		repo.updateUser.mockResolvedValue({});
-		const svc = new UserService(repo);
+		const svc = new ProfileService(repo);
 
 		await expect(svc.changePassword('5', { currentPassword: '', newPassword: 'longenough1' } as any))
 			.rejects.toMatchObject({ errorCode: 'USER_CURRENT_PASSWORD_REQUIRED' });

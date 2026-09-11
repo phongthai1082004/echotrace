@@ -2,8 +2,8 @@
  * Plan section 2.3 -- Coupon service (S-21..S-24).
  */
 import { mock } from "jest-mock-extended";
-import { CouponService } from "../../src/features/coupons/coupons.service.js";
-import { CouponRepository } from "../../src/features/coupons/coupons.repository.js";
+import { CouponService } from "../../src/modules/order-cart/coupons/coupons.service.js";
+import { CouponRepository } from "../../src/modules/order-cart/coupons/coupons.repository.js";
 
 const build = () => {
   const repo = mock<CouponRepository>();
