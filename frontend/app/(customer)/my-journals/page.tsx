@@ -24,7 +24,7 @@ export default function MyJournalsPage() {
 
   return (
     <div className="min-h-screen pt-15">
-      <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6 flex items-end justify-between border-b-[3px] border-[#222]">
+      <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6 flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between border-b-[3px] border-[#222]">
         <div>
           <h1
             className="text-3xl max-[1600px]:text-2xl max-[1440px]:text-xl max-[1280px]:text-lg font-bold"
@@ -45,7 +45,7 @@ export default function MyJournalsPage() {
         </button>
       </div>
 
-      <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-10 max-[1600px]:py-8 max-[1440px]:py-6">
+      <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6">
         <p
           suppressHydrationWarning
           className="font-mono text-[9px] font-bold tracking-widest uppercase mb-5 text-[#666]"
@@ -73,12 +73,12 @@ export default function MyJournalsPage() {
             </button>
           </div>
         ) : loading ? (
-          <div className="overflow-x-auto -mx-8 px-8 pb-8" style={{ scrollbarWidth: "none" }} ref={skeletonRef}>
+          <div className="overflow-x-auto -mx-4 px-4 sm:-mx-8 sm:px-8 pb-8" style={{ scrollbarWidth: "none" }} ref={skeletonRef}>
             <SkeletonCardRow count={Math.max(visibleCount, 2)} aspect="portrait" />
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-8 px-8 pb-8" style={{ scrollbarWidth: "none" }}>
-            <div className="flex gap-5" style={{ width: "max-content" }}>
+          <div className="overflow-x-auto -mx-4 px-4 sm:-mx-8 sm:px-8 pb-8" style={{ scrollbarWidth: "none" }}>
+            <div className="flex gap-3 sm:gap-5" style={{ width: "max-content" }}>
               {journals.map((j) => (
                 <JournalCard key={j.id} j={j} onDelete={setDeleteTarget} />
               ))}

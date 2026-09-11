@@ -9,9 +9,9 @@ export type CheckoutStep = (typeof steps)[number];
 export function StepHeader({ step }: { step: CheckoutStep }) {
   const { t } = useTranslation();
   return (
-    <div className="px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-10 max-[1600px]:py-8 max-[1440px]:py-6 border-b-[3px] border-[#222]">
+    <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-16 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6 border-b-[3px] border-[#222]">
       <p className={`${label} mb-1 text-[#666]`}>{t("customer.checkout.label")}</p>
-      <h1 className="text-3xl lg:text-4xl font-bold">{t("customer.checkout.title")}</h1>
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{t("customer.checkout.title")}</h1>
       <div className="flex items-center gap-4 mt-6">
         {steps.map((s, i) => (
           <div key={s} className="flex items-center gap-3">

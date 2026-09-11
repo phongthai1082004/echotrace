@@ -13,7 +13,7 @@ export function OrderCard({ order, onOpen }: { order: OrderDTO; onOpen: (o: Orde
   return (
     <div
       onClick={() => onOpen(order)}
-      className={`shrink-0 w-72 group cursor-pointer ${card} ${cardHover} overflow-hidden`}
+      className={`shrink-0 w-60 sm:w-72 group cursor-pointer ${card} ${cardHover} overflow-hidden`}
     >
       <div className="aspect-[4/3] bg-[#e8e6e0] overflow-hidden relative">
         <div className="grid grid-cols-2 h-full">

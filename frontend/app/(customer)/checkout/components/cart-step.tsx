@@ -114,7 +114,7 @@ export function CartStep({
                   e.stopPropagation();
                   onDelete(item.bookId);
                 }}
-                className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-[#B54843] bg-[#FFF7D6] text-[#B54843] font-mono text-[11px] font-bold flex items-center justify-center hover:bg-[#B54843] hover:text-white transition-colors z-10"
+                className="absolute -top-3 -right-3 w-8 h-8 sm:w-6 sm:h-6 rounded-full border-2 border-[#B54843] bg-[#FFF7D6] text-[#B54843] font-mono text-[11px] font-bold flex items-center justify-center hover:bg-[#B54843] hover:text-white transition-colors z-10"
               >
                 ✕
               </button>
@@ -136,7 +136,7 @@ export function CartStep({
                       }
                       onChangeQty(item.bookId, (item.quantity || 1) - 1);
                     }}
-                    className={`${neoBtn} w-6 h-6 rounded font-mono text-xs font-bold flex items-center justify-center`}
+                    className={`${neoBtn} w-8 h-8 sm:w-6 sm:h-6 rounded font-mono text-xs font-bold flex items-center justify-center`}
                   >
                     −
                   </button>
@@ -148,7 +148,7 @@ export function CartStep({
                       e.stopPropagation();
                       onChangeQty(item.bookId, (item.quantity || 1) + 1);
                     }}
-                    className={`${neoBtn} w-6 h-6 rounded font-mono text-xs font-bold flex items-center justify-center`}
+                    className={`${neoBtn} w-8 h-8 sm:w-6 sm:h-6 rounded font-mono text-xs font-bold flex items-center justify-center`}
                   >
                     +
                   </button>

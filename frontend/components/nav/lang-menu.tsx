@@ -25,7 +25,7 @@ export function LangMenu() {
       <button
         type="button"
         aria-label={t("nav.language")}
-        className="flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
+          className="flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
       >
         <svg
           width="16"

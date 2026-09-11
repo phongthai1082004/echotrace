@@ -11,7 +11,7 @@ export function JournalCard({ j, onDelete }: { j: JournalBook; onDelete: (j: Jou
   const thumb = j.thumbnailUrl ?? j.coverUrl;
 
   return (
-    <div className={`shrink-0 w-64 group ${card} ${cardHover} overflow-hidden`}>
+    <div className={`shrink-0 w-44 sm:w-64 group ${card} ${cardHover} overflow-hidden`}>
       <Link href={`/studio?id=${j.id}`} className="block">
         <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
           {thumb ? (
@@ -35,7 +35,7 @@ export function JournalCard({ j, onDelete }: { j: JournalBook; onDelete: (j: Jou
               e.stopPropagation();
               onDelete(j);
             }}
-            className="absolute top-2 right-2 p-1.5 bg-[#B54843] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#943a36] cursor-pointer z-10"
+            className="absolute top-2 right-2 p-1.5 min-h-[40px] min-w-[40px] flex items-center justify-center bg-[#B54843] text-white rounded-md opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-[#943a36] cursor-pointer z-10"
           >
             <Trash2 size={14} />
           </button>

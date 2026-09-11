@@ -25,7 +25,7 @@ export function AccountMenu({ user, token }: { user: NavUser; token?: string }) 
       <button
         type="button"
         aria-label={user.name || user.email || t("nav.account")}
-        className="flex items-center gap-2.5 h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
+          className="flex items-center gap-2.5 h-10 sm:h-9 px-3 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
       >
         {user.image ? (
           <Image
@@ -42,7 +42,7 @@ export function AccountMenu({ user, token }: { user: NavUser; token?: string }) 
             </span>
           </div>
         )}
-        <span suppressHydrationWarning className="text-sm font-bold leading-none">
+        <span suppressHydrationWarning className="hidden min-[480px]:block text-sm font-bold leading-none max-w-[140px] truncate">
           {user.name || user.email || t("nav.user")}
         </span>
       </button>

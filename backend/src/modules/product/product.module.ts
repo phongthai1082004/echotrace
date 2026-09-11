@@ -9,8 +9,12 @@ import { PrintOptionService } from './print-options/print-options.service.js';
 import { PrintOptionRepository } from './print-options/print-options.repository.js';
 import { UserImageService } from './uploads/user-images.service.js';
 import { UserImagesRepository } from './uploads/user-images.repository.js';
+import { OptionCatalogCacheService } from './catalog/option-catalog.cache.service.js';
+import { SampleBookCacheService } from './catalog/sample-book.cache.service.js';
 
 export function registerProduct(container: DependencyContainer): void {
+	container.registerSingleton('IOptionCatalogCacheService', OptionCatalogCacheService);
+	container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
 	container.registerSingleton('IBookService', BookService);
 	container.registerSingleton('BookRepository', BookRepository);
 	container.registerSingleton('ISampleBookService', SampleBookService);

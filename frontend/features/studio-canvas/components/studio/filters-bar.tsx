@@ -50,7 +50,8 @@ export function FiltersBar() {
           onWheel={(e) => {
             e.currentTarget.scrollLeft += e.deltaY;
           }}
-          className="w-full flex items-center gap-2 px-3 overflow-hidden"
+          className="w-full flex items-center gap-2 px-3 overflow-x-auto"
+          style={{ scrollbarWidth: "none" }}
         >
           {presets.map((p) => (
             <button

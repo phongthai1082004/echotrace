@@ -531,7 +531,7 @@ export function StudioWorkspace() {
   const zoom = ZOOM_LEVELS[zoomIndex];
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" ref={dropRef as any}>
+    <div className="flex-1 flex flex-col overflow-hidden min-w-0" ref={dropRef as any}>
       <div
         ref={viewportRef}
         className="flex-1 overflow-auto bg-[#e8e6e0]"

@@ -35,7 +35,7 @@ export function CartFlyout({ token }: { token?: string }) {
       <button
         type="button"
         aria-label={t("nav.cart", { count: cartCount })}
-        className="relative flex items-center justify-center w-9 h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
+          className="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
       >
         <svg
           width="16"
@@ -61,7 +61,7 @@ export function CartFlyout({ token }: { token?: string }) {
 
       {open && (
         <div className="absolute right-0 top-full z-50 pt-2">
-          <div className="w-72 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+          <div className="w-72 max-w-[calc(100vw-2rem)] bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
             <div className="px-4 py-3">
               <p
                 suppressHydrationWarning

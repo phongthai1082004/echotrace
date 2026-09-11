@@ -338,7 +338,10 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   };
 
   return (
-    <div className="h-12 flex items-center px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222]">
+    <div
+        className="h-12 flex items-center px-4 sm:px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222] overflow-x-auto [&>*]:shrink-0"
+        style={{ scrollbarWidth: "none" }}
+      >
       {editingTitle ? (
         <input
           ref={titleRef}

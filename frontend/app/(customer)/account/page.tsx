@@ -8,10 +8,10 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen pt-15">
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row" style={{ minHeight: "calc(100vh - 60px)" }}>
-        <main className="flex-1 py-10 lg:py-12 px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-14">
-          <div className="flex items-start justify-between mb-10">
+        <main className="flex-1 py-6 sm:py-10 lg:py-12 px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 lg:px-14">
+          <div className="flex items-start justify-between mb-6 sm:mb-10">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold mb-1" suppressHydrationWarning>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1" suppressHydrationWarning>
                 {t("customer.account.title")}
               </h1>
               <p className="text-sm text-[#666]" suppressHydrationWarning>

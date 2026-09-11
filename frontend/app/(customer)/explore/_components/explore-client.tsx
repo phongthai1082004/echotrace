@@ -36,7 +36,7 @@ export function ExploreClient() {
 			</p>
 		) : (
 			<>
-				<div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
+				<div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 sm:gap-5">
 					{list.map((s) => (
 						<SampleCard key={s.id} s={s} variant={variant} />
 					))}
@@ -50,7 +50,7 @@ export function ExploreClient() {
 		);
 
 	return (
-		<div className="flex flex-col lg:flex-row px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4">
+		<div className="flex flex-col lg:flex-row px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4">
 			<SidebarNav
 				title={t("customer.explore.categories")}
 				items={SAMPLE_BOOK_CATEGORIES.map((cat) => ({ value: cat, label: t(`customer.explore.${cat.toLowerCase()}`) }))}
@@ -58,7 +58,7 @@ export function ExploreClient() {
 				onSelect={onSelect}
 			/>
 
-			<main className="flex-1 py-8 max-[1600px]:py-6 max-[1440px]:py-5 lg:py-10 lg:pl-10">
+			<main className="flex-1 py-6 sm:py-8 max-[1600px]:py-6 max-[1440px]:py-5 lg:py-10 lg:pl-10">
 				<div className="flex gap-2 mb-6">
 					<button
 						onClick={() => setTab("samples")}

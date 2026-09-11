@@ -1,10 +1,10 @@
 {
 	"brand": "Cabinet Memoir",
 	"brandShort": "CM",
-	"tagline": "Thiết kế sổ tay du lịch thủ công với bố cục đẳng cấp biên tập.",
+	"tagline": "Thiết kế sổ tay du lịch thụ công với bố cục đẳng cấp biên tập.",
 	"nav": {
 		"explore": "Khám phá",
-		"myJournals": "Sổ tay của tôi",
+		"myJournals": "Sổ tay cụa tôi",
 		"studio": "Studio",
 		"orders": "Đơn hàng",
 		"account": "Tài khoản",
@@ -30,7 +30,7 @@
 	"common": {
 		"loading": "Đang tải...",
 		"save": "Lưu",
-		"cancel": "Hủy",
+		"cancel": "Hụy",
 		"confirm": "Xác nhận",
 		"close": "Đóng",
 		"delete": "Xóa",
@@ -54,10 +54,10 @@
 	"home": {
 		"hero": {
 			"location": "N 51°30′ / E 0°7′ · LONDON",
-			"titleLine1": "Ảnh Của Bạn.",
-			"titleLine2": "Câu Chuyện Của Bạn.",
+			"titleLine1": "Ảnh Cụa Bạn.",
+			"titleLine2": "Câu Chuyện Cụa Bạn.",
 			"titleLine3": "Đóng Bìa Trọn Đời.",
-			"subhead": "Thiết kế sách ảnh cao cấp trong studio 3D của chúng tôi, xem trước từng trang theo thời gian thực và in trên giấy lưu trữ—giao trong 5 ngày.",
+			"subhead": "Thiết kế sách ảnh cao cấp trong studio 3D cụa chúng tôi, xem trước từng trang theo thời gian thực và in trên giấy lưu trữ—giao trong 5 ngày.",
 			"ctaPrimary": "Thiết Kế Trong Studio",
 			"ctaSecondary": "Khám Phá Sách",
 			"bookTitle": "KỶ NIỆM 2024",
@@ -95,12 +95,12 @@
 			"section": "QUY TRÌNH",
 			"titleLine1": "Từ Ý Tưởng",
 			"titleLine2": "Đến Cửa Nhà",
-			"desc": "Chỉ cần ba bước. Studio của chúng tôi hướng dẫn bạn từ lần tải ảnh đầu tiên đến tệp sẵn sàng in.",
+			"desc": "Chỉ cần ba bước. Studio cụa chúng tôi hướng dẫn bạn từ lần tải ảnh đầu tiên đến tệp sẵn sàng in.",
 			"steps": [
 				{
 					"label": "THIẾT KẾ",
 					"title": "Tạo Trong Studio",
-					"desc": "Tải ảnh, sắp xếp bố cục, chọn bìa. Studio 3D kéo-thả của chúng tôi hiển thị trực tiếp từng trang."
+					"desc": "Tải ảnh, sắp xếp bố cục, chọn bìa. Studio 3D kéo-thả cụa chúng tôi hiển thị trực tiếp từng trang."
 				},
 				{
 					"label": "XEM THỬ",
@@ -119,7 +119,7 @@
 			"titleLine1": "Mỗi Trang Là",
 			"titleLine2": "Một Kiệt Tác",
 			"sampleCovers": "BÌA MẪU",
-			"desc": "Khám phá những cuốn sách thật do khách hàng tạo ra. Mỗi bìa được thiết kế riêng trong studio của chúng tôi từ chính ảnh của bạn.",
+			"desc": "Khám phá những cuốn sách thật do khách hàng tạo ra. Mỗi bìa được thiết kế riêng trong studio cụa chúng tôi từ chính ảnh cụa bạn.",
 			"browseGallery": "Xem Thư Viện",
 			"bookTitle": "ĐÁM CƯỚI 2024",
 			"badgeWedding": "ĐÁM CƯỚI",
@@ -129,7 +129,7 @@
 			"badgeGraduation": "TỐT NGHIỆP",
 			"badgeGraduationValue": "Lễ Tốt Nghiệp",
 			"galleryTitle": "Làm bởi khách hàng, in bền theo năm tháng",
-			"galleryBody": "Mỗi cuốn sách ở đây bắt đầu từ một thư mục ảnh và vài cú click trong studio. Xem những gì người thật đã tạo, rồi tự làm cuốn của bạn. Từ album cưới, nhật ký du lịch đến kỷ niệm năm đầu đời, mỗi bìa đều được dàn trang thủ công trong trình chỉnh sửa từ chính ảnh của bạn — rồi in trên giấy lưu trữ và đóng bìa để bền theo nhiều thế hệ.",
+			"galleryBody": "Mỗi cuốn sách ở đây bắt đầu từ một thư mục ảnh và vài cú click trong studio. Xem những gì người thật đã tạo, rồi tự làm cuốn cụa bạn. Từ album cưới, nhật ký du lịch đến kỷ niệm năm đầu đời, mỗi bìa đều được dàn trang thụ công trong trình chỉnh sửa từ chính ảnh cụa bạn — rồi in trên giấy lưu trữ và đóng bìa để bền theo nhiều thế hệ.",
 			"point1": "Bìa & bố cục thiết kế riêng",
 			"point2": "Giấy cao cấp, đóng bìa cứng",
 			"point3": "Giao tận nơi chỉ trong vài ngày",
@@ -142,7 +142,7 @@
 			"section": "CHẤT LIỆU",
 			"titleLine1": "Bền Vững",
 			"titleLine2": "Qua Các Thế Hệ",
-			"desc": "Chọn kiểu đóng bìa của bạn. Mọi bìa đều được kiểm tra tay trước khi giao.",
+			"desc": "Chọn kiểu đóng bìa cụa bạn. Mọi bìa đều được kiểm tra tay trước khi giao.",
 			"items": [
 				{
 					"name": "Bìa Mềm",
@@ -280,7 +280,7 @@
 		"explore": {
 			"title": "Khám phá Sổ tay",
 			"subtitle": "Khám phá sổ tay được tạo bởi cộng đồng",
-			"searchPlaceholder": "Tìm theo tiêu đề, chủ đề, địa điểm...",
+			"searchPlaceholder": "Tìm theo tiêu đề, chụ đề, địa điểm...",
 			"filterAll": "Tất cả",
 			"filterPublic": "Công khai",
 			"filterPrivate": "Riêng tư",
@@ -310,8 +310,8 @@
 			"loginRequired": "Vui lòng đăng nhập"
 		},
 		"myJournals": {
-			"title": "Sổ tay của tôi",
-			"subtitle": "Tất cả sổ tay của bạn tại một nơi",
+			"title": "Sổ tay cụa tôi",
+			"subtitle": "Tất cả sổ tay cụa bạn tại một nơi",
 			"empty": "Bạn chưa tạo sổ tay nào",
 			"emptyTitle": "Chưa có sổ tay",
 			"emptyDesc": "Tạo sổ tay đầu tiên để bắt đầu",
@@ -328,7 +328,7 @@
 			"deleting": "Đang xóa...",
 			"deleteTitle": "Xóa sổ tay",
 			"deleteConfirm": "Bạn có chắc muốn xóa sổ tay này?",
-			"cancel": "Hủy",
+			"cancel": "Hụy",
 			"error": "Không thể tải sổ tay",
 			"noCover": "Không có bìa",
 			"pg": "tr",
@@ -377,6 +377,7 @@
 			},
 			"doubleClickEdit": "Nhấp đúp để sửa",
 			"properties": "Thuộc tính",
+			"tools": "Công cụ",
 			"adjust": "Điều chỉnh",
 			"reset": "Đặt lại",
 			"selectFrame": "Chọn khung",
@@ -415,13 +416,13 @@
 			"sliderVibrance": "Độ rực",
 			"saveSuccess": "Đã lưu thành công",
 			"saveFailed": "Lưu thất bại",
-			"yourPhotos": "Ảnh của bạn",
+			"yourPhotos": "Ảnh cụa bạn",
 			"upload": "+ Tải lên",
 			"noPhotos": "Chưa có ảnh. Nhấn \"+ Tải lên\" để thêm ảnh.",
 			"addedToCart": "Đã thêm vào giỏ hàng!"
 		},
 		"orders": {
-			"title": "Đơn hàng của tôi",
+			"title": "Đơn hàng cụa tôi",
 			"subtitle": "Theo dõi và quản lý đơn hàng",
 			"orderNumber": "Đơn #",
 			"date": "Ngày",
@@ -438,22 +439,22 @@
 			"pg": "tr",
 			"payment": "Thanh toán",
 			"payNow": "Quét để thanh toán",
-			"payExpire": "Link hết hạn sau 1 giờ. Đơn chưa thanh toán sẽ tự động hủy.",
+			"payExpire": "Link hết hạn sau 1 giờ. Đơn chưa thanh toán sẽ tự động hụy.",
 			"genLink": "Tạo link thanh toán",
-			"cancelOrder": "Hủy đơn",
-			"confirmCancel": "Hủy đơn này? Thao tác không thể hoàn tác.",
+			"cancelOrder": "Hụy đơn",
+			"confirmCancel": "Hụy đơn này? Thao tác không thể hoàn tác.",
 			"cancelRefundHint": "Tiền sẽ được hoàn lại.",
 			"cancelNoRefundHint": "Đơn đã bắt đầu xử lý sẽ không được hoàn tiền.",
 			"confirm": "Xác nhận",
-			"cancelled": "Đã hủy đơn",
-			"cancelledRefunded": "Đã hủy đơn - đã hoàn tiền",
+			"cancelled": "Đã hụy đơn",
+			"cancelledRefunded": "Đã hụy đơn - đã hoàn tiền",
 			"subtotal": "Tạm tính",
 			"discount": "Giảm giá",
 			"paid": "Đã thanh toán",
 			"remaining": "Còn lại",
 			"method": "Phương thức",
 			"deposit": "Đặt cọc",
-			"fullPayment": "Thanh toán đủ",
+			"fullPayment": "Thanh toán đụ",
 			"delivery": "Giao hàng",
 			"note": "Ghi chú",
 			"name": "Tên",
@@ -475,7 +476,7 @@
 				"qualityCheck": "Kiểm tra chất lượng",
 				"shipped": "Đã giao hàng",
 				"delivered": "Đã nhận",
-				"cancelled": "Đã hủy"
+				"cancelled": "Đã hụy"
 			},
 			"empty": "Bạn chưa có đơn nào.",
 			"requestReturn": "Yêu cầu đổi/trả hàng",
@@ -503,7 +504,7 @@
 				"selectOne": "Vui lòng chọn ít nhất một sản phẩm"
 			},
 			"cancel": "Giữ đơn hàng",
-			"cancelPendingRefund": "Đã gửi yêu cầu hủy — chờ hoàn tiền"
+			"cancelPendingRefund": "Đã gửi yêu cầu hụy — chờ hoàn tiền"
 		},
 		"checkout": {
 			"title": "Thanh toán",
@@ -533,7 +534,7 @@
 			"waitingPayment": "Đang chờ xác nhận thanh toán...",
 			"paymentSuccess": "Thanh toán thành công!",
 			"orderCodeLabel": "Mã đơn",
-			"paidFull": "Đã thanh toán đủ",
+			"paidFull": "Đã thanh toán đụ",
 			"depositReceived": "Đã nhận cọc 50% — thu phần còn lại khi giao hàng",
 			"back": "Quay lại",
 			"continuePayment": "Tiếp tục thanh toán",
@@ -543,10 +544,10 @@
 			"streetAddress": "Địa chỉ",
 			"cityProvince": "Tỉnh/Thành phố",
 			"noteOptional": "Ghi chú (không bắt buộc)",
-			"namePlaceholder": "Họ tên đầy đủ",
+			"namePlaceholder": "Họ tên đầy đụ",
 			"phonePlaceholder": "Số điện thoại",
 			"addressPlaceholder": "Số nhà, tên đường, etc.",
-			"cityPlaceholder": "Thành phố của bạn",
+			"cityPlaceholder": "Thành phố cụa bạn",
 			"notePlaceholder": "Bất kỳ hướng dẫn đặc biệt nào",
 			"errorName": "Vui lòng nhập họ tên",
 			"errorPhone": "Số điện thoại không hợp lệ",
@@ -575,7 +576,7 @@
 			"paymentHalf": "Trả 50% (COD 50% khi nhận)",
 			"paymentHalfNote": "Sản phẩm cá nhân hóa không được trả lại",
 			"editOptions": "Tùy chỉnh sách",
-			"cancel": "Hủy",
+			"cancel": "Hụy",
 			"save": "Lưu",
 			"decrease": "Giảm số lượng",
 			"increase": "Tăng số lượng",
@@ -602,7 +603,7 @@
 		},
 		"preview": {
 			"page": "Trang",
-			"of": "của",
+			"of": "cụa",
 			"go": "Đi",
 			"threeD": "3D"
 		}
@@ -616,7 +617,7 @@
 			"totalRevenue": "Tổng doanh thu năm nay",
 			"totalOrders": "Tổng đơn hàng",
 			"avgOrderValue": "Giá trị đơn hàng TB",
-			"cancellationRate": "Tỷ lệ hủy",
+			"cancellationRate": "Tỷ lệ hụy",
 			"totalProfit": "Tổng lợi nhuận",
 			"monthlyRevenue": "Doanh thu hàng tháng (VND)",
 			"monthlyOrders": "Đơn hàng hàng tháng",
@@ -761,7 +762,7 @@
 			"paid": "Đã trả",
 			"remaining": "Còn lại",
 			"method": "Hình thức",
-			"payFull": "Trả đủ",
+			"payFull": "Trả đụ",
 			"payHalf": "Cọc 50%",
 			"paymentStatus": "Trạng thái thanh toán",
 			"shipping": "Vận chuyển & Nhà cung cấp",
@@ -880,7 +881,7 @@
 			"bank": "Thông tin ngân hàng",
 			"bankName": "Tên ngân hàng",
 			"bankAccountNumber": "Số tài khoản",
-			"bankAccountName": "Chủ tài khoản",
+			"bankAccountName": "Chụ tài khoản",
 			"saveSuccess": "Cập nhật nhà cung cấp thành công",
 			"saveFailed": "Cập nhật nhà cung cấp thất bại",
 			"back": "Quay lại",
@@ -1124,7 +1125,7 @@
 		"information": "Thông tin",
 		"changePassword": "Đổi mật khẩu",
 		"displayName": "Tên hiển thị",
-		"namePlaceholder": "Tên của bạn",
+		"namePlaceholder": "Tên cụa bạn",
 		"email": "Email",
 		"phone": "Điện thoại",
 		"phonePlaceholder": "Số điện thoại",
@@ -1168,7 +1169,7 @@
 		"code": "404",
 		"title": "Lạc đường",
 		"desc": "Trang này đã rời khỏi bản đồ. Tọa độ không khớp với bất kỳ nhật ký nào trong kho lưu trữ.",
-		"back": "Về trang chủ",
+		"back": "Về trang chụ",
 		"explore": "Khám phá nhật ký"
 	},
 	"orderStatuses": {
@@ -1178,7 +1179,7 @@
 		"processing": "Đang xử lý",
 		"shipping": "Đang giao",
 		"delivered": "Đã giao",
-		"cancelled": "Đã hủy",
+		"cancelled": "Đã hụy",
 		"refunding": "Đang hoàn tiền",
 		"refunded": "Đã hoàn tiền",
 		"pendingRefund": "Chờ hoàn tiền"

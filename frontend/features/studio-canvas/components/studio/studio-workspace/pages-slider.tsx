@@ -121,7 +121,7 @@ export function PagesSlider() {
                 {!item.isCover && (
                   <button
                     onClick={() => handleDelete(item)}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-[#B54843] text-white rounded-full text-[8px] leading-none font-bold opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                    className="absolute -top-1 -right-1 w-6 h-6 sm:w-4 sm:h-4 flex items-center justify-center bg-[#B54843] text-white rounded-full text-[8px] leading-none font-bold opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
                   >
                     ×
                   </button>
