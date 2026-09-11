@@ -13,19 +13,21 @@ import {
   hitTestFrame,
   removeDragOverlays,
   addFrameDragOverlays,
+  reviveDeep,
+  reclipPhotos,
+  reviveObject,
+  applyInteractionLock,
+} from "../../../lib/frames";
+import {
   placePhotoInFrame,
   relocalizeClipToPhoto,
-  reviveDeep,
   movePhotoWithFrame,
   unlockPhotoInFrame,
   lockPhotoInFrame,
   addPhotoDimOverlays,
   resolveFrameForPhoto,
   findPhotoInFrame,
-  reclipPhotos,
-  reviveObject,
-  applyInteractionLock,
-} from "../../../lib/frames";
+} from "../../../lib/photos";
 import { isCoverPage } from "../../../lib/layout-engine";
 import { attachSmartGuides } from "../../../lib/smart-guides";
 
@@ -90,7 +92,7 @@ export function StudioWorkspace() {
               }
               if (placePhotoInFrame(frame, img)) {
                 // ponytail: fitPhotoToFrame already yields group-local coords for a nested
-                // frame — add the photo INTO the group, not canvas root, then relocalize clip.
+                // frame -- add the photo INTO the group, not canvas root, then relocalize clip.
                 const parentGroup = (frame as any).group;
                 if (parentGroup && typeof parentGroup.add === "function") {
                   parentGroup.add(img);
@@ -275,7 +277,7 @@ export function StudioWorkspace() {
   };
 
 	// W-opt: canvas-create effect AND page-change effect both call loadPage in the same
-	// commit on cover<->inner switches — the double call bumped the load epoch and skipped
+	// commit on cover<->inner switches -- the double call bumped the load epoch and skipped
 	// the render, leaving the previous page painted until a click. Dedupe: one load per
 	// frame, latest canvas wins.
 	const pendingLoad: { canvas: fabric.Canvas | null; raf: number | null } = { canvas: null, raf: null };
@@ -456,7 +458,7 @@ export function StudioWorkspace() {
     c.backgroundColor = "#fff";
     c.renderAll();
     setCanvas(c);
-    // ponytail: without this call the import above is dead — no object:moving
+    // ponytail: without this call the import above is dead -- no object:moving
     // handler, no snapping. Detach on cleanup to avoid duplicate handlers.
     const smartGuides = attachSmartGuides(c);
     loadPage(c);

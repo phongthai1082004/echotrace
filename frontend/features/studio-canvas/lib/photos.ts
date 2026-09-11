@@ -1,0 +1,437 @@
+import * as fabric from "fabric";
+import { createClipPath } from "./shapes";
+import { isFrameObject, enforceZLayers } from "./fabric-core";
+
+// ponytail: everything about binding a photo into a frame -- fit, clip, lookup,
+// edit-mode lock/unlock. Shares the frameId/_selId + clipPath conventions.
+
+const DIM_OVERLAY_KEY = "_dimOverlay";
+
+
+function createRectPath(w: number, h: number): fabric.Rect {
+  return new fabric.Rect({ width: w, height: h, originX: "left", originY: "top", left: 0, top: 0 });
+}
+
+
+function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
+  const fw = (frame.width || 100) * (frame.scaleX || 1);
+  const fh = (frame.height || 100) * (frame.scaleY || 1);
+  const fl = frame.left || 0,
+    ft = frame.top || 0;
+  const imgW = img.width || 1,
+    imgH = img.height || 1;
+  // ponytail: cover -- image fills the frame edge to edge; the clipPath keeps it from spilling
+  const s = Math.max(fw / imgW, fh / imgH);
+  const shapeName = (frame as any).customProperties?.shapeName;
+  let clip;
+  if (shapeName) {
+    const size = (frame as any).customProperties?.shapeSize || fw;
+    clip = createClipPath(shapeName, size, size);
+    clip.set({
+      left: fl,
+      top: ft,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
+  } else {
+    clip = createRectPath(fw, fh);
+    clip.set({ left: fl, top: ft, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
+  }
+  clip.setCoords();
+  const fc = frame.getCenterPoint();
+  img.set({
+    left: fc.x,
+    top: fc.y,
+    originX: "center",
+    originY: "center",
+    scaleX: s,
+    scaleY: s,
+    angle: frame.angle || 0,
+    flipX: frame.flipX || false,
+    flipY: frame.flipY || false,
+    clipPath: clip,
+    objectCaching: false,
+  } as any);
+  img.setCoords();
+  img.dirty = true;
+}
+
+
+// ponytail: absolute clip (canvas coords) -> photo-local clip, so it survives
+// the group layout rewrite (children become group-relative, clip would stay behind).
+// Photo center == frame center, so the frame box recenters on photo-local origin.
+export function relocalizeClipToPhoto(photo: any, frame: any) {
+  const clip = photo?.clipPath;
+  if (!clip) return;
+  const fw = (frame.width || 0) * (frame.scaleX || 1);
+  const fh = (frame.height || 0) * (frame.scaleY || 1);
+  const sx = photo.scaleX || 1,
+    sy = photo.scaleY || 1;
+  const fc = frame.getCenterPoint();
+  const pc = photo.getCenterPoint();
+  const lw = fw / sx,
+    lh = fh / sy;
+  clip.set({
+    absolutePositioned: false,
+    angle: (frame.angle || 0) - (photo.angle || 0),
+    scaleX: (clip.scaleX || 1) / sx,
+    scaleY: (clip.scaleY || 1) / sy,
+    left: (fc.x - pc.x) / sx - lw / 2,
+    top: (fc.y - pc.y) / sy - lh / 2,
+  });
+  clip.setCoords();
+  photo.dirty = true;
+}
+
+
+export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
+  const canvas = (frame as any).canvas;
+  if (canvas && findPhotoInFrame(canvas, frame)) return false;
+  const frameZ = (frame as any).customProperties?.z ?? 50;
+  fitPhotoToFrame(frame, img);
+  // save baseline scales so movePhotoWithFrame doesn't double-count
+  (img as any).__frameLockScaleX = frame.scaleX || 1;
+  (img as any).__frameLockScaleY = frame.scaleY || 1;
+  (img as any).__photoLockScaleX = img.scaleX || 1;
+  (img as any).__photoLockScaleY = img.scaleY || 1;
+  (img as any).__photoRelScaleX = 1;
+  (img as any).__photoRelScaleY = 1;
+  (img as any).__frameOffsetX = 0;
+  (img as any).__frameOffsetY = 0;
+  img.set({
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockScalingX: true,
+    lockScalingY: true,
+    lockRotation: true,
+    selectable: false,
+    evented: false,
+    customProperties: {
+      z: frameZ - 1,
+      layer: "photo",
+      frameId: (frame as any)._selId,
+      layoutKind: (frame as any).customProperties?.layoutKind ?? null,
+    },
+  } as any);
+  (img as any)._selId = `photo-frame-${Date.now()}`;
+  return true;
+}
+
+
+export function applyFrameClip(frame: fabric.FabricObject, img: fabric.FabricImage) {
+  const fw = (frame.width || 100) * (frame.scaleX || 1);
+  const fh = (frame.height || 100) * (frame.scaleY || 1);
+  const fl = frame.left || 0,
+    ft = frame.top || 0;
+  const shapeName = (frame as any).customProperties?.shapeName;
+  if (shapeName) {
+    const size = (frame as any).customProperties?.shapeSize || fw;
+    const clip = createClipPath(shapeName, size, size);
+    clip.set({
+      left: fl,
+      top: ft,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
+    clip.setCoords();
+    img.set({ clipPath: clip } as any);
+  } else {
+    const clip = createRectPath(fw, fh);
+    clip.set({ left: fl, top: ft, angle: frame.angle || 0, absolutePositioned: true, objectCaching: false } as any);
+    clip.setCoords();
+    img.set({ clipPath: clip } as any);
+  }
+  img.setCoords();
+  img.dirty = true;
+  // ponytail: grouped frame lives in group space -- absolute clip would stay behind.
+  if ((frame as any).group) relocalizeClipToPhoto(img, frame);
+}
+
+
+// ponytail: photos live inside groups after grouping -- search one level deep too,
+// otherwise delete/move of a grouped frame orphans its photo.
+export function allPhotoCandidates(canvas: fabric.Canvas): any[] {
+  const out: any[] = [];
+  canvas.getObjects().forEach((o: any) => {
+    out.push(o);
+    if ((o.type === "group" || o.type === "activeselection") && Array.isArray(o._objects)) {
+      o._objects.forEach((c: any) => out.push(c));
+    }
+  });
+  return out;
+}
+
+export function findPhotoInFrame(canvas: fabric.Canvas, frame: fabric.FabricObject): fabric.FabricImage | undefined {
+  const frameId = (frame as any)._selId;
+  const candidates = allPhotoCandidates(canvas);
+  if (frameId) {
+    const photo = candidates.find(
+      (o: any) => o.customProperties?.frameId === frameId && !(o as any).hasControls,
+    ) as fabric.FabricImage | undefined;
+    if (photo) return photo;
+  }
+  // fallback: only match orphan photos (no frameId) whose center is inside this frame
+  return candidates.find((o: any) => {
+    if (o.customProperties?.layer !== "photo" || (o as any).hasControls) return false;
+    if (o.customProperties?.frameId && o.customProperties.frameId !== frameId) return false;
+    return frame.containsPoint(new fabric.Point(o.left || 0, o.top || 0));
+  }) as fabric.FabricImage | undefined;
+}
+
+
+export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.FabricImage) {
+  if ((photo as any).hasControls === true) return;
+  const fc = frame.getCenterPoint();
+  const fw = (frame.width || 100) * (frame.scaleX || 1);
+  const fh = (frame.height || 100) * (frame.scaleY || 1);
+  const imgW = photo.width || 1,
+    imgH = photo.height || 1;
+  // ponytail: always re-contain-fit to the current frame size; user scale/offset
+  // edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
+  const containS = Math.min(fw / imgW, fh / imgH);
+  const relSX = (photo as any).__photoRelScaleX ?? 1;
+  const relSY = (photo as any).__photoRelScaleY ?? 1;
+  const lockW = (frame.width || 100) * ((photo as any).__frameLockScaleX || 1);
+  const lockH = (frame.height || 100) * ((photo as any).__frameLockScaleY || 1);
+  const offX = ((photo as any).__frameOffsetX || 0) * (fw / lockW);
+  const offY = ((photo as any).__frameOffsetY || 0) * (fh / lockH);
+  const shapeName = (frame as any).customProperties?.shapeName;
+  let clip;
+  if (shapeName) {
+    const size = (frame as any).customProperties?.shapeSize || fw;
+    clip = createClipPath(shapeName, size, size);
+    clip.set({
+      left: frame.left,
+      top: frame.top,
+      scaleX: frame.scaleX || 1,
+      scaleY: frame.scaleY || 1,
+      angle: frame.angle || 0,
+    } as any);
+  } else {
+    clip = createRectPath(fw, fh);
+    clip.set({
+      left: frame.left,
+      top: frame.top,
+      angle: frame.angle || 0,
+      absolutePositioned: true,
+      objectCaching: false,
+    } as any);
+  }
+  clip.setCoords();
+  photo.set({
+    left: fc.x + offX,
+    top: fc.y + offY,
+    scaleX: containS * relSX,
+    scaleY: containS * relSY,
+    angle: frame.angle || 0,
+    clipPath: clip,
+  } as any);
+  photo.setCoords();
+  photo.dirty = true;
+  // ponytail: grouped frame lives in group space -- absolute clip would stay behind.
+  if ((frame as any).group) relocalizeClipToPhoto(photo, frame);
+}
+
+
+export function resolveFrameForPhoto(
+  canvas: fabric.Canvas,
+  photo: fabric.FabricImage,
+): fabric.FabricObject | undefined {
+  const fid = (photo as any).customProperties?.frameId;
+  // ponytail: grouped photo's frame may live in the same group -- check there first.
+  const parentGroup = (photo as any).group;
+  if (fid && parentGroup && Array.isArray(parentGroup._objects)) {
+    const frame = parentGroup._objects.find((o: any) => isFrameObject(o) && (o as any)._selId === fid);
+    if (frame) return frame;
+  }
+  if (fid) {
+    const frame = canvas.getObjects().find((o: any) => isFrameObject(o) && (o as any)._selId === fid);
+    if (frame) return frame;
+  }
+  const frame = canvas.getObjects().find((o: any) => {
+    if (!isFrameObject(o)) return false;
+    // center origin: photo.left/top are center
+    return o.containsPoint(new fabric.Point(photo.left || 0, photo.top || 0));
+  }) as fabric.FabricObject | undefined;
+  if (frame) {
+    (photo as any).customProperties = { ...(photo as any).customProperties, frameId: (frame as any)._selId };
+  }
+  return frame;
+}
+
+
+export function unlockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImage) {
+  const frame = resolveFrameForPhoto(canvas, photo);
+  if (!frame) return;
+  (photo as any).__savedZ = (photo as any).customProperties?.z;
+  (photo as any).customProperties = { ...((photo as any).customProperties || {}), z: 998 };
+  photo.set({
+    clipPath: null,
+    hasControls: true,
+    hasBorders: true,
+    lockMovementX: false,
+    lockMovementY: false,
+    lockScalingX: false,
+    lockScalingY: false,
+    lockRotation: false,
+    selectable: true,
+    evented: true,
+    objectCaching: false,
+  } as any);
+  photo.setCoords();
+  if (frame) {
+    (frame as any).__savedEvented = frame.evented;
+    (frame as any).__savedSelectable = frame.selectable;
+  }
+  // disable all other objects + rubber-band selection during edit mode
+  canvas.selection = false;
+  canvas.getObjects().forEach((o: any) => {
+    if (o === photo) return;
+    const cp = o.customProperties || {};
+    cp.__savedEvented_all = o.evented;
+    cp.__savedSelectable_all = o.selectable;
+    cp.__savedControls_all = o.hasControls;
+    cp.__savedBorders_all = o.hasBorders;
+    o.customProperties = cp;
+    o.set({ evented: false, selectable: false, hasControls: false, hasBorders: false } as any);
+  });
+  enforceZLayers(canvas);
+  addPhotoDimOverlays(canvas, photo);
+}
+
+
+export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImage) {
+  removePhotoDimOverlays(canvas);
+  const savedZ = (photo as any).__savedZ;
+  (photo as any).customProperties = {
+    ...((photo as any).customProperties || {}),
+    z: savedZ !== undefined ? savedZ : 0,
+  };
+  delete (photo as any).__savedZ;
+  // restore all objects + rubber-band selection after edit mode
+  canvas.selection = true;
+  canvas.getObjects().forEach((o: any) => {
+    const cp = o.customProperties;
+    if (!cp || cp.__savedEvented_all === undefined) return;
+    o.set({
+      evented: cp.__savedEvented_all,
+      selectable: cp.__savedSelectable_all,
+      hasControls: cp.__savedControls_all,
+      hasBorders: cp.__savedBorders_all,
+    } as any);
+    delete cp.__savedEvented_all;
+    delete cp.__savedSelectable_all;
+    delete cp.__savedControls_all;
+    delete cp.__savedBorders_all;
+    o.customProperties = cp;
+  });
+  const frame = resolveFrameForPhoto(canvas, photo);
+  if (frame) {
+    // save offset + scales for movePhotoWithFrame to preserve relative transform
+    const fc = frame.getCenterPoint();
+    (photo as any).__frameOffsetX = photo.left - fc.x;
+    (photo as any).__frameOffsetY = photo.top - fc.y;
+    (photo as any).__frameLockScaleX = frame.scaleX || 1;
+    (photo as any).__frameLockScaleY = frame.scaleY || 1;
+    (photo as any).__photoLockScaleX = photo.scaleX || 1;
+    (photo as any).__photoLockScaleY = photo.scaleY || 1;
+    const fwl = (frame.width || 100) * (frame.scaleX || 1);
+    const fhl = (frame.height || 100) * (frame.scaleY || 1);
+    const containS = Math.min(fwl / (photo.width || 1), fhl / (photo.height || 1));
+    (photo as any).__photoRelScaleX = (photo.scaleX || 1) / containS;
+    (photo as any).__photoRelScaleY = (photo.scaleY || 1) / containS;
+    applyFrameClip(frame, photo);
+    frame.set({
+      evented: (frame as any).__savedEvented !== undefined ? (frame as any).__savedEvented : true,
+      selectable: (frame as any).__savedSelectable !== undefined ? (frame as any).__savedSelectable : true,
+      hasControls: true,
+      hasBorders: true,
+    } as any);
+  }
+  photo.set({
+    hasControls: false,
+    hasBorders: false,
+    lockMovementX: true,
+    lockMovementY: true,
+    lockScalingX: true,
+    lockScalingY: true,
+    lockRotation: true,
+    selectable: false,
+    evented: false,
+  } as any);
+  photo.setCoords();
+  enforceZLayers(canvas);
+}
+
+
+export function resetCanvasInteractions(canvas: fabric.Canvas) {
+  removePhotoDimOverlays(canvas);
+  canvas.selection = true;
+  canvas.getObjects().forEach((o: any) => {
+    const cp = o.customProperties;
+    if (!cp || cp.__savedEvented_all === undefined) return;
+    o.set({
+      evented: cp.__savedEvented_all,
+      selectable: cp.__savedSelectable_all,
+      hasControls: cp.__savedControls_all,
+      hasBorders: cp.__savedBorders_all,
+    } as any);
+    delete cp.__savedEvented_all;
+    delete cp.__savedSelectable_all;
+    delete cp.__savedControls_all;
+    delete cp.__savedBorders_all;
+    o.customProperties = cp;
+  });
+  canvas.renderAll();
+}
+
+
+export function addPhotoDimOverlays(canvas: fabric.Canvas, photo: fabric.FabricObject) {
+  removePhotoDimOverlays(canvas);
+  const cw = canvas.width || 1000,
+    ch = canvas.height || 1000;
+  const frame = resolveFrameForPhoto(canvas, photo as fabric.FabricImage);
+  const target = frame || photo;
+  target.setCoords();
+  const center = target.getCenterPoint();
+  const hw = ((target.width || 100) * (target.scaleX || 1)) / 2;
+  const hh = ((target.height || 100) * (target.scaleY || 1)) / 2;
+  const rad = ((target.angle || 0) * Math.PI) / 180;
+  const cos = Math.cos(rad),
+    sin = Math.sin(rad);
+  const rel = [
+    { x: -hw, y: -hh },
+    { x: hw, y: -hh },
+    { x: hw, y: hh },
+    { x: -hw, y: hh },
+  ];
+  const corners = rel.map((c) => ({
+    x: center.x + c.x * cos - c.y * sin,
+    y: center.y + c.x * sin + c.y * cos,
+  }));
+
+  const pathData = `M 0 0 L ${cw} 0 L ${cw} ${ch} L 0 ${ch} Z M ${corners.map((c) => `${c.x} ${c.y}`).join(" L ")} Z`;
+  const overlay = new fabric.Path(pathData, {
+    fill: "rgba(128,128,128,0.55)",
+    fillRule: "evenodd",
+    selectable: false,
+    evented: false,
+    excludeFromExport: true,
+  } as any);
+  (overlay as any)[DIM_OVERLAY_KEY] = true;
+  (overlay as any).customProperties = { z: 999, layer: "dimOverlay" };
+  canvas.add(overlay);
+  canvas.renderAll();
+}
+
+
+export function removePhotoDimOverlays(canvas: fabric.Canvas) {
+  canvas
+    .getObjects()
+    .filter((o: any) => o[DIM_OVERLAY_KEY] === true)
+    .forEach((o) => canvas.remove(o));
+}

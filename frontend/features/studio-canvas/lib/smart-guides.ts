@@ -1,9 +1,9 @@
 import * as fabric from "fabric";
 
 /**
- * Smart guides — alignment + snapping + equal-distribute spacing while moving objects.
+ * Smart guides -- alignment + snapping + equal-distribute spacing while moving objects.
  *
- * Priority per axis: DISTRIBUTE (equal gaps between neighbors) beats alignment —
+ * Priority per axis: DISTRIBUTE (equal gaps between neighbors) beats alignment --
  * otherwise dense neighbor edges always win and distribute never fires.
  *
  * Optimizations:
@@ -110,7 +110,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		ensureGap().set({ x1: cx, y1: a, x2: cx, y2: b, visible: true });
 	};
 
-	// ponytail: whole pixels everywhere — default strokeWidth pads bboxes by fractions
+	// ponytail: whole pixels everywhere -- default strokeWidth pads bboxes by fractions
 	// and stale oCoords shift edges by 0.5px, which silently breaks threshold math.
 	const snapRound = (n: number): number => Math.round(n);
 
@@ -160,13 +160,13 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 			clear();
 			return;
 		}
-		// ponytail: build on first run too (!cache) — the old order checked !cache
+		// ponytail: build on first run too (!cache) -- the old order checked !cache
 		// before the dirty rebuild, so cache stayed null forever and nothing snapped.
 		if (dirty || !cache) {
 			cache = collectCandidates(target);
 			dirty = false;
 		}
-		// ponytail: hide last frame's gap lines + reuse pool from zero — without this
+		// ponytail: hide last frame's gap lines + reuse pool from zero -- without this
 		// stale red segments pile up on canvas and spacing looks random.
 		gapPool.forEach((l) => l.set({ visible: false }));
 		gapUsed = 0;
@@ -187,7 +187,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		let dy = 0;
 		let showAlignV: number | null = null;
 		let showAlignH: number | null = null;
-		// ponytail: spacing feedback takes over — one line only, no align clutter.
+		// ponytail: spacing feedback takes over -- one line only, no align clutter.
 		let spacingShown = false;
 
 		// ===== DISTRIBUTE first (equal gaps beat alignment) =====
@@ -212,7 +212,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 				distrX = true;
 				const targetLeft = (rightN.rect.left + leftN.rect.right - mb.width) / 2;
 				const d = targetLeft - mb.left;
-				// ponytail: bbox delta only — the single apply at the end handles any
+				// ponytail: bbox delta only -- the single apply at the end handles any
 				// origin (direct left= assignment breaks center-origin objects).
 				if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
 					dx = d;
@@ -226,7 +226,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 		}
 
 		// ===== ONE-SIDED distribute: approaching a row from outside =====
-		// Only inner neighbor exists — snap the new gap to the row's own gap and
+		// Only inner neighbor exists -- snap the new gap to the row's own gap and
 		// draw the chain: existing row gap + new gap (Canva-style).
 		if (!distrX && ((leftN && !rightN) || (!leftN && rightN))) {
 			const inner = (leftN || rightN) as GuideCache["others"][number];
@@ -289,7 +289,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 				distrY = true;
 				const targetTop = (bottomN.rect.top + topN.rect.bottom - mb.height) / 2;
 				const d = targetTop - mb.top;
-				// ponytail: same as X — delta only, applied once at the end.
+				// ponytail: same as X -- delta only, applied once at the end.
 				if (Math.abs(d) <= DISTRIBUTE_THRESHOLD && d !== 0) {
 					dy = d;
 				}

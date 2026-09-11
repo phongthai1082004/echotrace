@@ -67,11 +67,11 @@ const SERIALIZE_KEYS = [
 
 export function serializeCanvasState(canvas: fabric.Canvas): string {
   const parsed = (canvas as any).toJSON(SERIALIZE_KEYS) as { objects: any[]; width?: number; height?: number };
-	// PDF render needs the real page ratio — fabric toJSON drops viewport dims
+	// PDF render needs the real page ratio -- fabric toJSON drops viewport dims
 	parsed.width = canvas.getWidth();
 	parsed.height = canvas.getHeight();
   // ponytail: toJSON neither propagates SERIALIZE_KEYS into group children nor
-  // drops helpers there — backfill recursively so grouped nodes keep identity.
+  // drops helpers there -- backfill recursively so grouped nodes keep identity.
   backfillCustomProps(
     parsed.objects,
     canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport),

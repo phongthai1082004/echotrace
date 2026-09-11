@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -351,7 +351,7 @@ export function StudioProperties() {
         </p>
         {[
           [t("customer.studio.format"), `${fmt.cm} cm`],
-          [t("customer.studio.size"), `${fmt.width} px — ${fmt.height} px`],
+          [t("customer.studio.size"), `${fmt.width} px -- ${fmt.height} px`],
           [t("customer.studio.pages"), String(useCanvasStore.getState().pages.length)],
         ].map(([k, v]) => (
           <div key={k} className="mb-2.5">

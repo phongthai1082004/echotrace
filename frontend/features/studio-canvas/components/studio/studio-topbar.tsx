@@ -15,7 +15,8 @@ import { ZOOM_LEVELS, FONTS } from "../../types";
 import { isCoverPage, serializeCanvasState } from "../../lib/layout-engine";
 import { applyUndo, applyRedo } from "../../lib/history";
 import { isFrameObject, enforceZLayers } from "../../lib/fabric-core";
-import { placePhotoInFrame, applyFrameClip } from "../../lib/frames";
+import { placePhotoInFrame, applyFrameClip } from "../../lib/photos";
+import { deleteSelectedObjects } from "../../lib/frames";
 import * as fabric from "fabric";
 
 function useTextPresets(t: any) {
@@ -144,14 +145,12 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
 
   const handleDelete = () => {
     if (!canvas) return;
-    const active = canvas.getActiveObject();
-    if (active) {
-      pushUndo();
-      canvas.remove(active);
-      canvas.discardActiveObject();
-      canvas.renderAll();
-      clearRedo();
-    }
+    if (!canvas.getActiveObjects().length) return;
+    pushUndo();
+    // ponytail: canvas.remove(active) drops an ActiveSelection wrapper but keeps
+    // its children -- route through the group-aware delete instead.
+    deleteSelectedObjects(canvas);
+    clearRedo();
   };
 
   const handleZoom = (dir: 1 | -1) => {

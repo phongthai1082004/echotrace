@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { isFrameObject, enforceZLayers } from "../../lib/fabric-core";
-import { groupSelectedObjects, ungroupSelectedObjects, deleteSelectedObjects } from "../../lib/frames";
+import { groupSelectedObjects, ungroupSelectedObjects } from "../../lib/groups";
+import { deleteSelectedObjects } from "../../lib/frames";
 import { serializeSel } from "../../lib/clipboard";
 
 interface Props {

@@ -2,7 +2,8 @@ import * as fabric from "fabric";
 import type { PageState } from "../types";
 import type { UndoEntry } from "../hooks/useCanvasState";
 import { splitCanvasByMidpoint, serializeCanvasState, isCoverPage } from "./layout-engine";
-import { removeDragOverlays, removePhotoDimOverlays } from "./frames";
+import { removeDragOverlays } from "./frames";
+import { removePhotoDimOverlays } from "./photos";
 
 function cleanupUndo(canvas: fabric.Canvas) {
   canvas.discardActiveObject();

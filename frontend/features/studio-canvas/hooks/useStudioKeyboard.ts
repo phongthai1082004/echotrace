@@ -3,7 +3,8 @@ import * as fabric from "fabric";
 import { useCanvasStore } from "./useCanvasState";
 import { usePageManager } from "./usePageManager";
 import { serializeSel, pasteClipboard } from "../lib/clipboard";
-import { groupSelectedObjects, ungroupSelectedObjects, deleteSelectedObjects } from "../lib/frames";
+import { groupSelectedObjects, ungroupSelectedObjects } from "../lib/groups";
+import { deleteSelectedObjects } from "../lib/frames";
 import { applyUndo, applyRedo } from "../lib/history";
 import { ZOOM_LEVELS } from "../types";
 
