@@ -21,14 +21,10 @@ export function CtaSection() {
           §07 — {t("home.cta.section")}
         </div>
         <h2
+          className="t-display"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: "clamp(36px,5vw,64px)",
-            fontWeight: 800,
             color: "#222",
-            lineHeight: 1.0,
             margin: "0 0 22px",
-            letterSpacing: "-.025em",
           }}
         >
           {t("home.cta.titleLine1")}
@@ -38,11 +34,9 @@ export function CtaSection() {
           {t("home.cta.titleLine3")}
         </h2>
         <p
+          className="t-body"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
             color: "#555",
-            fontSize: 16,
-            lineHeight: 1.65,
             maxWidth: 400,
             margin: "0 0 36px",
           }}
@@ -53,14 +47,14 @@ export function CtaSection() {
           <a
             href="/studio"
             className="btn-brutalist"
-            style={{ background: "#B54843", color: "#fff", fontSize: 17, padding: "16px 32px" }}
+            style={{ background: "#B54843", color: "#fff" }}
           >
             {t("home.cta.ctaPrimary")}
           </a>
           <a
             href="/explore"
             className="btn-brutalist"
-            style={{ background: "#FFF7D6", color: "#222", fontSize: 17, padding: "16px 32px" }}
+            style={{ background: "#FFF7D6", color: "#222" }}
           >
             {t("home.cta.ctaSecondary")}
           </a>
@@ -84,22 +78,16 @@ export function CtaSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#7a2430",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.showcase.badgeWedding")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 16,
-              fontWeight: 800,
               color: "#222",
             }}
           >
@@ -123,22 +111,16 @@ export function CtaSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#713f12",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.showcase.badgeBaby")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 16,
-              fontWeight: 800,
               color: "#222",
             }}
           >
@@ -162,22 +144,16 @@ export function CtaSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#14532d",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.showcase.badgeGraduation")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 16,
-              fontWeight: 800,
               color: "#222",
             }}
           >

@@ -42,10 +42,8 @@ export function MaterialCard({
           {tag}
         </div>
         <h3
+          className="t-h3"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: 22,
-            fontWeight: 700,
             color: "#222",
             margin: "0 0 8px",
           }}
@@ -53,11 +51,9 @@ export function MaterialCard({
           {name}
         </h3>
         <p
+          className="t-small"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: 14,
             color: "#666",
-            lineHeight: 1.6,
             margin: 0,
           }}
         >

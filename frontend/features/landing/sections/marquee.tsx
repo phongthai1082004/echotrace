@@ -23,18 +23,15 @@ export function Marquee() {
         {items.map((item, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
             <span
+              className="t-caption"
               style={{
-                fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: ".15em",
                 color: i % 3 === 0 ? "#D97706" : i % 3 === 1 ? "#F8F2E5" : "#B54843",
                 padding: "0 28px",
               }}
             >
               {item}
             </span>
-            <span style={{ color: "#555", fontSize: 14 }}>✦</span>
+            <span className="t-caption" style={{ color: "#555" }}>✦</span>
           </span>
         ))}
       </div>

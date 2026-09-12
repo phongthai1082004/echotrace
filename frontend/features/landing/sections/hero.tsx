@@ -28,14 +28,10 @@ export function HeroSection() {
           {t("home.hero.location")}
         </div>
         <h1
+          className="t-display"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: "clamp(44px,5.2vw,74px)",
-            fontWeight: 800,
-            lineHeight: 1.0,
             color: "#222",
             margin: "0 0 22px",
-            letterSpacing: "-.025em",
           }}
         >
           {t("home.hero.titleLine1")}
@@ -45,11 +41,9 @@ export function HeroSection() {
           {t("home.hero.titleLine3")}
         </h1>
         <p
+          className="t-body"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: 17,
             color: "#444444",
-            lineHeight: 1.65,
             margin: "0 0 34px",
             maxWidth: 400,
           }}
@@ -92,21 +86,16 @@ export function HeroSection() {
           }}
         >
           <div
+            className="t-label"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 10,
               color: "#666",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
             }}
           >
             {t("home.hero.shipsIn")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 22,
-              fontWeight: 800,
               color: "#155724",
             }}
           >
@@ -127,21 +116,16 @@ export function HeroSection() {
           }}
         >
           <div
+            className="t-label"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 10,
               color: "#aaa",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
             }}
           >
             {t("home.hero.startingFrom")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 24,
-              fontWeight: 800,
               color: "#D97706",
             }}
           >
@@ -164,22 +148,16 @@ export function HeroSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#7a2430",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.hero.themeWedding")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 17,
-              fontWeight: 800,
               color: "#222",
             }}
           >
@@ -203,22 +181,16 @@ export function HeroSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#14532d",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.hero.themeFamily")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 17,
-              fontWeight: 800,
               color: "#222",
             }}
           >
@@ -242,22 +214,16 @@ export function HeroSection() {
           }}
         >
           <div
+            className="t-micro"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 9,
               color: "#713f12",
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              fontWeight: 700,
             }}
           >
             {t("home.hero.themeAnniversary")}
           </div>
           <div
+            className="t-badge"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 17,
-              fontWeight: 800,
               color: "#222",
             }}
           >

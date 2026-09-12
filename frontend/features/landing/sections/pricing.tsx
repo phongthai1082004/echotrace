@@ -12,13 +12,10 @@ export function PricingSection() {
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <h2
+            className="t-h2"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: "clamp(30px,4vw,54px)",
-              fontWeight: 800,
               color: "#222",
               margin: "0 0 12px",
-              lineHeight: 1.05,
             }}
           >
             {t("home.pricing.titleLine1")}
@@ -26,10 +23,9 @@ export function PricingSection() {
             {t("home.pricing.titleLine2")}
           </h2>
           <p
+            className="t-body"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
               color: "#555555",
-              fontSize: 16,
               maxWidth: 400,
               margin: "0 auto",
             }}
@@ -42,13 +38,11 @@ export function PricingSection() {
             <a
               key={label}
               href="/checkout"
-              className="btn-brutalist reveal"
+              className="btn-brutalist btn-brutalist-sm reveal"
               style={{
                 background: ["#D97706", "#B54843", "#155724"][i],
                 color: "#fff",
-                fontSize: 13,
                 letterSpacing: ".08em",
-                padding: "12px 32px",
                 transitionDelay: `${i * 110}ms`,
               }}
             >
@@ -58,9 +52,8 @@ export function PricingSection() {
         </div>
         <div style={{ textAlign: "center", marginTop: 32 }}>
           <span
+            className="t-small"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-              fontSize: 13,
               color: "#666666",
               letterSpacing: ".03em",
             }}

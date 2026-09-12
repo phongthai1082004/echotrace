@@ -15,13 +15,10 @@ export function MaterialsSection() {
           §04 — {t("home.materials.section")}
         </div>
         <h2
+          className="t-h2"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: "clamp(30px,4vw,52px)",
-            fontWeight: 800,
             color: "#222",
             margin: "0 0 8px",
-            lineHeight: 1.05,
           }}
         >
           {t("home.materials.titleLine1")}
@@ -29,12 +26,11 @@ export function MaterialsSection() {
           <span style={{ color: "#B54843" }}>{t("home.materials.titleLine2")}</span>
         </h2>
         <p
+          className="t-small"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
             color: "#444444",
             marginBottom: 48,
             maxWidth: 480,
-            lineHeight: 1.6,
           }}
         >
           {t("home.materials.desc")}

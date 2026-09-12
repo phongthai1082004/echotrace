@@ -23,6 +23,7 @@ export const LANDING_CSS = `
   }
   .btn-brutalist:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 #222; }
   .btn-brutalist:active { transform: translate(4px,4px); box-shadow: 0 0 0 #222; }
+  .btn-brutalist-sm { font-size: 14px; padding: 11px 22px; }
   .card-brutalist {
     border: 2.5px solid #222; box-shadow: 5px 5px 0 #222;
     transition: transform .12s ease, box-shadow .12s ease;

@@ -26,13 +26,10 @@ export function HowItWorksSection() {
               §02 — {t("home.process.section")}
             </div>
             <h2
+              className="t-h2"
               style={{
-                fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                fontSize: "clamp(32px,4vw,52px)",
-                fontWeight: 800,
                 color: "#222",
                 margin: 0,
-                lineHeight: 1.05,
               }}
             >
               {t("home.process.titleLine1")}
@@ -41,11 +38,10 @@ export function HowItWorksSection() {
             </h2>
           </div>
           <p
+            className="t-small"
             style={{
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
               color: "#555555",
               maxWidth: 340,
-              lineHeight: 1.6,
               margin: 0,
             }}
           >
@@ -82,10 +78,8 @@ export function HowItWorksSection() {
                     </span>
                   </div>
                   <h3
+                    className="t-h3"
                     style={{
-                      fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                      fontSize: 22,
-                      fontWeight: 700,
                       color: "#222",
                       margin: "0 0 12px",
                     }}
@@ -93,11 +87,9 @@ export function HowItWorksSection() {
                     {step.title}
                   </h3>
                   <p
+                    className="t-small"
                     style={{
-                      fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                       color: "#555555",
-                      fontSize: 14,
-                      lineHeight: 1.65,
                       margin: 0,
                     }}
                   >

@@ -18,12 +18,10 @@ export function FooterSection() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <div
+                className="t-h3"
                 style={{
                   background: "#F8F2E5",
                   color: "#222",
-                  fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                  fontWeight: 800,
-                  fontSize: 20,
                   padding: "4px 12px",
                   borderRadius: 6,
                 }}
@@ -31,22 +29,18 @@ export function FooterSection() {
                 {t("home.footer.brandBox")}
               </div>
               <div
+                className="t-label"
                 style={{
-                  fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                  fontSize: 10,
                   color: "#666",
-                  letterSpacing: ".1em",
                 }}
               >
                 {t("home.footer.brandTag")}
               </div>
             </div>
             <p
+              className="t-small"
               style={{
-                fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                 color: "#AAAAAA",
-                fontSize: 14,
-                lineHeight: 1.65,
                 maxWidth: 260,
                 margin: "0 0 20px",
               }}
@@ -81,13 +75,9 @@ export function FooterSection() {
           {(t("home.footer.cols", { returnObjects: true }) as { title: string; links: string[] }[]).map((col, i) => (
             <div key={i} className="text-center md:text-left">
               <div
+                className="neo-label"
                 style={{
-                  fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: ".08em",
                   color: "#AAAAAA",
-                  textTransform: "uppercase",
                   marginBottom: 16,
                 }}
               >
@@ -98,15 +88,14 @@ export function FooterSection() {
               >
                 {col.links.map((link, j) => (
                   <li key={j}>
-                    <a
-                      href="#"
-                      style={{
-                        fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                        color: "#999999",
-                        fontSize: 14,
-                        textDecoration: "none",
-                        transition: "color .15s",
-                      }}
+                      <a
+                        href="#"
+                        className="t-small"
+                        style={{
+                          color: "#999999",
+                          textDecoration: "none",
+                          transition: "color .15s",
+                        }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#F8F2E5")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
                     >
@@ -130,11 +119,9 @@ export function FooterSection() {
           }}
         >
           <div
+            className="t-caption"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 11,
               color: "#555",
-              letterSpacing: ".06em",
             }}
           >
             {t("home.footer.legal")}
@@ -144,12 +131,10 @@ export function FooterSection() {
               <a
                 key={i}
                 href="#"
+                className="t-label"
                 style={{
-                  fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                  fontSize: 10,
                   color: "#555",
                   textDecoration: "none",
-                  letterSpacing: ".06em",
                   transition: "color .15s",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#F8F2E5")}
@@ -160,11 +145,9 @@ export function FooterSection() {
             ))}
           </div>
           <div
+            className="t-label"
             style={{
-              fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-              fontSize: 10,
               color: "#444",
-              letterSpacing: ".06em",
             }}
           >
             {t("home.footer.coords")}

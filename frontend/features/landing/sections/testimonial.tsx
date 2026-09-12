@@ -33,32 +33,27 @@ export function TestimonialSection() {
           §06 — {t("home.testimonial.section")}
         </div>
         <div
+          className="t-display"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: 80,
             color: "#B54843",
             lineHeight: 0.7,
             marginBottom: 16,
-            fontWeight: 800,
           }}
         >
-          "
+          {'"'}
         </div>
         <blockquote
+          className="t-quote"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: "clamp(22px,3.5vw,42px)",
-            fontWeight: 700,
             color: "#F8F2E5",
-            lineHeight: 1.4,
             margin: "0 0 32px",
-            letterSpacing: "-.01em",
           }}
         >
           {t("home.testimonial.quote")}
         </blockquote>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
           <div
+            className="t-body font-bold"
             style={{
               width: 48,
               height: 48,
@@ -68,31 +63,24 @@ export function TestimonialSection() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
               color: "#fff",
-              fontWeight: 700,
-              fontSize: 18,
             }}
           >
             S
           </div>
           <div style={{ textAlign: "left" }}>
             <div
+              className="t-body font-bold"
               style={{
-                fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                 color: "#F8F2E5",
-                fontWeight: 700,
-                fontSize: 16,
               }}
             >
               {t("home.testimonial.name")}
             </div>
             <div
+              className="t-caption"
               style={{
-                fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                fontSize: 12,
                 color: "#AAAAAA",
-                letterSpacing: ".05em",
               }}
             >
               {t("home.testimonial.detail")}
@@ -129,23 +117,17 @@ export function TestimonialSection() {
               >
               <div style={{ color: "#D97706", marginBottom: 6 }}>{stat.icon}</div>
               <div
+                className="t-h1"
                 style={{
-                  fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-                  fontSize: 36,
-                  fontWeight: 800,
                   color: "#F8F2E5",
-                  lineHeight: 1,
                 }}
               >
                 {stat.val}
               </div>
               <div
+                className="t-label"
                 style={{
-                  fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'),monospace",
-                  fontSize: 10,
                   color: "#666",
-                  letterSpacing: ".12em",
-                  textTransform: "uppercase",
                   marginTop: 6,
                 }}
               >

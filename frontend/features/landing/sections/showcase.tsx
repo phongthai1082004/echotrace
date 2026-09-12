@@ -16,13 +16,10 @@ export function ShowcaseSection() {
           §03 — {t("home.showcase.section")}
         </div>
         <h2
+          className="t-h2"
           style={{
-            fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
-            fontSize: "clamp(30px,4vw,52px)",
-            fontWeight: 800,
             color: "#222",
             margin: "0 0 48px",
-            lineHeight: 1.05,
           }}
         >
           {t("home.showcase.titleLine1")}
@@ -44,11 +41,9 @@ export function ShowcaseSection() {
               {t("home.showcase.galleryTitle")}
             </span>
             <p
+              className="t-body"
               style={{
-                fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                 color: "#444444",
-                fontSize: 17,
-                lineHeight: 1.75,
                 margin: "0 0 28px",
               }}
             >
@@ -66,11 +61,9 @@ export function ShowcaseSection() {
                 <li key={k} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Check size={18} style={{ color: "#D97706", flexShrink: 0 }} />
                   <span
+                    className="t-small font-semibold"
                     style={{
-                      fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                       color: "#222",
-                      fontSize: 15,
-                      fontWeight: 600,
                     }}
                   >
                     {t(`home.showcase.${k}`)}
@@ -94,11 +87,9 @@ export function ShowcaseSection() {
                 {t("home.showcase.sampleCovers")}
               </span>
               <p
+                className="t-small"
                 style={{
-                  fontFamily: "var(--font-space-grotesk, 'Space Grotesk'),sans-serif",
                   color: "#555",
-                  fontSize: 15,
-                  lineHeight: 1.6,
                 }}
               >
                 {t("home.showcase.desc")}
@@ -108,8 +99,8 @@ export function ShowcaseSection() {
             <div style={{ marginTop: 20 }}>
               <a
                 href="/explore"
-                className="btn-brutalist"
-                style={{ background: "#222", color: "#F8F2E5", fontSize: 14, padding: "11px 22px" }}
+                className="btn-brutalist btn-brutalist-sm"
+                style={{ background: "#222", color: "#F8F2E5" }}
               >
                 {t("home.showcase.browseGallery")} <ArrowRight size={15} />
               </a>
