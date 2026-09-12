@@ -19,6 +19,9 @@ function restorePastedPhoto(photo: any, frame: any) {
   applyFrameClip(frame, photo);
 }
 
+// ponytail: pasted copy lands just below-right of the original, cascading on repeat pastes.
+const PASTE_STEP = 15;
+
 export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): string {
 	const SEL_KEYS = ["z", "layer", "customProperties", "_selId"];
 	const PHOTO_KEYS = [
@@ -79,7 +82,7 @@ export function pasteClipboard(
   const parsed = JSON.parse(clipboard);
   // W1: multi-object paste (from ActiveSelection/group copies)
 	if (parsed._multi) {
-		const off = 20 + pasteCount * 20;
+		const off = PASTE_STEP + pasteCount * PASTE_STEP;
 	const enlivened = parsed.objects.map((entry: any) => {
 		if (entry._composite) {
 			return Promise.all([

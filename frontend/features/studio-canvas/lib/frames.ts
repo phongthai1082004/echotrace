@@ -1,6 +1,6 @@
 ﻿import * as fabric from "fabric";
 import type { LayoutConfig } from "../types/layout";
-import { isFrameObject, styleFrame, nextFrameZ } from "./fabric-core";
+import { isFrameObject, styleFrame, nextFrameZ, isObjectLocked } from "./fabric-core";
 import { DESIGN_W, DESIGN_H, layoutSlotTransform } from "./layout-engine";
 import { resolveFrameForPhoto, allPhotoCandidates, resetCanvasInteractions, applyFrameClip } from "./photos";
 
@@ -380,7 +380,7 @@ function detachObject(canvas: fabric.Canvas, o: any) {
 }
 
 export function deleteSelectedObjects(canvas: fabric.Canvas) {
-	const sel = canvas.getActiveObjects();
+	const sel = canvas.getActiveObjects().filter((a: any) => !isObjectLocked(a));
 	if (!sel.length) return;
 	sel.forEach((a: any) => {
 		try {

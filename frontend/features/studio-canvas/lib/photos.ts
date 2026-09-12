@@ -1,6 +1,8 @@
 import * as fabric from "fabric";
 import { createClipPath } from "./shapes";
 import { isFrameObject, enforceZLayers } from "./fabric-core";
+import { isCoverPage } from "./layout-engine";
+import { useCanvasStore } from "../hooks/useCanvasState";
 
 // ponytail: everything about binding a photo into a frame -- fit, clip, lookup,
 // edit-mode lock/unlock. Shares the frameId/_selId + clipPath conventions.
@@ -89,6 +91,17 @@ export function isCoarsePointer(): boolean {
   return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 }
 
+// ponytail: center-x of the focused editing half — new objects land where the user
+// looks instead of the dead middle of the 2P spread when editing L/R.
+export function focusCenterX(canvas: fabric.Canvas): number {
+  const w = canvas.getWidth() || 840;
+  const s = useCanvasStore.getState();
+  if (isCoverPage(s.activePageIndex, s.pages.length)) return w / 2;
+  if (s.viewMode === "left") return w / 4;
+  if (s.viewMode === "right") return (3 * w) / 4;
+  return w / 2;
+}
+
 export async function placeFreeImage(
   canvas: fabric.Canvas,
   url: string,
@@ -103,7 +116,7 @@ export async function placeFreeImage(
   }
   const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
   img.set({
-    left: (canvas.getWidth() || 840) / 2,
+    left: focusCenterX(canvas),
     top: (canvas.getHeight() || 0) / 2,
     originX: "center",
     originY: "center",

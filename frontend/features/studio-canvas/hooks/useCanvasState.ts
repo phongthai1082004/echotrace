@@ -24,6 +24,7 @@ export type UndoEntry =
       type: "canvas";
       pageIdx: number;
       canvasJson: string;
+      bytes?: number;
     }
   | {
       type: "pages";
@@ -31,7 +32,23 @@ export type UndoEntry =
       activePageIndex: number;
       activeLayout: LayoutConfig | null;
       viewMode: "left" | "right" | "spread";
+      bytes?: number;
     };
+
+// ponytail: undo is in-memory — cap total bytes (not just entry count) so big
+// books can't balloon the tab. Oldest entries drop first, minimum 5 kept.
+const UNDO_BYTE_BUDGET = 20 * 1024 * 1024;
+const UNDO_MIN_ENTRIES = 5;
+
+function fitUndoBudget(stack: UndoEntry[]): UndoEntry[] {
+  let total = stack.reduce((s, e) => s + (e.bytes ?? 0), 0);
+  let out = stack;
+  while (out.length > UNDO_MIN_ENTRIES && total > UNDO_BYTE_BUDGET) {
+    total -= out[0].bytes ?? 0;
+    out = out.slice(1);
+  }
+  return out.slice(-50);
+}
 
 interface CanvasStore {
   canvas: FabricCanvas | null;
@@ -131,23 +148,23 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const { canvas, undoStack, activePageIndex } = get();
     if (!canvas) return;
     const json = serializeCanvasState(canvas);
-    const entry: UndoEntry = { type: "canvas", pageIdx: activePageIndex, canvasJson: json };
+    const entry: UndoEntry = { type: "canvas", pageIdx: activePageIndex, canvasJson: json, bytes: json.length };
     const lastEntry = undoStack[undoStack.length - 1];
     if (lastEntry?.type === "canvas" && lastEntry.canvasJson === json && lastEntry.pageIdx === activePageIndex) return;
-    const stack = [...undoStack, entry].slice(-50);
-    set({ undoStack: stack });
+    set({ undoStack: fitUndoBudget([...undoStack, entry]) });
   },
   pushUndoPages: () => {
     const { pages, activePageIndex, activeLayout, viewMode, undoStack } = get();
+    const snapshot = JSON.parse(JSON.stringify(pages));
     const entry: UndoEntry = {
       type: "pages",
-      pages: JSON.parse(JSON.stringify(pages)),
+      pages: snapshot,
       activePageIndex,
       activeLayout,
       viewMode,
+      bytes: JSON.stringify(snapshot).length,
     };
-    const stack = [...undoStack, entry].slice(-50);
-    set({ undoStack: stack });
+    set({ undoStack: fitUndoBudget([...undoStack, entry]) });
   },
   redoStack: [] as UndoEntry[],
   pushRedo: (entry) => set((st) => ({ redoStack: [...st.redoStack, entry].slice(-50) })),

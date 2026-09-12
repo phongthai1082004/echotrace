@@ -2,6 +2,7 @@
 
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { SHAPE_NAMES, makeShapeFrame } from "../../../lib/shapes";
+import { focusCenterX } from "../../../lib/photos";
 import { nextFrameZ, enforceZLayers } from "../../../lib/fabric-core";
 
 export function FramesPanel() {
@@ -13,7 +14,7 @@ export function FramesPanel() {
     if (!canvas) return;
     pushUndo();
     const size = 120;
-    const left = (canvas.width || 840) / 2 - size / 2;
+    const left = focusCenterX(canvas) - size / 2;
     const top = (canvas.height || 600) / 2 - size / 2;
     const frame = makeShapeFrame(name as any, left, top, size);
     (frame as any).customProperties.z = nextFrameZ(canvas);

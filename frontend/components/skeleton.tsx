@@ -8,44 +8,6 @@ function Pulse({ className = "" }: SkeletonProps) {
 // ponytail: one knob for faintness — bump opacity if skeletons look too ghostly.
 const faint = "opacity-60";
 
-export function SkeletonRow({ cells }: { cells: string[] }) {
-  return (
-    <div
-      className={`grid border-b-[2px] border-[#222]/10 items-center py-3 ${faint}`}
-      style={{ gridTemplateColumns: cells.join(" ") }}
-    >
-      {cells.map((_, i) => (
-        <Pulse key={i} className="h-3 mx-2" />
-      ))}
-    </div>
-  );
-}
-
-export function SkeletonCard() {
-  return (
-    <div className={`p-6 rounded-xl border-2 border-[#222]/10 ${faint}`}>
-      <Pulse className="h-3 w-24 mb-3" />
-      <Pulse className="h-7 w-32 mb-2" />
-      <Pulse className="h-3 w-20" />
-    </div>
-  );
-}
-
-export function SkeletonTable({ rows = 6, cols }: { rows?: number; cols: string[] }) {
-  return (
-    <>
-      <div className={`grid border-b-[3px] border-[#222] ${faint}`} style={{ gridTemplateColumns: cols.join(" ") }}>
-        {cols.map((_, i) => (
-          <Pulse key={i} className="h-3 mx-2 my-3" />
-        ))}
-      </div>
-      {Array.from({ length: rows }).map((_, i) => (
-        <SkeletonRow key={i} cells={cols} />
-      ))}
-    </>
-  );
-}
-
 type CardVariant = "journal" | "sample" | "order";
 
 function JournalSkeletonCard() {
@@ -150,28 +112,6 @@ export function SkeletonGrid({
   );
 }
 
-export function SkeletonCardRow({ count = 4, aspect = "portrait" }: { count?: number; aspect?: string }) {
-  const aspectClass = aspect === "landscape" ? "aspect-[4/3]" : "aspect-[3/4]";
-  return (
-    <div className={`flex gap-5 ${faint}`} style={{ width: "max-content" }}>
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="shrink-0 w-64 rounded-[10px] border-[3px] border-[#222]/10 overflow-hidden animate-pulse"
-        >
-          <Pulse className={`w-full ${aspectClass}`} />
-          <div className="p-4 border-t-[3px] border-[#222]/10 space-y-2">
-            <Pulse className="h-4 w-3/4" />
-            <Pulse className="h-3 w-1/2" />
-            <Pulse className="h-3 w-1/3" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Matches AccountSettings information tab: avatar header + same 2-col field grid + save button.
 export function SkeletonForm() {
   return (
     <div className={`space-y-8 animate-pulse ${faint}`}>

@@ -1,5 +1,6 @@
 import * as fabric from "fabric";
 import { PX_PER_MM, mmToPx } from "./unit-conversion";
+import { stripSparsePage, parsePageJson } from "./sparse-json";
 
 fabric.config.NUM_FRACTION_DIGITS = 2;
 
@@ -36,18 +37,6 @@ export function layoutSlotTransform(
 }
 
 
-const DROP_IF_DEFAULT: Record<string, unknown> = {
-	visible: true,
-	shadow: null,
-	strokeDashArray: null,
-	backgroundColor: "",
-	paintFirst: "fill",
-	fillRule: "nonzero",
-	strokeUniform: false,
-	objectCaching: true,
-	flipX: false,
-	flipY: false,
-};
 const SERIALIZE_KEYS = [
   "z",
   "layer",
@@ -71,14 +60,13 @@ export function serializeCanvasState(canvas: fabric.Canvas): string {
     parsed.objects,
     canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport),
   );
+  // ponytail: sparse — strip fabric defaults before storing to jsonb (see sparse-json.ts).
+  stripSparsePage(parsed);
   return JSON.stringify(parsed);
 }
 
 function backfillCustomProps(parsedObjs: any[], liveObjs: any[]) {
   parsedObjs.forEach((o: any, i: number) => {
-    for (const k of Object.keys(DROP_IF_DEFAULT)) {
-      if (o[k] === DROP_IF_DEFAULT[k]) delete o[k];
-    }
     const live = liveObjs[i];
     if (!live) return;
     o.customProperties = (live as any).customProperties;
@@ -96,7 +84,8 @@ export function isCoverPage(index: number, total: number): boolean {
 
 
 export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { leftJson: string; rightJson: string } {
-  const parsed = JSON.parse(jsonStr);
+  // ponytail: parse hydrates stripped defaults so the split sees complete objects.
+  const parsed = parsePageJson(jsonStr) ?? { objects: [] };
   const leftObjs: any[] = [],
     rightObjs: any[] = [];
   parsed.objects?.forEach((o: any) => {
@@ -107,7 +96,12 @@ export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { left
       rightObjs.push(o);
     }
   });
-  const mkJson = (objs: any[]) => JSON.stringify({ ...parsed, objects: objs });
+  const mkJson = (objs: any[]) => {
+    // ponytail: keep stored halves sparse — split hydrates for the midpoint math above.
+    const half = { ...parsed, objects: objs };
+    stripSparsePage(half);
+    return JSON.stringify(half);
+  };
   return { leftJson: mkJson(leftObjs), rightJson: mkJson(rightObjs) };
 }
 

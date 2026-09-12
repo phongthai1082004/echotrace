@@ -4,6 +4,31 @@ export function isFrameObject(obj: fabric.FabricObject): boolean {
   return (obj as any).customProperties?.layer === "frame";
 }
 
+// ponytail: per-object user lock — move/scale/rotate frozen, stays selectable
+// (with border, no handles) so it can be unlocked from the tooltip.
+export function isObjectLocked(o: any): boolean {
+  return !!(
+    o?.lockMovementX &&
+    o?.lockMovementY &&
+    o?.lockScalingX &&
+    o?.lockScalingY &&
+    o?.lockRotation
+  );
+}
+
+export function setObjectLocked(o: any, locked: boolean) {
+  o.set({
+    lockMovementX: locked,
+    lockMovementY: locked,
+    lockScalingX: locked,
+    lockScalingY: locked,
+    lockRotation: locked,
+    hasControls: !locked,
+    hasBorders: true,
+  } as any);
+  o.setCoords?.();
+}
+
 
 export function styleFrame(o: any) {
   const cp = o.customProperties || {};

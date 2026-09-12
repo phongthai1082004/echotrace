@@ -1,6 +1,7 @@
 // ponytail: normalize Fabric canvasJson -> mm-based, top-left-origin element list so pdf-lib
 // can render without parsing Fabric internals. canvasJson is kept for the editor (old optimization).
 import { PX_PER_MM, PT_PER_PX } from "./unit-conversion";
+import { parsePageJson } from "./sparse-json";
 export { PX_PER_MM, PT_PER_MM, PT_PER_PX } from "./unit-conversion";
 
 export type BookElement =
@@ -59,12 +60,9 @@ function bboxPx(o: any) {
 
 export function serializePage(canvasJson: string | null, index: number): PageContent | null {
 	if (!canvasJson) return null;
-	let parsed: any;
-	try {
-		parsed = JSON.parse(canvasJson);
-	} catch {
-		return null;
-	}
+	// ponytail: parse hydrates sparse pages so element extraction sees complete objects.
+	const parsed = parsePageJson(canvasJson);
+	if (!parsed) return null;
 	const widthMm = r2((parsed.width || 0) / PX_PER_MM);
 	const heightMm = r2((parsed.height || 0) / PX_PER_MM);
 	const elements: BookElement[] = [];

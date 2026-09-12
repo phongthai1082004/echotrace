@@ -1,22 +1,39 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useCanvasStore } from "./useCanvasState";
 import { calculateSpineWidth } from "../lib/spine";
 import { serializeCanvasState, isCoverPage, splitCanvasByMidpoint } from "../lib/layout-engine";
 import { useStudioAPI } from "../context/studio-context";
+import type { StudioAPI } from "../api/studio-api";
 import { resolveFormat } from "../types";
 import { uploadToR2 } from "@/lib/upload";
 import { serializePage } from "../lib/book-content";
+import { diffPageObjects, parsePageJson } from "../lib/sparse-json";
 
 
 
 const lastThumbUpload = new Map<string, string>();
 
+// ponytail: single in-flight save — manual Save + autosave tick racing must not
+// POST two books (duplicate creates) or interleave PATCHes.
+let saveInflight: Promise<{ ok: boolean; error?: string; id?: number }> | null = null;
+
 export function useAutoSave() {
   const api = useStudioAPI();
 
-  const saveFull = async (token?: string): Promise<{ ok: boolean; error?: string; id?: number }> => {
-    const s = useCanvasStore.getState();
+  // ponytail: join the in-flight save instead of racing it (duplicate creates).
+  const saveFull = (token?: string): Promise<{ ok: boolean; error?: string; id?: number }> =>
+    guardedSave(api, token);
+
+  return { saveFull };
+}
+
+async function runSaveFull(
+  api: StudioAPI,
+  token?: string,
+): Promise<{ ok: boolean; error?: string; id?: number }> {
+  const s = useCanvasStore.getState();
     const c = s.canvas;
     if (!c) return { ok: false, error: "No canvas" };
 
@@ -32,11 +49,21 @@ export function useAutoSave() {
         ? { spreadLayout: s.activeLayout, layout: null }
         : { layout: s.activeLayout, spreadLayout: null };
       updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: leftJson, ...layoutField };
-      updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)] = {
-        ...updatedPages[Math.min(s.activePageIndex + 1, pageCount - 1)],
+      const rightIdx = Math.min(s.activePageIndex + 1, pageCount - 1);
+      updatedPages[rightIdx] = {
+        ...updatedPages[rightIdx],
         canvasJson: rightJson,
         ...layoutField,
       };
+      // ponytail: spread pages share one canvas render — upload each dataURL thumb once.
+      const [leftThumb, rightThumb] = await Promise.all([
+        remoteThumb(updatedPages[s.activePageIndex].thumbnailUrl, token),
+        rightIdx === s.activePageIndex
+          ? updatedPages[s.activePageIndex].thumbnailUrl
+          : remoteThumb(updatedPages[rightIdx].thumbnailUrl, token),
+      ]);
+      updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], thumbnailUrl: leftThumb };
+      updatedPages[rightIdx] = { ...updatedPages[rightIdx], thumbnailUrl: rightThumb };
     } else {
 
       let thumbnailUrl = updatedPages[s.activePageIndex].thumbnailUrl;
@@ -101,11 +128,25 @@ export function useAutoSave() {
     } else if (prev.pages.length !== pagesAll.length) {
       payload.pages = pagesAll; // thêm/bớt trang → full sync
     } else {
-      const dirty = pagesAll.filter((p, i) => !samePage(prev.pages[i], p));
+      const dirty = pagesAll
+        .map((p, i) => ({ p, prev: prev.pages[i] }))
+        .filter(({ p, prev }) => !samePage(prev, p));
       if (dirty.length === 0 && prev.metaSig === metaSig) {
         return { ok: true, id: s.bookMeta.id ?? undefined }; // chẳng gì đổi → bỏ qua network
       }
-      if (dirty.length > 0) payload.changedPages = dirty;
+      // ponytail: object-level delta — dirty pages send only changed/removed
+      // objects (by _selId); backend merges into the stored canvasJson.
+      payload.changedPages = dirty.map(({ p, prev: prevSnap }) => {
+        const prevJson = prevSnap?.canvasJson ?? null;
+        const d = diffPageObjects(prevJson, p.canvasJson);
+        const nextCount = parsePageJson(p.canvasJson)?.objects?.length ?? 0;
+        if (prevJson && d.removed.length + d.changed.length < nextCount) {
+          const rest: Record<string, unknown> = { ...p };
+          delete rest.canvasJson;
+          return { ...rest, changedObjects: d };
+        }
+        return p;
+      });
     }
 
     // Size lives on the Book/SampleBook columns (paperHeight/paperWidth, mm), not inside content.
@@ -119,9 +160,58 @@ export function useAutoSave() {
       lastSavedBooks.set(String(result.id), { pages: pagesAll, metaSig });
     }
     return result;
-  };
+}
 
-  return { saveFull };
+function guardedSave(
+  api: StudioAPI,
+  token?: string,
+): Promise<{ ok: boolean; error?: string; id?: number }> {
+  if (saveInflight) return saveInflight;
+  saveInflight = runSaveFull(api, token).finally(() => {
+    saveInflight = null;
+  });
+  return saveInflight;
+}
+
+// ponytail: level-1 batching — one save per minute max, silent, skip-when-idle.
+// saveFull already returns early with zero network when nothing changed, so an
+// idle tab costs a local serialize per tick and nothing else.
+export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
+  const { saveFull } = useAutoSave();
+  const saveRef = useRef(saveFull);
+  const tokenRef = useRef(token);
+  const busyRef = useRef(false);
+
+  // ponytail: sync latest closure/token every commit — interval below reads refs only.
+  useEffect(() => {
+    saveRef.current = saveFull;
+    tokenRef.current = token;
+  });
+
+  useEffect(() => {
+    if (!token) return;
+    const tick = async () => {
+      if (busyRef.current || !tokenRef.current) return;
+      busyRef.current = true;
+      try {
+        await saveRef.current(tokenRef.current);
+      } catch (err) {
+        console.warn("[autosave] tick failed:", (err as Error)?.message || err);
+      } finally {
+        busyRef.current = false;
+      }
+    };
+    const id = setInterval(tick, intervalMs);
+    // ponytail: last-chance flush when the tab closes; best-effort, never blocks.
+    const flush = () => {
+      if (!busyRef.current && tokenRef.current) void saveRef.current(tokenRef.current).catch(() => {});
+    };
+    window.addEventListener("pagehide", flush);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("pagehide", flush);
+    };
+  }, [token, intervalMs]);
 }
 
 type PageSnapshot = {
@@ -135,11 +225,20 @@ type PageSnapshot = {
 const lastSavedBooks = new Map<string, { pages: PageSnapshot[]; metaSig: string }>();
 
 function samePage(a: PageSnapshot | undefined, b: PageSnapshot): boolean {
-  return (
-    !!a &&
-    a.canvasJson === b.canvasJson &&
-    a.thumbnailUrl === b.thumbnailUrl &&
-    a.layout === b.layout &&
-    a.spreadLayout === b.spreadLayout
-  );
+  // ponytail: thumbnailUrl excluded — local dataURL thumbs refresh on their own
+  // cadence and must never mark a page dirty by themselves (phantom empty saves).
+  return !!a && a.canvasJson === b.canvasJson && a.layout === b.layout && a.spreadLayout === b.spreadLayout;
+}
+
+// ponytail: inner pages never get a fresh canvas render of their own — just make
+// sure no raw dataURL thumb is ever sent/stored; upload once, R2 URLs pass through.
+async function remoteThumb(thumbnailUrl: string | null, token?: string): Promise<string | null> {
+  if (!token || !thumbnailUrl || !thumbnailUrl.startsWith("data:")) return thumbnailUrl;
+  try {
+    const file = new File([await (await fetch(thumbnailUrl)).blob()], "thumb.jpg", { type: "image/jpeg" });
+    return (await uploadToR2(file, "book-thumb", token)).url;
+  } catch (err) {
+    console.warn("[useAutoSave] thumb upload failed, keeping previous:", err);
+    return thumbnailUrl;
+  }
 }

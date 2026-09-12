@@ -29,6 +29,7 @@ import {
   findPhotoInFrame,
 } from "../../../lib/photos";
 import { isCoverPage } from "../../../lib/layout-engine";
+import { parsePageJson } from "../../../lib/sparse-json";
 import { attachSmartGuides } from "../../../lib/smart-guides";
 
 
@@ -201,14 +202,16 @@ export function StudioWorkspace() {
       const pg = useCanvasStore.getState().pages[idx];
       const coverJson = pg?.canvasJson;
       if (coverJson) {
+        // ponytail: single parse+hydrate — loadFromJSON tolerates the refilled defaults.
+        const coverParsed = parsePageJson(coverJson);
         try {
           void c
-            .loadFromJSON(JSON.parse(coverJson), reviveObject)
+            .loadFromJSON(coverParsed ?? {}, reviveObject)
             .then(() => {
 				if (destroyedRef.current) return;
               c.backgroundColor = "#fff";
               try {
-                reviveDeep(JSON.parse(coverJson).objects || [], c.getObjects());
+                reviveDeep(coverParsed?.objects || [], c.getObjects());
               } catch {
                 /* keep top-level revive only */
               }
@@ -231,12 +234,12 @@ export function StudioWorkspace() {
       const merged: any = { version: "7.4", background: "#fff", objects: [] };
       const leftPg = latestPages[idx];
       if (leftPg?.canvasJson) {
-        JSON.parse(leftPg.canvasJson).objects?.forEach((o: any) => merged.objects.push(o));
+        parsePageJson(leftPg.canvasJson)?.objects?.forEach((o: any) => merged.objects.push(o));
       }
       const rightPg = latestPages[rightIdx];
       if (rightPg?.canvasJson && rightPg !== leftPg) {
-        const rj = JSON.parse(rightPg.canvasJson);
-        rj.objects?.forEach((o: any) => {
+        const rj = parsePageJson(rightPg.canvasJson);
+        rj?.objects?.forEach((o: any) => {
           o.left = (o.left || 0) + pageW;
           merged.objects.push(o);
         });

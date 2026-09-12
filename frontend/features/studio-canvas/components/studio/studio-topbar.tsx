@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../hooks/useCanvasState";
-import { useAutoSave } from "../../hooks/useAutoSave";
+import { useAutoSave, useAutoSaveLoop } from "../../hooks/useAutoSave";
 import { usePageManager } from "../../hooks/usePageManager";
 import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
@@ -90,6 +90,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   const { data: session } = useSession();
   const router = useRouter();
   const token = (session as any)?.accessToken;
+  useAutoSaveLoop(token);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
@@ -162,8 +163,13 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
     if (!canvas) return;
     pushUndo();
     const id = `text-${Date.now()}`;
+    // ponytail: left-origin text — keep x=100, shifted into the right half when editing R.
+    const st = useCanvasStore.getState();
+    const cw = canvas.getWidth() || 840;
+    const halfX =
+      !isCoverPage(st.activePageIndex, st.pages.length) && st.viewMode === "right" ? cw / 2 : 0;
     const text = new fabric.IText(preset ? preset.label : t("customer.studio.doubleClickEdit"), {
-      left: 100,
+      left: halfX + 100,
       top: 100,
       fontSize: preset?.fontSize || 24,
       fontWeight: preset?.fontWeight || "normal",

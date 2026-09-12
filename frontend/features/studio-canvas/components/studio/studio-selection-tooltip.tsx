@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useReducer } from "react";
-import { Copy, Ellipsis, Trash2 } from "lucide-react";
+import { Copy, Ellipsis, Lock, LockOpen, Trash2 } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
+import { isObjectLocked, setObjectLocked } from "../../lib/fabric-core";
 import { ZOOM_LEVELS } from "../../types";
 import { serializeSel, pasteClipboard } from "../../lib/clipboard";
 import { deleteSelectedObjects } from "../../lib/frames";
@@ -58,10 +59,29 @@ export function StudioSelectionTooltip() {
   const onDelete = () => {
     const c = useCanvasStore.getState().canvas;
     if (!c || !c.getActiveObjects().length) return;
+    if (c.getActiveObjects().every((a: any) => isObjectLocked(a))) return;
     const st = useCanvasStore.getState();
     st.pushUndo();
     deleteSelectedObjects(c);
     st.clearRedo();
+  };
+
+  const lockTargets = (() => {
+    const objs = active.type === "activeselection" && Array.isArray((active as any)._objects)
+      ? (active as any)._objects
+      : [active];
+    return objs as any[];
+  })();
+  const locked = lockTargets.length > 0 && lockTargets.every((o: any) => isObjectLocked(o));
+
+  const onToggleLock = () => {
+    const c = useCanvasStore.getState().canvas;
+    if (!c) return;
+    useCanvasStore.getState().pushUndo();
+    const next = !locked;
+    lockTargets.forEach((o: any) => setObjectLocked(o, next));
+    c.requestRenderAll();
+    force();
   };
 
   const onMore = (e: React.MouseEvent) => {
@@ -96,6 +116,18 @@ export function StudioSelectionTooltip() {
           className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
         >
           <Copy size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleLock}
+          aria-label={locked ? "Unlock" : "Lock"}
+          className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
+        >
+          {locked ? (
+            <Lock size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
+          ) : (
+            <LockOpen size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
+          )}
         </button>
         <button
           type="button"
