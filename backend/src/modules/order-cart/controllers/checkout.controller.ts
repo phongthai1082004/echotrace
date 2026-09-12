@@ -20,4 +20,21 @@ export class CheckoutController {
 		const result = await this.checkoutService.createOrder(idempotencyKey, JSON.stringify(req.body ?? {}), userId);
 		res.json(ApiResponse.success(result));
 	};
+
+	createAlbumOrder = async (req: AuthRequest, res: Response) => {
+		const b = req.body ?? {};
+		const result = await this.checkoutService.createAlbumOrder({
+			customerId: Number(b.customerId),
+			sampleBookId: Number(b.sampleBookId),
+			quantity: b.quantity ?? 1,
+			name: b.name,
+			phone: b.phone,
+			address: b.address,
+			city: b.city,
+			note: b.note,
+			paymentMethod: b.paymentMethod,
+			couponCode: b.couponCode ?? null,
+		});
+		res.json(ApiResponse.success(result));
+	};
 }

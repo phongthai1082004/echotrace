@@ -819,7 +819,22 @@
 			"markDefective": "Đánh dấu lỗi",
 			"resolveDefect": "Đã xử lý xong",
 			"requeuePdf": "Tạo lại PDF",
-			"downloadPdf": "Tải PDF"
+			"downloadPdf": "Tải PDF",
+			"newAlbumOrder": "Tạo đơn album",
+			"albumOrderTitle": "Tạo đơn hàng album",
+			"searchCustomer": "Tìm khách theo tên/email/SĐT",
+			"album": "Album",
+			"selectAlbum": "Chọn album",
+			"quantity": "Số lượng",
+			"paymentMethod": "Thanh toán",
+			"createAlbumOrder": "Tạo đơn",
+			"orderCode": "Mã đơn",
+			"sendQrToCustomer": "Gửi QR này cho khách để thu tiền",
+			"copyCode": "Copy mã",
+			"copyLink": "Copy link",
+			"albumOrderNeedCustomer": "Chọn khách hàng và album trước",
+			"albumOrderCreated": "Đã tạo đơn album",
+			"albumOrderFailed": "Tạo đơn thất bại"
 		},
 		"stickers": {
 			"label": "Admin · Tài sản",

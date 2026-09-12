@@ -35,7 +35,7 @@ export function Modal({
   footer,
   widthClass = "max-w-md",
   cancelLabel = "Cancel",
-  closeOnOverlay = true,
+  closeOnOverlay = false,
   zClass = "z-50",
 }: ModalProps) {
   if (!open) return null;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { neoBtn } from "@/lib/styles";
+import { neoBtn, input } from "@/lib/styles";
 import type { OrderDTO } from "@/lib/order.dto";
 
 // ponytail: extracted from the order-detail-drawer god-component (A2).
@@ -28,7 +28,7 @@ export function ReturnRequestModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
       <div
         className="bg-[#F8F2E5] border-[3px] border-[#222] shadow-[4px_4px_0_#222] rounded-[10px] w-full max-w-[340px] p-5 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -69,7 +69,7 @@ export function ReturnRequestModal({
                             prev.map((r) => (r.index === i ? { ...r, quantity: Math.max(1, Number(e.target.value) || 1) } : r)),
                           )
                         }
-                        className="w-16 border-2 border-[#222] rounded px-2 py-1 text-xs font-bold bg-white"
+                        className={`${input} !w-16 !py-1 !text-xs`}
                       />
                     </div>
                     <input
@@ -77,7 +77,7 @@ export function ReturnRequestModal({
                       value={sel.defect}
                       onChange={(e) => setReturnItems((prev) => prev.map((r) => (r.index === i ? { ...r, defect: e.target.value } : r)))}
                       placeholder={t("customer.orders.return.defectPlaceholder")}
-                      className="w-full border-2 border-[#222] rounded px-2 py-1 text-xs bg-white"
+                      className={input}
                     />
                   </div>
                 )}
@@ -89,7 +89,7 @@ export function ReturnRequestModal({
           value={returnReason}
           onChange={(e) => setReturnReason(e.target.value)}
           placeholder={t("customer.orders.return.reasonPlaceholder")}
-          className="w-full border-2 border-[#222] rounded px-2 py-1.5 text-xs mb-4 bg-white"
+          className={`${input} mb-4`}
           rows={2}
         />
         {error && <p className="font-mono text-[10px] font-bold text-[#B54843] mb-2">{error}</p>}

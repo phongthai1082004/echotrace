@@ -20,10 +20,23 @@ import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { PaymentLinkItem } from '@payos/node';
 import { IPdfQueue } from '../../pdf/render/pdf.types.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
+import { ISampleBookService } from '../../product/sample-books/sample-books.service.js';
 import { ICouponService } from '../coupons/coupons.service.js';
 
 export interface ICheckoutService {
 	createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any>;
+	createAlbumOrder(input: {
+		customerId: number;
+		sampleBookId: number;
+		quantity?: number;
+		name?: string;
+		phone?: string;
+		address?: string;
+		city?: string;
+		note?: string;
+		paymentMethod: PaymentPlan;
+		couponCode?: string | null;
+	}): Promise<any>;
 }
 
 @injectable()
@@ -34,6 +47,7 @@ export class CheckoutService implements ICheckoutService {
 		@inject('IPdfQueue') private pdfQueue: IPdfQueue,
 		@inject('OrderRepository') private orderRepo: OrderRepository,
 		@inject('IStockService') private stockService: IStockService,
+		@inject('ISampleBookService') private sampleBookService: ISampleBookService,
 		@inject('ICouponService') private couponService: ICouponService,
 	) {}
 	async createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any> {
@@ -199,6 +213,53 @@ export class CheckoutService implements ICheckoutService {
 			await this.orderRepo.markIdempotencyFailed(idempotencyKey).catch(() => {});
 			throw error;
 		}
+	}
+
+	async createAlbumOrder(input: {
+		customerId: number;
+		sampleBookId: number;
+		quantity?: number;
+		name?: string;
+		phone?: string;
+		address?: string;
+		city?: string;
+		note?: string;
+		paymentMethod: PaymentPlan;
+		couponCode?: string | null;
+	}): Promise<any> {
+		const customerId = Number(input.customerId);
+		const sampleBookId = Number(input.sampleBookId);
+		const quantity = Math.max(1, Math.floor(Number(input.quantity) || 1));
+		if (!Number.isFinite(customerId) || !Number.isFinite(sampleBookId)) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		if (!Object.values(PaymentPlan).includes(input.paymentMethod)) {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		const album = await this.sampleBookService.getPublishedById(sampleBookId);
+		if ((album as any).type && (album as any).type !== 'ALBUM') {
+			throw new AppError(ErrorCode.INTERNAL, 400);
+		}
+		const item = await this.cartService.addAlbumToCart(customerId, { sampleBookId, quantity });
+		const body = JSON.stringify({
+			items: [
+				{
+					bookId: item.bookId,
+					quantity: item.quantity || quantity,
+					cover: (item as any).cover ?? null,
+					paper: (item as any).paper ?? null,
+					paperSize: (item as any).paperSize ?? null,
+				},
+			],
+			name: input.name,
+			phone: input.phone,
+			address: input.address,
+			city: input.city,
+			note: input.note,
+			paymentMethod: input.paymentMethod,
+			couponCode: input.couponCode ?? null,
+		});
+		return this.createOrder(`admin-album-${customerId}-${sampleBookId}-${Date.now()}`, body, customerId);
 	}
 
 	private createOrderCode(): number {

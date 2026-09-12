@@ -817,7 +817,22 @@
 			"returnApprove": "Aprobar devolución",
 			"markReshipped": "Marcar reenviado",
 			"markDefective": "Marcar defectuoso",
-			"resolveDefect": "Resolver defecto"
+			"resolveDefect": "Resolver defecto",
+			"newAlbumOrder": "Nuevo pedido de álbum",
+			"albumOrderTitle": "Crear pedido de álbum",
+			"searchCustomer": "Buscar cliente por nombre/correo/teléfono",
+			"album": "Álbum",
+			"selectAlbum": "Seleccionar álbum",
+			"quantity": "Cantidad",
+			"paymentMethod": "Pago",
+			"createAlbumOrder": "Crear pedido",
+			"orderCode": "Código",
+			"sendQrToCustomer": "Envía este QR al cliente para cobrar",
+			"copyCode": "Copiar código",
+			"copyLink": "Copiar enlace",
+			"albumOrderNeedCustomer": "Elige cliente y álbum primero",
+			"albumOrderCreated": "Pedido de álbum creado",
+			"albumOrderFailed": "No se pudo crear el pedido"
 		},
 		"stickers": {
 			"label": "Admin · Activos",

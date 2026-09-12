@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { label, card, neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { AdminHeader } from "@/components/admin-header";
@@ -10,11 +10,13 @@ import { OrderDetailDrawer } from "@/components/order-detail-drawer";
 import type { OrderStatus } from "@/lib/order.dto";
 import { useDispatch } from "./_hooks/use-dispatch";
 import { DispatchTable } from "./_components/dispatch-table";
+import { AlbumOrderModal } from "./_components/album-order-modal";
 import { formatCurrency } from "@/lib/order-status";
 
 export default function DispatchPage() {
   const { t } = useTranslation();
   const d = useDispatch();
+  const [albumModal, setAlbumModal] = useState(false);
 
   const drawerSuppliers = useMemo(
     () => d.suppliers.map((s) => ({ id: s.id, name: s.name })),
@@ -24,7 +26,15 @@ export default function DispatchPage() {
   return (
     <div className="h-screen flex flex-col">
       <AdminHeader label={t("admin.dispatch.label")} title={t("admin.dispatch.title")}>
-        <AdminSearch value={d.search} onChange={d.setSearch} placeholder={t("admin.dispatch.searchPlaceholder")} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAlbumModal(true)}
+            className={`${neoBtnPrimary} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2.5 whitespace-nowrap`}
+          >
+            {t("admin.dispatch.newAlbumOrder")}
+          </button>
+          <AdminSearch value={d.search} onChange={d.setSearch} placeholder={t("admin.dispatch.searchPlaceholder")} />
+        </div>
       </AdminHeader>
 
       <div className="flex-1 flex overflow-hidden">
@@ -134,6 +144,10 @@ export default function DispatchPage() {
           </div>
         </div>
       </div>
+
+      {albumModal && (
+        <AlbumOrderModal onClose={() => setAlbumModal(false)} onCreated={() => window.location.reload()} />
+      )}
 
       {d.selectedOrder && (
         <OrderDetailDrawer

@@ -54,7 +54,7 @@ export function OptionFormModal({
       cancelLabel={t("common.cancel")}
       actions={[{ label: t("common.save"), onClick: handleSave, primary: true, loading: saving }]}
     >
-      <div className="space-y-5 max-h-[70vh] overflow-y-auto">
+      <div className="space-y-5 max-h-[70vh] overflow-y-auto py-1">
         <div>
           <p className={`${label} text-xs text-[#666] mb-1`}>{t("admin.printOptions.type")}</p>
           <div className="flex gap-2">

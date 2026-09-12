@@ -26,9 +26,7 @@ export function useExplore(token?: string) {
 	const { data: session } = useSession();
 	const accessToken = token ?? (session as any)?.accessToken;
 	const [samples, setSamples] = useState<ExploreSample[]>([]);
-	const [albums, setAlbums] = useState<ExploreSample[]>([]);
 	const [samplesNext, setSamplesNext] = useState<number | null>(null);
-	const [albumsNext, setAlbumsNext] = useState<number | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [category, setCategoryState] = useState<string | null>(null);
 
@@ -43,24 +41,11 @@ export function useExplore(token?: string) {
 		[accessToken],
 	);
 
-	const loadAlbums = useCallback(
-		async (cursor: number, replace: boolean) => {
-			if (!accessToken) return;
-			const d = await apiFetch<{ items: ExploreSample[]; nextCursor: number | null }>(
-				`/api/explore/albums?cursor=${cursor}&limit=${LIMIT}`,
-				accessToken,
-			);
-			setAlbums((prev) => (replace ? d.items : [...prev, ...d.items]));
-			setAlbumsNext(d.nextCursor);
-		},
-		[accessToken],
-	);
-
 	useEffect(() => {
 		if (!accessToken) return;
 		setLoading(true);
-		Promise.all([loadSamples(0, null, true), loadAlbums(0, true)]).finally(() => setLoading(false));
-	}, [accessToken, loadSamples, loadAlbums]);
+		loadSamples(0, null, true).finally(() => setLoading(false));
+	}, [accessToken, loadSamples]);
 
 	const setCategory = useCallback(
 		(cat: string | null) => {
@@ -76,9 +61,5 @@ export function useExplore(token?: string) {
 		if (samplesNext != null) loadSamples(samplesNext, category, false);
 	}, [samplesNext, category, loadSamples]);
 
-	const loadMoreAlbums = useCallback(() => {
-		if (albumsNext != null) loadAlbums(albumsNext, false);
-	}, [albumsNext, loadAlbums]);
-
-	return { samples, albums, samplesNext, albumsNext, loading, setCategory, loadMoreSamples, loadMoreAlbums };
+	return { samples, samplesNext, loading, setCategory, loadMoreSamples };
 }

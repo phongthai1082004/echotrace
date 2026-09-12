@@ -29,6 +29,7 @@ router.post('/orders/:id/cancel', authGuard(), asyncHandler((req, res) => lifecy
 router.post('/orders/:id/return', authGuard(), asyncHandler((req, res) => returnsCtrl.requestReturn(req, res)));
 router.post('/orders/:id/report-defect', authGuard(), asyncHandler((req, res) => returnsCtrl.reportDefect(req, res)));
 
+router.post('/admin/orders/album', authGuard('admin'), asyncHandler((req, res) => checkoutCtrl.createAlbumOrder(req, res)));
 router.get('/admin/orders', authGuard('admin'), asyncHandler((req, res) => historyCtrl.listAllOrders(req, res)));
 router.get('/admin/orders/:id', authGuard('admin'), asyncHandler((req, res) => historyCtrl.getOrderById(req, res)));
 router.post('/admin/orders/:id/events', authGuard('admin'), asyncHandler((req, res) => lifecycleCtrl.processEvent(req, res)));

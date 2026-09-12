@@ -154,6 +154,7 @@ export default function AuthPage() {
           src="https://images.unsplash.com/photo-1765660996991-31f345c40247?w=1200&h=1600&fit=crop&auto=format"
           alt=""
           fill
+          priority
           sizes="50vw"
           className="object-cover"
         />

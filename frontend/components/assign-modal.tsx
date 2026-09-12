@@ -46,7 +46,7 @@ export function AssignModal({
         },
       ]}
     >
-      <div className="flex-1 overflow-y-auto space-y-3 max-h-[70vh]">
+      <div className="flex-1 overflow-y-auto space-y-3 max-h-[70vh] py-1">
         {items.map((it, i) => (
           <div key={i} className="p-3 border-2 border-[#222] rounded-lg bg-[#FFF7D6]/40">
             <p className="text-sm font-bold mb-1">{it.title}</p>

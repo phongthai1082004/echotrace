@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { ToastProvider } from "@/components/toast";
 import { I18nProvider } from "./i18n-provider";
+import { I18nClientProvider } from "./i18n-client-provider";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -36,11 +37,13 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">
-        <Providers>
-          <ToastProvider>
-            <I18nProvider lang={lang}>{children}</I18nProvider>
-          </ToastProvider>
-        </Providers>
+        <I18nClientProvider>
+          <Providers>
+            <ToastProvider>
+              <I18nProvider lang={lang}>{children}</I18nProvider>
+            </ToastProvider>
+          </Providers>
+        </I18nClientProvider>
       </body>
     </html>
   );

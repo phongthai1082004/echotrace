@@ -20,7 +20,7 @@ export function SizeModal({
 
   return (
     <Modal open onClose={onClose} title={t("customer.myJournals.chooseSize")} widthClass="max-w-[360px]">
-      <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+      <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 py-1">
         {loading ? (
           <p suppressHydrationWarning className="font-mono text-[10px] font-bold text-[#999]">
             {t("common.loading")}

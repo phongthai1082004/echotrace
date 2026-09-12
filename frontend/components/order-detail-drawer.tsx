@@ -83,7 +83,7 @@ export function OrderDetailDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/20" />
       <div
         className={`fixed right-0 bottom-0 z-50 bg-[#F8F2E5] flex flex-col overflow-hidden border-t-[3px] border-l-[3px] border-[#222] w-full sm:w-[420px] ${
           admin ? "top-0" : "top-15"

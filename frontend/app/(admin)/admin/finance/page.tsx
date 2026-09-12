@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { AdminHeader } from "@/components/admin-header";
 import { NeoSelect } from "@/components/neo-select";
-import { card, label, input, neoBtnPrimary, typeBadge } from "@/lib/styles";
+import { card, label, input, neoBtn, neoBtnPrimary, typeBadge } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { AdminList } from "@/components/admin-list";
 import { AdminPagination } from "@/components/admin-pagination";
@@ -91,6 +91,8 @@ export default function FinancePage() {
 	const expense = useCursorList<any>("/api/admin/financial/expense", expenseFilters);
 	const cashflow = useCursorList<any>("/api/admin/financial/cashflow", cashflowFilters);
 
+	const [table, setTable] = useState<"income" | "expense" | "cashflow">("cashflow");
+
 	const [expOpen, setExpOpen] = useState(false);
 	const [amount, setAmount] = useState("");
 	const [category, setCategory] = useState<string>("OPERATING");
@@ -144,7 +146,20 @@ export default function FinancePage() {
 					</div>
 				</section>
 
+				<div className="flex gap-2 flex-wrap">
+					{(["cashflow", "income", "expense"] as const).map((k) => (
+						<button
+							key={k}
+							onClick={() => setTable(k)}
+							className={`font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2 ${table === k ? neoBtnPrimary : neoBtn}`}
+						>
+							{t(`admin.finance.${k}Title`)}
+						</button>
+					))}
+				</div>
+
 				{/* INCOME */}
+				{table === "income" && (
 				<section className={`flex flex-col ${card} overflow-hidden`}>
 					<SectionHeader title={t("admin.finance.incomeTitle")}>
 						<DateFilter from={incFrom} setFrom={setIncFrom} to={incTo} setTo={setIncTo} />
@@ -164,13 +179,15 @@ export default function FinancePage() {
 							<>
 								<div className="px-2 font-mono text-[9px] font-bold text-[#666] whitespace-nowrap">{day(r.receivedAt)}</div>
 								<div className="px-2 text-center font-mono text-sm font-bold">{money(r.amount)}</div>
-								<div className="px-2 text-sm text-[#666] truncate">{r.note || r.orderId || "—"}</div>
-							</>
-						)}
-					/>
+							<div className="px-2 text-sm text-[#666] truncate">{r.note || r.orderId || "—"}</div>
+						</>
+					)}
+				/>
 				</section>
+				)}
 
 				{/* EXPENSE */}
+				{table === "expense" && (
 				<section className={`flex flex-col ${card} overflow-hidden`}>
 					<SectionHeader title={t("admin.finance.expenseTitle")}>
 						<div className="flex items-center gap-2 flex-wrap">
@@ -211,13 +228,15 @@ export default function FinancePage() {
 										{t(`admin.expenses.categories.${r.category}`)}
 									</span>
 								</div>
-								<div className="px-2 text-sm text-[#666] truncate">{r.supplierName || "—"}</div>
-							</>
-						)}
-					/>
+							<div className="px-2 text-sm text-[#666] truncate">{r.supplierName || "—"}</div>
+						</>
+					)}
+				/>
 				</section>
+				)}
 
 				{/* CASHFLOW */}
+				{table === "cashflow" && (
 				<section className={`flex flex-col ${card} overflow-hidden`}>
 					<SectionHeader title={t("admin.finance.cashflowTitle")}>
 						<div className="flex items-center gap-2 flex-wrap">
@@ -256,11 +275,12 @@ export default function FinancePage() {
 										{r.type}
 									</span>
 								</div>
-								<div className="px-2 text-sm text-[#666] truncate">{r.note || "—"}</div>
-							</>
-						)}
-					/>
+							<div className="px-2 text-sm text-[#666] truncate">{r.note || "—"}</div>
+						</>
+					)}
+				/>
 				</section>
+				)}
 			</div>
 
 			<Modal

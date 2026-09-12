@@ -62,7 +62,7 @@ export default function AdminSampleStudioPage() {
             </p>
             <CloseButton onClick={() => router.push("/admin/sample-books")} />
           </div>
-          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 py-1">
             {sizesLoading ? (
               <p suppressHydrationWarning className="font-mono text-[10px] font-bold text-[#999]">
                 {t("common.loading")}

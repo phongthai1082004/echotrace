@@ -819,7 +819,22 @@
 			"markDefective": "Mark defective",
 			"resolveDefect": "Resolve defect",
 			"requeuePdf": "Regenerate PDF",
-			"downloadPdf": "Download PDF"
+			"downloadPdf": "Download PDF",
+			"newAlbumOrder": "New album order",
+			"albumOrderTitle": "Create album order",
+			"searchCustomer": "Search customer by name/email/phone",
+			"album": "Album",
+			"selectAlbum": "Select album",
+			"quantity": "Quantity",
+			"paymentMethod": "Payment method",
+			"createAlbumOrder": "Create order",
+			"orderCode": "Order code",
+			"sendQrToCustomer": "Send this QR to the customer to collect payment",
+			"copyCode": "Copy code",
+			"copyLink": "Copy link",
+			"albumOrderNeedCustomer": "Pick a customer and an album first",
+			"albumOrderCreated": "Album order created",
+			"albumOrderFailed": "Failed to create album order"
 		},
 		"suppliers": {
 			"label": "Admin · Suppliers",

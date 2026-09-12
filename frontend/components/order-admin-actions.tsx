@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { neoBtnPrimary, neoBtn, neoBtnDanger } from "@/lib/styles";
+import { neoBtnPrimary, neoBtn, neoBtnDanger, input } from "@/lib/styles";
 import { AssignModal } from "@/components/assign-modal";
 import type { OrderDTO } from "@/lib/order.dto";
 
@@ -130,7 +130,7 @@ export function OrderAdminActions({
           <select
             value={fault}
             onChange={(e) => setFault(e.target.value as "self" | "supplier")}
-            className="w-full border-2 border-[#222] rounded px-2 py-1.5 text-xs font-bold bg-white"
+            className={input}
           >
             <option value="self">{t("admin.dispatch.returnFaultSelf")}</option>
             <option value="supplier">{t("admin.dispatch.returnFaultSupplier")}</option>
