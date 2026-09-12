@@ -3,15 +3,14 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useTranslation } from "react-i18next";
 import { StudioPage } from "@/features/studio-canvas/components/StudioPage";
 import { useStudioEditor } from "@/features/studio-canvas/hooks/useStudioEditor";
 import { customerAPI } from "@/features/studio-canvas/api/customer-api";
 import { apiFetch } from "@/lib/api.fetch";
 import { SizeModal } from "../my-journals/_components/size-modal";
+import { StudioSkeleton } from "@/components/skeleton";
 
 export default function StudioRouteInner() {
-  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -64,13 +63,7 @@ export default function StudioRouteInner() {
     );
   }
   if (!loaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p suppressHydrationWarning className="font-mono text-[10px] font-bold">
-          {t("common.loading")}
-        </p>
-      </div>
-    );
+    return <StudioSkeleton />;
   }
   return <StudioPage api={customerAPI} backHref={sampleId ? "/explore" : "/my-journals"} />;
 }

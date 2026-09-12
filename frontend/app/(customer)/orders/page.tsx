@@ -41,7 +41,7 @@ export default function OrdersPage() {
         </p>
         <div className="pb-8">
           {orders === null ? (
-            <SkeletonGrid count={6} aspect="landscape" />
+            <SkeletonGrid count={6} variant="order" />
           ) : orders.length === 0 ? (
             <p className="text-sm font-bold text-[#999] py-10">{t("customer.orders.empty")}</p>
           ) : (

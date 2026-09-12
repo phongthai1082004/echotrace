@@ -80,30 +80,30 @@ export function StudioSelectionTooltip() {
       className="absolute z-40"
       style={{ left: cx, top: ty, transform: above ? "translate(-50%,-100%)" : "translate(-50%,0)" }}
     >
-      <div className="flex items-center gap-1 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] px-1.5 py-1">
+      <div className="flex items-center gap-1 sm:gap-0.5 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] px-1.5 py-1 sm:px-0.5 sm:py-0.5">
         <button
           type="button"
           onClick={onMore}
           aria-label="More actions"
-          className="w-9 h-9 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
+          className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
         >
-          <Ellipsis size={16} strokeWidth={2.5} />
+          <Ellipsis size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
         </button>
         <button
           type="button"
           onClick={onCopy}
           aria-label="Duplicate"
-          className="w-9 h-9 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
+          className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-[6px] hover:bg-[#e8e6e0] transition-colors text-[#222]"
         >
-          <Copy size={16} strokeWidth={2.5} />
+          <Copy size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
         </button>
         <button
           type="button"
           onClick={onDelete}
           aria-label="Delete"
-          className="w-9 h-9 flex items-center justify-center rounded-[6px] hover:bg-[#B54843]/10 hover:text-[#B54843] transition-colors text-[#222]"
+          className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-[6px] hover:bg-[#B54843]/10 hover:text-[#B54843] transition-colors text-[#222]"
         >
-          <Trash2 size={16} strokeWidth={2.5} />
+          <Trash2 size={16} strokeWidth={2.5} className="sm:w-3 sm:h-3" />
         </button>
       </div>
     </div>

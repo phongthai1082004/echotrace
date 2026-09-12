@@ -224,9 +224,9 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   const fh = (frame.height || 100) * (frame.scaleY || 1);
   const imgW = photo.width || 1,
     imgH = photo.height || 1;
-  // ponytail: always re-contain-fit to the current frame size; user scale/offset
-  // edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
-  const containS = Math.min(fw / imgW, fh / imgH);
+  // ponytail: always re-cover-fit to the current frame size (same as initial place);
+  // user scale/offset edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
+  const coverS = Math.max(fw / imgW, fh / imgH);
   const relSX = (photo as any).__photoRelScaleX ?? 1;
   const relSY = (photo as any).__photoRelScaleY ?? 1;
   const lockW = (frame.width || 100) * ((photo as any).__frameLockScaleX || 1);
@@ -259,8 +259,8 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   photo.set({
     left: fc.x + offX,
     top: fc.y + offY,
-    scaleX: containS * relSX,
-    scaleY: containS * relSY,
+    scaleX: coverS * relSX,
+    scaleY: coverS * relSY,
     angle: frame.angle || 0,
     clipPath: clip,
   } as any);
@@ -375,9 +375,9 @@ export function lockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImag
     (photo as any).__photoLockScaleY = photo.scaleY || 1;
     const fwl = (frame.width || 100) * (frame.scaleX || 1);
     const fhl = (frame.height || 100) * (frame.scaleY || 1);
-    const containS = Math.min(fwl / (photo.width || 1), fhl / (photo.height || 1));
-    (photo as any).__photoRelScaleX = (photo.scaleX || 1) / containS;
-    (photo as any).__photoRelScaleY = (photo.scaleY || 1) / containS;
+    const coverS = Math.max(fwl / (photo.width || 1), fhl / (photo.height || 1));
+    (photo as any).__photoRelScaleX = (photo.scaleX || 1) / coverS;
+    (photo as any).__photoRelScaleY = (photo.scaleY || 1) / coverS;
     applyFrameClip(frame, photo);
     frame.set({
       evented: (frame as any).__savedEvented !== undefined ? (frame as any).__savedEvented : true,

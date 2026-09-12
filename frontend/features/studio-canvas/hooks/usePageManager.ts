@@ -48,14 +48,17 @@ export function usePageManager() {
   };
 
   const switchPage = (newIndex: number) => {
-    const { activePageIndex, pages, setActivePageIndex, viewMode } = useCanvasStore.getState();
+    const { activePageIndex, pages, setActivePageIndex, setViewMode, viewMode } = useCanvasStore.getState();
     if (newIndex === activePageIndex || newIndex >= pages.length || newIndex < 0) return;
     saveCurrentPage();
     setActivePageIndex(newIndex);
-    const spread = viewMode === "spread" && !isCoverPage(newIndex, pages.length);
+    // ponytail: first/last pages are singles — pin to 2P now so panels never see a stale L/R.
+    const effView = isCoverPage(newIndex, pages.length) ? "spread" : viewMode;
+    if (effView !== viewMode) setViewMode(effView);
+    const spread = effView === "spread" && !isCoverPage(newIndex, pages.length);
     const targetLayout = spread
       ? (useCanvasStore.getState().pages[newIndex]?.spreadLayout ?? null)
-      : viewMode === "right"
+      : effView === "right"
         ? (useCanvasStore.getState().pages[Math.min(newIndex + 1, pages.length - 1)]?.layout ?? null)
         : (useCanvasStore.getState().pages[newIndex]?.layout ?? null);
     useCanvasStore.setState({ activeLayout: targetLayout });

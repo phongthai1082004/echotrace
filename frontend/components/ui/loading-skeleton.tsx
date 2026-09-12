@@ -11,6 +11,9 @@ export interface LoadingSkeletonProps {
   className?: string;
 }
 
+// ponytail: faint site-wide, matches components/skeleton.tsx.
+const faint = "opacity-60";
+
 const shimmerKeyframes = `
   @keyframes shimmer {
     0% { background-color: #e5e7eb; }
@@ -34,7 +37,7 @@ export function LoadingSkeleton({
     <>
       <style>{shimmerKeyframes}</style>
       <div
-        className={className}
+        className={`${className} ${faint}`}
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${columns}, 1fr)`,
@@ -63,7 +66,7 @@ export function TableSkeletonRow({ columns = 6, animated = true }: { columns?: n
   return (
     <>
       <style>{shimmerKeyframes}</style>
-      <div className="flex items-center border-b-[2px] border-[#222]/10 px-2">
+      <div className={`flex items-center border-b-[2px] border-[#222]/10 px-2 ${faint}`}>
         {Array.from({ length: columns }).map((_, i) => (
           <div key={i} className="px-4 py-5 flex-1">
             <div
@@ -86,7 +89,7 @@ export function CardSkeleton({ animated = true, className = "" }: { animated?: b
   return (
     <>
       <style>{shimmerKeyframes}</style>
-      <div className={`border rounded-lg p-4 ${className}`}>
+      <div className={`border rounded-lg p-4 ${className} ${faint}`}>
         <div
           className="h-6 bg-gray-200 rounded mb-4 w-3/4"
           style={{

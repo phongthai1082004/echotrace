@@ -127,9 +127,11 @@ export function Nav({ user }: NavProps) {
 
         <div className="flex items-center gap-3 shrink-0">
           <LangMenu />
-          <button type="button" aria-label={t("nav.menu")} className="md:hidden shrink-0" onClick={() => setOpen(!open)}>
-            {open ? <XIcon size={18} /> : <MenuIcon size={18} />}
-          </button>
+          {currentUser && (
+            <button type="button" aria-label={t("nav.menu")} className="md:hidden shrink-0" onClick={() => setOpen(!open)}>
+              {open ? <XIcon size={18} /> : <MenuIcon size={18} />}
+            </button>
+          )}
           {currentUser && (
             <div className="hidden md:contents">
             <div className="relative" onMouseEnter={() => setNotifOpen(true)} onMouseLeave={() => setNotifOpen(false)}>
@@ -180,15 +182,13 @@ export function Nav({ user }: NavProps) {
               <AccountMenu user={currentUser} token={token} />
             </div>
           ) : (
-            <div className="hidden md:contents">
-              <Link
-                href="/auth"
-                suppressHydrationWarning
-                className={`${neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2`}
-              >
-                {t("nav.signIn")}
-              </Link>
-            </div>
+            <Link
+              href="/auth"
+              suppressHydrationWarning
+              className={`${neoBtnSm} font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2`}
+            >
+              {t("nav.signIn")}
+            </Link>
           )}
         </div>
       </div>
@@ -249,16 +249,6 @@ export function Nav({ user }: NavProps) {
                 {t("nav.signOut")}
               </button>
             </>
-          )}
-          {!token && (
-            <Link
-              href="/auth"
-              suppressHydrationWarning
-              onClick={() => setOpen(false)}
-              className="block font-mono text-[10px] font-bold tracking-widest uppercase px-8 py-3 hover:bg-[#222] hover:text-white transition-colors"
-            >
-              {t("nav.signIn")}
-            </Link>
           )}
         </div>
       )}

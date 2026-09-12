@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,7 @@ import { useCart } from "./hooks/use-cart";
 import { useCheckoutForm, validateCheckoutForm } from "./hooks/use-checkout-form";
 import { priceText } from "./_lib/utils";
 import { StepHeader, type CheckoutStep } from "./components/step-header";
+import { CheckoutSkeletonCards, CheckoutSkeletonSummary } from "@/components/skeleton";
 import { OrderSummary } from "./components/order-summary";
 import { CartStep } from "./components/cart-step";
 import { EditOptionsModal } from "./components/edit-options-modal";
@@ -73,15 +74,15 @@ export default function CheckoutPage() {
     (catalog?.[key] ?? []).map((o) => ({ value: o.code, label: optionLabel(o.code, key) }));
 
   const describeItem = (item: any): string =>
-    `${optionLabel(item.cover, "covers") || item.cover} · ${optionLabel(item.paper, "papers") || item.paper} · ${item.pages} trang · ${paperSizeLabel(item.paperSize || "", (i18n.language || "en").slice(0, 2) as "vi" | "en" | "es")}`;
+    `${optionLabel(item.cover, "covers") || item.cover} Â· ${optionLabel(item.paper, "papers") || item.paper} Â· ${item.pages} trang Â· ${paperSizeLabel(item.paperSize || "", (i18n.language || "en").slice(0, 2) as "vi" | "en" | "es")}`;
 
   const payNow = cart.total == null ? null : paymentMethod === PaymentPlan.HALF ? Math.round((cart.total * 50) / 100) : cart.total;
   const deduction = cart.total == null ? null : paymentMethod === PaymentPlan.FULL ? 0 : payNow;
   const editing = editingIndex != null ? items[editingIndex] : null;
   const formErrors = validateCheckoutForm(form);
 
-  // Tạo đơn: chốt số lần cuối → POST /orders với Idempotency-Key chống double-submit
-  // → PayOS trả checkoutUrl, redirect sang trang thanh toán.
+  // Táº¡o Ä‘Æ¡n: chá»‘t sá»‘ láº§n cuá»‘i â†’ POST /orders vá»›i Idempotency-Key chá»‘ng double-submit
+  // â†’ PayOS tráº£ checkoutUrl, redirect sang trang thanh toÃ¡n.
   const placeOrder = async () => {
     if (placing) return;
     setPlacing(true);
@@ -92,7 +93,7 @@ export default function CheckoutPage() {
         return;
       }
       const quote = await recalc();
-      if (!quote) return; // server chặn (thiếu option...) — đã toast
+      if (!quote) return; // server cháº·n (thiáº¿u option...) â€” Ä‘Ã£ toast
       const order = await apiFetch<any>("/api/orders", token, {
         method: "POST",
         headers: { "Idempotency-Key": crypto.randomUUID() },
@@ -114,7 +115,7 @@ export default function CheckoutPage() {
         }),
       });
       if (order?.checkoutUrl) {
-        setOrderInfo(order); // hiện QR, poll trạng thái → webhook/verify xác nhận xong nhảy /orders
+        setOrderInfo(order); // hiá»‡n QR, poll tráº¡ng thÃ¡i â†’ webhook/verify xÃ¡c nháº­n xong nháº£y /orders
       } else {
         router.push("/orders");
       }
@@ -125,7 +126,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Poll trạng thái đơn mỗi 3s — gọi verify (hỏi PayOS trực tiếp) vì webhook localhost không nhận được
+  // Poll tráº¡ng thÃ¡i Ä‘Æ¡n má»—i 3s â€” gá»i verify (há»i PayOS trá»±c tiáº¿p) vÃ¬ webhook localhost khÃ´ng nháº­n Ä‘Æ°á»£c
   const orderId = orderInfo?.orderId;
   useEffect(() => {
     if (!orderId) return;
@@ -186,7 +187,7 @@ export default function CheckoutPage() {
                       disabled={cart.missingAny}
                       onClick={async () => {
                         if (cart.missingAny) return;
-                        if (!(await recalc())) return; // server chặn (thiếu option...) → đã toast, ở lại
+                        if (!(await recalc())) return; // server cháº·n (thiáº¿u option...) â†’ Ä‘Ã£ toast, á»Ÿ láº¡i
                         setStep("delivery");
                       }}
                       className={`${neoBtnPrimary} w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed`}
@@ -235,7 +236,7 @@ export default function CheckoutPage() {
                       <TotalRow labelKey="customer.checkout.subtotal" value={priceText(cart.subtotal, t("customer.checkout.unknown"))} />
                       <TotalRow
                         labelKey="customer.checkout.discount"
-                        value={`−${priceText(cart.discountAmount, t("customer.checkout.unknown"))}`}
+                        value={`âˆ’${priceText(cart.discountAmount, t("customer.checkout.unknown"))}`}
                         valueClass="text-[#B54843]"
                       />
                     </div>
@@ -243,7 +244,7 @@ export default function CheckoutPage() {
                       <TotalRow labelKey="customer.checkout.total" value={priceText(cart.total, t("customer.checkout.unknown"))} />
                       <TotalRow
                         labelKey="customer.checkout.paymentMethod"
-                        value={`−${priceText(deduction, t("customer.checkout.unknown"))}`}
+                        value={`âˆ’${priceText(deduction, t("customer.checkout.unknown"))}`}
                         valueClass="text-[#B54843]"
                       />
                     </div>
@@ -270,7 +271,7 @@ export default function CheckoutPage() {
                     <p className={`${label} text-[#666]`}>{t("customer.checkout.paymentTitle")}</p>
                   </div>
                   <div className="p-4">
-                    {/* QR thật từ PayOS (qrCode là chuỗi EMV/VietQR → render bằng qrcode.react) */}
+                    {/* QR tháº­t tá»« PayOS (qrCode lÃ  chuá»—i EMV/VietQR â†’ render báº±ng qrcode.react) */}
                     <div className="bg-white rounded-[10px] border-[3px] border-[#222] shadow-[2px_2px_0_#222] flex justify-center p-3">
                       {orderInfo.qrCode ? (
                         <QRCodeSVG value={orderInfo.qrCode} size={192} level="M" />
@@ -283,7 +284,7 @@ export default function CheckoutPage() {
                     </p>
 
                     <div className="space-y-2 pt-4 mt-4 border-t-[3px] border-[#222]">
-                      <TotalRow labelKey="customer.checkout.orderCodeLabel" value={orderInfo.orderCode ?? "—"} />
+                      <TotalRow labelKey="customer.checkout.orderCodeLabel" value={orderInfo.orderCode ?? "â€”"} />
                       <TotalRow labelKey="customer.checkout.total" value={priceText(orderInfo.total, t("customer.checkout.unknown"))} />
                     </div>
 
@@ -342,44 +343,6 @@ function TotalRow({ labelKey, value, valueClass = "" }: { labelKey: string; valu
     <div className="flex justify-between gap-4 py-1.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-[#666]">{t(labelKey)}</span>
       <span className={`text-sm font-bold text-right ${valueClass}`}>{value}</span>
-    </div>
-  );
-}
-
-function CheckoutSkeletonCards() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 2 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-start gap-4 p-4 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222]/10 overflow-hidden animate-pulse"
-        >
-          <div className="w-16 h-20 bg-[#e8e6e0]/50 rounded-[10px]" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 bg-[#e8e6e0]/50 rounded w-3/4" />
-            <div className="h-3 bg-[#e8e6e0]/50 rounded w-1/2" />
-            <div className="flex gap-1.5 mt-2">
-              <div className="w-6 h-6 bg-[#e8e6e0]/50 rounded border-2 border-[#222]/10" />
-              <div className="w-5 h-6 bg-[#e8e6e0]/50 rounded" />
-              <div className="w-6 h-6 bg-[#e8e6e0]/50 rounded border-2 border-[#222]/10" />
-            </div>
-          </div>
-          <div className="h-4 bg-[#e8e6e0]/50 rounded w-16 self-center" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CheckoutSkeletonSummary() {
-  return (
-    <div className="rounded-[10px] border-[3px] border-[#222]/10 overflow-hidden animate-pulse">
-      <div className="p-4 space-y-3">
-        <div className="h-3 bg-[#e8e6e0]/50 rounded w-24" />
-        <div className="h-4 bg-[#e8e6e0]/50 rounded w-full" />
-        <div className="h-4 bg-[#e8e6e0]/50 rounded w-full" />
-        <div className="h-10 bg-[#e8e6e0]/50 rounded w-full" />
-      </div>
     </div>
   );
 }

@@ -27,7 +27,7 @@ export function ExploreClient() {
 		onLoadMore: () => void,
 	) =>
 		loading ? (
-			<SkeletonGrid count={skeletonCount} aspect="portrait" />
+			<SkeletonGrid count={skeletonCount} variant="sample" />
 		) : list.length === 0 ? (
 			<p className="text-sm text-[#999]" suppressHydrationWarning>
 				{t(emptyKey)}

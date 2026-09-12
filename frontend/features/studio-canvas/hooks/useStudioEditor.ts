@@ -25,6 +25,8 @@ export function useStudioEditor(
     prevParams.current = paramsKey;
     done.current = true;
     useCanvasStore.getState().resetStore();
+    // ponytail: studio always opens on page 0 (a single) — pin to 2P at init.
+    useCanvasStore.getState().setViewMode("spread");
     if (!effectiveId) {
       useCanvasStore.getState().setBookMeta({
         format: initialFormat || "PORTRAIT_A4",

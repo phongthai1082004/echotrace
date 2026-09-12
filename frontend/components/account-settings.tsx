@@ -154,9 +154,7 @@ export function AccountSettings() {
       </div>
 
       {loading ? (
-        <div className="max-w-md">
-          <SkeletonForm />
-        </div>
+        <SkeletonForm />
       ) : (
         tab === "information" && (
           <form onSubmit={handleSubmitProfile} className="space-y-8">
