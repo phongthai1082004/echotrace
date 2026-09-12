@@ -1,8 +1,6 @@
 import { injectable } from 'tsyringe';
 import { IEmailService, EmailMessage } from '@echotrace/shared';
 
-// ponytail: implements the shared IEmailService port — consumers depend on the
-// token, never on this class. Transport = Resend HTTP API.
 @injectable()
 export class EmailService implements IEmailService {
 	async send(msg: EmailMessage): Promise<void> {
