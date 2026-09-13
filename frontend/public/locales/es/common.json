@@ -1,6 +1,6 @@
 {
-	"brand": "Cabinet Memoir",
-	"brandShort": "CM",
+	"brand": "Better Memoire",
+	"brandShort": "BM",
 	"tagline": "Diseña diarios de viaje artesanales con maquetación editorial.",
 	"nav": {
 		"explore": "Explorar",
@@ -198,8 +198,8 @@
 			"bookTitle": "TU HISTORIA"
 		},
 		"footer": {
-			"brandBox": "FOLIO",
-			"brandTag": "PRESS™",
+			"brandBox": "BETTER",
+			"brandTag": "MEMOIRE™",
 			"desc": "Fotolibros premium, diseñados en línea e impresos con calidad de archivo. Con sede en Londres, envíos a todo el mundo.",
 			"cols": [
 				{
@@ -233,7 +233,7 @@
 					]
 				}
 			],
-			"legal": "© 2024 FOLIO PRESS LTD · TODOS LOS DERECHOS RESERVADOS",
+			"legal": "© 2024 BETTER MEMOIRE · TODOS LOS DERECHOS RESERVADOS",
 			"links": [
 				"Política de Privacidad",
 				"Términos del Servicio",

@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api.fetch";
 import { roleHome } from "@/lib/routing";
 import { useToast } from "@/components/toast";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
+import logoImg from "@/assets/images/Logo.png";
 
 function validateEmail(e: string): string | null {
   if (!e) return "Email is required";
@@ -158,8 +159,9 @@ export default function AuthPage() {
           sizes="50vw"
           className="object-cover"
         />
-        <div className="absolute top-10 left-10">
-          <p className="text-white text-2xl font-bold tracking-tight">Cabinet Memoir</p>
+        <div className="absolute top-10 left-10 flex items-center gap-3">
+          <Image src={logoImg} alt="Better Memoire" style={{ height: 48, width: "auto" }} className="rounded-full bg-[#F8F2E5]/90 p-1" priority />
+          <p className="text-white text-2xl font-bold tracking-tight">Better Memoire</p>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-white/20">
           <p className="font-mono text-[10px] font-bold text-white/70 tracking-wider uppercase">
@@ -169,7 +171,10 @@ export default function AuthPage() {
       </div>
 
       <div className="flex flex-col px-4 sm:px-8 lg:px-14 py-8 sm:py-12 lg:w-[45%] bg-[#F8F2E5]">
-        <p className="lg:hidden text-2xl font-bold mb-10">Cabinet Memoir</p>
+        <p className="lg:hidden flex items-center gap-2 text-2xl font-bold mb-10">
+          <Image src={logoImg} alt="Better Memoire" style={{ height: 36, width: "auto" }} />
+          Better Memoire
+        </p>
 
         <div className="flex gap-2 mb-8">
           {(["Sign In", "Create Account"] as const).map((label, i) => {

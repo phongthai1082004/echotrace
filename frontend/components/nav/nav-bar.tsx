@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -10,6 +11,7 @@ import { apiFetch } from "@/lib/api.fetch";
 import { LangMenu } from "./lang-menu";
 import { CartFlyout } from "./cart-flyout";
 import { AccountMenu } from "./account-menu";
+import logoImg from "@/assets/images/Logo.png";
 
 interface NavProps {
   user?: { name?: string | null; email?: string | null; image?: string | null } | null;
@@ -72,6 +74,39 @@ export function Nav({ user }: NavProps) {
   const token = (session as any)?.accessToken;
   const currentUser = user ?? session?.user ?? null;
 
+  const [notifs, setNotifs] = useState<any[] | null>(null);
+  const unread = notifs?.filter((n: any) => !n.isRead).length ?? 0;
+
+  // ponytail: token already in scope — fetch list, poll for new ones.
+  const fetchNotifs = async () => {
+    if (!token) return;
+    try {
+      const d = await apiFetch<any>("/api/notifications?limit=20", token);
+      const items = Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
+      setNotifs(items);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial poll of external API
+    void fetchNotifs();
+    const id = setInterval(fetchNotifs, 60000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const openNotif = async (n: any) => {
+    setNotifOpen(false);
+    if (!n.isRead && token) {
+      try {
+        await apiFetch(`/api/notifications/${n.id}/read`, token, { method: "PATCH" });
+      } catch {}
+      setNotifs((prev) => prev?.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)) ?? prev);
+    }
+    router.push(n.metadata?.actionUrl || "/orders");
+  };
+
   useEffect(() => {
     if (!open || !token) return;
     apiFetch<any>("/api/cart", token)
@@ -101,8 +136,9 @@ export function Nav({ user }: NavProps) {
     <nav suppressHydrationWarning className="fixed top-0 left-0 right-0 z-40 bg-[#F8F2E5] border-b-[3px] border-[#222]">
       <div className="flex items-center justify-between px-4 sm:px-8 h-15">
         <div className="flex items-center gap-10">
-          <Link href="/" suppressHydrationWarning className="font-bold text-base tracking-tight shrink-0 leading-none">
-            {t("brand")}
+          <Link href="/" suppressHydrationWarning className="flex items-center gap-2 shrink-0 leading-none">
+            <Image src={logoImg} alt="Better Memoire" style={{ height: 32, width: "auto" }} priority />
+            <span className="font-bold text-base tracking-tight">{t("brand")}</span>
           </Link>
           {token && (
             <div className="hidden md:flex items-center gap-6">
@@ -134,11 +170,11 @@ export function Nav({ user }: NavProps) {
           )}
           {currentUser && (
             <div className="hidden md:contents">
-            <div className="relative" onMouseEnter={() => setNotifOpen(true)} onMouseLeave={() => setNotifOpen(false)}>
+            <div className="relative" onMouseEnter={() => { setNotifOpen(true); void fetchNotifs(); }} onMouseLeave={() => setNotifOpen(false)}>
               <button
                 type="button"
                 aria-label={t("nav.notifications")}
-                className="flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
+                className="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 rounded-[8px] border-[2px] border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] bg-[#FFF7D6]"
               >
                 <svg
                   width="16"
@@ -154,18 +190,49 @@ export function Nav({ user }: NavProps) {
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
+                {unread > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-[#B54843] text-white font-mono text-[8px] font-bold flex items-center justify-center leading-none">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-full z-50 pt-2">
-                    <div className="w-72 max-w-[calc(100vw-2rem)] bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
-                    <div className="px-4 py-3 border-b-[3px] border-[#222]">
+                    <div className="w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+                    <div className="px-4 py-3 border-b-[3px] border-[#222] sticky top-0 bg-[#FFF7D6]">
                       <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
                         {t("nav.notifications")}
                       </p>
                     </div>
-                    <div className="px-4 py-8 text-center">
-                      <p className="text-sm font-bold text-[#999]">{t("nav.noNotifications")}</p>
-                    </div>
+                    {notifs === null ? (
+                      <div className="px-4 py-8 text-center">
+                        <p className="text-sm font-bold text-[#999]">…</p>
+                      </div>
+                    ) : notifs.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <p className="text-sm font-bold text-[#999]">{t("nav.noNotifications")}</p>
+                      </div>
+                    ) : (
+                      notifs.map((n: any) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => openNotif(n)}
+                          className="w-full text-left px-4 py-3 border-b-2 border-[#222]/10 last:border-b-0 hover:bg-[#e8e6e0]/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#B54843] shrink-0" />}
+                            <p className="text-sm font-bold leading-tight flex-1">{n.title}</p>
+                          </div>
+                          <p className="text-xs text-[#666] line-clamp-2 mt-0.5">
+                            {String(n.message ?? "").replace(/<[^>]*>/g, "")}
+                          </p>
+                          <p className="font-mono text-[8px] text-[#999] mt-1">
+                            {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
+                          </p>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

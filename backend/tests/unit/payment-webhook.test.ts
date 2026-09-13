@@ -6,7 +6,7 @@ import { mock } from "jest-mock-extended";
 import { PaymentWebhookService } from "../../src/modules/financial/payments/payment.service.js";
 import { PaymentWebhookRepository } from "../../src/modules/financial/payments/payment.repository.js";
 import { PayOSGateway } from "../../src/modules/financial/payments/gateways/payos.service.js";
-import { IEmailService } from "@echotrace/shared";
+import { NotificationSubject } from "../../src/modules/notification/notification.subject.js";
 import type { IStockService } from "../../src/modules/product/sample-books/stock.service.js";
 import type { PayOS } from "@payos/node";
 import { TransactionStatus } from "@echotrace/shared";
@@ -29,10 +29,10 @@ const buildWebhook = () => {
   };
   (prisma as any).db = { $transaction: jest.fn((fn: any) => fn(tx)) };
   const repo = new PaymentWebhookRepository(prisma);
-  const email = mock<IEmailService>();
+  const subject = mock<NotificationSubject>();
   const stock = mock<IStockService>();
-  const svc = new PaymentWebhookService(email, repo, stock);
-  return { svc, tx, email, stock, prisma };
+  const svc = new PaymentWebhookService(subject, repo, stock);
+  return { svc, tx, subject, stock, prisma };
 };
 
 const successResult = (over: Partial<Record<string, any>> = {}) => ({
@@ -53,12 +53,13 @@ const paidOrder = {
   paidAmount: 0,
   totalAmount: 200,
   orderCode: "111",
+  userId: 7,
   user: { email: "a@b.c", name: "Ann" },
 };
 
 describe("processWebhook (S-13..S-17)", () => {
-  it("S-13: SUCCESS full -> txn SUCCESS + Cashflow IN + order paid + email", async () => {
-    const { svc, tx, email } = buildWebhook();
+  it("S-13: SUCCESS full -> txn SUCCESS + Cashflow IN + order paid + notify", async () => {
+    const { svc, tx, subject } = buildWebhook();
     tx.transaction.findUnique.mockResolvedValue({ id: 1, orderId: 5, status: "pending" });
     tx.order.findUnique.mockResolvedValue(paidOrder);
 
@@ -73,7 +74,9 @@ describe("processWebhook (S-13..S-17)", () => {
     expect(tx.order.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 5 }, data: expect.objectContaining({ status: "paid", paidAmount: 200 }) }),
     );
-    expect(email.send).toHaveBeenCalledWith(expect.objectContaining({ to: "a@b.c" }));
+    expect(subject.notify).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "7", email: "a@b.c", type: "payment" }),
+    );
   });
 
   it("S-13b: 50% deposit -> partially_paid", async () => {
@@ -87,12 +90,12 @@ describe("processWebhook (S-13..S-17)", () => {
   });
 
   it("S-14: duplicate webhook (txn already SUCCESS) -> early return, no writes", async () => {
-    const { svc, tx, email } = buildWebhook();
+    const { svc, tx, subject } = buildWebhook();
     tx.transaction.findUnique.mockResolvedValue({ id: 1, orderId: 5, status: "success" });
     await svc.processWebhook(successResult());
     expect(tx.transaction.update).not.toHaveBeenCalled();
     expect(tx.cashflow.create).not.toHaveBeenCalled();
-    expect(email.send).not.toHaveBeenCalled();
+    expect(subject.notify).not.toHaveBeenCalled();
   });
 
   it("S-15: dupPaid counts OTHER SUCCESS txns only -- current txn excluded", async () => {

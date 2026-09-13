@@ -58,6 +58,10 @@ model Notification {
   message   String
   sendBy    String   @default("system")
   type      String   @default("info")
+  channels  String[] @default([])
+  email     String?
+  phone     String?
+  metadata  Json?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

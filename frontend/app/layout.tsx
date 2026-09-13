@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cabinet Memoir",
+  title: "Better Memoire",
   description: "Design bespoke travel journals with editorial-grade layouts.",
 };
 

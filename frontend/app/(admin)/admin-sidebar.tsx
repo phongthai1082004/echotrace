@@ -23,6 +23,7 @@ import {
   BellDot,
 } from "lucide-react";
 import { CloseButton } from "@/components/ui/close-button";
+import logoImg from "@/assets/images/Logo.png";
 
 export function AdminSidebar() {
   const { t } = useTranslation();
@@ -74,21 +75,19 @@ export function AdminSidebar() {
 
   return (
     <aside className="fixed top-0 left-0 w-56 max-[1600px]:w-45 max-[1280px]:w-16 h-screen bg-[#FFF7D6] border-r-[3px] border-[#222] flex flex-col transition-all duration-200 z-30">
-      <div className="p-5 max-[1600px]:p-4 max-[1280px]:p-3 border-b-[3px] border-[#222]">
-        <p className="font-bold text-lg max-[1600px]:text-base max-[1280px]:text-xs max-[1280px]:text-center">
-          <span className="max-[1280px]:hidden" suppressHydrationWarning>
+      <div className="p-5 max-[1600px]:p-4 max-[1280px]:p-3 border-b-[3px] border-[#222] flex items-center gap-2.5 max-[1280px]:justify-center">
+        <Image src={logoImg} alt="Better Memoire" style={{ height: 34, width: "auto" }} className="shrink-0" />
+        <div className="min-w-0 max-[1280px]:hidden">
+          <p className="font-bold text-lg max-[1600px]:text-base leading-tight" suppressHydrationWarning>
             {t("brand")}
-          </span>
-          <span className="hidden max-[1280px]:inline" suppressHydrationWarning>
-            {t("brandShort")}
-          </span>
-        </p>
-        <p
-          className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] mt-0.5 max-[1280px]:hidden"
-          suppressHydrationWarning
-        >
-          {t("admin.panel")}
-        </p>
+          </p>
+          <p
+            className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999] mt-0.5"
+            suppressHydrationWarning
+          >
+            {t("admin.panel")}
+          </p>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto overscroll-contain p-3 max-[1600px]:p-2 max-[1280px]:p-1.5 space-y-4">

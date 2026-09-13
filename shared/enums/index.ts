@@ -2,6 +2,7 @@ export * from './book.type.enum.js';
 export * from './decor.asset.enum.js';
 export * from './discount.enum.js';
 export * from './idempotency.type.enum.js';
+export * from './notification.enum.js';
 export * from './order.enum.js';
 export * from './payment.enum.js';
 export * from './print.option.enum.js';

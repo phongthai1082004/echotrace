@@ -8,6 +8,10 @@ export interface NotificationRow {
 	message: string;
 	sendBy: string;
 	type: string;
+	channels: string[];
+	email: string | null;
+	phone: string | null;
+	metadata: unknown;
 	isRead: boolean;
 	createdAt: Date;
 	updatedAt: Date;
@@ -32,5 +36,12 @@ export class NotificationRepository {
 
 	markRead(id: number, tx?: any): Promise<NotificationRow> {
 		return (tx ?? this.client).notification.update({ where: { id }, data: { isRead: true } });
+	}
+
+	/** Mark own notification read; returns affected count (0 = not yours). */
+	markReadOwned(id: number, userId: number, tx?: any): Promise<number> {
+		return (tx ?? this.client).notification
+			.updateMany({ where: { id, userId }, data: { isRead: true } })
+			.then((r: { count: number }) => r.count);
 	}
 }

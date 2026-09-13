@@ -12,8 +12,8 @@ async function main() {
 
 		await prisma.user.createMany({
 			data: [
-				{ email: 'admin@cabinetmemoir.app', password: adminHash, name: 'Admin One', role: 'admin', isDelete: false },
-				{ email: 'admin2@cabinetmemoir.app', password: adminHash, name: 'Admin Two', role: 'admin', isDelete: false },
+				{ email: 'admin@bettermemoire.com', password: adminHash, name: 'Admin One', role: 'admin', isDelete: false },
+				{ email: 'admin2@bettermemoire.com', password: adminHash, name: 'Admin Two', role: 'admin', isDelete: false },
 				{
 					email: 'minh@example.com',
 					password: userHash,
@@ -186,7 +186,7 @@ async function main() {
 					isDelete: false,
 				},
 				{
-					email: 'quang.admin@cabinetmemoir.app',
+					email: 'quang.admin@bettermemoire.com',
 					password: adminHash,
 					name: 'Trần Minh Quang',
 					phone: '0909000999',

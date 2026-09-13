@@ -28,7 +28,7 @@ import { startDelayedWorker } from './modules/order-cart/queue/redis-delayed-que
 import { startOrderExpiryCron } from './modules/order-cart/queue/order-expiry-cron.js';
 import paymentRoutes from './modules/financial/payments/payment.route.js';
 import financeRoutes from './modules/financial/ledger/finance.route.js';
-import { errorMiddleware } from './shared/middleware/error.middleware.js';
+import notificationRoutes from './modules/notification/notification.routes.js';import { errorMiddleware } from './shared/middleware/error.middleware.js';
 import { healthRoutes } from './shared/health/health.routes.js';
 
 const PORT = process.env.BACKEND_PORT;
@@ -101,6 +101,7 @@ apiRouter.use('/', directoryRoutes);
 			apiRouter.use('/', uploadsRoutes);
 			apiRouter.use('/', orderRoutes);
 			apiRouter.use('/', financeRoutes);
+			apiRouter.use('/', notificationRoutes);
 
 			app.use('/:lang/api', apiRouter);
 			app.use('/api', apiRouter);

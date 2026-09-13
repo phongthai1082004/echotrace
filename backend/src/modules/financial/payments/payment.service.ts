@@ -7,7 +7,8 @@ import {
 	WebhookProcessResult,
 } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
-import { IEmailService } from '@echotrace/shared';
+import { NotificationChannel, NotificationType } from '@echotrace/shared';
+import { NotificationSubject } from '../../notification/notification.subject.js';
 import { PaymentWebhookRepository } from './payment.repository.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
 
@@ -18,13 +19,22 @@ export interface IPaymentWebhookService {
 @injectable()
 export class PaymentWebhookService implements IPaymentWebhookService {
 	constructor(
-		@inject('IEmailService') private emailService: IEmailService,
+		@inject('NotificationSubject') private subject: NotificationSubject,
 		@inject('PaymentWebhookRepository') private paymentRepo: PaymentWebhookRepository,
 		@inject('IStockService') private stockService: IStockService,
 	) {}
 
 	async processWebhook(result: WebhookProcessResult): Promise<void> {
-		let email: { to: string; name: string; orderCode: string; paid: number; total: number; fullyPaid: boolean } | null = null;
+		let email: {
+			to: string;
+			name: string;
+			userId: number;
+			orderId: number;
+			orderCode: string;
+			paid: number;
+			total: number;
+			fullyPaid: boolean;
+		} | null = null;
 
 		await this.paymentRepo.client.$transaction(
 			async (tx) => {
@@ -52,6 +62,7 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 						paidAmount: true,
 						totalAmount: true,
 						orderCode: true,
+						userId: true,
 						user: { select: { email: true, name: true } },
 					},
 				});
@@ -92,6 +103,8 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 						email = {
 							to: order.user.email,
 							name: order.user.name || '',
+							userId: order.userId,
+							orderId: order.id,
 							orderCode: order.orderCode || String(result.orderCode),
 							paid: paidAmount,
 							total: order.totalAmount,
@@ -119,25 +132,25 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 		);
 
-		if (email) await this.sendConfirmation(email);
-	}
-
-	private async sendConfirmation(mail: {
-		to: string;
-		name: string;
-		orderCode: string;
-		paid: number;
-		total: number;
-		fullyPaid: boolean;
-	}): Promise<void> {
-		const subject = mail.fullyPaid
-			? `Đã nhận thanh toán đơn ${mail.orderCode}`
-			: `Đã nhận tiền cọc đơn ${mail.orderCode}`;
-		const html = `<p>Xin chào ${mail.name || 'bạn'},</p><p>Chúng tôi đã nhận <b>${mail.paid.toLocaleString('vi-VN')}đ</b> cho đơn <b>${mail.orderCode}</b>.</p>${
-			mail.fullyPaid
-				? '<p>Đơn hàng đã được thanh toán đủ và đang được xử lý.</p>'
-				: `<p>Đây là 50% tiền cọc. Phần còn lại <b>${(mail.total - mail.paid).toLocaleString('vi-VN')}đ</b> sẽ thu khi giao hàng (COD).</p>`
-		}`;
-		await this.emailService.send({ to: mail.to, subject, html });
+		// ponytail: one fan-out replaces the old direct mail — channels route it.
+		if (email) {
+			const title = email.fullyPaid
+				? `Đã nhận thanh toán đơn ${email.orderCode}`
+				: `Đã nhận tiền cọc đơn ${email.orderCode}`;
+			const message = `<p>Xin chào ${email.name || 'bạn'},</p><p>Chúng tôi đã nhận <b>${email.paid.toLocaleString('vi-VN')}đ</b> cho đơn <b>${email.orderCode}</b>.</p>${
+				email.fullyPaid
+					? '<p>Đơn hàng đã được thanh toán đủ và đang được xử lý.</p>'
+					: `<p>Đây là 50% tiền cọc. Phần còn lại <b>${(email.total - email.paid).toLocaleString('vi-VN')}đ</b> sẽ thu khi giao hàng (COD).</p>`
+			}`;
+			await this.subject.notify({
+				userId: String(email.userId),
+				email: email.to,
+				type: NotificationType.PAYMENT,
+				channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+				title,
+				message,
+				metadata: { orderId: email.orderId, orderCode: email.orderCode },
+			});
+		}
 	}
 }

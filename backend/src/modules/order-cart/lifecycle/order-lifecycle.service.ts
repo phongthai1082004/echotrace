@@ -11,6 +11,8 @@ import {
 	ErrorCode,
 	PAYMENT_LINK_EXPIRY_MS,
 	WebhookProcessResult,
+	NotificationChannel,
+	NotificationType,
 } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { PaymentService } from '../../financial/payments/gateways/payment.service.js';
@@ -18,6 +20,8 @@ import { PaymentWebhookService } from '../../financial/payments/payment.service.
 import { IOrderFinanceService } from '../../financial/settlement/order-finance.bridge.js';
 import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
+import { NotificationSubject } from '../../notification/notification.subject.js';
+import { notifyOrderUser } from '../../notification/order-notify.js';
 
 const payStatusCache = new Map<number, { status: string | null; ts: number }>();
 const PAY_STATUS_TTL_MS = 5000;
@@ -54,6 +58,7 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 		@inject('IPaymentWebhookService') private webhookService: PaymentWebhookService,
 		@inject('IOrderFinanceService') private finance: IOrderFinanceService,
 		@inject('IStockService') private stockService: IStockService,
+		@inject('NotificationSubject') private subject: NotificationSubject,
 	) {}
 
 	async createPaymentLink(orderId: number, userId: number): Promise<{ qrCode?: string; checkoutUrl?: string }> {
@@ -200,11 +205,29 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 		const supplierIds = Array.from(new Set(items.map((i: any) => i.supplierId).filter(Boolean)));
 		const orderSupplier = supplierIds.length === 1 ? supplierIds[0] : null;
 		await this.orderRepo.updateOrder(order.id, { orderItems: items, supplierId: orderSupplier, status: OrderStatus.PROCESSING });
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.ORDER,
+			channels: [NotificationChannel.DB],
+			title: `Đơn ${order.orderCode} đang được xử lý`,
+			message: `<p>Đơn <b>${order.orderCode}</b> đã được chuyển xưởng in.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 
 	private async shipOrder(order: any): Promise<void> {
 		this.assertTransition(order.status, OrderStatus.SHIPPING);
 		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.SHIPPING });
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.SHIPPING,
+			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+			title: `Đơn ${order.orderCode} đang giao`,
+			message: `<p>Đơn <b>${order.orderCode}</b> đang trên đường giao tới bạn.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 
 	private async deliverOrder(order: any, payload: any): Promise<void> {
@@ -230,6 +253,17 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 			);
 			if (allDelivered) await this.finance.recognizeIncome(order.id, order.totalAmount, tx);
 		});
+		if (allDelivered) {
+			await notifyOrderUser(this.subject, this.orderRepo.client, {
+				userId: order.userId,
+				type: NotificationType.ORDER,
+				channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+				title: `Đã giao đơn ${order.orderCode}`,
+				message: `<p>Đơn <b>${order.orderCode}</b> đã được giao thành công. Cảm ơn bạn!</p>`,
+				orderId: order.id,
+				orderCode: order.orderCode,
+			});
+		}
 	}
 
 	private async reconcileCod(order: any): Promise<void> {
@@ -290,6 +324,15 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 			throw new AppError(ErrorCode.INTERNAL, 400);
 		}
 		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.PENDING_REFUND });
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.ORDER,
+			channels: [NotificationChannel.DB],
+			title: `Đơn ${order.orderCode} chờ hoàn tiền`,
+			message: `<p>Đơn <b>${order.orderCode}</b> đang chờ hoàn tiền.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 
 	async cancelOrder(orderId: number, userId: number): Promise<{ status: string; refunded: boolean; amount: number }> {
@@ -301,6 +344,15 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 		const beforeProcess = order.status === OrderStatus.PENDING_PAYMENT || order.status === OrderStatus.PAID || order.status === OrderStatus.PARTIALLY_PAID;
 		if (beforeProcess && order.paidAmount > 0) {
 			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.PENDING_REFUND });
+			await notifyOrderUser(this.subject, this.orderRepo.client, {
+				userId: order.userId,
+				type: NotificationType.ORDER,
+				channels: [NotificationChannel.DB],
+				title: `Đơn ${order.orderCode} chờ hoàn tiền`,
+				message: `<p>Đơn <b>${order.orderCode}</b> đã hủy. Số tiền <b>${Number(order.paidAmount).toLocaleString('vi-VN')}đ</b> đang chờ hoàn.</p>`,
+				orderId: order.id,
+				orderCode: order.orderCode,
+			});
 			return { status: OrderStatus.PENDING_REFUND, refunded: false, amount: order.paidAmount };
 		}
 		if (order.status === OrderStatus.PENDING_PAYMENT) {
@@ -309,9 +361,27 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 				if (count === 0) return;
 				await this.stockService.restockOrderAlbums(order.orderItems, tx);
 			});
+			await notifyOrderUser(this.subject, this.orderRepo.client, {
+				userId: order.userId,
+				type: NotificationType.ORDER,
+				channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+				title: `Đơn ${order.orderCode} đã hủy`,
+				message: `<p>Đơn <b>${order.orderCode}</b> đã được hủy.</p>`,
+				orderId: order.id,
+				orderCode: order.orderCode,
+			});
 			return { status: OrderStatus.CANCELLED, refunded: false, amount: 0 };
 		}
 		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED });
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.ORDER,
+			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+			title: `Đơn ${order.orderCode} đã hủy`,
+			message: `<p>Đơn <b>${order.orderCode}</b> đã được hủy.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 		return { status: OrderStatus.CANCELLED, refunded: false, amount: 0 };
 	}
 
@@ -327,6 +397,15 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 			await this.orderRepo.createCashflow({ type: 'OUT', orderId: order.id, amount, date: new Date(), note: `Hoàn tiền khách (đơn ${order.orderCode})` }, tx);
 			await this.orderRepo.updateOrder(order.id, { status: OrderStatus.REFUNDED }, tx);
 		});
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.PAYMENT,
+			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+			title: `Đã hoàn tiền đơn ${order.orderCode}`,
+			message: `<p>Đơn <b>${order.orderCode}</b> đã được hoàn <b>${Number(amount).toLocaleString('vi-VN')}đ</b>.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 
 	private async forceStatus(order: any, payload: any): Promise<void> {
@@ -340,5 +419,14 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 		const auditNote = `[FORCE ${new Date().toISOString()}] ${status.toUpperCase()}: ${String(reason).trim()}`;
 		const note = order.note ? `${order.note}\n${auditNote}` : auditNote;
 		await this.orderRepo.updateOrder(order.id, { status, note });
+		await notifyOrderUser(this.subject, this.orderRepo.client, {
+			userId: order.userId,
+			type: NotificationType.ORDER,
+			channels: [NotificationChannel.DB],
+			title: `Cập nhật đơn ${order.orderCode}`,
+			message: `<p>Đơn <b>${order.orderCode}</b> chuyển sang trạng thái <b>${status}</b>.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 }

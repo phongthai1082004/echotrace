@@ -1,6 +1,6 @@
 {
-	"brand": "Cabinet Memoir",
-	"brandShort": "CM",
+	"brand": "Better Memoire",
+	"brandShort": "BM",
 	"tagline": "Thiết kế sổ tay du lịch thụ công với bố cục đẳng cấp biên tập.",
 	"nav": {
 		"explore": "Khám phá",
@@ -198,8 +198,8 @@
 			"bookTitle": "CÂU CHUYỆN CỦA BẠN"
 		},
 		"footer": {
-			"brandBox": "FOLIO",
-			"brandTag": "PRESS™",
+			"brandBox": "BETTER",
+			"brandTag": "MEMOIRE™",
 			"desc": "Sách ảnh cao cấp, thiết kế trực tuyến và in với chất lượng lưu trữ. Trụ sở tại London, giao hàng toàn thế giới.",
 			"cols": [
 				{
@@ -233,7 +233,7 @@
 					]
 				}
 			],
-			"legal": "© 2024 FOLIO PRESS LTD · BẢO LƯU MỌI QUYỀN",
+			"legal": "© 2024 BETTER MEMOIRE · BẢO LƯU MỌI QUYỀN",
 			"links": [
 				"Chính Sách Bảo Mật",
 				"Điều Khoản Dịch Vụ",

@@ -1,6 +1,6 @@
 {
-	"brand": "Cabinet Memoir",
-	"brandShort": "CM",
+	"brand": "Better Memoire",
+	"brandShort": "BM",
 	"tagline": "Design bespoke travel journals with editorial-grade layouts.",
 	"nav": {
 		"explore": "Explore",
@@ -198,8 +198,8 @@
 			"bookTitle": "YOUR STORY"
 		},
 		"footer": {
-			"brandBox": "FOLIO",
-			"brandTag": "PRESS™",
+			"brandBox": "BETTER",
+			"brandTag": "MEMOIRE™",
 			"desc": "Premium photo books, designed online and printed with archival quality. Based in London, shipped worldwide.",
 			"cols": [
 				{
@@ -233,7 +233,7 @@
 					]
 				}
 			],
-			"legal": "© 2024 FOLIO PRESS LTD · ALL RIGHTS RESERVED",
+			"legal": "© 2024 BETTER MEMOIRE · ALL RIGHTS RESERVED",
 			"links": [
 				"Privacy Policy",
 				"Terms of Service",

@@ -6,7 +6,7 @@ const otpTemplate = (otp: string) => `
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px">
     <table width="400" cellpadding="0" cellspacing="0" style="background:#FFF7D6;border:3px solid #222;border-radius:12px;box-shadow:6px 6px 0 #222">
       <tr><td style="padding:32px 24px;text-align:center">
-        <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;color:#222">Cabinet Memoir</h1>
+        <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;color:#222">Better Memoire</h1>
         <p style="font-size:13px;color:#666;margin:0 0 24px">Your verification code</p>
         <div style="background:#222;border-radius:8px;padding:16px;margin-bottom:24px">
           <span style="font-size:36px;font-weight:700;color:#fff;letter-spacing:8px">${otp}</span>
@@ -15,7 +15,7 @@ const otpTemplate = (otp: string) => `
         <p style="font-size:10px;color:#999;margin:8px 0 0">If you didn't request this, please ignore this email.</p>
       </td></tr>
     </table>
-        <p style="font-size:10px;color:#999;margin-top:16px">Cabinet Memoir — Design your travel journals</p>
+        <p style="font-size:10px;color:#999;margin-top:16px">Better Memoire — Design your travel journals</p>
   </td></tr></table>
 </body>
 </html>`;
@@ -39,9 +39,9 @@ export async function sendOtpEmail(to: string, otp: string) {
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({
-			from: 'Cabinet Memoir <noreply@cabinetmemoir.app>',
+			from: 'Better Memoire <noreply@bettermemoire.com>',
 			to,
-			subject: 'Your OTP Code — Cabinet Memoir',
+			subject: 'Your OTP Code — Better Memoire',
 			html: otpTemplate(otp),
 		}),
 	});
