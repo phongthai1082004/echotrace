@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { AppError } from '../../../shared/middleware/app.error.js';
-import { ErrorCode } from '@echotrace/shared';
+import { ErrorCode, EXPENSE_INPUT_CATEGORIES } from '@echotrace/shared';
 import { FinanceRepository } from './finance.repository.js';
 
 export interface SupplierDebt {
@@ -18,8 +18,6 @@ export interface CreateExpenseInput {
 	supplierName?: string;
 	note?: string;
 }
-
-const EXPENSE_CATEGORIES = ['OPERATING', 'PAYROLL', 'MARKETING', 'DEBT', 'OTHER', 'SUPPLIER', 'DEFECTIVE'];
 
 export interface IFinanceService {
 	getSummary(): Promise<{ summary: Record<string, number>; monthly: { period: string; revenue: number; orders: number }[] }>;
@@ -98,7 +96,7 @@ export class FinanceService implements IFinanceService {
 
 	async createExpense(input: CreateExpenseInput): Promise<any> {
 		if (typeof input.amount !== 'number' || !Number.isFinite(input.amount) || input.amount <= 0) throw new AppError(ErrorCode.INTERNAL, 400);
-		if (!EXPENSE_CATEGORIES.includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
+		if (!(EXPENSE_INPUT_CATEGORIES as readonly string[]).includes(input.category)) throw new AppError(ErrorCode.INTERNAL, 400);
 		return this.financeRepo.createExpense({
 			amount: input.amount,
 			category: input.category as any,

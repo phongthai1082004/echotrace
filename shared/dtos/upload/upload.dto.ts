@@ -7,12 +7,34 @@ export interface UploadSignatureDTO {
   cloud_name: string | undefined;
 }
 
-export interface SaveImageDTO {
-  url: string;
+import { IsString, IsNotEmpty, IsOptional, IsInt, Min } from 'class-validator';
+
+export class SaveImageDTO {
+  @IsString()
+  @IsNotEmpty()
+  url!: string;
+
+  @IsString()
+  @IsOptional()
   publicId?: string;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
   width?: number;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
   height?: number;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
   size?: number;
+
+  @IsString()
+  @IsOptional()
   thumbUrl?: string;
 }
 

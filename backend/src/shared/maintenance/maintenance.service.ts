@@ -1,7 +1,10 @@
 import { container } from '../../di/container.js';
 import { PrismaService } from '../../../lib/db.service.js';
-import { NotificationType } from '@echotrace/shared';
+import { NotificationType, ErrorCode } from '@echotrace/shared';
+import { AppError } from '../middleware/app.error.js';
 import { broadcastNotification } from '../../modules/notification/notify/broadcast.js';
+
+const MAX_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export interface MaintenanceWindowDTO {
 	id: number;
@@ -106,6 +109,13 @@ export async function stopMaintenanceNow(by?: string): Promise<MaintenanceStatus
 }
 
 export async function scheduleMaintenance(startAt: Date, endAt: Date, by?: string, reason?: string | null) {
+	// ponytail: validate trong service (không phải routes) để test được trực tiếp:
+	// ISO hợp lệ, endAt > startAt, endAt tương lai, cửa sổ tối đa 24h (chống gõ nhầm năm)
+	const t0 = startAt instanceof Date ? startAt.getTime() : NaN;
+	const t1 = endAt instanceof Date ? endAt.getTime() : NaN;
+	if (!Number.isFinite(t0) || !Number.isFinite(t1) || t1 <= t0 || t1 <= Date.now() || t1 - t0 > MAX_WINDOW_MS) {
+		throw new AppError(ErrorCode.VALIDATION_FAILED, 400);
+	}
 	const r = await db().maintenanceWindow.create({
 		data: { startAt, endAt, reason: reason?.slice(0, 500) ?? null, status: 'scheduled', createdBy: by ? parseInt(by) : null },
 	});

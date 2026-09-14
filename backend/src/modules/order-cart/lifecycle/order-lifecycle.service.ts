@@ -128,7 +128,10 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 			data.status = patch.status;
 		}
 
-		if (patch.supplierId !== undefined) data.supplierId = patch.supplierId;
+		if (patch.supplierId !== undefined) {
+			if (!Number.isInteger(patch.supplierId)) throw new AppError(ErrorCode.INTERNAL, 400);
+			data.supplierId = patch.supplierId;
+		}
 		if (patch.trackingCode !== undefined) data.trackingCode = patch.trackingCode;
 		if (patch.defectState !== undefined) {
 			if (!Object.values(DefectState).includes(patch.defectState)) throw new AppError(ErrorCode.INTERNAL, 400);

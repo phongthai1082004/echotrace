@@ -10,6 +10,7 @@ export * from './expense/expense.dto.js';
 export * from './income/income.dto.js';
 export * from './order/order.dto.js';
 export * from './order/order.read.dto.js';
+export * from './returns/returns.dto.js';
 export * from './payment/payment.link.dto.js';
 export * from './sample-book/sample-book.dto.js';
 export * from './supplier/supplier.dto.js';

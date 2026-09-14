@@ -8,6 +8,20 @@ export const ExpenseCategory = {
 
 export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];
 
+import { IsString, IsOptional, IsNumber, IsPositive, IsIn, IsDateString, IsObject } from 'class-validator';
+
+// Matches finance.service validation (amount > 0, category whitelist).
+// NOTE: SUPPLIER/DEFECTIVE are accepted here (system-written flows), not just the base enum.
+export const EXPENSE_INPUT_CATEGORIES = [
+	'OPERATING',
+	'PAYROLL',
+	'MARKETING',
+	'DEBT',
+	'OTHER',
+	'SUPPLIER',
+	'DEFECTIVE',
+] as const;
+
 export interface ExpenseDTO {
   id: number;
   transactionId: number;
@@ -23,16 +37,37 @@ export interface ExpenseDTO {
   updatedAt: Date | string;
 }
 
-export interface CreateExpenseDTO {
-  transactionId: number;
-  amount: number;
-  category: ExpenseCategory;
-  description?: string | null;
-  date?: Date | string;
-  supplierName?: string | null;
-  supplierInfo?: Record<string, unknown>;
-  taxCode?: string | null;
-  note?: string | null;
+export class CreateExpenseDTO {
+	@IsNumber()
+	@IsPositive()
+	amount!: number;
+
+	@IsIn(EXPENSE_INPUT_CATEGORIES)
+	category!: (typeof EXPENSE_INPUT_CATEGORIES)[number];
+
+	@IsString()
+	@IsOptional()
+	description?: string | null;
+
+	@IsDateString()
+	@IsOptional()
+	date?: string;
+
+	@IsString()
+	@IsOptional()
+	supplierName?: string | null;
+
+	@IsObject()
+	@IsOptional()
+	supplierInfo?: Record<string, unknown>;
+
+	@IsString()
+	@IsOptional()
+	taxCode?: string | null;
+
+	@IsString()
+	@IsOptional()
+	note?: string | null;
 }
 
 export interface UpdateExpenseDTO {

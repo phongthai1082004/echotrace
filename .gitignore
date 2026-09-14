@@ -52,4 +52,5 @@ pnpm-debug.log*
 # test
 backend/tests/*
 backend/test-results/*
+backend/coverage/*
 *.md

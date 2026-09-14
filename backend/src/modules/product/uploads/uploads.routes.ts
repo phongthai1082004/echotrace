@@ -1,5 +1,7 @@
 import { container } from 'tsyringe';
 import { asyncHandler } from '../../../shared/middleware/async-handler.js';
+import { validateDto } from '../../../shared/middleware/validator.middleware.js';
+import { SaveImageDTO } from '@echotrace/shared';
 import { Router, Request, Response, NextFunction } from 'express';
 import { UploadController } from './uploads.controller.js';
 import { authGuard, AuthRequest } from '../../../shared/middleware/auth.middleware.js';
@@ -16,6 +18,7 @@ router.get(
 );
 router.post(
 	'/uploads/image',
+	validateDto(SaveImageDTO),
 	asyncHandler((req, res) => uploadCtrl.saveImage(req, res)),
 );
 router.get(
