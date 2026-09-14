@@ -1,0 +1,127 @@
+import { container } from '../../di/container.js';
+import { PrismaService } from '../../../lib/db.service.js';
+import { NotificationType } from '@echotrace/shared';
+import { broadcastNotification } from '../../modules/notification/notify/broadcast.js';
+
+export interface MaintenanceWindowDTO {
+	id: number;
+	startAt: string;
+	endAt: string | null;
+	reason: string | null;
+	status: string;
+	createdAt: string;
+	endedAt: string | null;
+}
+
+export interface MaintenanceStatus {
+	active: boolean;
+	window: MaintenanceWindowDTO | null;
+}
+
+function db() {
+	return container.resolve(PrismaService).db;
+}
+
+function pick(r: any): MaintenanceWindowDTO {
+	return {
+		id: r.id,
+		startAt: r.startAt.toISOString(),
+		endAt: r.endAt ? r.endAt.toISOString() : null,
+		reason: r.reason,
+		status: r.status,
+		createdAt: r.createdAt.toISOString(),
+		endedAt: r.endedAt ? r.endedAt.toISOString() : null,
+	};
+}
+
+// ponytail: dòng live = dòng bao giờ-hiện-tại (ưu tiên tạo sau cùng); quá giờ
+// tự lật completed nên làm sớm quên tắt cũng tự mở lại. Redis reset không ảnh hưởng.
+export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
+	const now = new Date();
+	const rows = await db().maintenanceWindow.findMany({
+		where: { status: { in: ['scheduled', 'active'] } },
+		orderBy: { id: 'desc' },
+		take: 10,
+	});
+	const covers = (r: any) => r.startAt <= now && (!r.endAt || r.endAt >= now);
+	const live = rows.find(covers);
+	if (live) {
+		if (live.status === 'scheduled') {
+			// ponytail: guard notifiedAt — nhiều process cùng lật thì 1 bên thắng, khỏi bắn trùng
+			const flipped = await db().maintenanceWindow.updateMany({
+				where: { id: live.id, notifiedAt: null },
+				data: { status: 'active', notifiedAt: now },
+			}).catch(() => ({ count: 0 }));
+			if (flipped.count > 0) {
+				await broadcastNotification({
+					type: NotificationType.SYSTEM,
+					title: 'Shop đang bảo trì',
+					message: `<p>Shop đang bảo trì${live.reason ? `: ${live.reason}` : ''}. Quay lại sau vài phút nhé.</p>`,
+					metadata: { maintenanceId: live.id },
+				});
+			}
+		}
+		return { active: true, window: pick({ ...live, status: 'active' }) };
+	}
+	// dọn các cửa sổ đã qua mà chưa đóng
+	await db().maintenanceWindow.updateMany({
+		where: { status: { in: ['scheduled', 'active'] }, endAt: { lt: now } },
+		data: { status: 'completed', endedAt: now },
+	}).catch(() => {});
+	return { active: false, window: null };
+}
+
+// bật tay ngay — hủy các lịch đang chờ/dang dở (bật tay đè lịch hẹn)
+export async function startMaintenanceNow(by?: string, reason?: string | null): Promise<MaintenanceStatus> {
+	const now = new Date();
+	await db().maintenanceWindow.updateMany({
+		where: { status: { in: ['scheduled', 'active'] } },
+		data: { status: 'cancelled', endedAt: now },
+	}).catch(() => {});
+	const r = await db().maintenanceWindow.create({
+		data: { startAt: now, endAt: null, reason: reason?.slice(0, 500) ?? null, status: 'active', notifiedAt: now, createdBy: by ? parseInt(by) : null },
+	});
+	await broadcastNotification({
+		type: NotificationType.SYSTEM,
+		title: 'Shop đang bảo trì',
+		message: `<p>Shop đang bảo trì${r.reason ? `: ${r.reason}` : ''}. Quay lại sau vài phút nhé.</p>`,
+		metadata: { maintenanceId: r.id },
+	});
+	return { active: true, window: pick(r) };
+}
+
+// tắt ngay = nút "xong sớm" — đóng mọi cửa sổ đang live/chờ + báo mở lại
+export async function stopMaintenanceNow(by?: string): Promise<MaintenanceStatus> {
+	const now = new Date();
+	await db().maintenanceWindow.updateMany({
+		where: { status: { in: ['scheduled', 'active'] } },
+		data: { status: 'completed', endedAt: now, endedBy: by ? parseInt(by) : null },
+	}).catch(() => {});
+	await broadcastNotification({
+		type: NotificationType.SYSTEM,
+		title: 'Shop đã mở lại',
+		message: `<p>Bảo trì hoàn tất. Cảm ơn bạn đã chờ.</p>`,
+	});
+	return { active: false, window: null };
+}
+
+export async function scheduleMaintenance(startAt: Date, endAt: Date, by?: string, reason?: string | null) {
+	const r = await db().maintenanceWindow.create({
+		data: { startAt, endAt, reason: reason?.slice(0, 500) ?? null, status: 'scheduled', createdBy: by ? parseInt(by) : null },
+	});
+	const fmt = (d: Date) => d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+	await broadcastNotification({
+		type: NotificationType.SYSTEM,
+		title: 'Sắp bảo trì shop',
+		message: `<p>Shop sẽ bảo trì từ <b>${fmt(startAt)}</b> đến <b>${fmt(endAt)}</b>${r.reason ? ` (${r.reason})` : ''}.</p>`,
+		metadata: { maintenanceId: r.id },
+	});
+	const now = new Date();
+	const active = startAt <= now && endAt >= now;
+	return { ...pick(r), active };
+}
+
+export async function listMaintenanceHistory(limit = 10) {
+	const rows = await db().maintenanceWindow.findMany({ orderBy: { id: 'desc' }, take: Math.min(Math.max(limit, 1), 50) });
+	return rows.map(pick);
+}

@@ -38,6 +38,11 @@ model User {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
+  // ponytail: first-touch marketing attribution, write-once (null mới ghi)
+  firstUtmSource   String?
+  firstUtmMedium   String?
+  firstUtmCampaign String?
+
   tokens      Token[]
   orders      Order[]
   userImages  UserImage[]
@@ -56,9 +61,11 @@ model Notification {
   userId    Int
   title     String
   message   String
-  sendBy    String   @default("system")
-  type      String   @default("info")
+  sendBy    String  @default("system")
+  type      String  @default("info")
   channels  String[] @default([])
+  // ponytail: personal = 1 user, broadcast = toàn bộ (500 rows/đợt, vài ms)
+  scope     String  @default("personal")
   email     String?
   phone     String?
   metadata  Json?
@@ -69,6 +76,7 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, scope])
 }
 
 model Token {
@@ -165,6 +173,11 @@ model Order {
   returnReason String?
   defectState  DefectState? @default(none)
 
+  // ponytail: snapshot UTM copy server-side từ Book lúc tạo đơn — đơn bất biến
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
   user         User          @relation(fields: [userId], references: [id])
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
   transactions Transaction[]
@@ -175,6 +188,7 @@ model Order {
   @@index([status])
   @@index([orderCode])
   @@index([trackingCode])
+  @@index([utmSource])
 }
 
 model OrderPdfJob {
@@ -305,6 +319,12 @@ model Book {
   updatedAt DateTime @updatedAt
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
+
+  // ponytail: UTM ghim lúc tạo sách — phiên design kéo dài nhiều ngày nên
+  // attribution theo project, không theo session lúc thanh toán
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
 
   sampleBookId Int?
   sampleBook   SampleBook? @relation(fields: [sampleBookId], references: [id])
@@ -459,8 +479,8 @@ model SupplierPrintOption {
   printOptionId Int
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  isDelete      Boolean   @default(false)
-  deletedAt     DateTime?
+  isDelete  Boolean  @default(false)
+  deletedAt DateTime?
 
   supplier    Supplier   @relation(fields: [supplierId], references: [id])
   printOption PrintOption @relation(fields: [printOptionId], references: [id])
@@ -507,4 +527,23 @@ model FinancePeriod {
   payables             Float    @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+// ponytail: cửa sổ bảo trì — 1 bảng vừa là cờ live (dòng scheduled/active mới
+// nhất) vừa là lịch sử. Sống trong DB nên rebuild container/Redis reset không mất.
+model MaintenanceWindow {
+  id        Int      @id @default(autoincrement())
+  startAt   DateTime
+  endAt     DateTime? // null = bật tay, mở tới khi có người tắt
+  reason    String?
+  status    String   @default("scheduled") // scheduled|active|completed|cancelled
+  createdBy Int?
+  createdAt DateTime @default(now())
+  endedAt   DateTime?
+  endedBy   Int?
+  // ponytail: đã bắn broadcast "đang bảo trì" chưa — guard chống bắn trùng
+  // khi nhiều process cùng lật cửa sổ hẹn sang active
+  notifiedAt DateTime?
+
+  @@index([status])
 }

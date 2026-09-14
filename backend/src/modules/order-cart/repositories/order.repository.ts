@@ -38,6 +38,14 @@ export class OrderRepository {
 		return (tx ?? this.client).user.findUnique({ where: { id: userId }, select: { name: true, email: true, phone: true, address: true } });
 	}
 
+	// ponytail: đọc UTM đã ghim trên Book để snapshot sang Order lúc tạo đơn
+	findBooksAttribution(bookIds: number[], tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).book.findMany({
+			where: { id: { in: bookIds } },
+			select: { id: true, utmSource: true, utmMedium: true, utmCampaign: true },
+		});
+	}
+
 	// --- sample book stock ---
 	findSampleBooks(ids: number[], tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.findMany({ where: { id: { in: ids } }, select: { id: true, quantity: true } });
@@ -77,6 +85,26 @@ export class OrderRepository {
 	}
 	createOrder(data: Prisma.OrderUncheckedCreateInput, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).order.create({ data });
+	}
+
+	// --- marketing summary (groupBy trực tiếp, 2 admin nên không cache) ---
+	summarizeOrdersBySource(from: Date, to: Date) {
+		return this.client.order.groupBy({
+			by: ['utmSource'],
+			where: {
+				createdAt: { gte: from, lt: to },
+				status: { notIn: ['pending_payment', 'cancelled', 'refunded', 'pending_refund'] },
+			},
+			_count: { _all: true },
+			_sum: { totalAmount: true, paidAmount: true },
+		});
+	}
+	countBooksBySource(from: Date, to: Date) {
+		return this.client.book.groupBy({
+			by: ['utmSource'],
+			where: { createdAt: { gte: from, lt: to }, isDelete: false },
+			_count: { _all: true },
+		});
 	}
 	updateOrder(id: number, data: Record<string, unknown>, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).order.update({ where: { id }, data: data as Prisma.OrderUpdateInput });

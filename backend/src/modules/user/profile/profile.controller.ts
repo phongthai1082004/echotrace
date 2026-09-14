@@ -23,4 +23,10 @@ export class ProfileController {
 		const result = await this.profileService.changePassword(req.userId!, req.body);
 		res.json(ApiResponse.success(result));
 	};
+
+	stampAttribution = async (req: AuthRequest, res: Response) => {
+		const { source, medium, campaign } = req.body ?? {};
+		const result = await this.profileService.stampAttribution(req.userId!, { source, medium, campaign });
+		res.json(ApiResponse.success(result));
+	};
 }

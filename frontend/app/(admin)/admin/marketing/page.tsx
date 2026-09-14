@@ -1,61 +1,51 @@
 "use client";
 
-import { Users, Percent } from "lucide-react";
+import { ShoppingBag, DollarSign, Tag, BookOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { label, card } from "@/lib/styles";
 import { FunnelChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
+import { useMarketingSummary } from "./_hooks/use-marketing-summary";
+
+// ponytail: funnel 5 nấc — 3 nấc đầu từ GA Data API, 2 nấc cuối từ DB.
+// Chưa cấu hình GA (gaConfigured=false) thì đầu phễu hiện 0 + dòng chú thích.
+const CHANNEL_LABELS: Record<string, string> = {
+  facebook: "channelFacebookAds",
+  tiktok: "channelTikTokBio",
+  google: "channelGoogleOrganic",
+  instagram: "channelInstagramReels",
+  email: "channelEmailCampaign",
+};
 
 export default function MarketingPage() {
   const { t } = useTranslation();
+  const summary = useMarketingSummary(30);
+  const totals = summary?.totals;
+  const rows = summary?.bySource ?? [];
 
   const kpis = [
-    { key: "totalVisitors", value: "12,840", change: "+5.2%", icon: Users },
-    { key: "conversionRate", value: "3.42%", change: "+0.31pp", icon: Percent },
+    { key: "paidOrders", value: totals ? String(totals.orders) : "…", icon: ShoppingBag },
+    {
+      key: "totalRevenueMarketing",
+      value: totals ? `$${totals.revenue.toLocaleString()}` : "…",
+      icon: DollarSign,
+    },
+    {
+      key: "avgOrderValue",
+      value: totals ? `$${totals.avgOrderValue.toLocaleString()}` : "…",
+      icon: Tag,
+    },
+    { key: "booksCreated", value: totals ? String(totals.books) : "…", icon: BookOpen },
   ];
 
+  const v = totals?.visitors ?? 0;
+  const pct = (n: number) => (v ? Math.round((n / v) * 1000) / 10 : 0);
   const funnel = [
-    { step: t("admin.marketing.funnelVisitedSite"), count: 12840, pct: 100 },
-    { step: t("admin.marketing.funnelOpenedDesigner"), count: 6420, pct: 50 },
-    { step: t("admin.marketing.funnelViewedPreview"), count: 3852, pct: 30 },
-    { step: t("admin.marketing.funnelClickedCheckout"), count: 1798, pct: 14 },
-    { step: t("admin.marketing.funnelSuccessfulPayment"), count: 439, pct: 3.42 },
-  ];
-
-  const trafficSources = [
-    {
-      channel: t("admin.marketing.channelFacebookAds"),
-      visitors: 4120,
-      orders: 158,
-      conv: 3.83,
-      spend: 1200,
-      roas: 4.2,
-    },
-    { channel: t("admin.marketing.channelTikTokBio"), visitors: 2840, orders: 92, conv: 3.24, spend: 800, roas: 3.8 },
-    {
-      channel: t("admin.marketing.channelGoogleOrganic"),
-      visitors: 3210,
-      orders: 126,
-      conv: 3.93,
-      spend: 0,
-      roas: null,
-    },
-    {
-      channel: t("admin.marketing.channelInstagramReels"),
-      visitors: 1890,
-      orders: 43,
-      conv: 2.28,
-      spend: 600,
-      roas: 2.5,
-    },
-    {
-      channel: t("admin.marketing.channelEmailCampaign"),
-      visitors: 780,
-      orders: 20,
-      conv: 2.56,
-      spend: 200,
-      roas: 3.1,
-    },
+    { step: t("admin.marketing.funnelVisitedSite"), count: v, pct: 100 },
+    { step: t("admin.marketing.funnelOpenedDesigner"), count: totals?.opened ?? 0, pct: pct(totals?.opened ?? 0) },
+    { step: t("admin.marketing.funnelViewedPreview"), count: totals?.preview ?? 0, pct: pct(totals?.preview ?? 0) },
+    { step: t("admin.marketing.funnelClickedCheckout"), count: totals?.checkout ?? 0, pct: pct(totals?.checkout ?? 0) },
+    { step: t("admin.marketing.funnelSuccessfulPayment"), count: totals?.orders ?? 0, pct: pct(totals?.orders ?? 0) },
   ];
 
   return (
@@ -72,38 +62,26 @@ export default function MarketingPage() {
                   <p className={`${label} text-[#666]`}>{t(`admin.marketing.${k.key}`)}</p>
                 </div>
                 <p className="text-2xl font-bold">{k.value}</p>
-                <p className="font-mono text-[9px] font-bold mt-1 text-[#2D6A2D]">{k.change}</p>
               </div>
             );
           })}
-          <div className={`p-6 ${card} flex flex-col justify-center`}>
-            <p className={`${label} mb-2 text-[#666]`}>{t("admin.marketing.avgOrderValue")}</p>
-            <p className="text-2xl font-bold">$97.20</p>
-            <p className="font-mono text-[9px] font-bold mt-1 text-[#999]">{t("admin.marketing.acrossAllChannels")}</p>
-          </div>
-          <div className={`p-6 ${card} flex flex-col justify-center`}>
-            <p className={`${label} mb-2 text-[#666]`}>{t("admin.marketing.totalRevenueMarketing")}</p>
-            <p className="text-2xl font-bold">$42,680</p>
-            <p className="font-mono text-[9px] font-bold mt-1 text-[#999]">{t("admin.marketing.attributedThisWeek")}</p>
-          </div>
         </div>
 
         <div className={`p-6 ${card}`}>
           <p className={`${label} mb-6 text-[#666]`}>{t("admin.marketing.conversionFunnel")}</p>
           <FunnelChart data={funnel} />
           <div className="mt-6 pt-4 border-t-[2px] border-[#222]/10 flex items-center gap-6">
-            {[
-              { label: "dropoffSiteToDesigner", val: "50%" },
-              { label: "dropoffPreviewToCheckout", val: "53.3%" },
-              { label: "overallCr", val: "3.42%" },
-            ].map((d) => (
-              <div key={d.label}>
-                <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999]">
-                  {t(`admin.marketing.${d.label}`)}
-                </p>
-                <p className="text-lg font-bold mt-0.5">{d.val}</p>
-              </div>
-            ))}
+            <div>
+              <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#999]">
+                {t("admin.marketing.overallCr")}
+              </p>
+              <p className="text-lg font-bold mt-0.5">{pct(totals?.orders ?? 0)}%</p>
+            </div>
+            {summary && !summary.gaConfigured && (
+              <p className="font-mono text-[8px] font-bold tracking-widest uppercase text-[#B54843]">
+                {t("admin.marketing.gaNotConnected")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -118,8 +96,10 @@ export default function MarketingPage() {
                   {[
                     t("admin.marketing.channel"),
                     t("admin.marketing.visitors"),
+                    t("admin.marketing.books"),
                     t("admin.marketing.orders"),
                     t("admin.marketing.convRate"),
+                    t("admin.marketing.revenue"),
                   ].map((h) => (
                     <th
                       key={h}
@@ -131,24 +111,43 @@ export default function MarketingPage() {
                 </tr>
               </thead>
               <tbody>
-                {trafficSources.map((s) => (
-                  <tr key={s.channel} className="hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10">
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 text-sm font-bold">
-                      {s.channel}
-                    </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
-                      {s.visitors.toLocaleString()}
-                    </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
-                      {s.orders}
-                    </td>
-                    <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5">
-                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4E6] text-[#2D6A2D] border-2 border-[#2D6A2D]">
-                        {s.conv}%
-                      </span>
+                {rows.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-sm font-bold text-[#999]"
+                    >
+                      …
                     </td>
                   </tr>
-                ))}
+                )}
+                {rows.map((r) => {
+                  const conv = r.visitors ? Math.round((r.orders / r.visitors) * 10000) / 100 : 0;
+                  return (
+                    <tr key={r.source} className="hover:bg-[#e8e6e0] transition-colors border-b-[2px] border-[#222]/10">
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 text-sm font-bold">
+                        {CHANNEL_LABELS[r.source] ? t(`admin.marketing.${CHANNEL_LABELS[r.source]}`) : r.source === "unknown" ? t("admin.marketing.unknown") : r.source}
+                      </td>
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                        {r.visitors.toLocaleString()}
+                      </td>
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                        {r.books}
+                      </td>
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                        {r.orders}
+                      </td>
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5">
+                        <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4E6] text-[#2D6A2D] border-2 border-[#2D6A2D]">
+                          {conv}%
+                        </span>
+                      </td>
+                      <td className="px-4 max-[1600px]:px-3 max-[1280px]:px-2 py-3 max-[1600px]:py-2.5 font-mono text-[10px] font-bold">
+                        ${r.revenue.toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

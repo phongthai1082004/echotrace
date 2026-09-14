@@ -4,7 +4,7 @@ import { OrderStatus, ReturnState, ReturnFault, DefectState, ErrorCode, Notifica
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { IOrderFinanceService } from '../../financial/settlement/order-finance.bridge.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
-import { notifyOrderUser } from '../../notification/order-notify.js';
+import { notifyOrderUser, notifyAdmins } from '../../notification/notify/order.js';
 
 export interface IReturnsService {
 	requestReturn(
@@ -48,6 +48,13 @@ export class ReturnsService implements IReturnsService {
 			items[r.index] = { ...items[r.index], defective: true, returnQty: r.quantity, returnDefect: r.defect ?? null };
 		}
 		await this.orderRepo.updateOrder(orderId, { returnState: ReturnState.REQUESTED, returnReason: body.reason ?? null, orderItems: items });
+		await notifyAdmins(this.subject, this.orderRepo.client, {
+			type: NotificationType.ORDER,
+			title: `Yêu cầu đổi trả đơn ${order.orderCode}`,
+			message: `<p>Khách vừa gửi yêu cầu đổi trả đơn <b>${order.orderCode}</b>${body.reason ? `: ${body.reason}` : ''}.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
 	}
 
 	async approveReturn(orderId: number, body: { fault: ReturnFault }): Promise<void> {

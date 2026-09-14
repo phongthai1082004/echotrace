@@ -1,6 +1,11 @@
 {
 	"brand": "Better Memoire",
 	"brandShort": "BM",
+	"maintenance": {
+		"title": "En mantenimiento",
+		"desc": "Estamos actualizando la tienda para servirte mejor. Volvemos en unos minutos.",
+		"retry": "Reintentar"
+	},
 	"tagline": "Diseña diarios de viaje artesanales con maquetación editorial.",
 	"nav": {
 		"explore": "Explorar",
@@ -692,6 +697,11 @@
 				"DEFECTIVE": "Envío de defectuosos"
 			}
 		},
+		"maintenance": {
+			"label": "Admin · Mantenimiento",
+			"title": "Modo de mantenimiento",
+			"history": "Historial"
+		},
 		"marketing": {
 			"label": "Admin · Marketing",
 			"title": "Analítica de Tráfico y Conversión",
@@ -707,6 +717,12 @@
 			"overallCr": "CR global",
 			"trafficSources": "Fuentes de tráfico (UTM)",
 			"channel": "Canal",
+			"books": "Libros",
+			"revenue": "Ingresos",
+			"unknown": "Desconocido / Directo",
+			"paidOrders": "Pedidos pagados",
+			"booksCreated": "Libros creados",
+			"gaNotConnected": "GA no conectado — inicio del embudo en 0",
 			"visitors": "Visitantes",
 			"orders": "Pedidos",
 			"convRate": "Tasa conv.",
@@ -989,7 +1005,21 @@
 		},
 		"adminAccount": {
 			"label": "Admin · Cuenta",
-			"title": "Ajustes de cuenta"
+			"title": "Ajustes de cuenta",
+			"maintenanceTitle": "Modo de mantenimiento",
+			"maintenanceDesc": "Actívalo durante actualizaciones. Los clientes ven una página de mantenimiento; los admins siguen trabajando; los webhooks de pago siguen activos.",
+			"maintenanceSchedule": "Programar",
+			"maintenanceStart": "Inicio",
+			"maintenanceEnd": "Fin",
+			"maintenanceSave": "Guardar",
+			"maintenanceClear": "Borrar",
+			"maintenanceConfirmTitle": "Confirmar",
+			"maintenanceConfirmOn": "¿Activar el mantenimiento ahora? Los clientes verán la página de mantenimiento.",
+			"maintenanceConfirmOff": "¿Desactivar el mantenimiento? Los clientes podrán volver.",
+			"maintenanceConfirmSchedule": "¿Programar el mantenimiento desde {{from}} hasta {{to}}?",
+			"maintenanceWindow": "Programado: {{from}} → {{to}}",
+			"maintenanceLive": "MANTENIMIENTO ACTIVO",
+			"maintenanceIdle": "Abierto"
 		},
 		"common": {
 			"dash": "—",
@@ -1006,6 +1036,7 @@
 			"users": "Usuarios",
 			"assets": "Activos",
 			"account": "Cuenta",
+			"maintenance": "Mantenimiento",
 			"studio": "Estudio",
 			"notifications": "Notificaciones",
 			"coupons": "Cupones",

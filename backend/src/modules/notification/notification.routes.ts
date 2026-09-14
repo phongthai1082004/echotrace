@@ -8,5 +8,6 @@ const ctrl = container.resolve(NotificationController);
 
 route(router, 'get', '/notifications', (req, res) => ctrl.list(req, res), { auth: true });
 route(router, 'patch', '/notifications/:id/read', (req, res) => ctrl.markRead(req, res), { auth: true });
+route(router, 'get', '/notifications/stream', (req, res) => ctrl.stream(req, res), { auth: true });
 
 export default router;

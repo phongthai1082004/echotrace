@@ -137,7 +137,7 @@ export function AccountSettings() {
 
   return (
     <>
-      <div className="flex items-center gap-1 overflow-x-auto pb-2 border-b-[3px] border-[#222] mb-8">
+      <div className="mt-2 flex items-center gap-1 overflow-x-auto pb-2 border-b-[3px] border-[#222] mb-8">
         {[
           { id: "information" as const, label: t("account.information") },
           { id: "reset-password" as const, label: t("account.changePassword") },

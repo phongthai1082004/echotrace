@@ -15,8 +15,10 @@ import {
 } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ICartService } from '../cart/cart.service.js';
-import { PaymentService } from '../../financial/payments/gateways/payment.service.js';
-import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
+import { NotificationSubject } from '../../notification/notification.subject.js';
+import { notifyAdmins } from '../../notification/notify/order.js';
+import { NotificationType, NotificationChannel } from '@echotrace/shared';
+import { PaymentService } from '../../financial/payments/gateways/payment.service.js';import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { PaymentLinkItem } from '@payos/node';
 import { IPdfQueue } from '../../pdf/render/pdf.types.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
@@ -49,6 +51,7 @@ export class CheckoutService implements ICheckoutService {
 		@inject('IStockService') private stockService: IStockService,
 		@inject('ISampleBookService') private sampleBookService: ISampleBookService,
 		@inject('ICouponService') private couponService: ICouponService,
+		@inject('NotificationSubject') private subject: NotificationSubject,
 	) {}
 	async createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any> {
 		const [existing, user] = await this.orderRepo.client.$transaction([
@@ -140,18 +143,26 @@ export class CheckoutService implements ICheckoutService {
 						}
 					}
 
-					const itemsSnapshot = quote.items.map((item) => toOrderItem(item));
-					const order = await this.orderRepo.createOrder(
-						{
-							orderCode: String(orderCode),
-							userId,
-							subTotal: quote.subtotal,
-							discountAmount: quote.discount,
-							totalAmount: quote.total,
-							depositAmount: plan === PaymentPlan.HALF ? quote.payNow : 0,
-							paidAmount: 0,
-							paymentType: plan,
-							status: OrderStatus.PENDING_PAYMENT,
+				const itemsSnapshot = quote.items.map((item) => toOrderItem(item));
+				// ponytail: snapshot UTM từ Book (ghim lúc tạo sách) sang Order —
+				// đơn nhiều sách khác camp thì lấy book đầu tiên có UTM
+				const pinned = await this.orderRepo.findBooksAttribution(bookIds, tx);
+				const byId = new Map(pinned.map((b) => [b.id, b]));
+				const first = bookIds.map((id) => byId.get(id)).find((b) => b?.utmSource);
+				const order = await this.orderRepo.createOrder(
+					{
+						orderCode: String(orderCode),
+						userId,
+						subTotal: quote.subtotal,
+						discountAmount: quote.discount,
+						totalAmount: quote.total,
+						depositAmount: plan === PaymentPlan.HALF ? quote.payNow : 0,
+						paidAmount: 0,
+						paymentType: plan,
+						status: OrderStatus.PENDING_PAYMENT,
+						utmSource: first?.utmSource ?? null,
+						utmMedium: first?.utmMedium ?? null,
+						utmCampaign: first?.utmCampaign ?? null,
 							name: buyer.name || null,
 							phone: buyer.phone || null,
 							address: createOrderDto.address || null,
@@ -207,6 +218,17 @@ export class CheckoutService implements ICheckoutService {
 			scheduleDelayedJob('order_expiry', { orderId: result.orderId }, PAYMENT_LINK_EXPIRY_MS);
 
 			this.pdfQueue.enqueue(result.orderId).catch(() => {});
+
+			// ponytail: báo admin đơn mới — bỏ qua đơn admin tự tạo (createAlbumOrder)
+			if (!idempotencyKey.startsWith('admin-album-')) {
+				await notifyAdmins(this.subject, this.orderRepo.client, {
+					type: NotificationType.ORDER,
+					title: `Đơn mới ${result.orderCode}`,
+					message: `<p>Khách vừa tạo đơn <b>${result.orderCode}</b> trị giá <b>${Number(result.total).toLocaleString('vi-VN')}đ</b>.</p>`,
+					orderId: result.orderId,
+					orderCode: result.orderCode,
+				});
+			}
 
 			return result;
 		} catch (error) {

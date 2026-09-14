@@ -6,6 +6,7 @@ import { BookPreview } from "@/features/book-slider/book";
 import { customerAPI } from "@/features/studio-canvas/api/customer-api";
 import { renderBookImages, type BookPageImage } from "@/features/book-slider/render-book-images";
 import { resolveFormat, type PageState } from "@/features/studio-canvas/types";
+import { trackEvent } from "@/lib/analytics";
 
 export default function StudioPreviewPage() {
   const searchParams = useSearchParams();
@@ -15,6 +16,7 @@ export default function StudioPreviewPage() {
 
   useEffect(() => {
     if (!id) return;
+    trackEvent("view_preview", { book_id: id });
     let cancelled = false;
     customerAPI
       .load(id)

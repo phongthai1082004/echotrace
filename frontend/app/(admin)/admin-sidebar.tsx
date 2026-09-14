@@ -21,8 +21,11 @@ import {
   Printer,
   LogOut,
   BellDot,
+  Wrench,
 } from "lucide-react";
 import { CloseButton } from "@/components/ui/close-button";
+import { apiFetch } from "@/lib/api.fetch";
+import { useNotifStore, useUnreadCount } from "@/stores/notifications";
 import logoImg from "@/assets/images/Logo.png";
 
 export function AdminSidebar() {
@@ -33,13 +36,28 @@ export function AdminSidebar() {
   const { data: session, status } = useSession();
   const wasAuth = useRef(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  // ponytail: chuông admin đọc chung store (bootstrap ở Providers nạp + SSE đẩy)
+  const adminNotifs = useNotifStore((s) => s.items);
+  const adminUnread = useUnreadCount();
+  const adminLoadMore = useNotifStore((s) => s.loadMore);
+  const adminLoadingMore = useNotifStore((s) => s.loadingMore);
+
+  const openAdminNotif = async (n: any) => {
+    setNotifOpen(false);
+    if (!n.isRead && typeof n.id === "number") {
+      try {
+        await apiFetch(`/api/notifications/${n.id}/read`, undefined, { method: "PATCH" });
+      } catch {}
+    }
+    if (!n.isRead) useNotifStore.getState().setRead(n.id);
+    router.push(n.metadata?.actionUrl || "/admin/dispatch");
+  };
   useEffect(() => {
     if (status === "authenticated") wasAuth.current = true;
     if (status === "unauthenticated" && wasAuth.current) router.push("/");
   }, [status, router]);
 
-  const navGroups = [
-    {
+  const navGroups = [    {
       key: "business",
       items: [
         { href: "/admin/analytics", label: t("admin.sidebar.overview"), icon: BarChart3 },
@@ -68,6 +86,7 @@ export function AdminSidebar() {
       items: [
         { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
         { href: "/admin/account", label: t("admin.sidebar.account"), icon: UserCircle },
+        { href: "/admin/maintenance", label: t("admin.sidebar.maintenance"), icon: Wrench },
         { href: "#", label: t("admin.sidebar.notifications"), icon: Bell, notify: true },
       ],
     },
@@ -110,7 +129,14 @@ export function AdminSidebar() {
                 }`;
                 return notify ? (
                   <button key={label} onClick={() => setNotifOpen(true)} className={btnClass}>
-                    <Icon size={14} className="shrink-0" />
+                    <span className="relative shrink-0">
+                      <Icon size={14} />
+                      {adminUnread > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-[#B54843] text-white font-mono text-[8px] font-bold flex items-center justify-center leading-none">
+                          {adminUnread > 9 ? "9+" : adminUnread}
+                        </span>
+                      )}
+                    </span>
                     <span className="max-[1280px]:hidden" suppressHydrationWarning>
                       {label}
                     </span>
@@ -176,8 +202,37 @@ export function AdminSidebar() {
               </div>
               <CloseButton onClick={() => setNotifOpen(false)} />
             </div>
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm font-bold text-[#999]">{t("admin.comingSoon")}</p>
+            <div className="flex-1 overflow-y-auto overscroll-contain" onScroll={(e) => {
+              const el = e.currentTarget;
+              // ponytail: cursor append khi scroll gần đáy
+              if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) void adminLoadMore();
+            }}>
+              {adminNotifs.length === 0 && (
+                <div className="flex items-center justify-center h-full min-h-40">
+                  <p className="text-sm font-bold text-[#999]">
+                    {adminLoadingMore ? "…" : t("nav.noNotifications")}
+                  </p>
+                </div>
+              )}
+              {adminNotifs.map((n: any) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => openAdminNotif(n)}
+                  className="w-full text-left px-5 py-3 border-b-2 border-[#222]/10 last:border-b-0 hover:bg-[#e8e6e0]/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#B54843] shrink-0" />}
+                    <p className="text-sm font-bold leading-tight flex-1">{n.title}</p>
+                  </div>
+                  <p className="text-xs text-[#666] line-clamp-2 mt-0.5">
+                    {String(n.message ?? "").replace(/<[^>]*>/g, "")}
+                  </p>
+                  <p className="font-mono text-[8px] text-[#999] mt-1">
+                    {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
+                  </p>
+                </button>
+              ))}
             </div>
           </div>
         </>

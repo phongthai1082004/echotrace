@@ -146,7 +146,7 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 				userId: String(email.userId),
 				email: email.to,
 				type: NotificationType.PAYMENT,
-				channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
+				channels: [NotificationChannel.DB, NotificationChannel.EMAIL, NotificationChannel.PUSH],
 				title,
 				message,
 				metadata: { orderId: email.orderId, orderCode: email.orderCode },

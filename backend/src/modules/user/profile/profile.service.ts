@@ -4,16 +4,22 @@ import { ErrorCode } from '@echotrace/shared';
 import bcrypt from 'bcryptjs';
 import { ProfileDTO, UpdateProfileDTO, ChangePasswordDTO, ProfileMapper } from '@echotrace/shared';
 import { UserRepository } from '../repositories/users.repository.js';
+import { NotificationSubject } from '../../notification/notification.subject.js';
+import { NotificationChannel, NotificationType } from '@echotrace/shared';
 
 export interface IProfileService {
 	getProfile(userId: string): Promise<ProfileDTO>;
 	updateProfile(userId: string, data: UpdateProfileDTO): Promise<ProfileDTO>;
 	changePassword(userId: string, body: ChangePasswordDTO): Promise<{ message: string }>;
+	stampAttribution(userId: string, touch: { source?: unknown; medium?: unknown; campaign?: unknown }): Promise<{ stamped: boolean }>;
 }
 
 @injectable()
 export class ProfileService implements IProfileService {
-	constructor(@inject('UserRepository') private userRepo: UserRepository) {}
+	constructor(
+		@inject('UserRepository') private userRepo: UserRepository,
+		@inject('NotificationSubject') private subject?: NotificationSubject,
+	) {}
 
 	async getProfile(userId: string) {
 		const user = await this.userRepo.findByIdFull(parseInt(userId));
@@ -63,6 +69,29 @@ export class ProfileService implements IProfileService {
 
 		const hashed = await bcrypt.hash(body.newPassword, 10);
 		await this.userRepo.updateUser(parseInt(userId), { password: hashed });
+		// ponytail: cảnh báo bảo mật personal — DB+PUSH+EMAIL, observer nào lỗi cũng không rollback đổi pass
+		this.subject?.notify({
+			userId: String(userId),
+			email: user.email ?? undefined,
+			type: NotificationType.SYSTEM,
+			channels: [NotificationChannel.DB, NotificationChannel.PUSH, NotificationChannel.EMAIL],
+			title: 'Mật khẩu của bạn vừa được đổi',
+			message: `<p>Mật khẩu tài khoản <b>${user.email ?? ''}</b> vừa được thay đổi. Nếu không phải bạn, hãy liên hệ shop ngay.</p>`,
+		}).catch(() => {});
 		return { message: 'Password updated successfully' };
+	}
+
+	// ponytail: first-touch marketing attribution — write-once, 1 query, không đọc trước
+	async stampAttribution(userId: string, touch: { source?: unknown; medium?: unknown; campaign?: unknown }) {
+		const source = String(touch?.source ?? '').trim().toLowerCase().slice(0, 64);
+		if (!source) return { stamped: false };
+		const medium = String(touch?.medium ?? '').trim().toLowerCase().slice(0, 64) || null;
+		const campaign = String(touch?.campaign ?? '').trim().slice(0, 128) || null;
+		const r = await this.userRepo.updateById(parseInt(userId), {
+			firstUtmSource: source,
+			firstUtmMedium: medium,
+			firstUtmCampaign: campaign,
+		}, { firstUtmSource: null });
+		return { stamped: r.count > 0 };
 	}
 }

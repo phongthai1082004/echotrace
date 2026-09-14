@@ -10,6 +10,7 @@ import { resolveFormat } from "../types";
 import { uploadToR2 } from "@/lib/upload";
 import { serializePage } from "../lib/book-content";
 import { diffPageObjects, parsePageJson } from "../lib/sparse-json";
+import { readFirstTouch } from "@/lib/attribution";
 
 
 
@@ -125,6 +126,12 @@ async function runSaveFull(
     const prev = lastSavedBooks.get(bookKey);
     if (!prev) {
       payload.pages = pagesAll; // lần đầu / book mới → full sync
+      // ponytail: ghim UTM vào Book lúc tạo — design kéo dài nhiều ngày nên
+      // attribution theo project, không theo session lúc thanh toán
+      const touch = readFirstTouch();
+      if (touch?.source) {
+        payload.attribution = { source: touch.source, medium: touch.medium, campaign: touch.campaign };
+      }
     } else if (prev.pages.length !== pagesAll.length) {
       payload.pages = pagesAll; // thêm/bớt trang → full sync
     } else {

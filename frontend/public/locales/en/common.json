@@ -1,6 +1,11 @@
 {
 	"brand": "Better Memoire",
 	"brandShort": "BM",
+	"maintenance": {
+		"title": "Under maintenance",
+		"desc": "We're updating the shop to serve you better. Back in a few minutes.",
+		"retry": "Try again"
+	},
 	"tagline": "Design bespoke travel journals with editorial-grade layouts.",
 	"nav": {
 		"explore": "Explore",
@@ -692,6 +697,11 @@
 				"DEFECTIVE": "Defective shipping"
 			}
 		},
+		"maintenance": {
+			"label": "Admin · Maintenance",
+			"title": "Maintenance Mode",
+			"history": "History"
+		},
 		"marketing": {
 			"label": "Admin · Marketing",
 			"title": "Traffic & Conversion Analytics",
@@ -707,6 +717,12 @@
 			"overallCr": "Overall CR",
 			"trafficSources": "Traffic Sources (UTM)",
 			"channel": "Channel",
+			"books": "Books",
+			"revenue": "Revenue",
+			"unknown": "Unknown / Direct",
+			"paidOrders": "Paid Orders",
+			"booksCreated": "Books Created",
+			"gaNotConnected": "GA not connected — top of funnel shows 0",
 			"visitors": "Visitors",
 			"orders": "Orders",
 			"convRate": "Conv. Rate",
@@ -992,7 +1008,21 @@
 		},
 		"adminAccount": {
 			"label": "Admin · Account",
-			"title": "Account Settings"
+			"title": "Account Settings",
+			"maintenanceTitle": "Maintenance mode",
+			"maintenanceDesc": "Turn on during updates. Customers see a maintenance page; admins keep full access; payment webhooks keep running.",
+			"maintenanceSchedule": "Schedule",
+			"maintenanceStart": "Start",
+			"maintenanceEnd": "End",
+			"maintenanceSave": "Save",
+			"maintenanceClear": "Clear schedule",
+			"maintenanceConfirmTitle": "Confirm",
+			"maintenanceConfirmOn": "Turn maintenance ON now? Customers will see the maintenance page.",
+			"maintenanceConfirmOff": "Turn maintenance OFF? Customers can browse again.",
+			"maintenanceConfirmSchedule": "Schedule maintenance from {{from}} to {{to}}?",
+			"maintenanceWindow": "Scheduled: {{from}} → {{to}}",
+			"maintenanceLive": "MAINTENANCE ACTIVE",
+			"maintenanceIdle": "Open"
 		},
 		"common": {
 			"dash": "—",
@@ -1009,6 +1039,7 @@
 			"users": "Users",
 			"assets": "Assets",
 			"account": "Account",
+			"maintenance": "Maintenance",
 			"studio": "Studio",
 			"notifications": "Notifications",
 			"coupons": "Coupons",

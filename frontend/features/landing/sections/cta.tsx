@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.Book3D), { ssr: false });
 import weddingImg from "@/assets/images/travel.jpg";
+import { trackEvent } from "@/lib/analytics";
 
 export function CtaSection() {
   const { t } = useTranslation();
@@ -46,6 +47,7 @@ export function CtaSection() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <a
             href="/studio"
+            onClick={() => trackEvent("open_studio")}
             className="btn-brutalist"
             style={{ background: "#B54843", color: "#fff" }}
           >

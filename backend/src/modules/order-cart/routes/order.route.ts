@@ -9,6 +9,7 @@ import { authGuard, AuthRequest } from '../../../shared/middleware/auth.middlewa
 import { container } from '../../../di/container.js';
 import { OrderRepository } from '../repositories/order.repository.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
+import { getGaTrafficBySource } from '../../../shared/ga/ga-data.service.js';
 import type { IPdfQueue } from '../../pdf/render/pdf.types.js';
 
 const router = Router();
@@ -63,6 +64,55 @@ router.post('/admin/orders/:id/pdf', authGuard('admin'), asyncHandler(async (req
 	}
 	await container.resolve<IPdfQueue>('IPdfQueue').enqueue(orderId);
 	res.json(ApiResponse.success({ queued: true }));
+}));
+
+// ponytail: marketing summary — DB (đơn/sách theo UTM) + GA Data API
+// (visitors/events theo sessionSource). Chưa cấu hình GA → gaConfigured=false.
+router.get('/admin/marketing/summary', authGuard('admin'), asyncHandler(async (req, res) => {
+	const days = Math.min(Math.max(parseInt(String(req.query.days ?? '30')) || 30, 1), 365);
+	const to = new Date();
+	const from = new Date(to.getTime() - days * 864e5);
+	const [orderRows, bookRows, gaRows] = await Promise.all([
+		orderRepo.summarizeOrdersBySource(from, to),
+		orderRepo.countBooksBySource(from, to),
+		getGaTrafficBySource(days),
+	]);
+	const bySource: Record<string, { source: string; visitors: number; opened: number; preview: number; checkout: number; orders: number; revenue: number; books: number }> = {};
+	const blank = (source: string) => ({ source, visitors: 0, opened: 0, preview: 0, checkout: 0, orders: 0, revenue: 0, books: 0 });
+	for (const r of gaRows ?? []) {
+		bySource[r.source] = { ...blank(r.source), visitors: r.visitors, opened: r.opened, preview: r.preview, checkout: r.checkout };
+	}
+	for (const r of orderRows) {
+		const key = r.utmSource || 'unknown';
+		bySource[key] = bySource[key] ?? blank(key);
+		bySource[key].orders = r._count._all;
+		bySource[key].revenue = Math.round((r._sum.paidAmount ?? 0) * 100) / 100;
+	}
+	for (const r of bookRows) {
+		const key = r.utmSource || 'unknown';
+		bySource[key] = bySource[key] ?? blank(key);
+		bySource[key].books = r._count._all;
+	}
+	const rows = Object.values(bySource);
+	const orders = rows.reduce((s, r) => s + r.orders, 0);
+	const revenue = Math.round(rows.reduce((s, r) => s + r.revenue, 0) * 100) / 100;
+	const visitors = rows.reduce((s, r) => s + r.visitors, 0);
+	res.json(ApiResponse.success({
+		from: from.toISOString(),
+		to: to.toISOString(),
+		gaConfigured: gaRows !== null,
+		totals: {
+			orders,
+			revenue,
+			avgOrderValue: orders ? Math.round((revenue / orders) * 100) / 100 : 0,
+			books: rows.reduce((s, r) => s + r.books, 0),
+			visitors,
+			opened: rows.reduce((s, r) => s + r.opened, 0),
+			preview: rows.reduce((s, r) => s + r.preview, 0),
+			checkout: rows.reduce((s, r) => s + r.checkout, 0),
+		},
+		bySource: rows.sort((a, b) => b.visitors - a.visitors || b.orders - a.orders),
+	}));
 }));
 
 export default router;

@@ -23,10 +23,10 @@ export class BookController {
 		res.json(ApiResponse.success(books));
 	};
 
-	create = async (req: AuthRequest, res: Response) => {
+ 	create = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
 		if (isNaN(userId)) throw new AppError(ErrorCode.AUTH_NOT_AUTHENTICATED, 401);
-		const { title, content, paperHeight, paperWidth } = req.body;
+		const { title, content, paperHeight, paperWidth, attribution } = req.body;
 		if (!content) throw new AppError(ErrorCode.BOOK_MISSING_CONTENT, 400);
 		const contentJson = typeof content === 'string' ? JSON.parse(content) : content;
 		const book = await this.bookService.create(userId, {
@@ -34,7 +34,7 @@ export class BookController {
 			title,
 			paperHeight: toNumOrNull(paperHeight),
 			paperWidth: toNumOrNull(paperWidth),
-		});
+		}, attribution);
 		res.status(201).json(ApiResponse.success(book));
 	};
 

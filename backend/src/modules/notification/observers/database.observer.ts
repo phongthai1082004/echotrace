@@ -1,6 +1,6 @@
 import { injectable, inject } from "tsyringe";
 import type { NotificationPayload, Observer } from "../events/notification-events.js"
-import { NotificationRepository } from "../store/notification.repository.js";
+import { NotificationRepository } from "../channels/notification.repository.js";
 import { NotificationChannel } from '@echotrace/shared';
 
 @injectable()

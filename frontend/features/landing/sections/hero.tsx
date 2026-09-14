@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.Book3D), { ssr: false });
 import parisImg from "@/assets/images/wedding.png";
+import { trackEvent } from "@/lib/analytics";
 
 export function HeroSection() {
   const { t } = useTranslation();
@@ -51,7 +52,7 @@ export function HeroSection() {
           {t("home.hero.subhead")}
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 40 }}>
-          <a href="/studio" className="btn-brutalist" style={{ background: "#B54843", color: "#fff" }}>
+          <a href="/studio" onClick={() => trackEvent("open_studio")} className="btn-brutalist" style={{ background: "#B54843", color: "#fff" }}>
             {t("home.hero.ctaPrimary")}
           </a>
           <a href="/explore" className="btn-brutalist btn-brutalist-secondary">

@@ -16,6 +16,7 @@ import { useCart } from "./hooks/use-cart";
 import { useCheckoutForm, validateCheckoutForm } from "./hooks/use-checkout-form";
 import { priceText } from "./_lib/utils";
 import { StepHeader, type CheckoutStep } from "./components/step-header";
+import { trackEvent } from "@/lib/analytics";
 import { CheckoutSkeletonCards, CheckoutSkeletonSummary } from "@/components/skeleton";
 import { OrderSummary } from "./components/order-summary";
 import { CartStep } from "./components/cart-step";
@@ -59,9 +60,11 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!token) return;
+    trackEvent("begin_checkout");
     fetchPrintCatalog(token)
       .then(setCatalog)
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const optionLabel = (code: string, key: "covers" | "papers"): string => {

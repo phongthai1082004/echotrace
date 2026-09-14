@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Better Memoire — Maintenance</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #F8F2E5; padding: 16px;
+    font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  }
+  .box {
+    max-width: 440px; width: 100%; text-align: center;
+    background: #FFF7D6; border: 3px solid #222; border-radius: 12px;
+    box-shadow: 6px 6px 0 #222; padding: 36px 28px;
+  }
+  .logo {
+    display: inline-block; font-weight: 700; font-size: 13px; letter-spacing: 3px;
+    background: #222; color: #F8F2E5; padding: 6px 14px; border-radius: 6px; margin-bottom: 20px;
+  }
+  h1 { font-size: 24px; color: #222; margin-bottom: 10px; }
+  p { font-size: 14px; color: #666; margin-bottom: 24px; }
+  a {
+    display: inline-block; font-family: monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; text-decoration: none;
+    color: #fff; background: #222; padding: 12px 22px; border-radius: 8px;
+    border: 2px solid #222; box-shadow: 2px 2px 0 #222;
+  }
+  a:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #222; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">BETTER MEMOIRE</div>
+    <h1 data-i18n="title">Under maintenance</h1>
+    <p data-i18n="desc">We're updating the shop. Back in a few minutes.</p>
+    <a href="/" data-i18n="retry">Try again</a>
+  </div>
+<script>
+// ponytail: static page i18n — priority: site cookie (matches in-app choice)
+// → URL prefix (/vi/…) → browser language → en. No deps, no network.
+(function () {
+  var T = {
+    en: { title: "Under maintenance", desc: "We're updating the shop. Back in a few minutes.", retry: "Try again" },
+    vi: { title: "Đang bảo trì", desc: "Shop đang cập nhật để phục vụ bạn tốt hơn. Quay lại sau vài phút nhé.", retry: "Thử lại" },
+    es: { title: "En mantenimiento", desc: "Estamos actualizando la tienda. Volvemos en unos minutos.", retry: "Reintentar" }
+  };
+  function pick() {
+    try {
+      var m = document.cookie.match(/(?:^|;\s*)i18nextLng=([a-z]{2})/i);
+      if (m && T[m[1].toLowerCase()]) return m[1].toLowerCase();
+    } catch (e) {}
+    var seg = (location.pathname.split("/")[1] || "").toLowerCase();
+    if (T[seg]) return seg;
+    var nav = (navigator.language || "en").slice(0, 2).toLowerCase();
+    return T[nav] ? nav : "en";
+  }
+  var lang = pick();
+  document.documentElement.lang = lang;
+  document.title = "Better Memoire — " + T[lang].title;
+  document.querySelectorAll("[data-i18n]").forEach(function (el) {
+    var k = el.getAttribute("data-i18n");
+    if (T[lang][k]) el.textContent = T[lang][k];
+  });
+})();
+</script>
+</body>
+</html>

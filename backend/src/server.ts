@@ -30,6 +30,8 @@ import paymentRoutes from './modules/financial/payments/payment.route.js';
 import financeRoutes from './modules/financial/ledger/finance.route.js';
 import notificationRoutes from './modules/notification/notification.routes.js';import { errorMiddleware } from './shared/middleware/error.middleware.js';
 import { healthRoutes } from './shared/health/health.routes.js';
+import maintenanceRoutes from './shared/maintenance/maintenance.routes.js';
+import { maintenanceMiddleware } from './shared/middleware/maintenance.middleware.js';
 
 const PORT = process.env.BACKEND_PORT;
 const SUPPORTED_LANGS = ['en', 'vi', 'es'];
@@ -68,10 +70,13 @@ async function bootstrap() {
 			app.use(helmet());
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
 			app.use(cors({ origin: allowedOrigins, credentials: true }));
-			app.use(express.json({ limit: '1mb' }));
-			app.use(handle(i18next));
+		app.use(express.json({ limit: '1mb' }));
+		app.use(handle(i18next));
+		// ponytail: cờ bảo trì — chặn API khi bật, trừ webhook/auth/admin/health.
+		// Đăng ký trước routers để bao hết; /health nông đăng ký sớm hơn nên luôn sống.
+		app.use(maintenanceMiddleware);
 
-			app.use('/health', healthRoutes); // deep check (DB + Redis); shallow /health handled above
+		app.use('/health', healthRoutes); // deep check (DB + Redis); shallow /health handled above
 
 			const apiRouter = express.Router({ mergeParams: true });
 
@@ -84,6 +89,9 @@ async function bootstrap() {
 			// Webhook MUST be mounted first: several routers call router.use(authGuard()) and are
 			// mounted on '/' — a later mount would 401 the PayOS webhook before it matches.
 			apiRouter.use('/', paymentRoutes);
+			// ponytail: maintenance status public (frontend proxy đọc, không auth) —
+			// cùng lý do webhook, mount sớm kẻo dính authGuard('/') của router khác.
+			apiRouter.use('/', maintenanceRoutes);
 
 apiRouter.use('/auth', passwordRoutes);
 apiRouter.use('/auth', sessionsRoutes);

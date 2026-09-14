@@ -21,7 +21,7 @@ import { IOrderFinanceService } from '../../financial/settlement/order-finance.b
 import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
-import { notifyOrderUser } from '../../notification/order-notify.js';
+import { notifyOrderUser, notifyAdmins } from '../../notification/notify/order.js';
 
 const payStatusCache = new Map<number, { status: string | null; ts: number }>();
 const PAY_STATUS_TTL_MS = 5000;
@@ -353,6 +353,13 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 				orderId: order.id,
 				orderCode: order.orderCode,
 			});
+			await notifyAdmins(this.subject, this.orderRepo.client, {
+				type: NotificationType.ORDER,
+				title: `Khách hủy đơn ${order.orderCode} (chờ hoàn tiền)`,
+				message: `<p>Khách vừa hủy đơn <b>${order.orderCode}</b> đã trả <b>${Number(order.paidAmount).toLocaleString('vi-VN')}đ</b> — cần xử lý hoàn tiền.</p>`,
+				orderId: order.id,
+				orderCode: order.orderCode,
+			});
 			return { status: OrderStatus.PENDING_REFUND, refunded: false, amount: order.paidAmount };
 		}
 		if (order.status === OrderStatus.PENDING_PAYMENT) {
@@ -370,6 +377,13 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 				orderId: order.id,
 				orderCode: order.orderCode,
 			});
+			await notifyAdmins(this.subject, this.orderRepo.client, {
+				type: NotificationType.ORDER,
+				title: `Khách hủy đơn ${order.orderCode} (chưa thanh toán)`,
+				message: `<p>Khách vừa hủy đơn chưa thanh toán <b>${order.orderCode}</b>.</p>`,
+				orderId: order.id,
+				orderCode: order.orderCode,
+			});
 			return { status: OrderStatus.CANCELLED, refunded: false, amount: 0 };
 		}
 		await this.orderRepo.updateOrder(order.id, { status: OrderStatus.CANCELLED });
@@ -379,6 +393,13 @@ export class OrderLifecycleService implements IOrderLifecycleService {
 			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
 			title: `Đơn ${order.orderCode} đã hủy`,
 			message: `<p>Đơn <b>${order.orderCode}</b> đã được hủy.</p>`,
+			orderId: order.id,
+			orderCode: order.orderCode,
+		});
+		await notifyAdmins(this.subject, this.orderRepo.client, {
+			type: NotificationType.ORDER,
+			title: `Khách hủy đơn ${order.orderCode}`,
+			message: `<p>Khách vừa hủy đơn <b>${order.orderCode}</b>.</p>`,
 			orderId: order.id,
 			orderCode: order.orderCode,
 		});

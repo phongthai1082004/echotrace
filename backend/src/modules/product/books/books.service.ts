@@ -8,7 +8,7 @@ import { BookRepository } from './books.repository.js';
 export interface IBookService {
 	getById(bookId: number, userId: number): Promise<BookDTO>;
 	getMyBooks(userId: number): Promise<BookDTO[]>;
-	create(userId: number, data: CreateBookDTO): Promise<BookDTO>;
+	create(userId: number, data: CreateBookDTO, attribution?: unknown): Promise<BookDTO>;
 	delete(bookId: number, userId: number): Promise<void>;
 	updatePages(bookId: number, userId: number, data: UpdatePagesDTO): Promise<void>;
 }
@@ -29,7 +29,9 @@ export class BookService implements IBookService {
 		return BookMapper.toDTOList(books);
 	}
 
-	async create(userId: number, data: CreateBookDTO) {
+	async create(userId: number, data: CreateBookDTO, attribution?: unknown) {
+		const touch = attribution as { source?: unknown; medium?: unknown; campaign?: unknown } | undefined;
+		const source = String(touch?.source ?? '').trim().toLowerCase().slice(0, 64) || null;
 		const book = await this.bookRepo.createBook({
 			user: { connect: { id: userId } },
 			type: 'TRAVEL',
@@ -40,6 +42,9 @@ export class BookService implements IBookService {
 			paperHeight: data.paperHeight ?? null,
 			paperWidth: data.paperWidth ?? null,
 			content: data.content ?? null,
+			utmSource: source,
+			utmMedium: source ? String(touch?.medium ?? '').trim().toLowerCase().slice(0, 64) || null : null,
+			utmCampaign: source ? String(touch?.campaign ?? '').trim().slice(0, 128) || null : null,
 		});
 
 		const dto = BookMapper.toDTO(book);

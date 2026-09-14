@@ -1,6 +1,11 @@
 {
 	"brand": "Better Memoire",
 	"brandShort": "BM",
+	"maintenance": {
+		"title": "Đang bảo trì",
+		"desc": "Shop đang cập nhật để phục vụ bạn tốt hơn. Quay lại sau vài phút nhé.",
+		"retry": "Thử lại"
+	},
 	"tagline": "Thiết kế sổ tay du lịch thụ công với bố cục đẳng cấp biên tập.",
 	"nav": {
 		"explore": "Khám phá",
@@ -692,6 +697,11 @@
 				"DEFECTIVE": "Gửi hàng lỗi"
 			}
 		},
+		"maintenance": {
+			"label": "Admin · Bảo trì",
+			"title": "Chế độ bảo trì",
+			"history": "Lịch sử"
+		},
 		"marketing": {
 			"label": "Admin · Marketing",
 			"title": "Phân tích Lượng truy cập & Chuyển đổi",
@@ -707,6 +717,12 @@
 			"overallCr": "CR tổng thể",
 			"trafficSources": "Nguồn truy cập (UTM)",
 			"channel": "Kênh",
+			"books": "Sách",
+			"revenue": "Doanh thu",
+			"unknown": "Không rõ / Direct",
+			"paidOrders": "Đơn đã thanh toán",
+			"booksCreated": "Sách đã tạo",
+			"gaNotConnected": "Chưa nối GA — đầu phễu hiện 0",
 			"visitors": "Lượt truy cập",
 			"orders": "Đơn hàng",
 			"convRate": "Tỷ lệ CV",
@@ -991,7 +1007,21 @@
 		},
 		"adminAccount": {
 			"label": "Admin · Tài khoản",
-			"title": "Cài đặt tài khoản"
+			"title": "Cài đặt tài khoản",
+			"maintenanceTitle": "Chế độ bảo trì",
+			"maintenanceDesc": "Bật khi cập nhật. Khách thấy trang bảo trì; admin vẫn dùng bình thường; webhook thanh toán vẫn chạy.",
+			"maintenanceSchedule": "Đặt lịch",
+			"maintenanceStart": "Bắt đầu",
+			"maintenanceEnd": "Kết thúc",
+			"maintenanceSave": "Lưu",
+			"maintenanceClear": "Xóa lịch",
+			"maintenanceConfirmTitle": "Xác nhận",
+			"maintenanceConfirmOn": "Bật bảo trì ngay? Khách sẽ thấy trang bảo trì.",
+			"maintenanceConfirmOff": "Tắt bảo trì? Khách vào lại bình thường.",
+			"maintenanceConfirmSchedule": "Hẹn bảo trì từ {{from}} đến {{to}}?",
+			"maintenanceWindow": "Đã hẹn: {{from}} → {{to}}",
+			"maintenanceLive": "ĐANG BẢO TRÌ",
+			"maintenanceIdle": "Đang mở"
 		},
 		"common": {
 			"dash": "—",
@@ -1008,6 +1038,7 @@
 			"users": "Người dùng",
 			"assets": "Tài sản",
 			"account": "Tài khoản",
+			"maintenance": "Bảo trì",
 			"studio": "Studio",
 			"notifications": "Thông báo",
 			"coupons": "Mã giảm giá",

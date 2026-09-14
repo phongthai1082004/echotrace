@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api.fetch";
 import { LangMenu } from "./lang-menu";
 import { CartFlyout } from "./cart-flyout";
 import { AccountMenu } from "./account-menu";
+import { useNotifStore, useUnreadCount } from "@/stores/notifications";
 import logoImg from "@/assets/images/Logo.png";
 
 interface NavProps {
@@ -74,36 +75,30 @@ export function Nav({ user }: NavProps) {
   const token = (session as any)?.accessToken;
   const currentUser = user ?? session?.user ?? null;
 
-  const [notifs, setNotifs] = useState<any[] | null>(null);
-  const unread = notifs?.filter((n: any) => !n.isRead).length ?? 0;
+  const items = useNotifStore((s) => s.items);
+  const unread = useUnreadCount();
+  const loadMore = useNotifStore((s) => s.loadMore);
+  const loadingMore = useNotifStore((s) => s.loadingMore);
 
-  // ponytail: token already in scope — fetch list, poll for new ones.
-  const fetchNotifs = async () => {
-    if (!token) return;
-    try {
-      const d = await apiFetch<any>("/api/notifications?limit=20", token);
-      const items = Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
-      setNotifs(items);
-    } catch {}
-  };
-
+  // ponytail: list do store giữ (bootstrap nạp đầu + SSE đẩy live) — đây chỉ poll backup 60s.
   useEffect(() => {
     if (!token) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial poll of external API
-    void fetchNotifs();
-    const id = setInterval(fetchNotifs, 60000);
+    const id = setInterval(() => {
+      void useNotifStore.getState().refresh();
+    }, 60000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const openNotif = async (n: any) => {
     setNotifOpen(false);
-    if (!n.isRead && token) {
+    // ponytail: tin live id tạm (string) không có trên DB — chỉ đánh dấu local
+    if (!n.isRead && typeof n.id === "number" && token) {
       try {
         await apiFetch(`/api/notifications/${n.id}/read`, token, { method: "PATCH" });
       } catch {}
-      setNotifs((prev) => prev?.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)) ?? prev);
     }
+    if (!n.isRead) useNotifStore.getState().setRead(n.id);
     router.push(n.metadata?.actionUrl || "/orders");
   };
 
@@ -170,7 +165,7 @@ export function Nav({ user }: NavProps) {
           )}
           {currentUser && (
             <div className="hidden md:contents">
-            <div className="relative" onMouseEnter={() => { setNotifOpen(true); void fetchNotifs(); }} onMouseLeave={() => setNotifOpen(false)}>
+            <div className="relative" onMouseEnter={() => { setNotifOpen(true); void useNotifStore.getState().refresh(); }} onMouseLeave={() => setNotifOpen(false)}>
               <button
                 type="button"
                 aria-label={t("nav.notifications")}
@@ -198,22 +193,25 @@ export function Nav({ user }: NavProps) {
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-full z-50 pt-2">
-                    <div className="w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden">
+                    <div
+                      className="w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden"
+                      onScroll={(e) => {
+                        const el = e.currentTarget;
+                        // ponytail: cursor append khi scroll gần đáy
+                        if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) void loadMore();
+                      }}
+                    >
                     <div className="px-4 py-3 border-b-[3px] border-[#222] sticky top-0 bg-[#FFF7D6]">
                       <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
                         {t("nav.notifications")}
                       </p>
                     </div>
-                    {notifs === null ? (
+                    {items.length === 0 ? (
                       <div className="px-4 py-8 text-center">
-                        <p className="text-sm font-bold text-[#999]">…</p>
-                      </div>
-                    ) : notifs.length === 0 ? (
-                      <div className="px-4 py-8 text-center">
-                        <p className="text-sm font-bold text-[#999]">{t("nav.noNotifications")}</p>
+                        <p className="text-sm font-bold text-[#999]">{loadingMore ? "…" : t("nav.noNotifications")}</p>
                       </div>
                     ) : (
-                      notifs.map((n: any) => (
+                      items.map((n: any) => (
                         <button
                           key={n.id}
                           type="button"

@@ -17,6 +17,10 @@ build/
 .env.production
 .env.local*
 
+# Secrets — never commit
+*service-account*.json
+*credentials*.json
+
 # Database
 *.db
 *.db-journal

@@ -13,6 +13,7 @@ export const NotificationChannel = {
   DB: 'db',
   EMAIL: 'email',
   PHONE: 'phone',
+  PUSH: 'push',
 } as const;
 
 export type NotificationChannel = typeof NotificationChannel[keyof typeof NotificationChannel];
