@@ -7,10 +7,12 @@ import { QueryProvider } from "./query-provider";
 import { AttributionCapture } from "./analytics/attribution-capture";
 import { AttributionFlush } from "./analytics/attribution-flush";
 import { NotificationBootstrap } from "./analytics/notification-bootstrap";
+import { GoogleAnalytics } from "./analytics/google-analytics";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
+      <GoogleAnalytics />
       <QueryProvider>
         <ErrorProvider>
           <AttributionCapture />

@@ -4,7 +4,6 @@ import { Providers } from "@/components/providers";
 import { ToastProvider } from "@/components/toast";
 import { I18nProvider } from "./i18n-provider";
 import { I18nClientProvider } from "./i18n-client-provider";
-import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -38,7 +37,6 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">
-        <GoogleAnalytics />
         <I18nClientProvider>
           <Providers>
             <ToastProvider>
