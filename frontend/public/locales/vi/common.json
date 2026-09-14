@@ -838,6 +838,8 @@
 			"downloadPdf": "Tải PDF",
 			"newAlbumOrder": "Tạo đơn album",
 			"albumOrderTitle": "Tạo đơn hàng album",
+			"orderSource": "Nguồn đơn",
+			"orderSourceAuto": "Tự động (theo sách)",
 			"searchCustomer": "Tìm khách theo tên/email/SĐT",
 			"album": "Album",
 			"selectAlbum": "Chọn album",

@@ -836,6 +836,8 @@
 			"resolveDefect": "Resolver defecto",
 			"newAlbumOrder": "Nuevo pedido de álbum",
 			"albumOrderTitle": "Crear pedido de álbum",
+			"orderSource": "Fuente del pedido",
+			"orderSourceAuto": "Auto (del libro)",
 			"searchCustomer": "Buscar cliente por nombre/correo/teléfono",
 			"album": "Álbum",
 			"selectAlbum": "Seleccionar álbum",

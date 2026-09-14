@@ -38,6 +38,9 @@ export interface ICheckoutService {
 		note?: string;
 		paymentMethod: PaymentPlan;
 		couponCode?: string | null;
+		utmSource?: unknown;
+		utmMedium?: unknown;
+		utmCampaign?: unknown;
 	}): Promise<any>;
 }
 
@@ -248,6 +251,9 @@ export class CheckoutService implements ICheckoutService {
 		note?: string;
 		paymentMethod: PaymentPlan;
 		couponCode?: string | null;
+		utmSource?: unknown;
+		utmMedium?: unknown;
+		utmCampaign?: unknown;
 	}): Promise<any> {
 		const customerId = Number(input.customerId);
 		const sampleBookId = Number(input.sampleBookId);
@@ -281,7 +287,19 @@ export class CheckoutService implements ICheckoutService {
 			paymentMethod: input.paymentMethod,
 			couponCode: input.couponCode ?? null,
 		});
-		return this.createOrder(`admin-album-${customerId}-${sampleBookId}-${Date.now()}`, body, customerId);
+		return this.createOrder(`admin-album-${customerId}-${sampleBookId}-${Date.now()}`, body, customerId).then(async (result) => {
+			// ponytail: admin chọn nguồn tay (đơn gọi điện/zalo) — đè lên UTM kế thừa từ sách.
+			// Không chọn thì giữ nguyên (sách online → đúng kênh, thuần offline → unknown).
+			const source = String(input.utmSource ?? '').trim().toLowerCase().slice(0, 64);
+			if (source) {
+				await this.orderRepo.updateOrder(result.orderId, {
+					utmSource: source,
+					utmMedium: String(input.utmMedium ?? '').trim().toLowerCase().slice(0, 64) || null,
+					utmCampaign: String(input.utmCampaign ?? '').trim().slice(0, 128) || null,
+				}).catch(() => {});
+			}
+			return result;
+		});
 	}
 
 	private createOrderCode(): number {

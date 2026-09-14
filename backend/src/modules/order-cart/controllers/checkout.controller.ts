@@ -34,6 +34,9 @@ export class CheckoutController {
 			note: b.note,
 			paymentMethod: b.paymentMethod,
 			couponCode: b.couponCode ?? null,
+			utmSource: b.utmSource,
+			utmMedium: b.utmMedium,
+			utmCampaign: b.utmCampaign,
 		});
 		res.json(ApiResponse.success(result));
 	};

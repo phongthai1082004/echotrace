@@ -88,12 +88,15 @@ export class OrderRepository {
 	}
 
 	// --- marketing summary (groupBy trực tiếp, 2 admin nên không cache) ---
+	// ponytail: chỉ tính user thường — admin xài chung studio/đặt đơn test,
+	// tính vào là bẩn số marketing
 	summarizeOrdersBySource(from: Date, to: Date) {
 		return this.client.order.groupBy({
 			by: ['utmSource'],
 			where: {
 				createdAt: { gte: from, lt: to },
 				status: { notIn: ['pending_payment', 'cancelled', 'refunded', 'pending_refund'] },
+				user: { role: 'user', isDelete: false },
 			},
 			_count: { _all: true },
 			_sum: { totalAmount: true, paidAmount: true },
@@ -102,7 +105,7 @@ export class OrderRepository {
 	countBooksBySource(from: Date, to: Date) {
 		return this.client.book.groupBy({
 			by: ['utmSource'],
-			where: { createdAt: { gte: from, lt: to }, isDelete: false },
+			where: { createdAt: { gte: from, lt: to }, isDelete: false, user: { role: 'user', isDelete: false } },
 			_count: { _all: true },
 		});
 	}

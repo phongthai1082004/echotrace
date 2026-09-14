@@ -838,6 +838,8 @@
 			"downloadPdf": "Download PDF",
 			"newAlbumOrder": "New album order",
 			"albumOrderTitle": "Create album order",
+			"orderSource": "Order source",
+			"orderSourceAuto": "Auto (from book)",
 			"searchCustomer": "Search customer by name/email/phone",
 			"album": "Album",
 			"selectAlbum": "Select album",

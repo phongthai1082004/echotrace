@@ -56,6 +56,8 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
   const [city, setCity] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>(PaymentPlan.FULL);
+  // ponytail: nguồn tay cho đơn gọi điện/zalo — để trống = kế thừa UTM từ sách
+  const [utmSource, setUtmSource] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<CreatedOrder | null>(null);
@@ -108,6 +110,7 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
             city: city || undefined,
             note: note || undefined,
             paymentMethod,
+            utmSource: utmSource || undefined,
           }),
         },
       );
@@ -262,6 +265,22 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
               <label className={labelCls}>{t("customer.checkout.cityProvince")}</label>
               <input value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
             </div>
+          </div>
+          <div>
+            <label className={labelCls}>{t("admin.dispatch.orderSource")}</label>
+            <NeoSelect
+              value={utmSource}
+              onChange={setUtmSource}
+              className="w-full"
+              options={[
+                { value: "", label: t("admin.dispatch.orderSourceAuto") },
+                { value: "facebook", label: "facebook" },
+                { value: "instagram", label: "instagram" },
+                { value: "tiktok", label: "tiktok" },
+                { value: "google", label: "google" },
+                { value: "email", label: "email" },
+              ]}
+            />
           </div>
           <div>
             <label className={labelCls}>{t("admin.dispatch.note")}</label>
