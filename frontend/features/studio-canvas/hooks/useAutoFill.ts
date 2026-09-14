@@ -3,7 +3,9 @@
 import * as fabric from "fabric";
 import { useCanvasStore } from "./useCanvasState";
 import { serializeCanvasState } from "../lib/layout-engine";
+import { parsePageJson } from "../lib/sparse-json";
 import { placePhotoInFrame, applyFrameClip } from "../lib/photos";
+import { reviveDeep } from "../lib/frames";
 import { enforceZLayers } from "../lib/fabric-core";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
@@ -78,23 +80,21 @@ export function useAutoFill(token: string | undefined) {
       if (photoIdx >= unused.length) break;
       const pgStr = updatedPages[task.pageIdx].canvasJson;
       if (!pgStr) continue;
-      let parsed: any;
-      try {
-        parsed = JSON.parse(pgStr);
-      } catch {
-        continue;
-      }
+      // ponytail: hydrate như mọi đường load thật (workspace/PDF) — JSON thô
+      // thiếu defaults, fabric tự đắp kiểu khác là lệch tọa độ.
+      const parsed = parsePageJson(pgStr);
+      if (!parsed) continue;
 
       await tc.loadFromJSON(parsed).then(() => {
         tc.renderAll();
       });
-      const pgObjs = parsed.objects || [];
-      tc.getObjects().forEach((live: any, i: number) => {
-        if (pgObjs[i]) {
-          if (pgObjs[i].customProperties) live.customProperties = pgObjs[i].customProperties;
-          if (pgObjs[i]._selId) live._selId = pgObjs[i]._selId;
-        }
-      });
+      // ponytail: reviveDeep thay vì copy tay theo index — bản tay không đệ quy
+      // vào group con, _selId/customProperties của khung grouped bị mất.
+      try {
+        reviveDeep(parsed.objects || [], tc.getObjects());
+      } catch {
+        /* keep top-level revive only */
+      }
 
       const frame = tc.getObjects().find((o: any) => o._selId === task.frameSelId);
       if (!frame) {
@@ -106,7 +106,17 @@ export function useAutoFill(token: string | undefined) {
         const img = await fabric.FabricImage.fromURL(unused[photoIdx].url, { crossOrigin: "anonymous" });
         placePhotoInFrame(frame, img);
         applyFrameClip(frame, img);
-        tc.add(img);
+        // ponytail: mirror manual drop (studio-workspace) — khung grouped thì ảnh
+        // phải vào TRONG group (tọa độ group-relative). tc.add ra root là lệch
+        // đúng bằng transform của group. Clip đã relocalize 1 lần trong
+        // applyFrameClip nên không gọi lại (gọi 2 lần là chia đôi scale).
+        const parentGroup = (frame as any).group;
+        if (parentGroup && typeof parentGroup.add === "function") {
+          parentGroup.add(img);
+          parentGroup.setCoords();
+        } else {
+          tc.add(img);
+        }
         tc.renderAll();
         enforceZLayers(tc);
         const newJson = serializeCanvasState(tc);

@@ -1,14 +1,20 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { authOptions } from "@/lib/auth.config";
-import { roleHome } from "@/lib/routing";
+import { roleHome, withLang, langFromPath } from "@/lib/routing";
 import { Nav } from "@/components/nav";
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session) redirect(roleHome());
-  if (role === "admin") redirect(roleHome(role));
+  // ponytail: logged-out users go to /auth (resolves lang via cookie) —
+  // never hardcode a lang prefix here, it would clobber the user's language.
+  if (!session) redirect("/auth");
+  if (role === "admin") {
+    const cookieLang = (await cookies()).get("i18nextLng")?.value;
+    redirect(withLang(roleHome(role), langFromPath(`/${cookieLang}`)));
+  }
 
   return (
     <>

@@ -112,6 +112,23 @@ export function StudioProperties() {
     setHexInput(currentColor.replace("#", ""));
   }, [currentColor, selectionVersion]);
 
+  // ponytail: ô số xài state local + commit khi blur/Enter — bind thẳng vào
+  // fabric thì xóa trắng về 0/NaN, gõ dở cũng bị render đè (không nhập được số).
+  const [sizeInput, setSizeInput] = useState("24");
+  useEffect(() => {
+    setSizeInput(String(Math.round((selected as any)?.fontSize ?? 24)));
+  }, [selectionVersion]);
+  const commitSize = () => {
+    const v = parseInt(sizeInput, 10);
+    if (!Number.isFinite(v)) {
+      setSizeInput(String(Math.round((selected as any)?.fontSize ?? 24)));
+      return;
+    }
+    const clamped = Math.min(200, Math.max(8, v));
+    applyText({ fontSize: clamped });
+    setSizeInput(String(clamped));
+  };
+
   const fmt = resolveFormat(bookMeta);
 
   return (
@@ -201,10 +218,13 @@ export function StudioProperties() {
                 </p>
                 <input
                   type="number"
-                  value={Math.round((selected as any).fontSize || 24)}
-                  onChange={(e) => {
-                    selected.set({ fontSize: Number(e.target.value) });
-                    canvas?.renderAll();
+                  min={8}
+                  max={200}
+                  value={sizeInput}
+                  onChange={(e) => setSizeInput(e.target.value)}
+                  onBlur={commitSize}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                   }}
                   className="w-full font-mono text-[10px] font-bold p-1.5 rounded-md border-2 border-[#222] bg-white shadow-none! focus:shadow-none! focus:translate-x-0! focus:translate-y-0!"
                 />

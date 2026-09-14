@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
-import { roleHome } from "@/lib/routing";
+import { roleHome, withLang, langFromPath } from "@/lib/routing";
 import { useToast } from "@/components/toast";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 import logoImg from "@/assets/images/Logo.png";
@@ -28,6 +29,12 @@ export default function AuthPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   const otpValue = otp.join("");
+  // ponytail: full-reload post-login must keep the lang prefix explicitly —
+  // relying on the cookie redirect here is what silently reset UI language.
+  const seg = langFromPath(usePathname());
+  const goHome = (role?: string | null) => {
+    window.location.href = withLang(roleHome(role), seg);
+  };
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("error") === "expired") {
@@ -38,7 +45,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      window.location.href = roleHome((session?.user as { role?: string } | undefined)?.role);
+      goHome((session?.user as { role?: string } | undefined)?.role);
     }
   }, [status, session]);
 
@@ -93,7 +100,7 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      window.location.href = roleHome(data?.user?.role);
+      goHome(data?.user?.role);
     } catch (err: any) {
       const msg = err.message || "Verification failed";
       setError(msg);
@@ -121,7 +128,7 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error(result.error);
-      window.location.href = roleHome(data?.user?.role);
+      goHome(data?.user?.role);
     } catch (err: any) {
       const msg = err.message || "Account not found or invalid password";
       setError(msg);

@@ -7,7 +7,10 @@ function expireSession() {
   import("next-auth/react")
     .then(async (m) => {
       await m.signOut({ redirect: false });
-      window.location.href = "/auth?error=expired";
+      // ponytail: prefix lang explicitly — bare "/auth" relies on the cookie,
+      // and a stale cookie is exactly how the UI silently reset to English.
+      const { withLang, langFromCookie } = await import("@/lib/routing");
+      window.location.href = withLang("/auth?error=expired", langFromCookie());
     })
     .catch(() => {});
 }

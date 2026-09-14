@@ -116,7 +116,8 @@ export function Nav({ user }: NavProps) {
     if (token) {
       await apiFetch("/api/auth/logout", token, { method: "POST" }).catch(() => {});
     }
-    signOut({ callbackUrl: "/" });
+    const { withLang, langFromPath } = await import("@/lib/routing");
+    signOut({ callbackUrl: withLang("/", langFromPath(pathname)) });
   };
 
   if (pathname === "/auth" || pathname.match(/^\/(en|vi|es)\/auth$/)) return null;
