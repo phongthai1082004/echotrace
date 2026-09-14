@@ -10,6 +10,7 @@ import type { PaymentService } from "../../src/modules/financial/payments/gatewa
 import type { PaymentWebhookService } from "../../src/modules/financial/payments/payment.service.js";
 import type { IOrderFinanceService } from "../../src/modules/financial/settlement/order-finance.bridge.js";
 import type { IStockService } from "../../src/modules/product/sample-books/stock.service.js";
+import type { NotificationSubject } from "../../src/modules/notification/notification.subject.js";
 
 const build = () => {
   const orderRepo = mock<OrderRepository>();
@@ -21,6 +22,7 @@ const build = () => {
     mock<PaymentWebhookService>(),
     mock<IOrderFinanceService>(),
     stock,
+    mock<NotificationSubject>(),
   );
   return { svc, orderRepo, stock };
 };
@@ -80,7 +82,7 @@ describe("deliverOrder (S-4)", () => {
   it("all delivered -> status delivered + recognizeIncome once", async () => {
     const { svc, orderRepo } = build();
     const finance = mock<IOrderFinanceService>();
-    const svcFull = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>());
+    const svcFull = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>(), mock<NotificationSubject>());
     (orderRepo.findOrderById as jest.Mock).mockResolvedValue(shippingOrder);
     await (svcFull as any).processOrderEvent(5, "deliver", {});
     expect(orderRepo.updateOrder).toHaveBeenCalledWith(5, expect.objectContaining({ status: "delivered" }), expect.anything());
@@ -91,7 +93,7 @@ describe("deliverOrder (S-4)", () => {
   it("partial delivery stays shipping, no income", async () => {
     const { orderRepo } = build();
     const finance = mock<IOrderFinanceService>();
-    const svcPartial = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>());
+    const svcPartial = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>(), mock<NotificationSubject>());
     // fresh order — the "deliver all" test mutates its items array via object identity
     (orderRepo.findOrderById as jest.Mock).mockResolvedValue({
       id: 5, status: "shipping", totalAmount: 200, orderItems: [{ deliveredAt: null }, { deliveredAt: null }],
@@ -130,7 +132,7 @@ describe("reconcileSupplier (S-6)", () => {
   it("writes Expense(SUPPLIER) per supplier, skips supplier-fault items", async () => {
     const { svc, orderRepo } = build();
     const finance = mock<IOrderFinanceService>();
-    const svcR = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>());
+    const svcR = new OrderLifecycleService(orderRepo, mock<PaymentService>(), mock<PaymentWebhookService>(), finance, mock<IStockService>(), mock<NotificationSubject>());
     (orderRepo.findOrderById as jest.Mock).mockResolvedValue({
       id: 3, status: "processing", orderCode: "123",
       orderItems: [
@@ -161,7 +163,7 @@ describe("refund flow (S-7, S-8)", () => {
     const { svc, orderRepo } = build();
     const payment = mock<PaymentService>();
     const finance = mock<IOrderFinanceService>();
-    const svcR = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), finance, mock<IStockService>());
+    const svcR = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), finance, mock<IStockService>(), mock<NotificationSubject>());
     (orderRepo.findOrderById as jest.Mock).mockResolvedValue({ id: 7, status: "paid", paidAmount: 100, orderCode: "42" });
     await (svcR as any).processOrderEvent(7, "refund", {});
     expect(orderRepo.updateOrder).toHaveBeenCalledWith(7, { status: "pending_refund" });
@@ -174,7 +176,7 @@ describe("refund flow (S-7, S-8)", () => {
     const { svc, orderRepo } = build();
     const payment = mock<PaymentService>();
     const finance = mock<IOrderFinanceService>();
-    const svcR = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), finance, mock<IStockService>());
+    const svcR = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), finance, mock<IStockService>(), mock<NotificationSubject>());
     payment.refund.mockRejectedValue(new Error("221 cannot cancel paid")); // PayOS best-effort swallowed
     (orderRepo.findOrderById as jest.Mock).mockResolvedValue({ id: 7, status: "pending_refund", paidAmount: 100, orderCode: "42" });
     await (svcR as any).processOrderEvent(7, "reconcile_refund", {});
@@ -211,7 +213,7 @@ describe("cancelOrder (S-9, S-10)", () => {
   it("paid -> pending_refund, no restock, no PayOS", async () => {
     const { svc, orderRepo, stock } = build();
     const payment = mock<PaymentService>();
-    const svcP = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), mock<IOrderFinanceService>(), stock);
+    const svcP = new OrderLifecycleService(orderRepo, payment, mock<PaymentWebhookService>(), mock<IOrderFinanceService>(), stock, mock<NotificationSubject>());
     (orderRepo.findOrderWithTransactions as jest.Mock).mockResolvedValue({
       id: 2, userId: 5, status: "paid", paidAmount: 80, orderCode: "12", orderItems: [],
     });
