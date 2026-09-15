@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "id": "expire-gallery-180d",
+      "conditions": { "prefix": "echotrace/gallery/" },
+      "enabled": true,
+      "deleteObjectsTransition": { "condition": { "maxAge": 15552000, "type": "Age" } }
+    },
+    {
+      "id": "expire-book-thumbs-180d",
+      "conditions": { "prefix": "echotrace/books/" },
+      "enabled": true,
+      "deleteObjectsTransition": { "condition": { "maxAge": 15552000, "type": "Age" } }
+    }
+  ]
+}

@@ -331,7 +331,45 @@ export function StudioWorkspace() {
         if (o.controls.tr) o.controls.tr.cursorStyle = "nesw-resize";
         if (o.controls.bl) o.controls.bl.cursorStyle = "nesw-resize";
       }
+      decorateRotateControl(o);
       if ((o as any).customProperties?.layer === "frame") styleFrame(o);
+    }
+    // ponytail: white glyph inside the mtr circle — same render pass as the circle, always centered.
+    function decorateRotateControl(o: any) {
+      const mtr = o.controls?.mtr;
+      if (!mtr || mtr._glyph) return;
+      mtr._glyph = true;
+      const base = mtr.render.bind(mtr);
+      mtr.render = (ctx: CanvasRenderingContext2D, left: number, top: number, style: any, obj: any) => {
+        base(ctx, left, top, style, obj);
+        const size = mtr.sizeX || obj.cornerSize || 12;
+        const rr = size * 0.24;
+        const lw = Math.max(1.2, size * 0.11);
+        ctx.save();
+        ctx.translate(left, top);
+        ctx.strokeStyle = "#fff";
+        ctx.fillStyle = "#fff";
+        ctx.lineWidth = lw;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        const a1 = Math.PI * 1.45;
+        ctx.beginPath();
+        ctx.arc(0, 0, rr, -0.5, a1);
+        ctx.stroke();
+        const ex = Math.cos(a1) * rr;
+        const ey = Math.sin(a1) * rr;
+        const tx = -Math.sin(a1);
+        const ty = Math.cos(a1);
+        const h = lw * 2.4;
+        const w = lw * 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ex + tx * h, ey + ty * h);
+        ctx.lineTo(ex - ty * w, ey + tx * w);
+        ctx.lineTo(ex + ty * w, ey - tx * w);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      };
     }
     c.getObjects().forEach(applyStyle);
     let dragUndoPushed = false;
@@ -420,6 +458,13 @@ export function StudioWorkspace() {
       enforceZLayers(c);
       useCanvasStore.getState().incrementLayerVersion();
     });
+    // ponytail: ActiveSelection builds its own controls — decorate on select.
+    const decorateActive = () => {
+      const a = c.getActiveObject() as any;
+      if (a) decorateRotateControl(a);
+    };
+    c.on("selection:created", decorateActive);
+    c.on("selection:updated", decorateActive);
     c.on("object:removed", () => {
       syncFrameBorders(c);
       useCanvasStore.getState().incrementLayerVersion();

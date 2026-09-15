@@ -7,7 +7,9 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "lifecycle:apply": "wrangler r2 bucket lifecycle set cabinetdememoire --file ./r2-lifecycle.json",
+    "lifecycle:list": "wrangler r2 bucket lifecycle list cabinetdememoire"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.12.4",

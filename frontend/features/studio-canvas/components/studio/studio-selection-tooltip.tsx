@@ -41,9 +41,21 @@ export function StudioSelectionTooltip() {
   active.setCoords();
   const zoom = ZOOM_LEVELS[zoomIndex] ?? 1;
   const r = active.getBoundingRect(true, true);
-  const cx = (r.left + r.width / 2) * zoom;
-  const above = r.top * zoom > 52;
-  const ty = above ? r.top * zoom - 10 : (r.top + r.height) * zoom + 10;
+  // ponytail: dock tooltip at the corner with room (prefer top-right) — never top-center (rotate handle).
+  const GAP = 12;
+  const EST_W = 180;
+  const EST_H = 52;
+  const containerW = (canvas.getWidth?.() ?? 0) * zoom;
+  const containerH = (canvas.getHeight?.() ?? 0) * zoom;
+  const leftEdge = r.left * zoom;
+  const rightEdge = (r.left + r.width) * zoom;
+  const topEdge = r.top * zoom;
+  const botEdge = (r.top + r.height) * zoom;
+  const roomRight = containerW - rightEdge >= EST_W + GAP;
+  const roomAbove = topEdge >= EST_H + 10;
+  const left = roomRight ? rightEdge + GAP : Math.max(0, leftEdge - GAP - EST_W);
+  const top = roomAbove ? topEdge - 10 : Math.min(botEdge + 10, Math.max(0, containerH - EST_H));
+  const transform = roomAbove ? "translate(0,-100%)" : "translate(0,0)";
 
   const onCopy = () => {
     const c = useCanvasStore.getState().canvas;
@@ -98,7 +110,7 @@ export function StudioSelectionTooltip() {
   return (
     <div
       className="absolute z-40"
-      style={{ left: cx, top: ty, transform: above ? "translate(-50%,-100%)" : "translate(-50%,0)" }}
+      style={{ left, top, transform }}
     >
       <div className="flex items-center gap-1 sm:gap-0.5 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] px-1.5 py-1 sm:px-0.5 sm:py-0.5">
         <button
