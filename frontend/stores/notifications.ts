@@ -10,9 +10,21 @@ export interface NotifItem {
   isRead: boolean;
   createdAt?: string;
   metadata?: any;
+  i18n?: { title?: Record<string, unknown>; message?: Record<string, unknown> } | null;
 }
 
-const LIMIT = 20;
+const LIMIT = 10; // ponytail: trang load ít, scroll gần đáy append tiếp
+
+// ponytail: admin broadcast đa ngữ — text theo lang nằm ở cột i18n,
+// tin cũ (trước migration) rớt về metadata.i18n, thiếu nữa thì về title/message gốc.
+export function notifText(n: NotifItem, field: "title" | "message", lang?: string | null): string {
+  const l = (lang || "vi").slice(0, 2).toLowerCase();
+  const hit =
+    n.i18n?.[field]?.[l] ??
+    (n.metadata as { i18n?: Record<string, Record<string, unknown>> } | undefined)?.i18n?.[field]?.[l];
+  if (typeof hit === "string" && hit.trim()) return hit;
+  return String(n[field] ?? "");
+}
 
 interface NotifState {
   items: NotifItem[];
@@ -25,6 +37,7 @@ interface NotifState {
   // prepend tin live từ SSE (id tạm `live-*`)
   pushLive: (n: NotifItem) => void;
   setRead: (id: number | string) => void;
+  setUnread: (id: number | string) => void;
   reset: () => void;
 }
 
@@ -72,6 +85,9 @@ export const useNotifStore = create<NotifState>((set, get) => ({
 
   setRead: (id) =>
     set((s) => ({ items: s.items.map((x) => (x.id === id ? { ...x, isRead: true } : x)) })),
+
+  setUnread: (id) =>
+    set((s) => ({ items: s.items.map((x) => (x.id === id ? { ...x, isRead: false } : x)) })),
 
   reset: () => set({ items: [], hasMore: true, loadingMore: false }),
 }));

@@ -28,7 +28,7 @@ export async function apiFetch<T = any>(
   // Add language code to API path for client requests
   let apiPath = path;
   if (!isServer && !path.startsWith("/en") && !path.startsWith("/es") && !path.startsWith("/vi")) {
-    apiPath = `/en${path}`;
+    apiPath = `/vi${path}`;
   }
 
   // Client calls go through the same-origin proxy, which injects the bearer

@@ -10,6 +10,7 @@ export async function notifyOrderUser(
 		channels: NotificationChannel[];
 		title: string;
 		message: string;
+		i18n?: { title?: Record<string, string>; message?: Record<string, string> } | null;
 		orderId: number;
 		orderCode?: string | null;
 	},
@@ -28,6 +29,7 @@ export async function notifyOrderUser(
 			channels: Array.from(new Set([...opts.channels, NotificationChannel.PUSH])),
 			title: opts.title,
 			message: opts.message,
+			i18n: opts.i18n ?? null,
 			metadata: { orderId: opts.orderId, orderCode: opts.orderCode ?? undefined },
 		});
 	} catch (e) {
@@ -44,6 +46,7 @@ export async function notifyAdmins(
 		type: NotificationType;
 		title: string;
 		message: string;
+		i18n?: { title?: Record<string, string>; message?: Record<string, string> } | null;
 		orderId?: number;
 		orderCode?: string | number | null;
 		actionUrl?: string;
@@ -63,6 +66,7 @@ export async function notifyAdmins(
 					channels: [NotificationChannel.DB, NotificationChannel.PUSH],
 					title: opts.title,
 					message: opts.message,
+					i18n: opts.i18n ?? null,
 					metadata: {
 						orderId: opts.orderId,
 						orderCode: opts.orderCode ?? undefined,

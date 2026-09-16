@@ -16,17 +16,5 @@
   "devDependencies": {
     "prisma": "^7.8.0",
     "typescript": "^6.0.3"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "ignoreMissing": [
-        "react",
-        "react-dom"
-      ],
-      "allowAny": [
-        "react",
-        "react-dom"
-      ]
-    }
   }
 }

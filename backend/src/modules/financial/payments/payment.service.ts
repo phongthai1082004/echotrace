@@ -9,6 +9,7 @@ import {
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { NotificationChannel, NotificationType } from '@echotrace/shared';
 import { NotificationSubject } from '../../notification/notification.subject.js';
+import { orderText } from '../../notification/notify/order-texts.js';
 import { PaymentWebhookRepository } from './payment.repository.js';
 import { IStockService } from '../../product/sample-books/stock.service.js';
 
@@ -134,21 +135,17 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 
 		// ponytail: one fan-out replaces the old direct mail — channels route it.
 		if (email) {
-			const title = email.fullyPaid
-				? `Đã nhận thanh toán đơn ${email.orderCode}`
-				: `Đã nhận tiền cọc đơn ${email.orderCode}`;
-			const message = `<p>Xin chào ${email.name || 'bạn'},</p><p>Chúng tôi đã nhận <b>${email.paid.toLocaleString('vi-VN')}đ</b> cho đơn <b>${email.orderCode}</b>.</p>${
-				email.fullyPaid
-					? '<p>Đơn hàng đã được thanh toán đủ và đang được xử lý.</p>'
-					: `<p>Đây là 50% tiền cọc. Phần còn lại <b>${(email.total - email.paid).toLocaleString('vi-VN')}đ</b> sẽ thu khi giao hàng (COD).</p>`
-			}`;
+			const t = email.fullyPaid
+				? orderText('paidFull', { code: email.orderCode, name: email.name || '', paid: email.paid })
+				: orderText('deposit', { code: email.orderCode, name: email.name || '', paid: email.paid, rest: email.total - email.paid });
 			await this.subject.notify({
 				userId: String(email.userId),
 				email: email.to,
 				type: NotificationType.PAYMENT,
 				channels: [NotificationChannel.DB, NotificationChannel.EMAIL, NotificationChannel.PUSH],
-				title,
-				message,
+				title: t.title,
+				message: t.message,
+				i18n: t.i18n,
 				metadata: { orderId: email.orderId, orderCode: email.orderCode },
 			});
 		}

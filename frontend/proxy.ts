@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const SUPPORTED_LANGS = ["en", "vi", "es"];
-const DEFAULT_LANG = "en";
+const DEFAULT_LANG = "vi"; // ponytail: mặc định tiếng Việt
 const BACKEND = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
 
 // ponytail: cache cờ bảo trì 10s trong process — khỏi gọi backend mỗi request.

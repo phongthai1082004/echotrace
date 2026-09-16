@@ -84,6 +84,8 @@ interface CanvasStore {
   setIsDraggingPhoto: (v: boolean) => void;
   clipboard: string | null;
   setClipboard: (s: string | null) => void;
+  pageClipboard: PageState[] | null;
+  setPageClipboard: (p: PageState[] | null) => void;
   pasteCount: number;
   resetPasteCount: () => void;
   bumpPasteCount: () => void;
@@ -191,6 +193,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
   setIsDraggingPhoto: (v) => set({ isDraggingPhoto: v }),
   setClipboard: (s) => set({ clipboard: s }),
+  pageClipboard: null,
+  setPageClipboard: (p) => set({ pageClipboard: p }),
   resetPasteCount: () => set({ pasteCount: 0 }),
   bumpPasteCount: () => set((s) => ({ pasteCount: s.pasteCount + 1 })),
   incrementLayerVersion: () => set((s) => ({ layerVersion: s.layerVersion + 1 })),

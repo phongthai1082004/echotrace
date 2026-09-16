@@ -17,6 +17,7 @@ import { AppError } from '../../../shared/middleware/app.error.js';
 import { ICartService } from '../cart/cart.service.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyAdmins } from '../../notification/notify/order.js';
+import { orderText } from '../../notification/notify/order-texts.js';
 import { NotificationType, NotificationChannel } from '@echotrace/shared';
 import { PaymentService } from '../../financial/payments/gateways/payment.service.js';import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { PaymentLinkItem } from '@payos/node';
@@ -224,10 +225,12 @@ export class CheckoutService implements ICheckoutService {
 
 			// ponytail: báo admin đơn mới — bỏ qua đơn admin tự tạo (createAlbumOrder)
 			if (!idempotencyKey.startsWith('admin-album-')) {
+				const tNew = orderText('newOrderAdmin', { code: result.orderCode, total: result.total });
 				await notifyAdmins(this.subject, this.orderRepo.client, {
 					type: NotificationType.ORDER,
-					title: `Đơn mới ${result.orderCode}`,
-					message: `<p>Khách vừa tạo đơn <b>${result.orderCode}</b> trị giá <b>${Number(result.total).toLocaleString('vi-VN')}đ</b>.</p>`,
+					title: tNew.title,
+					message: tNew.message,
+					i18n: tNew.i18n,
 					orderId: result.orderId,
 					orderCode: result.orderCode,
 				});

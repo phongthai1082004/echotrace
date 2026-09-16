@@ -30,7 +30,9 @@
 		"cartEmpty": "Giỏ hàng trống",
 		"language": "Đổi ngôn ngữ",
 		"menu": "Menu",
-		"softcover": "Bìa mềm"
+		"softcover": "Bìa mềm",
+		"markRead": "Đánh dấu đã đọc",
+		"markUnread": "Đánh dấu chưa đọc"
 	},
 	"common": {
 		"loading": "Đang tải...",
@@ -1044,7 +1046,8 @@
 			"studio": "Studio",
 			"notifications": "Thông báo",
 			"coupons": "Mã giảm giá",
-			"sampleBooks": "Mẫu"
+			"sampleBooks": "Mẫu",
+			"broadcast": "Gửi thông báo"
 		},
 		"cat": {
 			"business": "Kinh doanh",
@@ -1167,6 +1170,20 @@
 			"publishConfirm": "Bạn có muốn xuất bản mẫu {title}?",
 			"kindTemplate": "Template",
 			"kindAlbum": "Album"
+		},
+		"broadcast": {
+			"label": "Gửi thông báo",
+			"title": "Thông báo toàn hệ thống",
+			"desc": "Gửi tới mọi user qua DB + realtime (SSE). Không gửi mail.",
+			"titleLabel": "Tiêu đề",
+			"titlePh": "VD: Bảo trì đêm nay",
+			"send": "Gửi",
+			"sending": "Đang gửi…",
+			"sent": "Đã gửi tới {{count}} người dùng",
+			"fail": "Gửi thất bại, thử lại",
+			"msgPh": "Nội dung thông báo… (trống = dùng tiếng Việt)",
+			"markRead": "Đánh dấu đã đọc",
+			"markUnread": "Đánh dấu chưa đọc"
 		}
 	},
 	"account": {

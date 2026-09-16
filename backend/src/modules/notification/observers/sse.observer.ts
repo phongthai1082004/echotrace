@@ -21,6 +21,7 @@ export class SseObserver implements Observer {
 				message: payload.message,
 				type: payload.type,
 				metadata: payload.metadata ?? null,
+				i18n: payload.i18n ?? null,
 				createdAt: new Date().toISOString(),
 				isRead: false,
 			}));

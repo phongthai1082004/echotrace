@@ -13,6 +13,8 @@ export interface NotificationPayload {
   // 3. Content
   title: string;
   message: string;
+  // ponytail: bản dịch 3 thứ tiếng → cột i18n; thiếu thì client rớt về title/message gốc
+  i18n?: { title?: Record<string, string>; message?: Record<string, string> } | null;
 
   // 4. Helper data for click-through navigation on the UI
   metadata?: {

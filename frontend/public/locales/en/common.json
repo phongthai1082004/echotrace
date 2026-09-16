@@ -30,7 +30,9 @@
 		"cartEmpty": "Your cart is empty",
 		"language": "Change language",
 		"menu": "Menu",
-		"softcover": "Softcover"
+		"softcover": "Softcover",
+		"markRead": "Mark as read",
+		"markUnread": "Mark as unread"
 	},
 	"common": {
 		"loading": "Loading...",
@@ -1045,7 +1047,8 @@
 			"studio": "Studio",
 			"notifications": "Notifications",
 			"coupons": "Coupons",
-			"sampleBooks": "Template"
+			"sampleBooks": "Template",
+			"broadcast": "Broadcast"
 		},
 		"cat": {
 			"business": "Business",
@@ -1168,6 +1171,20 @@
 			"publishConfirm": "Do you want to publish template {title}?",
 			"kindTemplate": "Template",
 			"kindAlbum": "Album"
+		},
+		"broadcast": {
+			"label": "Broadcast",
+			"title": "System-wide announcement",
+			"desc": "Send to all users via DB + realtime (SSE). No email.",
+			"titleLabel": "Title",
+			"titlePh": "E.g. Maintenance tonight",
+			"send": "Send",
+			"sending": "Sending…",
+			"sent": "Sent to {{count}} users",
+			"fail": "Send failed, try again",
+			"msgPh": "Message… (empty = use Vietnamese)",
+			"markRead": "Mark as read",
+			"markUnread": "Mark as unread"
 		}
 	},
 	"account": {

@@ -24,7 +24,7 @@ const ENV_BASE = {
 
 function run(request: Request, envMock: unknown) {
 	const ctx = createExecutionContext();
-	const p = worker.fetch(request, envMock as never, ctx);
+	const p = worker.fetch(request, envMock as never);
 	return { p, ctx };
 }
 

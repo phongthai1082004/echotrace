@@ -8,6 +8,7 @@ export * from './print-option/print-option.create.dto.js';
 export * from './print-option/print-option.update.dto.js';
 export * from './expense/expense.dto.js';
 export * from './income/income.dto.js';
+export * from './notification/notification.dto.js';
 export * from './order/order.dto.js';
 export * from './order/order.read.dto.js';
 export * from './returns/returns.dto.js';

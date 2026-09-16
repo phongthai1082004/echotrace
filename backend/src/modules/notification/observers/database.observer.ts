@@ -17,6 +17,7 @@ export class DatabaseObserver implements Observer {
                 type: payload.type, channels: payload.channels ?? [NotificationChannel.DB],
                 email: payload.email ?? null, phone: payload.phone ?? null,
                 metadata: (payload.metadata ?? null) as any,
+                i18n: (payload.i18n ?? null) as any,
             },
         });
     }

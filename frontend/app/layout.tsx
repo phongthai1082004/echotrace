@@ -33,7 +33,7 @@ export default async function RootLayout({
   const langs = ["en", "vi", "es"];
   // middleware rewrites /{lang}/... and stamps the lang on the request; cookie covers direct hits
   const raw = (await headers()).get("x-i18n-lang") ?? (await cookies()).get("i18nextLng")?.value;
-  const lang = langs.includes(raw ?? "") ? raw! : "en";
+  const lang = langs.includes(raw ?? "") ? raw! : "vi";
   return (
     <html lang={lang} className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">

@@ -5,6 +5,7 @@ import { AppError } from '../../../shared/middleware/app.error.js';
 import { IOrderFinanceService } from '../../financial/settlement/order-finance.bridge.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyOrderUser, notifyAdmins } from '../../notification/notify/order.js';
+import { orderText } from '../../notification/notify/order-texts.js';
 
 export interface IReturnsService {
 	requestReturn(
@@ -48,10 +49,12 @@ export class ReturnsService implements IReturnsService {
 			items[r.index] = { ...items[r.index], defective: true, returnQty: r.quantity, returnDefect: r.defect ?? null };
 		}
 		await this.orderRepo.updateOrder(orderId, { returnState: ReturnState.REQUESTED, returnReason: body.reason ?? null, orderItems: items });
+		const tReturnReq = orderText('returnRequestedAdmin', { code: order.orderCode, reason: body.reason ?? '' });
 		await notifyAdmins(this.subject, this.orderRepo.client, {
 			type: NotificationType.ORDER,
-			title: `Yêu cầu đổi trả đơn ${order.orderCode}`,
-			message: `<p>Khách vừa gửi yêu cầu đổi trả đơn <b>${order.orderCode}</b>${body.reason ? `: ${body.reason}` : ''}.</p>`,
+			title: tReturnReq.title,
+			message: tReturnReq.message,
+			i18n: tReturnReq.i18n,
 			orderId: order.id,
 			orderCode: order.orderCode,
 		});
@@ -68,12 +71,14 @@ export class ReturnsService implements IReturnsService {
 			if (it.defective && fault === ReturnFault.SUPPLIER) it.returnFault = 'supplier';
 		}
 		await this.orderRepo.updateOrder(orderId, { returnFault: fault, orderItems: items, returnState: ReturnState.RESHIPPING });
+		const tApproved = orderText('returnApproved', { code: order.orderCode });
 		await notifyOrderUser(this.subject, this.orderRepo.client, {
 			userId: order.userId,
 			type: NotificationType.ORDER,
 			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
-			title: `Yêu cầu đổi trả đơn ${order.orderCode} được duyệt`,
-			message: `<p>Yêu cầu đổi trả đơn <b>${order.orderCode}</b> đã được duyệt. Chúng tôi sẽ liên hệ để nhận lại hàng.</p>`,
+			title: tApproved.title,
+			message: tApproved.message,
+			i18n: tApproved.i18n,
 			orderId: order.id,
 			orderCode: order.orderCode,
 		});
@@ -97,12 +102,14 @@ export class ReturnsService implements IReturnsService {
 		} else {
 			await this.orderRepo.updateOrder(orderId, { returnState: ReturnState.RESHIPPED });
 		}
+		const tReshipped = orderText('reshipped', { code: order.orderCode });
 		await notifyOrderUser(this.subject, this.orderRepo.client, {
 			userId: order.userId,
 			type: NotificationType.SHIPPING,
 			channels: [NotificationChannel.DB, NotificationChannel.EMAIL],
-			title: `Đơn ${order.orderCode} đã được gửi lại`,
-			message: `<p>Hàng bảo hành/đổi trả của đơn <b>${order.orderCode}</b> đã được gửi lại.</p>`,
+			title: tReshipped.title,
+			message: tReshipped.message,
+			i18n: tReshipped.i18n,
 			orderId: order.id,
 			orderCode: order.orderCode,
 		});
@@ -122,12 +129,14 @@ export class ReturnsService implements IReturnsService {
 		if (order.status !== OrderStatus.DELIVERED) throw new AppError(ErrorCode.INTERNAL, 400);
 		if (order.defectState && order.defectState !== DefectState.NONE) throw new AppError(ErrorCode.INTERNAL, 400);
 		await this.orderRepo.updateOrder(orderId, { defectState: DefectState.REPORTED });
+		const tDefect = orderText('defectNoted', { code: order.orderCode });
 		await notifyOrderUser(this.subject, this.orderRepo.client, {
 			userId: order.userId,
 			type: NotificationType.ORDER,
 			channels: [NotificationChannel.DB],
-			title: `Đã ghi nhận lỗi đơn ${order.orderCode}`,
-			message: `<p>Báo lỗi của đơn <b>${order.orderCode}</b> đã được ghi nhận và đang xử lý.</p>`,
+			title: tDefect.title,
+			message: tDefect.message,
+			i18n: tDefect.i18n,
 			orderId: order.id,
 			orderCode: order.orderCode,
 		});

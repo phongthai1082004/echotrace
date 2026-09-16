@@ -11,6 +11,8 @@ export async function broadcastNotification(opts: {
 	title: string;
 	message: string;
 	metadata?: Record<string, unknown> | null;
+	i18n?: { title: Record<string, string>; message: Record<string, string> } | null;
+	sendBy?: string;
 }): Promise<{ users: number }> {
 	try {
 		const db = container.resolve(PrismaService).db;
@@ -25,22 +27,25 @@ export async function broadcastNotification(opts: {
 				type: opts.type,
 				channels: [NotificationChannel.DB, NotificationChannel.PUSH],
 				scope: 'broadcast',
+				sendBy: opts.sendBy ?? 'system',
 				metadata: (opts.metadata ?? null) as any,
+				i18n: (opts.i18n ?? null) as any,
 			})),
 		});
 		try {
 			const presence = container.resolve<PresenceService>('PresenceService');
 			for (const u of users) {
 				try {
-					presence.sendTo(u.id, JSON.stringify({
-						id: `live-${Date.now()}-${u.id}`,
-						title: opts.title,
-						message: opts.message,
-						type: opts.type,
-						metadata: opts.metadata ?? null,
-						createdAt: now.toISOString(),
-						isRead: false,
-					}));
+				presence.sendTo(u.id, JSON.stringify({
+					id: `live-${Date.now()}-${u.id}`,
+					title: opts.title,
+					message: opts.message,
+					type: opts.type,
+					metadata: opts.metadata ?? null,
+					i18n: opts.i18n ?? null,
+					createdAt: now.toISOString(),
+					isRead: false,
+				}));
 				} catch {}
 			}
 		} catch {}

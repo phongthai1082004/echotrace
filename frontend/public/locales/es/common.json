@@ -30,7 +30,9 @@
 		"cartEmpty": "Tu carrito está vacío",
 		"language": "Cambiar idioma",
 		"menu": "Menú",
-		"softcover": "Tapa blanda"
+		"softcover": "Tapa blanda",
+		"markRead": "Marcar como leído",
+		"markUnread": "Marcar como no leído"
 	},
 	"common": {
 		"loading": "Cargando...",
@@ -1042,7 +1044,8 @@
 			"studio": "Estudio",
 			"notifications": "Notificaciones",
 			"coupons": "Cupones",
-			"sampleBooks": "Plantilla"
+			"sampleBooks": "Plantilla",
+			"broadcast": "Difusión"
 		},
 		"cat": {
 			"business": "Negocio",
@@ -1165,6 +1168,20 @@
 			"publishConfirm": "¿Quieres publicar la plantilla {title}?",
 			"kindTemplate": "Plantilla",
 			"kindAlbum": "Álbum"
+		},
+		"broadcast": {
+			"label": "Enviar aviso",
+			"title": "Anuncio global",
+			"desc": "Enviar a todos los usuarios por DB + tiempo real (SSE). Sin correo.",
+			"titleLabel": "Título",
+			"titlePh": "Ej.: Mantenimiento esta noche",
+			"send": "Enviar",
+			"sending": "Enviando…",
+			"sent": "Enviado a {{count}} usuarios",
+			"fail": "Error al enviar, inténtalo de nuevo",
+			"msgPh": "Mensaje… (vacío = usar vietnamita)",
+			"markRead": "Marcar como leído",
+			"markUnread": "Marcar como no leído"
 		}
 	},
 	"account": {

@@ -11,7 +11,7 @@ import { apiFetch } from "@/lib/api.fetch";
 import { LangMenu } from "./lang-menu";
 import { CartFlyout } from "./cart-flyout";
 import { AccountMenu } from "./account-menu";
-import { useNotifStore, useUnreadCount } from "@/stores/notifications";
+import { useNotifStore, useUnreadCount, notifText, type NotifItem } from "@/stores/notifications";
 import logoImg from "@/assets/images/Logo.png";
 
 interface NavProps {
@@ -58,11 +58,12 @@ function MenuIcon({ size }: { size: number }) {
 }
 
 export function Nav({ user }: NavProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [menu, setMenu] = useState<{ id: number | string; x: number; y: number } | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const { data: session, status } = useSession();
   const wasAuth = useRef(false);
@@ -100,6 +101,25 @@ export function Nav({ user }: NavProps) {
     }
     if (!n.isRead) useNotifStore.getState().setRead(n.id);
     router.push(n.metadata?.actionUrl || "/orders");
+  };
+
+  // ponytail: menu fixed theo viewport (thoát khung scroll của dropdown)
+  const openMenu = (e: React.MouseEvent<HTMLButtonElement>, n: NotifItem) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    setMenu(menu?.id === n.id ? null : { id: n.id, x: Math.max(8, r.right - 190), y: r.bottom + 6 });
+  };
+
+  const setFlag = async (n: NotifItem, read: boolean) => {
+    setMenu(null);
+    if (typeof n.id === "number" && token) {
+      try {
+        await apiFetch(`/api/notifications/${n.id}/${read ? "read" : "unread"}`, token, {
+          method: "PATCH",
+        });
+      } catch {}
+    }
+    useNotifStore.getState()[read ? "setRead" : "setUnread"](n.id);
   };
 
   useEffect(() => {
@@ -166,7 +186,7 @@ export function Nav({ user }: NavProps) {
           )}
           {currentUser && (
             <div className="hidden md:contents">
-            <div className="relative" onMouseEnter={() => { setNotifOpen(true); void useNotifStore.getState().refresh(); }} onMouseLeave={() => setNotifOpen(false)}>
+            <div className="relative" onMouseEnter={() => { setNotifOpen(true); void useNotifStore.getState().refresh(); }} onMouseLeave={() => { if (!menu) setNotifOpen(false); }}>
               <button
                 type="button"
                 aria-label={t("nav.notifications")}
@@ -197,6 +217,7 @@ export function Nav({ user }: NavProps) {
                     <div
                       className="w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden"
                       onScroll={(e) => {
+                        setMenu(null);
                         const el = e.currentTarget;
                         // ponytail: cursor append khi scroll gần đáy
                         if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) void loadMore();
@@ -213,25 +234,37 @@ export function Nav({ user }: NavProps) {
                       </div>
                     ) : (
                       items.map((n: any) => (
-                        <button
+                        <div
                           key={n.id}
-                          type="button"
-                          onClick={() => openNotif(n)}
-                          className="w-full text-left px-4 py-3 border-b-2 border-[#222]/10 last:border-b-0 hover:bg-[#e8e6e0]/50 transition-colors"
+                          className={`relative px-4 py-3 border-b-2 border-[#222]/10 last:border-b-0 transition-colors ${
+                            n.isRead ? "" : "bg-white"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#B54843] shrink-0" />}
-                            <p className="text-sm font-bold leading-tight flex-1">{n.title}</p>
-                          </div>
-                          <p className="text-xs text-[#666] line-clamp-2 mt-0.5">
-                            {String(n.message ?? "").replace(/<[^>]*>/g, "")}
-                          </p>
-                          <p className="font-mono text-[8px] text-[#999] mt-1">
-                            {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
-                          </p>
-                        </button>
-                      ))
-                    )}
+                          <button type="button" onClick={() => openNotif(n)} className="w-full text-left">
+                            <div className="flex items-center gap-2">
+                              {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#B54843] shrink-0" />}
+                              <p className="text-sm font-bold leading-tight flex-1">{notifText(n, "title", i18n.language)}</p>
+                            </div>
+                            <p className="text-xs text-[#666] line-clamp-2 mt-0.5">
+                              {notifText(n, "message", i18n.language).replace(/<[^>]*>/g, "")}
+                            </p>
+                            <p className="font-mono text-[8px] text-[#999] mt-1">
+                              {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
+                            </p>
+                          </button>
+                          <span className="absolute inset-y-0 right-2 flex items-center">
+                            <button
+                              type="button"
+                              aria-label="…"
+                              onClick={(e) => openMenu(e, n)}
+                              className="w-7 h-7 rounded-[8px] border-[3px] border-[#222] bg-[#FFF7D6] font-bold text-[#222] shadow-[2px_2px_0_#222] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] transition-[transform,box-shadow] leading-none"
+                            >
+                              …
+                            </button>
+                          </span>
+                        </div>
+                      )))
+                    }
                   </div>
                 </div>
               )}
@@ -242,6 +275,36 @@ export function Nav({ user }: NavProps) {
             <div className="hidden md:contents">
               <CartFlyout token={token} />
             </div>
+          )}
+          {menu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
+              <div
+                className="fixed z-50 bg-white rounded-lg border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden w-48"
+                style={{ top: menu.y, left: menu.x }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const n = items.find((i) => i.id === menu.id);
+                    if (n) void setFlag(n, true);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-xs font-bold hover:bg-[#FFF7D6]"
+                >
+                  {t("nav.markRead")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const n = items.find((i) => i.id === menu.id);
+                    if (n) void setFlag(n, false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-xs font-bold border-t-2 border-[#222]/10 hover:bg-[#FFF7D6]"
+                >
+                  {t("nav.markUnread")}
+                </button>
+              </div>
+            </>
           )}
           {currentUser ? (
             <div className="hidden md:contents">

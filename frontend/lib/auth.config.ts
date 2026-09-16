@@ -15,6 +15,7 @@ async function refreshAccessToken(token: any) {
   return {
     ...token,
     accessToken: data.data.accessToken,
+    refreshToken: data.data.refreshToken ?? token.refreshToken, // ponytail: backend xoay refresh mỗi lần gọi, không lấy mới thì lần 2 ăn 401 REVOKED
     accessTokenExpires: Date.now() + 55 * 60 * 1000,
   };
 }
@@ -102,6 +103,7 @@ export const authOptions = {
     // ponytail: the real access token lives ONLY in the httpOnly JWT cookie and
     // is injected server-side by /api/proxy. We expose an inert placeholder here
     // so guards/type-checks pass without ever leaking the secret to client JS.
+    if (!token) return session; // ponytail: refresh chết → jwt null, không crash đọc .sub
     if (session.user) {
       session.accessToken = "client";
       session.user.id = token.sub;

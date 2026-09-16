@@ -9,14 +9,14 @@ const instance = i18n.createInstance();
 instance.init({
 	resources: { en: { common: en }, vi: { common: vi }, es: { common: es } },
 	defaultNS: "common",
-	lng: "en",
-	fallbackLng: "en",
+	lng: "vi",
+	fallbackLng: "vi",
 	interpolation: { escapeValue: false },
 });
 
 export const I18N_LANGS = ["en", "vi", "es"] as const;
 
 export function getT(lng: string | undefined | null) {
-	const lang = lng && (I18N_LANGS as readonly string[]).includes(lng) ? lng : "en";
+	const lang = lng && (I18N_LANGS as readonly string[]).includes(lng) ? lng : "vi";
 	return instance.getFixedT(lang, "common");
 }

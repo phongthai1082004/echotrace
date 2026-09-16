@@ -1,13 +1,16 @@
 import { renderHook } from "@testing-library/react";
 import { act } from "@testing-library/react";
-import { useDebounce } from "./useDebounce";
+import { vi } from "vitest";
+import { useDebounce } from "@/hooks/ui/useDebounce";
 
-jest.useFakeTimers();
+beforeEach(() => {
+  vi.useFakeTimers();
+});
 
 describe("useDebounce", () => {
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it("should return initial value immediately", () => {
@@ -26,7 +29,7 @@ describe("useDebounce", () => {
     expect(result.current).toBe("initial");
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(result.current).toBe("updated");
@@ -40,7 +43,7 @@ describe("useDebounce", () => {
     rerender({ value: "second", delay: 500 });
 
     act(() => {
-      jest.advanceTimersByTime(250);
+      vi.advanceTimersByTime(250);
     });
 
     expect(result.current).toBe("first");
@@ -48,13 +51,13 @@ describe("useDebounce", () => {
     rerender({ value: "third", delay: 500 });
 
     act(() => {
-      jest.advanceTimersByTime(250);
+      vi.advanceTimersByTime(250);
     });
 
     expect(result.current).toBe("first");
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(result.current).toBe("third");
@@ -68,13 +71,13 @@ describe("useDebounce", () => {
     rerender({ value: "updated", delay: 300 });
 
     act(() => {
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
     });
 
     expect(result.current).toBe("test");
 
     act(() => {
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
     });
 
     expect(result.current).toBe("updated");
@@ -82,7 +85,7 @@ describe("useDebounce", () => {
 
   it("should work with different value types", () => {
     const { result, rerender } = renderHook(({ value }) => useDebounce<number | string>(value, 500), {
-      initialProps: { value: 123 },
+      initialProps: { value: 123 as number | string },
     });
 
     expect(result.current).toBe(123);
@@ -90,7 +93,7 @@ describe("useDebounce", () => {
     rerender({ value: "string" });
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(result.current).toBe("string");
@@ -107,7 +110,7 @@ describe("useDebounce", () => {
     rerender({ value: obj2 });
 
     act(() => {
-      jest.advanceTimersByTime(500);
+      vi.advanceTimersByTime(500);
     });
 
     expect(result.current).toBe(obj2);
@@ -119,13 +122,13 @@ describe("useDebounce", () => {
     rerender({ value: "updated" });
 
     act(() => {
-      jest.advanceTimersByTime(499);
+      vi.advanceTimersByTime(499);
     });
 
     expect(result.current).toBe("initial");
 
     act(() => {
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
     });
 
     expect(result.current).toBe("updated");

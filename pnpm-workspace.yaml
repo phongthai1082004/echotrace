@@ -2,6 +2,13 @@ packages:
   - 'shared'
   - 'frontend'
   - 'backend'
+peerDependencyRules:
+  ignoreMissing:
+    - react
+    - react-dom
+  allowAny:
+    - react
+    - react-dom
 allowBuilds:
   '@prisma/engines': true
   bcrypt: set this to true or false

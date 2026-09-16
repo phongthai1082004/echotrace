@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
-import { useForm } from "./useForm";
+import { vi } from "vitest";
+import { useForm } from "@/hooks/forms/useForm";
 
 describe("useForm", () => {
   const initialValues = {
@@ -105,7 +106,7 @@ describe("useForm", () => {
   });
 
   it("should handle form submission", async () => {
-    const onSubmit = jest.fn();
+    const onSubmit = vi.fn();
     const { result } = renderHook(() => useForm({ initialValues, onSubmit }));
 
     act(() => {
@@ -116,8 +117,8 @@ describe("useForm", () => {
 
     await act(async () => {
       await result.current.handleSubmit({
-        preventDefault: jest.fn(),
-      } as React.FormEvent<HTMLFormElement>);
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>);
     });
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -128,7 +129,7 @@ describe("useForm", () => {
   });
 
   it("should prevent submission with validation errors", async () => {
-    const onSubmit = jest.fn();
+    const onSubmit = vi.fn();
     const validators = {
       email: [(value: string) => (!value ? "Email is required" : null)],
     };
@@ -137,8 +138,8 @@ describe("useForm", () => {
 
     await act(async () => {
       await result.current.handleSubmit({
-        preventDefault: jest.fn(),
-      } as React.FormEvent<HTMLFormElement>);
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>);
     });
 
     expect(onSubmit).not.toHaveBeenCalled();

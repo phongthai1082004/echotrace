@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { useModal } from "./useModal";
+import { useModal } from "@/hooks/ui/useModal";
 
 describe("useModal", () => {
   interface TestData {

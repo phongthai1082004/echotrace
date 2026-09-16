@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { usePagination } from "./usePagination";
+import { usePagination } from "@/hooks/ui/usePagination";
 
 describe("usePagination", () => {
   it("should initialize with correct defaults", () => {

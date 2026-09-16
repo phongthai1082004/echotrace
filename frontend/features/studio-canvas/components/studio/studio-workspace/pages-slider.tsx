@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { usePageManager } from "../../../hooks/usePageManager";
 
@@ -31,19 +32,54 @@ function PageThumb({
   );
 }
 
+type Item = { idx: number; type: "single" | "spread"; leftIdx: number; rightIdx: number; isCover: boolean };
+
 export function PagesSlider() {
   const pages = useCanvasStore((s) => s.pages);
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
-  const { switchPage, addPage, deletePage } = usePageManager();
+  const pageClipboard = useCanvasStore((s) => s.pageClipboard);
+  const { switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread } =
+    usePageManager();
   const n = pages.length;
   const h = 54;
   const ratio = bookMeta.width && bookMeta.height ? bookMeta.width / bookMeta.height : 210 / 297;
   const singleW = Math.round(h * ratio); // thumbnail keeps the canvas aspect ratio
   const spreadW = singleW * 2 + 1; // 2 pages + spine
 
+  // ponytail: native HTML5 drag — no new dep for a thumbnail strip.
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; item: Item } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // clamp menu into viewport + close on outside click / Escape
+  useEffect(() => {
+    if (!menu) return;
+    const el = menuRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const vw = window.innerWidth,
+        vh = window.innerHeight;
+      let cx = menu.x,
+        cy = menu.y;
+      if (menu.x + rect.width > vw - 8) cx = vw - rect.width - 8;
+      if (menu.y + rect.height > vh - 8) cy = vh - rect.height - 8;
+      el.style.left = `${Math.max(8, cx)}px`;
+      el.style.top = `${Math.max(8, cy)}px`;
+    }
+    const close = () => setMenu(null);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
   // items: cover pages are singles, content pages are spreads
-  const items: { idx: number; type: "single" | "spread"; leftIdx: number; rightIdx: number; isCover: boolean }[] = [];
+  const items: Item[] = [];
   let i = 0;
   while (i < n) {
     if (i === 0 || i === n - 1) {
@@ -66,6 +102,15 @@ export function PagesSlider() {
     }
   };
 
+  const menuItems = menu
+    ? [
+        { label: "Duplicate", fn: () => duplicateSpread(menu.item.leftIdx) },
+        { label: "Copy", fn: () => copySpread(menu.item.leftIdx) },
+        { label: "Paste", disabled: !pageClipboard?.length, fn: () => pasteCopiedSpread() },
+        { label: "Delete", fn: () => handleDelete(menu.item) },
+      ]
+    : [];
+
   return (
     <div className="shrink-0 flex items-center gap-3 px-4 bg-[#FFF7D6] overflow-x-auto thin-scrollbar border-t-[3px] border-[#222]">
       <div className="my-2 flex items-center gap-3">
@@ -74,9 +119,51 @@ export function PagesSlider() {
           const left = pages[item.leftIdx];
           const right = pages[item.rightIdx];
           const active = activePageIndex === item.leftIdx || activePageIndex === item.rightIdx;
+          const dragging = dragFrom === item.leftIdx;
+          const isTarget = dropTarget === item.leftIdx && dragFrom !== item.leftIdx;
           return (
-            <div key={item.idx} className="shrink-0 flex flex-col items-center gap-1 group relative">
-              <div className="relative" style={{ width: item.type === "spread" ? spreadW : singleW, height: h }}>
+            <div
+              key={item.idx}
+              className="shrink-0 flex flex-col items-center gap-1 group relative"
+              draggable={!item.isCover}
+              onDragStart={(e) => {
+                if (item.isCover) return;
+                setDragFrom(item.leftIdx);
+                setMenu(null);
+                e.dataTransfer.effectAllowed = "move";
+                try {
+                  e.dataTransfer.setData("text/plain", String(item.leftIdx));
+                } catch {}
+              }}
+              onDragOver={(e) => {
+                if (item.isCover || dragFrom == null) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDropTarget(item.leftIdx);
+              }}
+              onDragLeave={() => setDropTarget((t) => (t === item.leftIdx ? null : t))}
+              onDrop={(e) => {
+                if (item.isCover || dragFrom == null) return;
+                e.preventDefault();
+                moveSpread(dragFrom, item.leftIdx);
+                setDragFrom(null);
+                setDropTarget(null);
+              }}
+              onDragEnd={() => {
+                setDragFrom(null);
+                setDropTarget(null);
+              }}
+              onContextMenu={(e) => {
+                if (item.isCover) return;
+                e.preventDefault();
+                e.stopPropagation();
+                setMenu({ x: e.clientX, y: e.clientY, item });
+              }}
+            >
+              <div
+                className={`${dragging ? "opacity-40" : ""} ${isTarget ? "outline-2 outline-dashed outline-[#7c3aed] outline-offset-2" : ""} ${!item.isCover ? "cursor-grab active:cursor-grabbing" : ""}`}
+                style={{ width: item.type === "spread" ? spreadW : singleW, height: h }}
+              >
                 {item.type === "spread" ? (
                   <div
                     onClick={() => switchPage(item.leftIdx)}
@@ -145,6 +232,26 @@ export function PagesSlider() {
           <span className="text-lg leading-none text-[#666]">+</span>
         </button>
       </div>
+      {menu && (
+        <div ref={menuRef} className="fixed z-[9999] min-w-[160px]" style={{ left: menu.x, top: menu.y }}>
+          <div className="bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[4px_4px_0_#222] overflow-hidden py-1">
+            {menuItems.map((m) => (
+              <button
+                key={m.label}
+                disabled={m.disabled}
+                onClick={() => {
+                  if (m.disabled) return;
+                  m.fn();
+                  setMenu(null);
+                }}
+                className="w-full text-left px-4 py-2 font-mono text-[10px] font-bold tracking-wider hover:bg-[#e8e6e0] transition-colors text-[#222] disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

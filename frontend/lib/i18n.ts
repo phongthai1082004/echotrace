@@ -9,8 +9,8 @@ const LANGS = ["en", "vi", "es"];
 i18n.use(initReactI18next).init({
   resources: { en: { common: en }, vi: { common: vi }, es: { common: es } },
   defaultNS: "common",
-  lng: "en",
-  fallbackLng: "en",
+  lng: "vi",
+  fallbackLng: "vi",
   interpolation: { escapeValue: false },
 });
 
@@ -20,12 +20,4 @@ if (typeof document !== "undefined") {
   const cookie = document.cookie.match(/(?:^|;\s*)i18nextLng=([^;]+)/)?.[1];
   if (cookie && LANGS.includes(cookie) && i18n.language !== cookie) i18n.changeLanguage(cookie);
 }
-
-// W4 diagnostic: dev-only — logs every language flip with the caller stack
-if (process.env.NODE_ENV !== "production") {
-  i18n.on("languageChanged", (lng) => {
-    console.warn("[i18n] languageChanged ->", lng, new Error("caller").stack?.split("\n").slice(1, 5).join("\n"));
-  });
-}
-
 export default i18n;
