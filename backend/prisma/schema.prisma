@@ -52,8 +52,9 @@ model User {
   cart        Cart?
   notifications Notification[]
 
+  // ponytail: giữ role (giá trị hiếm admin=~0.1%, planner dùng được);
+  // isDelete boolean bị bỏ (selectivity kém, chỉ tốn chi phí ghi).
   @@index([role])
-  @@index([isDelete])
 }
 
 model Notification {
@@ -188,10 +189,6 @@ model Order {
 
   @@index([userId])
   @@index([supplierId])
-  @@index([status])
-  @@index([orderCode])
-  @@index([trackingCode])
-  @@index([utmSource])
 }
 
 model OrderPdfJob {
@@ -208,7 +205,6 @@ model OrderPdfJob {
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@index([status])
 }
 
 model Transaction {
@@ -236,9 +232,6 @@ model Transaction {
   expenses        Expense[]
 
   @@index([orderId])
-  @@index([status])
-  @@index([gateway])
-  @@index([type])
 }
 
 model Income {
@@ -277,7 +270,6 @@ model Expense {
   cashflow    Cashflow?
 
   @@index([date])
-  @@index([category])
   @@index([taxCode])
   @@index([orderId])
   @@index([transactionId])
@@ -299,7 +291,6 @@ model Cashflow {
   income  Income?  @relation(fields: [incomeId], references: [id])
   expense Expense? @relation(fields: [expenseId], references: [id])
 
-  @@index([type])
   @@index([date])
   @@index([orderId])
   @@index([transactionId])
@@ -336,7 +327,6 @@ model Book {
   cartItems  CartItem[]
 
   @@index([userId])
-  @@index([type])
   @@index([sampleBookId])
 }
 
@@ -406,9 +396,6 @@ model SampleBook {
   books   Book[]
 
   @@index([createdBy])
-  @@index([type])
-  @@index([category])
-  @@index([isActive])
 }
 
 model DecorAsset {
@@ -427,7 +414,6 @@ model DecorAsset {
   creator User @relation(fields: [createdBy], references: [id])
 
   @@index([createdBy])
-  @@index([type])
 }
 
 model Supplier {
@@ -472,8 +458,6 @@ model PrintOption {
   supplierOptions SupplierPrintOption[]
 
   @@unique([type, code])
-  @@index([type])
-  @@index([isDelete])
 }
 
 model SupplierPrintOption {
@@ -509,7 +493,6 @@ model Coupon {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  @@index([isActive])
   @@index([expiresAt])
 }
 
@@ -548,5 +531,4 @@ model MaintenanceWindow {
   // khi nhiều process cùng lật cửa sổ hẹn sang active
   notifiedAt DateTime?
 
-  @@index([status])
 }
