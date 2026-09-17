@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
-import { IEmailService, EmailMessage } from '@echotrace/shared';
+import {EmailMessage} from '@echotrace/shared';
+import type {IEmailService} from '@echotrace/shared';
 
 @injectable()
 export class EmailService implements IEmailService {

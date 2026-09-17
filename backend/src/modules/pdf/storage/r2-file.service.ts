@@ -1,6 +1,7 @@
 import { injectable, inject } from 'tsyringe';
-import { IR2ImageService } from '../../../shared/r2/r2.service.js';
-import { IR2FileService, PDF_FOLDER } from '../render/pdf.types.js';
+import type {IR2ImageService} from '../../../shared/r2/r2.service.js';
+import {PDF_FOLDER} from '../render/pdf.types.js';
+import type {IR2FileService} from '../render/pdf.types.js';
 
 @injectable()
 export class R2FileService implements IR2FileService {

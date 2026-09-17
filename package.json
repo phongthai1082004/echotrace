@@ -8,6 +8,7 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
     "build": "pnpm -r build",
+    "test:all": "pnpm --filter backend test --forceExit && pnpm --filter backend test:integration && pnpm --dir frontend test --reporter=default --reporter=json --outputFile=test-results/vitest-results.json",
     "db:generate": "pnpm --filter backend exec prisma generate",
     "db:push": "pnpm --filter backend exec prisma db push",
     "db:studio": "pnpm --filter backend exec prisma studio",

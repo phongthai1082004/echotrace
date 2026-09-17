@@ -1,5 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { AuthRepository } from '../repositories/auth.repository.js';
@@ -33,7 +34,7 @@ export class SessionService implements ISessionService {
 		if (!user || user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);
 
 		const accessToken = generateAccessToken(payload.userId, user.role);
-		const rt = jwt.sign({ userId: payload.userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '30d' });
+		const rt = jwt.sign({ userId: payload.userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '30d', jwtid: randomUUID() });
 		await this.authRepo.rotateSessionToken(
 			existing.id,
 			parseInt(payload.userId),

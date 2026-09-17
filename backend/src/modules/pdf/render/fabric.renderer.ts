@@ -3,7 +3,8 @@ import { PDFDocument } from 'pdf-lib';
 import { StaticCanvas } from 'fabric/node';
 import { registerFont } from 'canvas';
 import { existsSync } from 'fs';
-import { IOrderPdfRenderer, isRenderableBookType } from './pdf.types.js';
+import {isRenderableBookType} from './pdf.types.js';
+import type {IOrderPdfRenderer} from './pdf.types.js';
 import { OrderRepository } from '../../order-cart/repositories/order.repository.js';
 import { BookRepository } from '../../product/books/books.repository.js';
 

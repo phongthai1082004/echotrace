@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
-import { ICheckoutService } from '../checkout/checkout.service.js';
+import type {ICheckoutService} from '../checkout/checkout.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,6 +27,8 @@ export class CheckoutController {
 			customerId: Number(b.customerId),
 			sampleBookId: Number(b.sampleBookId),
 			quantity: b.quantity ?? 1,
+			cover: b.cover ?? null,
+			paper: b.paper ?? null,
 			name: b.name,
 			phone: b.phone,
 			address: b.address,

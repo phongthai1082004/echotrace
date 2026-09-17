@@ -6,7 +6,7 @@ import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { CreateSupplierDTO } from '@echotrace/shared';
 import { UpdateSupplierDTO } from '@echotrace/shared';
-import { ISupplierService } from './suppliers.service.js';
+import type {ISupplierService} from './suppliers.service.js';
 
 @injectable()
 export class SupplierController {

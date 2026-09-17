@@ -4,7 +4,7 @@ import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
-import { ISampleBookService } from './sample-books.service.js';
+import type {ISampleBookService} from './sample-books.service.js';
 
 @injectable()
 export class SampleBookController {

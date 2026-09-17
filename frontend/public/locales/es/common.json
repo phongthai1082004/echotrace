@@ -804,7 +804,7 @@
 			"phone": "Teléfono",
 			"address": "Dirección",
 			"pages": "Páginas",
-			"cover": "Portada",
+			"cover": "Cubierta",
 			"selected": "{{count}} seleccionados",
 			"assignSearch": "Buscar por ID de pedido o producto...",
 			"noResults": "Sin resultados",
@@ -852,7 +852,10 @@
 			"copyLink": "Copiar enlace",
 			"albumOrderNeedCustomer": "Elige cliente y álbum primero",
 			"albumOrderCreated": "Pedido de álbum creado",
-			"albumOrderFailed": "No se pudo crear el pedido"
+			"albumOrderFailed": "No se pudo crear el pedido",
+			"paper": "Papel",
+			"selectCover": "Elegir cubierta",
+			"selectPaper": "Elegir papel"
 		},
 		"stickers": {
 			"label": "Admin · Activos",

@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response } from 'express';
-import { IOtpService } from './otp.service.js';
+import type {IOtpService} from './otp.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';

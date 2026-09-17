@@ -14,17 +14,17 @@ import {
 	PAYMENT_LINK_EXPIRY_MS,
 } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
-import { ICartService } from '../cart/cart.service.js';
+import type {ICartService} from '../cart/cart.service.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyAdmins } from '../../notification/notify/order.js';
 import { orderText } from '../../notification/notify/order-texts.js';
 import { NotificationType, NotificationChannel } from '@echotrace/shared';
 import { PaymentService } from '../../financial/payments/gateways/payment.service.js';import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
 import { PaymentLinkItem } from '@payos/node';
-import { IPdfQueue } from '../../pdf/render/pdf.types.js';
-import { IStockService } from '../../product/sample-books/stock.service.js';
-import { ISampleBookService } from '../../product/sample-books/sample-books.service.js';
-import { ICouponService } from '../coupons/coupons.service.js';
+import type {IPdfQueue} from '../../pdf/render/pdf.types.js';
+import type {IStockService} from '../../product/sample-books/stock.service.js';
+import type {ISampleBookService} from '../../product/sample-books/sample-books.service.js';
+import type {ICouponService} from '../coupons/coupons.service.js';
 
 export interface ICheckoutService {
 	createOrder(idempotencyKey: string, requestBody: string, userId: number): Promise<any>;
@@ -32,6 +32,8 @@ export interface ICheckoutService {
 		customerId: number;
 		sampleBookId: number;
 		quantity?: number;
+		cover?: string | null;
+		paper?: string | null;
 		name?: string;
 		phone?: string;
 		address?: string;
@@ -247,6 +249,8 @@ export class CheckoutService implements ICheckoutService {
 		customerId: number;
 		sampleBookId: number;
 		quantity?: number;
+		cover?: string | null;
+		paper?: string | null;
 		name?: string;
 		phone?: string;
 		address?: string;
@@ -271,7 +275,7 @@ export class CheckoutService implements ICheckoutService {
 		if ((album as any).type && (album as any).type !== 'ALBUM') {
 			throw new AppError(ErrorCode.INTERNAL, 400);
 		}
-		const item = await this.cartService.addAlbumToCart(customerId, { sampleBookId, quantity });
+		const item = await this.cartService.addAlbumToCart(customerId, { sampleBookId, quantity, cover: input.cover ?? null, paper: input.paper ?? null });
 		const body = JSON.stringify({
 			items: [
 				{

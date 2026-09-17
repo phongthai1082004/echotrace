@@ -16,10 +16,15 @@ export class OAuthService implements IOAuthService {
 	constructor(@inject('AuthRepository') private authRepo: AuthRepository) {}
 
 	async loginWithGoogle(idToken: string) {
-		const ticket = await googleClient.verifyIdToken({
-			idToken,
-			audience: process.env.GOOGLE_CLIENT_ID,
-		});
+		let ticket;
+		try {
+			ticket = await googleClient.verifyIdToken({
+				idToken,
+				audience: process.env.GOOGLE_CLIENT_ID,
+			});
+		} catch {
+			throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
+		}
 		const payload = ticket.getPayload();
 		if (!payload?.email) throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
 

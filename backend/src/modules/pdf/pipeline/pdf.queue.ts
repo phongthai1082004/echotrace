@@ -1,5 +1,5 @@
 import { injectable, inject } from 'tsyringe';
-import { IPdfQueue } from '../render/pdf.types.js';
+import type {IPdfQueue} from '../render/pdf.types.js';
 import { PdfRepository } from '../storage/pdf.repository.js';
 
 @injectable()

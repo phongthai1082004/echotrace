@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
-import { IReturnsService } from '../returns/returns.service.js';
+import type {IReturnsService} from '../returns/returns.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode, ReturnFault } from '@echotrace/shared';

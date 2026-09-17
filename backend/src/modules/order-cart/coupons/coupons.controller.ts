@@ -2,7 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
-import { ICouponService } from './coupons.service.js';
+import type {ICouponService} from './coupons.service.js';
 
 @injectable()
 export class CouponController {

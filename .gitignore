@@ -50,7 +50,8 @@ pnpm-debug.log*
 .turbo/
 
 # test
-backend/tests/*
 backend/test-results/*
 backend/coverage/*
+frontend/test-results/*
+frontend/coverage/*
 *.md

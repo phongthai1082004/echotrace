@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
-import { IBookService } from './books.service.js';
+import type {IBookService} from './books.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';

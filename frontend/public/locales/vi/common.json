@@ -854,7 +854,10 @@
 			"copyLink": "Copy link",
 			"albumOrderNeedCustomer": "Chọn khách hàng và album trước",
 			"albumOrderCreated": "Đã tạo đơn album",
-			"albumOrderFailed": "Tạo đơn thất bại"
+			"albumOrderFailed": "Tạo đơn thất bại",
+			"paper": "Giấy",
+			"selectCover": "Chọn bìa",
+			"selectPaper": "Chọn giấy"
 		},
 		"stickers": {
 			"label": "Admin · Tài sản",

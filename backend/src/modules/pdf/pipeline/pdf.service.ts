@@ -1,5 +1,6 @@
 import { injectable, inject } from 'tsyringe';
-import { IOrderPdfRenderer, IR2FileService, PDF_FOLDER, isRenderableBookType } from '../render/pdf.types.js';
+import {PDF_FOLDER, isRenderableBookType} from '../render/pdf.types.js';
+import type {IOrderPdfRenderer, IR2FileService} from '../render/pdf.types.js';
 import { PdfRepository } from '../storage/pdf.repository.js';
 
 @injectable()

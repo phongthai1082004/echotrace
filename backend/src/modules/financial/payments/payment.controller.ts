@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { WebhookProcessResult } from '@echotrace/shared';
-import { IPaymentWebhookService } from './payment.service.js';
+import type {IPaymentWebhookService} from './payment.service.js';
 import { PaymentService } from './gateways/payment.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 

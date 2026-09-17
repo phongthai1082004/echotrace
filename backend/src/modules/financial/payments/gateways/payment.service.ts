@@ -1,6 +1,6 @@
 import { PaymentGateway } from '@echotrace/shared';
 import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult } from '@echotrace/shared';
-import { IPaymentStrategy } from './payment.strategy.js';
+import type {IPaymentStrategy} from './payment.strategy.js';
 import { injectable } from 'tsyringe';
 
 export interface IPaymentService {

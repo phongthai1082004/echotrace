@@ -854,7 +854,10 @@
 			"copyLink": "Copy link",
 			"albumOrderNeedCustomer": "Pick a customer and an album first",
 			"albumOrderCreated": "Album order created",
-			"albumOrderFailed": "Failed to create album order"
+			"albumOrderFailed": "Failed to create album order",
+			"paper": "Paper",
+			"selectCover": "Select cover",
+			"selectPaper": "Select paper"
 		},
 		"suppliers": {
 			"label": "Admin · Suppliers",

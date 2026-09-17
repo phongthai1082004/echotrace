@@ -11,7 +11,7 @@ import { NotificationChannel, NotificationType } from '@echotrace/shared';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { orderText } from '../../notification/notify/order-texts.js';
 import { PaymentWebhookRepository } from './payment.repository.js';
-import { IStockService } from '../../product/sample-books/stock.service.js';
+import type {IStockService} from '../../product/sample-books/stock.service.js';
 
 export interface IPaymentWebhookService {
 	processWebhook(result: WebhookProcessResult): Promise<void>;

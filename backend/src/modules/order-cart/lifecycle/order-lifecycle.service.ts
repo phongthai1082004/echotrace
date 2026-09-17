@@ -17,9 +17,9 @@ import {
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { PaymentService } from '../../financial/payments/gateways/payment.service.js';
 import { PaymentWebhookService } from '../../financial/payments/payment.service.js';
-import { IOrderFinanceService } from '../../financial/settlement/order-finance.bridge.js';
+import type {IOrderFinanceService} from '../../financial/settlement/order-finance.bridge.js';
 import { scheduleDelayedJob } from '../queue/redis-delayed-queue.js';
-import { IStockService } from '../../product/sample-books/stock.service.js';
+import type {IStockService} from '../../product/sample-books/stock.service.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyOrderUser, notifyAdmins } from '../../notification/notify/order.js';
 import { orderText } from '../../notification/notify/order-texts.js';

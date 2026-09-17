@@ -65,6 +65,15 @@ describe("token lifecycle (S-25..S-28)", () => {
     await expect(sessions.refresh(tok)).rejects.toMatchObject({ statusCode: 401, errorCode: "AUTH_REFRESH_TOKEN_REVOKED" });
   });
 
+  it("S-28b: two logins in the same second issue different refresh tokens (jti)", async () => {
+    const { password, repo } = build();
+    (repo.findActiveUserByEmailFull as jest.Mock).mockResolvedValue({ ...activeUser, password: bcrypt.hashSync("pw", 4) });
+    (repo.createSessionToken as jest.Mock).mockResolvedValue({});
+    const a = await password.login("a@b.c", "pw");
+    const b = await password.login("a@b.c", "pw");
+    expect(a.refreshToken).not.toBe(b.refreshToken);
+  });
+
   it("S-28: secret-swap -- an ACCESS-secret token is not a valid refresh token", async () => {
     const { sessions, repo } = build();
     const access = jwt.sign({ userId: "5" }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "1h" });

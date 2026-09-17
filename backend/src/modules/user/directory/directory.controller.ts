@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
-import { IDirectoryService } from './directory.service.js';
+import type {IDirectoryService} from './directory.service.js';
 import { UserRepository } from '../repositories/users.repository.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';

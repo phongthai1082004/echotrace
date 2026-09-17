@@ -23,6 +23,7 @@ export default function AdminCouponsPage() {
         <div className="flex items-center gap-3">
           <AdminSearch value={search} onChange={setSearch} placeholder={t("admin.coupons.searchPlaceholder")} />
           <button
+            data-testid="coupon-create-open"
             suppressHydrationWarning
             onClick={() => setSelected({ id: 0 } as Coupon)}
             className={`${neoBtnPrimary} font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5 shrink-0`}

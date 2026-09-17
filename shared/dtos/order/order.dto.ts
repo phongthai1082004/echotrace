@@ -81,6 +81,14 @@ export class AlbumOrderDTO {
 
   @IsString()
   @IsOptional()
+  cover?: string;
+
+  @IsString()
+  @IsOptional()
+  paper?: string;
+
+  @IsString()
+  @IsOptional()
   name?: string;
 
   @IsString()

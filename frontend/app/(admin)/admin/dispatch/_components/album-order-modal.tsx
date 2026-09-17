@@ -49,6 +49,10 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
   const [albums, setAlbums] = useState<AlbumRow[]>([]);
   const [sampleBookId, setSampleBookId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [covers, setCovers] = useState<{ code: string; label: string }[]>([]);
+  const [papers, setPapers] = useState<{ code: string; label: string }[]>([]);
+  const [cover, setCover] = useState("");
+  const [paper, setPaper] = useState("");
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,6 +71,16 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
     apiFetch<any>("/api/admin/sample-books?type=ALBUM&status=published&limit=100", token)
       .then((d) => setAlbums(d?.items ?? d ?? []))
       .catch(() => setAlbums([]));
+    // ponytail: cover/paper admin chọn lúc tạo đơn (size lấy từ album)
+    const opts = (type: string, set: (v: { code: string; label: string }[]) => void) =>
+      apiFetch<any>(`/api/admin/print-options?type=${type}&limit=100`, token)
+        .then((d) => {
+          const list: { code: string; name?: { vi?: string } }[] = d?.items ?? d ?? [];
+          set(list.map((o) => ({ code: o.code, label: o.name?.vi || o.code })));
+        })
+        .catch(() => set([]));
+    void opts("cover", setCovers);
+    void opts("paper", setPapers);
   }, [token]);
 
   useEffect(() => {
@@ -104,6 +118,8 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
             customerId,
             sampleBookId,
             quantity,
+            cover: cover || undefined,
+            paper: paper || undefined,
             name: name || undefined,
             phone: phone || undefined,
             address: address || undefined,
@@ -221,6 +237,28 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
                 label: `${a.name}${a.quantity != null ? ` (${a.quantity})` : ""}`,
               }))}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>{t("admin.dispatch.cover")}</label>
+              <NeoSelect
+                value={cover}
+                onChange={setCover}
+                placeholder={t("admin.dispatch.selectCover")}
+                className="w-full"
+                options={covers.map((c) => ({ value: c.code, label: c.label }))}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>{t("admin.dispatch.paper")}</label>
+              <NeoSelect
+                value={paper}
+                onChange={setPaper}
+                placeholder={t("admin.dispatch.selectPaper")}
+                className="w-full"
+                options={papers.map((p) => ({ value: p.code, label: p.label }))}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { OrderRepository } from '../repositories/order.repository.js';
 import { OrderStatus, ReturnState, ReturnFault, DefectState, ErrorCode, NotificationChannel, NotificationType } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
-import { IOrderFinanceService } from '../../financial/settlement/order-finance.bridge.js';
+import type {IOrderFinanceService} from '../../financial/settlement/order-finance.bridge.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyOrderUser, notifyAdmins } from '../../notification/notify/order.js';
 import { orderText } from '../../notification/notify/order-texts.js';

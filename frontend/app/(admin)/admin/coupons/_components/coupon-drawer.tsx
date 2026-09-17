@@ -67,6 +67,7 @@ export function CouponDrawer({
           <div>
             <div className={`${label} text-xs text-[#666] mb-1`}>{t("admin.coupons.code")}</div>
             <input
+              data-testid="coupon-code"
               className={input}
               value={form.code}
               disabled={!isCreating}
@@ -100,6 +101,7 @@ export function CouponDrawer({
             <div>
               <div className={`${label} text-xs text-[#666] mb-1`}>{t("admin.coupons.value")}</div>
               <input
+                data-testid="coupon-value"
                 type="number"
                 value={form.discountValue}
                 disabled={!isCreating}
@@ -172,6 +174,7 @@ export function CouponDrawer({
         {isCreating ? (
           <div className="px-6 py-4 shrink-0 border-t-[3px] border-[#222]">
             <button
+              data-testid="coupon-save"
               onClick={handleSave}
               disabled={saving || !form.code.trim()}
               className={`${neoBtnPrimary} w-full flex items-center justify-center gap-2 py-3 disabled:opacity-40`}

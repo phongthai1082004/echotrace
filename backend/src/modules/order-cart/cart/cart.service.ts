@@ -28,15 +28,22 @@ function toOptKeyMap(rows: PrintOptionRawRow[]): OptKeyMap {
 }
 
 function applyItemPrice(item: any, optByKey: OptKeyMap): any {
-	if (item.cover == null || item.paper == null || item.paperSize == null) return { ...item, price: null };
+	if (item.cover == null || item.paper == null) return { ...item, price: null };
 	const cover = optByKey.get(`cover:${item.cover}`)?.price;
 	const paper = optByKey.get(`paper:${item.paper}`)?.price;
-	const size = optByKey.get(`paperSize:${item.paperSize}`);
 	if (cover == null || paper == null) return { ...item, price: null };
 	// ponytail: paperSize multiplier is ALWAYS derived from dimensions (A4-area ratio).
-	// The admin price field on paperSize rows is ignored — it's not a cost, it used to be
+	// The admin price field on paperSize rows is ignored �?" it's not a cost, it used to be
 	// a hidden override that silently beat the dimension math.
-	const factor = size?.width && size?.height ? (size.width * size.height) / (210 * 297) : 1;
+	// Album items have no paperSize code (size cố định từ lúc tạo album) → lấy từ
+	// dims của sách; không có dims mới chịu 400 như cũ.
+	const size = item.paperSize == null ? null : optByKey.get(`paperSize:${item.paperSize}`);
+	let factor: number | null;
+	if (size?.width && size?.height) factor = (size.width * size.height) / (210 * 297);
+	else if (item.paperSize != null) factor = 1;
+	else if (item.paperWidth && item.paperHeight) factor = (item.paperWidth * item.paperHeight) / (210 * 297);
+	else factor = null;
+	if (factor == null) return { ...item, price: null };
 	return { ...item, price: computeItemPrice(item.pages ?? 0, cover, paper, factor) };
 }
 
@@ -49,7 +56,7 @@ export interface ICartService {
 		patch: Partial<Pick<CartItem, 'quantity' | 'cover' | 'paper' | 'paperSize'>>,
 	): Promise<CartItem>;
 	deleteItem(userId: number, bookId: number): Promise<void>;
-	addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number }): Promise<CartItem>;
+	addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number; cover?: string | null; paper?: string | null }): Promise<CartItem>;
 	calculateCart(
 		userId: number,
 		paymentMethod?: string | null,
@@ -142,7 +149,7 @@ export class CartService implements ICartService {
 		if (cart) await this.cartRepo.deleteCartItems(cart.id, bookId);
 	}
 
-	async addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number }): Promise<CartItem> {
+	async addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number; cover?: string | null; paper?: string | null }): Promise<CartItem> {
 		const sampleBookId = input.sampleBookId;
 		const quantity = Math.max(1, Math.floor(input.quantity ?? 1));
 		if (!Number.isFinite(sampleBookId)) throw new AppError('sampleBookId không hợp lệ', 400);
@@ -167,7 +174,9 @@ export class CartService implements ICartService {
 				content: (sample.content as object) ?? {},
 			});
 		}
-		return this.upsertItem(userId, { bookId: book.id, quantity, cover: sample.cover, paper: null, paperSize: null });
+		// ponytail: cover/paper do admin chọn lúc tạo đơn (size lấy từ dims album);
+		// cover rớt về sample.cover, paper bắt buộc (thiếu → 400 ở calculateCart).
+		return this.upsertItem(userId, { bookId: book.id, quantity, cover: input.cover ?? sample.cover, paper: input.paper ?? null, paperSize: null });
 	}
 
 	async calculateCart(

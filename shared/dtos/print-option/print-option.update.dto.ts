@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsIn, IsInt, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PRINT_OPTION_TYPES, PrintOptionType, MultiLangTextDTO } from './print-option.create.dto.js';
+import { PRINT_OPTION_TYPES, MultiLangTextDTO } from './print-option.create.dto.js';
+import type { PrintOptionType } from './print-option.create.dto.js';
 
 export class UpdatePrintOptionDTO {
 	@IsIn(PRINT_OPTION_TYPES, { message: 'Loại option không hợp lệ' })

@@ -5,7 +5,7 @@ import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { AssetCategory } from '@echotrace/shared';
-import { IR2ImageService } from '../../../shared/r2/r2.service.js';
+import type {IR2ImageService} from '../../../shared/r2/r2.service.js';
 import { DecorAssetRepository } from './stickers.repository.js';
 
 const VALID_CATEGORIES = new Set(Object.values(AssetCategory));

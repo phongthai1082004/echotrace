@@ -10,7 +10,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "pretest:e2e": "set NEXTAUTH_URL=http://localhost:3100&& set NEXT_PUBLIC_BACKEND_URL=http://localhost:4101&& set BACKEND_URL=http://localhost:4101&& set NEXTAUTH_SECRET=test-e2e-secret&& set GOOGLE_CLIENT_ID=dummy&& set GOOGLE_CLIENT_SECRET=dummy&& next build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@echotrace/shared": "workspace:*",
@@ -71,6 +73,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",

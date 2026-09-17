@@ -2,7 +2,7 @@ import { Redis } from "ioredis";
 import { container } from "tsyringe";
 import { OrderStatus } from "@echotrace/shared";
 import { OrderRepository } from "../repositories/order.repository.js";
-import { IStockService } from "../../product/sample-books/stock.service.js";
+import type {IStockService} from "../../product/sample-books/stock.service.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const QUEUE_KEY = "echotrace:delayed_jobs";

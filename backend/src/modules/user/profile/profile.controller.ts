@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
-import { IProfileService } from './profile.service.js';
+import type {IProfileService} from './profile.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 
 @injectable()

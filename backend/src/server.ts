@@ -37,7 +37,9 @@ const PORT = process.env.BACKEND_PORT;
 const SUPPORTED_LANGS = ['en', 'vi', 'es'];
 const DEFAULT_LANG = 'en';
 
-async function bootstrap() {
+// ponytail: buildApp tách riêng để integration test (supertest) dùng chung app
+// thật mà không listen/không chạy workers. opts.jobs=false trong test.
+export async function buildApp(opts: { jobs?: boolean } = {}) {
 	const app = express();
 
 	// behind nginx (1 hop) — lets express-rate-limit see real client IPs from X-Forwarded-For
@@ -47,25 +49,21 @@ async function bootstrap() {
 	app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 	app.get('/', (req, res) => res.status(200).send('ok'));
 
-	// Start server immediately so health checks pass
-	const server = app.listen(PORT, () => {
-		console.log(`🚀 Server running successfully at http://localhost:${PORT}/`);
-	});
-
-	// Initialize everything else but don't block startup
-	setImmediate(async () => {
-		try {
-			await i18next
-				.use(Backend)
-				.use(LanguageDetector)
-				.init({
-					fallbackLng: DEFAULT_LANG,
-					supportedLngs: SUPPORTED_LANGS,
-					preload: SUPPORTED_LANGS,
-					backend: {
-						loadPath: './locales/{{lng}}.json',
-					},
-				});
+	try {
+		await i18next
+			.use(Backend)
+			.use(LanguageDetector)
+			.init({
+				fallbackLng: DEFAULT_LANG,
+				supportedLngs: SUPPORTED_LANGS,
+				preload: SUPPORTED_LANGS,
+				backend: {
+					loadPath: './locales/{{lng}}.json',
+				},
+			});
+	} catch {
+		/* i18n files missing in test cwd — validator falls back to raw messages */
+	}
 
 			app.use(helmet());
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
@@ -116,33 +114,40 @@ apiRouter.use('/', directoryRoutes);
 
 			app.use(errorMiddleware);
 
-			// Background jobs
-			startDelayedWorker();
-			startOrderExpiryCron();
-			container.resolve(PdfWorker).start();
+			if (opts.jobs ?? true) {
+				// Background jobs (skipped in integration tests)
+				startDelayedWorker();
+				startOrderExpiryCron();
+				container.resolve(PdfWorker).start();
 
-			// Register webhook URL with PayOS (idempotent). Re-run on deploy or URL change,
-			// otherwise payment notifications are never sent. Requires WEBHOOK_URL publicly reachable.
-			if (process.env.WEBHOOK_URL) {
-				const { PayOS } = await import('@payos/node');
-				const payos = new PayOS({
-					clientId: process.env.PAYOS_CLIENT_ID!,
-					apiKey: process.env.PAYOS_API_KEY!,
-					checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
-				});
-				try {
-					await payos.webhooks.confirm(process.env.WEBHOOK_URL);
-					console.log('? PayOS webhook registered:', process.env.WEBHOOK_URL);
-				} catch (e: any) {
-					console.error('? PayOS webhook registration failed:', e?.message || e);
+				// Register webhook URL with PayOS (idempotent). Re-run on deploy or URL change,
+				// otherwise payment notifications are never sent. Requires WEBHOOK_URL publicly reachable.
+				if (process.env.WEBHOOK_URL) {
+					const { PayOS } = await import('@payos/node');
+					const payos = new PayOS({
+						clientId: process.env.PAYOS_CLIENT_ID!,
+						apiKey: process.env.PAYOS_API_KEY!,
+						checksumKey: process.env.PAYOS_CHECKSUM_KEY!,
+					});
+					try {
+						await payos.webhooks.confirm(process.env.WEBHOOK_URL);
+						console.log('? PayOS webhook registered:', process.env.WEBHOOK_URL);
+					} catch (e: any) {
+						console.error('? PayOS webhook registration failed:', e?.message || e);
+					}
+				} else {
+					console.warn('? WEBHOOK_URL not set - PayOS webhooks will not be delivered');
 				}
-			} else {
-				console.warn('? WEBHOOK_URL not set - PayOS webhooks will not be delivered');
 			}
-		} catch (err) {
-			console.error('Failed to initialize app features:', err);
-			// Keep server running with health checks only
-		}
+	return app;
+}
+
+async function bootstrap() {
+	const app = await buildApp();
+
+	// Start server immediately so health checks pass
+	const server = app.listen(PORT, () => {
+		console.log(`🚀 Server running successfully at http://localhost:${PORT}/`);
 	});
 
 	server.on('error', (error: Error) => {
@@ -159,8 +164,10 @@ apiRouter.use('/', directoryRoutes);
 	});
 }
 
-bootstrap().catch((error: Error) => {
-	console.error('❌ Fatal error during server bootstrap initialization:', error.message);
-	console.error(error.stack);
-	process.exit(1);
-});
+if (process.env.JEST_WORKER_ID === undefined) {
+	bootstrap().catch((error: Error) => {
+		console.error('❌ Fatal error during server bootstrap initialization:', error.message);
+		console.error(error.stack);
+		process.exit(1);
+	});
+}

@@ -1,6 +1,6 @@
 import { CreatePaymentLinkDto, PaymentLinkResponse, WebhookProcessResult, TransactionStatus } from '@echotrace/shared';
 import { PaymentGateway } from '@echotrace/shared';
-import { IPaymentStrategy } from './payment.strategy.js';
+import type {IPaymentStrategy} from './payment.strategy.js';
 import { inject, injectable } from 'tsyringe';
 import { PaymentLinkItem, PayOS, TaxPercentage } from '@payos/node';
 import * as crypto from 'crypto';

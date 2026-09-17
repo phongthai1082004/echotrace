@@ -4,7 +4,7 @@ import { AuthRequest } from '../../../shared/middleware/auth.middleware.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { CreatePrintOptionDTO } from '@echotrace/shared';
 import { UpdatePrintOptionDTO } from '@echotrace/shared';
-import { IPrintOptionService } from './print-options.service.js';
+import type {IPrintOptionService} from './print-options.service.js';
 
 @injectable()
 export class PrintOptionController {
