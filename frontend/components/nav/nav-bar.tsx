@@ -81,13 +81,11 @@ export function Nav({ user }: NavProps) {
   const loadMore = useNotifStore((s) => s.loadMore);
   const loadingMore = useNotifStore((s) => s.loadingMore);
 
-  // ponytail: list do store giữ (bootstrap nạp đầu + SSE đẩy live) — đây chỉ poll backup 60s.
+  // ponytail: list do store giữ (bootstrap nạp đầu + SSE đẩy live, tự reconnect).
+  // Bỏ poll backup 60s — khỏi giữ Neon thức vì chuông. Mở tab/reconnect thì refresh 1 lần.
   useEffect(() => {
     if (!token) return;
-    const id = setInterval(() => {
-      void useNotifStore.getState().refresh();
-    }, 60000);
-    return () => clearInterval(id);
+    void useNotifStore.getState().refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 

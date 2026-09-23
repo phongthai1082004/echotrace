@@ -2,10 +2,8 @@ import { handleOrderExpiry } from "./redis-delayed-queue.js";
 import { container } from "tsyringe";
 import { OrderRepository } from "../repositories/order.repository.js";
 
-const TEN_MINUTES_MS = 10 * 60 * 1000;
-
-// ponytail: cron an toàn chạy 10 phút/lần để bắt những đơn pending_payment hết hạn
-// mà Redis delayed job lỡ không xử lý (mất kết nối/m timeout). Chỉ cancel đơn chưa thanh toán.
+// ponytail: không interval — Redis delayed job hẹn giờ hủy từng đơn (Redis-only, rẻ).
+// Scan boot 1 lần để dọn đơn tồn khi Redis rớt/mất job. DB được ngủ khi rỗi.
 const BATCH_SIZE = 200;
 
 export function startOrderExpiryCron(): void {
@@ -31,7 +29,6 @@ export function startOrderExpiryCron(): void {
     }
   };
 
-  // ponytail: chạy luôn 1 lần khi boot để dọn đơn tồn đọng
+  // ponytail: 1 lần khi boot để dọn đơn tồn đọng — không lặp, khỏi giữ Neon thức.
   void scan();
-  setInterval(scan, TEN_MINUTES_MS);
 }

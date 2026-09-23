@@ -68,7 +68,9 @@ export function useCustomerOrders() {
 
   const pollVerify = useCallback((id: number, status: string) => {
     if (!token || !id || status !== "pending_payment") return;
+    // ponytail: 12s + skip tab ẩn — webhook là luồng chính, poll chỉ fallback.
     const interval = setInterval(async () => {
+      if (document.hidden) return;
       try {
         const r = await apiFetch<{ status: string }>(`/api/orders/${id}/verify`, token, { method: "POST" });
         if (r?.status && r.status !== "pending_payment") {
@@ -77,7 +79,7 @@ export function useCustomerOrders() {
           updateOrder(id, { status: r.status as OrderDTO["status"], qrCode: undefined });
         }
       } catch {}
-    }, 3000);
+    }, 12000);
     return () => clearInterval(interval);
   }, [token, updateOrder, showToast]);
 

@@ -6,13 +6,13 @@ const SUPPORTED_LANGS = ["en", "vi", "es"];
 const DEFAULT_LANG = "vi"; // ponytail: mặc định tiếng Việt
 const BACKEND = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
 
-// ponytail: cache cờ bảo trì 10s trong process — khỏi gọi backend mỗi request.
+// ponytail: cache cờ bảo trì 60s trong process — khỏi gọi backend mỗi request, khỏi giữ Neon thức.
 // downStreak: fetch lỗi mạng 2 lần liên tiếp mới coi backend chết (tránh flapping
 // vì 1 timeout lẻ). Backend trả HTTP (kể cả 500) = còn sống.
 let flagCache: { at: number; on: boolean } | null = null;
 let downStreak = 0;
 async function maintenanceState(): Promise<{ on: boolean; down: boolean }> {
-  if (flagCache && Date.now() - flagCache.at < 10_000) {
+  if (flagCache && Date.now() - flagCache.at < 60_000) {
     return { on: flagCache.on, down: downStreak >= 2 };
   }
   try {

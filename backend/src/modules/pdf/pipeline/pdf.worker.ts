@@ -12,10 +12,7 @@ export class PdfWorker {
 	// ponytail: số PDF render cùng lúc — define sẵn để không ngợp CPU/bandwidth.
 	private readonly max = Math.max(1, Number(process.env.PDF_MAX_CONCURRENT ?? 2));
 	private readonly baseMs = Number(process.env.PDF_POLL_MS ?? 5000);
-	// ponytail: trần backoff phải > Neon suspend delay (5p) thì DB mới được ngủ khi rỗi.
-	private readonly maxMs = Number(process.env.PDF_POLL_MAX_MS ?? 600000);
-	private delayMs = this.baseMs;
-	private kicked = false;
+	// ponytail: rỗi thì ngủ hẳn (không timer) để Neon suspend — enqueue() kick() đánh thức.
 
 	constructor(
 		@inject('PdfService') private pdf: PdfService,
@@ -25,8 +22,8 @@ export class PdfWorker {
 	start() {
 		if (!this.stopped) return;
 		this.stopped = false;
-		this.delayMs = this.baseMs;
-		if (!this.polling) void this.tick();
+		// ponytail: 1 tick lúc boot để dọn job tồn — xong rỗi thì ngủ, chờ kick().
+		if (!this.polling && !this.timer) void this.tick();
 	}
 
 	stop() {
@@ -37,15 +34,10 @@ export class PdfWorker {
 		}
 	}
 
-	// ponytail: enqueue() gọi để PDF mới chạy trong vài giây dù worker đang ngủ backoff.
+	// ponytail: đường đánh thức duy nhất khi rỗi — enqueue() gọi, PDF mới chạy trong vài giây.
 	kick() {
-		if (this.stopped) return;
-		this.kicked = true;
-		if (this.polling) return;
-		if (this.timer) {
-			clearTimeout(this.timer);
-			this.timer = null;
-		}
+		if (this.stopped || this.polling) return;
+		if (this.timer) return; // đang có hẹn bận — tick đó sẽ bắt job
 		void this.tick();
 	}
 
@@ -56,17 +48,18 @@ export class PdfWorker {
 		try {
 			found = await this.poll();
 		} catch {
-			found = false; // ponytail: DB sập thì backoff, đừng nện thêm.
+			found = false; // ponytail: DB sập thì ngủ, chờ kick sau — đừng nện thêm.
 		}
 		this.polling = false;
-		const busy = found || this.active > 0 || this.kicked;
-		this.kicked = false;
-		this.delayMs = busy ? this.baseMs : Math.min(this.delayMs * 2, this.maxMs);
 		if (this.stopped) return;
-		this.timer = setTimeout(() => {
-			this.timer = null;
-			void this.tick();
-		}, this.delayMs);
+		// ponytail: còn việc (vừa claim / render đang chạy) thì hẹn tick kế;
+		// rỗi hẳn (không job, không render) thì ngủ — không timer, Neon được suspend.
+		if (found || this.active > 0) {
+			this.timer = setTimeout(() => {
+				this.timer = null;
+				void this.tick();
+			}, this.baseMs);
+		}
 	}
 
 	private async poll(): Promise<boolean> {
@@ -79,6 +72,8 @@ export class PdfWorker {
 			this.active++;
 			void this.run(job).finally(() => {
 				this.active--;
+				// ponytail: render xong có thể trống slot cho job chờ — đánh thức 1 tick nếu đang ngủ.
+				this.kick();
 			});
 		}
 		return found;

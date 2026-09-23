@@ -37,9 +37,17 @@ function pick(r: any): MaintenanceWindowDTO {
 	};
 }
 
+// ponytail: cache 30s trong process — middleware chạy mỗi request, không query Neon mỗi lần.
+// Cờ đổi vài lần/năm, trễ vài chục giây chấp nhận được. Write path (start/stop/schedule) xóa cache.
+let statusCache: { at: number; value: MaintenanceStatus } | null = null;
+export function clearMaintenanceStatusCache(): void {
+	statusCache = null;
+}
+
 // ponytail: dòng live = dòng bao giờ-hiện-tại (ưu tiên tạo sau cùng); quá giờ
 // tự lật completed nên làm sớm quên tắt cũng tự mở lại. Redis reset không ảnh hưởng.
 export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
+	if (statusCache && Date.now() - statusCache.at < 30_000) return statusCache.value;
 	const now = new Date();
 	const rows = await db().maintenanceWindow.findMany({
 		where: { status: { in: ['scheduled', 'active'] } },
@@ -64,14 +72,18 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
 				});
 			}
 		}
-		return { active: true, window: pick({ ...live, status: 'active' }) };
+		const value: MaintenanceStatus = { active: true, window: pick({ ...live, status: 'active' }) };
+		statusCache = { at: Date.now(), value };
+		return value;
 	}
 	// dọn các cửa sổ đã qua mà chưa đóng
 	await db().maintenanceWindow.updateMany({
 		where: { status: { in: ['scheduled', 'active'] }, endAt: { lt: now } },
 		data: { status: 'completed', endedAt: now },
 	}).catch(() => {});
-	return { active: false, window: null };
+	const value: MaintenanceStatus = { active: false, window: null };
+	statusCache = { at: Date.now(), value };
+	return value;
 }
 
 // bật tay ngay — hủy các lịch đang chờ/dang dở (bật tay đè lịch hẹn)
@@ -84,6 +96,7 @@ export async function startMaintenanceNow(by?: string, reason?: string | null): 
 	const r = await db().maintenanceWindow.create({
 		data: { startAt: now, endAt: null, reason: reason?.slice(0, 500) ?? null, status: 'active', notifiedAt: now, createdBy: by ? parseInt(by) : null },
 	});
+	clearMaintenanceStatusCache();
 	await broadcastNotification({
 		type: NotificationType.SYSTEM,
 		title: 'Shop đang bảo trì',
@@ -100,6 +113,7 @@ export async function stopMaintenanceNow(by?: string): Promise<MaintenanceStatus
 		where: { status: { in: ['scheduled', 'active'] } },
 		data: { status: 'completed', endedAt: now, endedBy: by ? parseInt(by) : null },
 	}).catch(() => {});
+	clearMaintenanceStatusCache();
 	await broadcastNotification({
 		type: NotificationType.SYSTEM,
 		title: 'Shop đã mở lại',
@@ -119,6 +133,7 @@ export async function scheduleMaintenance(startAt: Date, endAt: Date, by?: strin
 	const r = await db().maintenanceWindow.create({
 		data: { startAt, endAt, reason: reason?.slice(0, 500) ?? null, status: 'scheduled', createdBy: by ? parseInt(by) : null },
 	});
+	clearMaintenanceStatusCache();
 	const fmt = (d: Date) => d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 	await broadcastNotification({
 		type: NotificationType.SYSTEM,

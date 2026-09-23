@@ -12,6 +12,7 @@ import {
 	stopMaintenanceNow,
 	scheduleMaintenance,
 	listMaintenanceHistory,
+	clearMaintenanceStatusCache,
 } from "../../../src/shared/maintenance/maintenance.service.js";
 
 const mockMw = {
@@ -27,6 +28,7 @@ let resolveSpy: jest.SpyInstance;
 
 beforeEach(() => {
 	jest.clearAllMocks();
+	clearMaintenanceStatusCache(); // ponytail: cache 30s trong service — test nào mock DB riêng test đó
 	mockMw.findMany.mockResolvedValue([]);
 	mockMw.updateMany.mockResolvedValue({ count: 0 });
 	mockUser.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }]);

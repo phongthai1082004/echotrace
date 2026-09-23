@@ -129,11 +129,13 @@ export default function CheckoutPage() {
     }
   };
 
-  // Poll tráº¡ng thÃ¡i Ä‘Æ¡n má»—i 3s â€” gá»i verify (há»i PayOS trá»±c tiáº¿p) vÃ¬ webhook localhost khÃ´ng nháº­n Ä‘Æ°á»£c
+  // Poll trạng thái đơn mỗi 12s + skip khi tab ẩn — gọi verify (hỏi PayOS trực tiếp) vì webhook localhost không nhận được
+  // ponytail: 12s đủ nhanh cho QR, khỏi nện Neon mỗi 3s; webhook là luồng chính khi deploy thật.
   const orderId = orderInfo?.orderId;
   useEffect(() => {
     if (!orderId) return;
     const id = setInterval(async () => {
+      if (document.hidden) return;
       try {
         const o = await apiFetch<{ status: string }>(`/api/orders/${orderId}/verify`, token, { method: "POST" });
         if (o?.status && o.status !== "pending_payment") {
@@ -143,7 +145,7 @@ export default function CheckoutPage() {
           router.push("/orders");
         }
       } catch {}
-    }, 3000);
+    }, 12000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, token]);
