@@ -3,12 +3,28 @@
 import { ArrowRight, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
-const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.Book3D), { ssr: false });
+import { useEffect, useState } from "react";
+const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.Book3D), {
+  ssr: false,
+  loading: () => <div style={{ width: "100%", height: 500 }} />,
+});
 import parisImg from "@/assets/images/wedding.png";
 import { trackEvent } from "@/lib/analytics";
 
 export function HeroSection() {
   const { t } = useTranslation();
+  // ponytail: three.js (~600KB) must not race LCP text — mount after paint/idle.
+  const [show3D, setShow3D] = useState(false);
+  useEffect(() => {
+    const mount = () => setShow3D(true);
+    if (typeof window === "undefined") return;
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(mount, { timeout: 1500 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(mount, 800);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <section
       className="grid-paper hero-grid md:grid-cols-2"
@@ -70,7 +86,7 @@ export function HeroSection() {
           justifyContent: "center",
         }}
       >
-        <Book3D autoRotate={false} height={500} coverUrl={parisImg.src} />
+        {show3D ? <Book3D autoRotate={false} height={500} coverUrl={parisImg.src} /> : <div style={{ width: "100%", height: 500 }} />}
         <div
           className="float-badge"
           style={{

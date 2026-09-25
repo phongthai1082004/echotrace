@@ -12,12 +12,16 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-space-grotesk",
+  display: "swap",
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

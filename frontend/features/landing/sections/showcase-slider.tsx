@@ -45,6 +45,9 @@ export function ShowcaseSlider() {
             key={i}
             src={img.url}
             alt={img.alt}
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={i === 0 ? "high" : "low"}
             style={{
               position: "absolute",
               inset: 0,
@@ -94,6 +97,8 @@ export function ShowcaseSlider() {
             <img
               src={img.url}
               alt={img.alt}
+              loading="lazy"
+              decoding="async"
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           </button>

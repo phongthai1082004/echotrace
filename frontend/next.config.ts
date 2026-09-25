@@ -58,6 +58,11 @@ const nextConfig: NextConfig = {
     ];
   },
   output: 'standalone',
+  compress: true,
+  experimental: {
+    // ponytail: barrel packages (lucide etc.) bloat initial JS → LCP waits for hydration.
+    optimizePackageImports: ["lucide-react", "@react-three/drei", "@react-three/fiber", "@react-spring/three", "date-fns", "react-hook-form", "zod"],
+  },
 };
 
 export default nextConfig;
