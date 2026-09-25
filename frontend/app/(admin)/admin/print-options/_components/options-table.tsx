@@ -6,6 +6,7 @@ import { PrintOption } from "@/models/print-option/print-option";
 import { L10NText } from "@echotrace/shared";
 import { chip, neoBtn, neoBtnDanger } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
+import { EmptyStateMinimal } from "@/components/ui/empty-state";
 
 const TYPE_STYLE: Record<string, string> = {
   paperSize: "bg-[#FFD93D] text-[#222]",
@@ -40,11 +41,7 @@ export function OptionsTable({
       data={filtered}
       loading={loading}
       rowKey={(o) => o.id}
-      empty={
-        <div className="flex items-center justify-center py-10">
-          <p className="text-lg font-bold">{t("admin.printOptions.empty")}</p>
-        </div>
-      }
+      empty={<EmptyStateMinimal title={t("admin.printOptions.empty")} />}
       renderRow={(o) => {
         const name = o.name?.[lng] || o.name?.vi || o.name?.en || o.name?.es || o.code;
         return (

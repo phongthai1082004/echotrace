@@ -6,6 +6,7 @@ import type { OrderDTO } from "@/lib/order.dto";
 import { totalCopies, formatCurrency } from "@/lib/order-status";
 import { neoBtn, neoBtnPrimary } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
+import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { AdminPagination } from "@/components/admin-pagination";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -40,11 +41,7 @@ export function DispatchTable({
       data={paged}
       rowKey={(o) => String(o.id)}
       rowClassName="hover:bg-[#FFF7D6]/60"
-      empty={
-        <div className="flex items-center justify-center py-10">
-          <p className="font-bold text-[#999]">{t("admin.dispatch.noOrders")}</p>
-        </div>
-      }
+      empty={<EmptyStateMinimal title={t("admin.dispatch.noOrders")} />}
       footer={
         <AdminPagination
           hasNext={page < totalPages - 1}

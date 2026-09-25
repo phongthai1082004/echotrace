@@ -9,6 +9,7 @@ import { NeoSelect } from "@/components/neo-select";
 import { card, label, input, neoBtn, neoBtnPrimary, typeBadge } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import { AdminList } from "@/components/admin-list";
+import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { AdminPagination } from "@/components/admin-pagination";
 import { Modal } from "@/components/ui/modal";
 import { useCursorList } from "./_hooks/use-cursor-list";
@@ -173,7 +174,7 @@ export default function FinancePage() {
 						data={income.items}
 						loading={income.loading}
 						rowKey={(r) => r.id}
-						empty={<p className="py-10 text-center font-bold text-[#999]">{t("admin.finance.noData")}</p>}
+						empty={<EmptyStateMinimal title={t("admin.finance.noData")} />}
 						footer={<AdminPagination hasNext={income.nextCursor !== null} hasPrevious={income.hasPrevious} onNext={income.next} onPrevious={income.prev} />}
 						renderRow={(r: any) => (
 							<>
@@ -217,7 +218,7 @@ export default function FinancePage() {
 						data={expense.items}
 						loading={expense.loading}
 						rowKey={(r) => r.id}
-						empty={<p className="py-10 text-center font-bold text-[#999]">{t("admin.finance.noData")}</p>}
+						empty={<EmptyStateMinimal title={t("admin.finance.noData")} />}
 						footer={<AdminPagination hasNext={expense.nextCursor !== null} hasPrevious={expense.hasPrevious} onNext={expense.next} onPrevious={expense.prev} />}
 						renderRow={(r: any) => (
 							<>
@@ -264,7 +265,7 @@ export default function FinancePage() {
 						data={cashflow.items}
 						loading={cashflow.loading}
 						rowKey={(r) => r.id}
-						empty={<p className="py-10 text-center font-bold text-[#999]">{t("admin.finance.noData")}</p>}
+						empty={<EmptyStateMinimal title={t("admin.finance.noData")} />}
 						footer={<AdminPagination hasNext={cashflow.nextCursor !== null} hasPrevious={cashflow.hasPrevious} onNext={cashflow.next} onPrevious={cashflow.prev} />}
 						renderRow={(r: any) => (
 							<>

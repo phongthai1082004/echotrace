@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api.fetch";
 import { label, card, neoBtnPrimary, input } from "@/lib/styles";
 import { Modal } from "@/components/ui/modal";
+import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { useNotifStore, notifText, type NotifItem } from "@/stores/notifications";
 
 const LANGS = [
@@ -111,9 +112,7 @@ export function NotificationsClient() {
 
         <div className={`p-6 ${card}`}>
           {items.length === 0 && (
-            <p className="text-sm font-bold text-[#999] text-center py-8">
-              {loadingMore ? "…" : t("nav.noNotifications")}
-            </p>
+            <EmptyStateMinimal title={loadingMore ? "…" : t("nav.noNotifications")} />
           )}
           <div
             className="overflow-y-auto overscroll-contain max-h-[60vh]"

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { DiscountType, MinOrderType } from "@echotrace/shared";
 import { card } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
+import { EmptyStateMinimal } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { Coupon } from "../_hooks/use-coupons";
 
@@ -32,11 +33,7 @@ export function CouponsTable({
         loading={loading}
         rowKey={(c) => c.id}
         onRowClick={onOpen}
-        empty={
-          <div className="flex items-center justify-center py-10">
-            <p className="text-lg font-bold">{t("admin.coupons.empty")}</p>
-          </div>
-        }
+        empty={<EmptyStateMinimal title={t("admin.coupons.empty")} />}
         renderRow={(c) => (
           <>
             <div className="px-2 text-sm font-bold font-mono whitespace-nowrap">{c.code}</div>
