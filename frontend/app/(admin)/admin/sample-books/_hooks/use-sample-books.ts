@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { SampleBookDTO } from "@echotrace/shared";
 import { apiFetch } from "@/lib/api.fetch";
@@ -8,21 +8,23 @@ import { useDebounce } from "@hooks";
 
 type ListResponse = { items: SampleBookDTO[]; nextCursor: number | null };
 
-export function useSampleBooks() {
+export function useSampleBooks(initialItems?: SampleBookDTO[], initialNextCursor?: number | null) {
   const { data: session } = useSession();
   const accessToken = (session as any)?.accessToken;
 
+  const provided = initialItems !== undefined;
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [type, setType] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
-  const [items, setItems] = useState<SampleBookDTO[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<SampleBookDTO[]>(initialItems ?? []);
+  const [loading, setLoading] = useState(!provided);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(initialNextCursor ?? null);
   const [cursorStack, setCursorStack] = useState<number[]>([]);
+  const consumedInitial = useRef(false);
 
   const queryUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -36,6 +38,20 @@ export function useSampleBooks() {
 
   useEffect(() => {
     if (!accessToken) return;
+    // ponytail: server đã nạp trang đầu (filter mặc định) — bỏ qua đúng 1 lần fetch đầu.
+    if (
+      provided &&
+      !consumedInitial.current &&
+      !type &&
+      !category &&
+      !status &&
+      !debouncedSearch &&
+      !cursor
+    ) {
+      consumedInitial.current = true;
+      setLoading(false);
+      return;
+    }
 // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     setFetchError(null);

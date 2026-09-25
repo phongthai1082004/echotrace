@@ -53,14 +53,15 @@ export function couponToForm(c: Coupon): CouponForm {
   };
 }
 
-export function useCoupons() {
+export function useCoupons(initialCoupons?: Coupon[]) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
 
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
+  const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons ?? []);
+  const [loading, setLoading] = useState(initialCoupons === undefined);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [filter, setFilter] = useState("all");
@@ -77,7 +78,7 @@ export function useCoupons() {
   };
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || initialCoupons !== undefined) return;
     setLoading(true);
     fetchCoupons().finally(() => setLoading(false));
   }, [token]);

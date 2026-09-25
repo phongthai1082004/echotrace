@@ -4,14 +4,15 @@ import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import type { OrderDTO } from "@/lib/order.dto";
 
-export function useCustomerOrders() {
+export function useCustomerOrders(initial?: OrderDTO[] | null) {
   const { showToast } = useToast();
   const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
-  const [orders, setOrders] = useState<OrderDTO[] | null>(null);
+  // ponytail: có initial từ server thì khỏi fetch lại — hết waterfall + flash skeleton.
+  const [orders, setOrders] = useState<OrderDTO[] | null>(initial ?? null);
   const [selectedOrder, setSelectedOrder] = useState<OrderDTO | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || initial !== undefined) return;
     apiFetch<OrderDTO[]>("/api/orders", token)
       .then(setOrders)
       .catch(() => setOrders([]));

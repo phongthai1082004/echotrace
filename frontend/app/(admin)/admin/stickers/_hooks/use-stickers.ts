@@ -17,11 +17,12 @@ export interface Asset {
   category: AssetCategory | null;
 }
 
-export function useStickers() {
+export function useStickers(initialAssets?: Asset[]) {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
+  const [assets, setAssets] = useState<Asset[]>(initialAssets ?? []);
+  const [loading, setLoading] = useState(initialAssets === undefined);
   const [uploading, setUploading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<"all" | AssetCategory>("all");
   const [search, setSearch] = useState("");
@@ -42,6 +43,7 @@ export function useStickers() {
   };
 
   useEffect(() => {
+    if (initialAssets !== undefined) return;
     fetchAssets();
   }, [token]);
 

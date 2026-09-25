@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserStatus } from "@echotrace/shared";
 import { UserResponse } from "@/models/users/user.list";
@@ -9,20 +9,22 @@ import { useDebounce } from "@hooks";
 import { isAuthenticatedSession } from "@/types/auth";
 import { detectSearchTarget } from "@/lib/search-detector";
 
-export function useUsers() {
+export function useUsers(initialUsers?: UserResponse["users"], initialNextCursor?: string | null) {
   const { data: session } = useSession();
   const isAuthenticated = isAuthenticatedSession(session);
   const token = isAuthenticated ? session.accessToken : undefined;
 
+  const provided = initialUsers !== undefined;
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [filter, setFilter] = useState<UserStatus | "all">("all");
   const [cursor, setCursor] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor ?? null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
-  const [users, setUsers] = useState<UserResponse["users"]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<UserResponse["users"]>(initialUsers ?? []);
+  const [loading, setLoading] = useState(!provided);
   const [refreshKey, setRefreshKey] = useState(0);
+  const consumedInitial = useRef(false);
 
   const queryUrl = useMemo(() => {
     if (!isAuthenticated) return "";
@@ -50,6 +52,13 @@ export function useUsers() {
 
   useEffect(() => {
     if (!token || !queryUrl) return;
+    // ponytail: server đã nạp trang đầu (filter/search/cursor mặc định) — bỏ qua
+    // đúng 1 lần fetch đầu, mọi đổi filter/search/cursor sau đó vẫn fetch bình thường.
+    if (provided && !consumedInitial.current && filter === "all" && !debouncedSearch && !cursor && refreshKey === 0) {
+      consumedInitial.current = true;
+      setLoading(false);
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch
     setLoading(true);
     apiFetch<UserResponse>(queryUrl, token)

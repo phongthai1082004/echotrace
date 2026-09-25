@@ -1,24 +1,31 @@
-"use client";
-
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { useTranslation } from "react-i18next";
-import { SkeletonGrid } from "@/components/skeleton";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth.config";
+import { apiFetch } from "@/lib/api.fetch";
+import { getT } from "@/lib/i18n-server";
 import { neoBtnPrimary } from "@/lib/styles";
-import { YesNoPopup } from "@/components/yes-no-popup";
-import { useMyBooks } from "./_hooks/use-my-books";
-import { JournalCard } from "./_components/journal-card";
+import type { JournalBook } from "./_hooks/use-my-books";
+import { MyJournalsClient } from "./_components/my-journals-client";
 
-export default function MyJournalsPage() {
-  const { t } = useTranslation();
-  const { data: session } = useSession();
-  const accessToken = (session as any)?.accessToken;
+// ponytail: page server — header + data lần đầu render sẵn thành HTML,
+// khỏi waterfall session → token → fetch ở client (mẫu explore/page.tsx).
+export default async function MyJournalsPage() {
+  const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
+  const t = getT(lng);
+  const session = await getServerSession(authOptions);
+  const token = (session as any)?.accessToken as string | undefined;
 
-  const { journals, fetchError, loading, deleteTarget, setDeleteTarget, deleting, handleDelete } =
-    useMyBooks(accessToken);
-
-  const router = useRouter();
+  let initialJournals: JournalBook[] | undefined;
+  let initialError: string | null = null;
+  if (token) {
+    try {
+      initialJournals = (await apiFetch<JournalBook[]>("/api/user/my-books", token)) ?? [];
+    } catch (err) {
+      initialJournals = [];
+      initialError = err instanceof Error ? err.message : String(err);
+    }
+  }
 
   return (
     <div className="min-h-screen pt-15">
@@ -34,13 +41,13 @@ export default function MyJournalsPage() {
             {t("customer.myJournals.subtitle")}
           </p>
         </div>
-        <button
-          onClick={() => router.push("/studio")}
+        <Link
+          href="/studio"
           suppressHydrationWarning
           className={`${neoBtnPrimary} font-mono text-[10px] font-bold tracking-widest uppercase px-5 py-3 shrink-0`}
         >
           {t("customer.myJournals.newJournal")}
-        </button>
+        </Link>
       </div>
 
       <div className="px-4 sm:px-8 max-[1600px]:px-6 max-[1440px]:px-5 max-[1280px]:px-4 py-6 sm:py-10 max-[1600px]:py-8 max-[1440px]:py-6">
@@ -50,48 +57,13 @@ export default function MyJournalsPage() {
         >
           {t("customer.myJournals.history")}
         </p>
-        {fetchError && (
+        {initialError && (
           <p suppressHydrationWarning className="text-[10px] text-red-500 mb-3">
-            {t("customer.myJournals.error", { message: fetchError })}
+            {t("customer.myJournals.error", { message: initialError })}
           </p>
         )}
-        {journals.length === 0 && !fetchError ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p suppressHydrationWarning className="text-xl font-bold mb-2">
-              {t("customer.myJournals.emptyTitle")}
-            </p>
-            <p suppressHydrationWarning className="text-sm mb-6 text-[#999]">
-              {t("customer.myJournals.emptyDesc")}
-            </p>
-            <button
-              onClick={() => router.push("/studio")}
-              className={`${neoBtnPrimary} font-mono text-[10px] font-bold tracking-widest uppercase px-6 py-3`}
-            >
-              {t("customer.myJournals.openStudio")}
-            </button>
-          </div>
-        ) : loading ? (
-          <SkeletonGrid count={8} variant="journal" />
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-            {journals.map((j) => (
-              <JournalCard key={j.id} j={j} onDelete={setDeleteTarget} />
-            ))}
-          </div>
-        )}
+        <MyJournalsClient initialJournals={initialJournals} initialError={initialError} />
       </div>
-
-      {deleteTarget && (
-        <YesNoPopup
-          open
-          busy={deleting}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-          title={t("customer.myJournals.deleteTitle")}
-          message={t("customer.myJournals.deleteConfirm", { title: deleteTarget.title })}
-          confirmLabel={deleting ? t("customer.myJournals.deleting") : t("customer.myJournals.delete")}
-        />
-      )}
     </div>
   );
 }

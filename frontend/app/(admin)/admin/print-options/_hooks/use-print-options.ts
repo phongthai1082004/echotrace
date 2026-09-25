@@ -37,14 +37,15 @@ export function withNum(f: OptionForm, key: "width" | "height", v: string): Opti
   return { ...f, [key]: Number.isNaN(n) ? null : n };
 }
 
-export function usePrintOptions() {
+export function usePrintOptions(initialOptions?: PrintOption[]) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
 
-  const [options, setOptions] = useState<PrintOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
+  const [options, setOptions] = useState<PrintOption[]>(initialOptions ?? []);
+  const [loading, setLoading] = useState(initialOptions === undefined);
   const [filter, setFilter] = useState("all");
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState<PrintOption | null>(null);
@@ -60,7 +61,7 @@ export function usePrintOptions() {
   }, [token, t, showToast]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || initialOptions !== undefined) return;
     setLoading(true);
     fetchOptions().finally(() => setLoading(false));
   }, [token, fetchOptions]);
