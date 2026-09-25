@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import i18n from "@/lib/i18n";
+import i18n, { ensureLang } from "@/lib/i18n";
 
 // ponytail: singleton mutation per render — fine at this scale.
 // SSR: apply synchronously during render so server HTML matches the request language.
@@ -18,7 +18,11 @@ export function I18nProvider({ lang, children }: { lang: string; children: React
   if (typeof window === "undefined" && i18n.language !== target) i18n.changeLanguage(target);
 
   useEffect(() => {
-    if (i18n.language !== target) i18n.changeLanguage(target);
+    if (i18n.language === target) return;
+    // ponytail: en/es bundle lazy — nạp xong mới đổi, trước đó fallback vi (không key thô).
+    void ensureLang(target).then(() => {
+      if (i18n.language !== target) void i18n.changeLanguage(target);
+    });
   }, [target]);
 
   return <>{children}</>;

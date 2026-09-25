@@ -11,7 +11,7 @@ export default function MaintenancePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8F2E5] px-4">
       <div className="max-w-md w-full text-center bg-[#FFF7D6] rounded-[12px] border-[3px] border-[#222] shadow-[6px_6px_0_#222] p-8">
-        <Image src={logoImg} alt="Better Memoire" style={{ height: 72, width: "auto" }} className="mx-auto mb-5" />
+        <Image src={logoImg} alt="Better Memoire" style={{ height: 72, width: "auto" }} className="mx-auto mb-5" priority />
         <h1 className="text-2xl font-bold mb-2">{t("maintenance.title")}</h1>
         <p className="text-sm text-[#666] mb-6">{t("maintenance.desc")}</p>
         <Link

@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { LANDING_CSS } from "./landing-css";
+import type { ReactNode } from "react";
 import { useReveal } from "./use-reveal";
 
-// ponytail: wrapper client để chạy scroll-reveal + inject CSS (không thể làm ở server component).
+// ponytail: CSS landing nằm ở globals.css (build-time) — wrapper chỉ còn scroll-reveal.
 export function LandingReveal({ children }: { children: ReactNode }) {
-	useReveal();
-	useEffect(() => {
-		const style = document.createElement("style");
-		style.textContent = LANDING_CSS;
-		document.head.appendChild(style);
-		return () => {
-			document.head.removeChild(style);
-		};
-	}, []);
-	return <>{children}</>;
+  useReveal();
+  return <>{children}</>;
 }

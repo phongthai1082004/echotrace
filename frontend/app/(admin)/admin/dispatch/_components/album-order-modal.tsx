@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
-import { QRCodeSVG } from "qrcode.react";
+import dynamic from "next/dynamic";
+// ponytail: qrcode chỉ render sau khi tạo đơn — dynamic khỏi vào bundle dispatch ban đầu.
+const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG), {
+  ssr: false,
+  loading: () => <div style={{ width: 192, height: 192 }} />,
+});
 import { Modal } from "@/components/ui/modal";
 import { NeoSelect } from "@/components/neo-select";
 import { useToast } from "@/components/toast";

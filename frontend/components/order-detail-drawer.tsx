@@ -3,7 +3,12 @@
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/components/ui/close-button";
 import { useEffect, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import dynamic from "next/dynamic";
+// ponytail: qrcode chỉ render khi drawer mở ở step thanh toán — dynamic khỏi vào bundle chung.
+const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG), {
+  ssr: false,
+  loading: () => <div style={{ width: 180, height: 180 }} />,
+});
 import type { ReactNode } from "react";
 import { infoBox, neoBtn, chip, neoBtnDanger } from "@/lib/styles";
 import type { OrderDTO, OrderStatus } from "@/lib/order.dto";

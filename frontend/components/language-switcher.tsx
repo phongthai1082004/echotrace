@@ -63,6 +63,8 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
               key={l.code}
               onClick={async () => {
                 document.cookie = `i18nextLng=${l.code}; path=/`;
+                const { ensureLang } = await import("@/lib/i18n");
+                await ensureLang(l.code);
                 await i18n.changeLanguage(l.code);
                 router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`);
               }}
@@ -99,6 +101,8 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
                 key={l.code}
                 onClick={async () => {
                   document.cookie = `i18nextLng=${l.code}; path=/`;
+                  const { ensureLang } = await import("@/lib/i18n");
+                  await ensureLang(l.code);
                   await i18n.changeLanguage(l.code);
                   router.push(`/${l.code}${pathname.replace(/^\/(en|vi|es)/, "")}`);
                   setOpen(false);

@@ -17,7 +17,8 @@ async function maintenanceState(): Promise<{ on: boolean; down: boolean }> {
   }
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 1500);
+    // ponytail: 3s thay vì 1.5s — Neon cold-start hay quá 1.5s, tính down oan là rewrite /maintenance.
+    const timer = setTimeout(() => ctrl.abort(), 3000);
     const res = await fetch(`${BACKEND}/api/maintenance/status`, { signal: ctrl.signal });
     clearTimeout(timer);
     const json = await res.json().catch(() => null);

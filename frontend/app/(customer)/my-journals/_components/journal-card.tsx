@@ -16,7 +16,7 @@ export function JournalCard({ j, onDelete }: { j: JournalBook; onDelete: (j: Jou
         <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
           {thumb ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumb} alt={j.title} className="w-full h-full object-cover" />
+            <img src={thumb} alt={j.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span

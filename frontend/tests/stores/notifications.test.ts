@@ -25,6 +25,8 @@ it("F41 refresh self-dedupes: hasMore false when < limit", async () => {
   mockFetch.mockResolvedValue([n(1)]);
   await useNotifStore.getState().refresh();
   expect(useNotifStore.getState().hasMore).toBe(false);
+  // ponytail: refresh throttle 30s — reset để lần gọi 2 được fetch thật.
+  useNotifStore.getState().reset();
   mockFetch.mockResolvedValue(Array.from({ length: 10 }, (_, i) => n(i)));
   await useNotifStore.getState().refresh();
   expect(useNotifStore.getState().hasMore).toBe(true);

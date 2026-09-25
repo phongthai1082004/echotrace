@@ -15,7 +15,7 @@ export function PaymentStep({ items, describe }: { items: any[]; describe: (item
             className="flex items-center gap-4 p-4 bg-[#FFF7D6] rounded-[10px] border-[3px] border-[#222] shadow-[2px_2px_0_#222]"
           >
             <div className="w-16 h-20 bg-[#e8e6e0] rounded-[10px] border-[3px] border-[#222] shrink-0 overflow-hidden">
-              {itemThumb(item) && <img src={itemThumb(item)!} alt="" className="w-full h-full object-cover" />}
+              {itemThumb(item) && <img src={itemThumb(item)!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-lg font-bold leading-tight">{item.title}</p>

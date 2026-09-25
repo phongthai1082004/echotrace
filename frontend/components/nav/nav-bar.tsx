@@ -12,6 +12,7 @@ import { LangMenu } from "./lang-menu";
 import { CartFlyout } from "./cart-flyout";
 import { AccountMenu } from "./account-menu";
 import { useNotifStore, useUnreadCount, notifText, type NotifItem } from "@/stores/notifications";
+import { useCartCount } from "@/hooks/api/use-cart-count";
 import logoImg from "@/assets/images/Logo.png";
 
 interface NavProps {
@@ -64,7 +65,6 @@ export function Nav({ user }: NavProps) {
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menu, setMenu] = useState<{ id: number | string; x: number; y: number } | null>(null);
-  const [cartCount, setCartCount] = useState(0);
   const { data: session, status } = useSession();
   const wasAuth = useRef(false);
 
@@ -75,19 +75,18 @@ export function Nav({ user }: NavProps) {
 
   const token = (session as any)?.accessToken;
   const currentUser = user ?? session?.user ?? null;
+  // ponytail: count qua query key chung với CartFlyout (stale 60s, dedup) —
+  // trước đây mở menu mobile là 1 GET /cart riêng, hover flyout 1 cái nữa.
+  const { data: cartCount = 0 } = useCartCount(!!token);
 
   const items = useNotifStore((s) => s.items);
   const unread = useUnreadCount();
   const loadMore = useNotifStore((s) => s.loadMore);
   const loadingMore = useNotifStore((s) => s.loadingMore);
 
-  // ponytail: list do store giữ (bootstrap nạp đầu + SSE đẩy live, tự reconnect).
-  // Bỏ poll backup 60s — khỏi giữ Neon thức vì chuông. Mở tab/reconnect thì refresh 1 lần.
-  useEffect(() => {
-    if (!token) return;
-    void useNotifStore.getState().refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  // ponytail: NotificationBootstrap trong Providers đã refresh 1 lần khi login —
+  // nav từng refresh trùng (2x GET/notifications mỗi mount). Hover chuông vẫn refresh
+  // nhưng store đã dedup + throttle 30s nên không spam.
 
   const openNotif = async (n: any) => {
     setNotifOpen(false);
@@ -119,16 +118,6 @@ export function Nav({ user }: NavProps) {
     }
     useNotifStore.getState()[read ? "setRead" : "setUnread"](n.id);
   };
-
-  useEffect(() => {
-    if (!open || !token) return;
-    apiFetch<any>("/api/cart", token)
-      .then((d) => {
-        const items: any[] = d?.parsedItems ?? [];
-        setCartCount(items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0));
-      })
-      .catch(() => {});
-  }, [open, token]);
 
   const logout = async () => {
     if (token) {

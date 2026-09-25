@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "@/lib/api.fetch";
+import { useCartCount } from "@/hooks/api/use-cart-count";
 
 function itemThumb(item: any): string | null {
   return item.thumbnailUrl ?? item.coverUrl ?? null;
@@ -13,22 +14,25 @@ export function CartFlyout({ token }: { token?: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
-  const [cartCount, setCartCount] = useState(0);
+  // ponytail: badge count qua query key chung với nav (stale 60s, dedup);
+  // preview items chỉ refetch khi hover thưa (>30s), khỏi spam /api/cart.
+  const { data: cartCount = 0 } = useCartCount(!!token);
+  const lastFetch = useRef(0);
+
+  const loadPreview = () => {
+    if (!token || Date.now() - lastFetch.current < 30_000) return;
+    lastFetch.current = Date.now();
+    apiFetch<any>("/api/cart", token)
+      .then((d) => setCartItems(d?.parsedItems ?? []))
+      .catch(() => {});
+  };
 
   return (
     <div
       className="relative"
       onMouseEnter={() => {
         setOpen(true);
-        if (token) {
-          apiFetch<any>("/api/cart", token)
-            .then((d) => {
-              const items: any[] = d?.parsedItems ?? [];
-              setCartItems(items);
-              setCartCount(items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0));
-            })
-            .catch(() => {});
-        }
+        loadPreview();
       }}
       onMouseLeave={() => setOpen(false)}
     >
@@ -82,7 +86,7 @@ export function CartFlyout({ token }: { token?: string }) {
                   {cartItems.slice(0, 5).map((item, i) => (
                     <div key={i} className="flex items-center gap-3 px-4 py-3 border-t-[3px] border-[#222]">
                       <div className="w-10 h-12 bg-[#e8e6e0] rounded-[8px] border-2 border-[#222] shrink-0 overflow-hidden">
-                        {itemThumb(item) && <img src={itemThumb(item)!} alt="" className="w-full h-full object-cover" />}
+                        {itemThumb(item) && <img src={itemThumb(item)!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p suppressHydrationWarning className="text-sm font-bold leading-tight truncate">

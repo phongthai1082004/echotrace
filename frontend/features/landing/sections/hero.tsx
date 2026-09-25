@@ -8,7 +8,7 @@ const Book3D = dynamic(() => import("@/features/landing/book-3d").then((m) => m.
   ssr: false,
   loading: () => <div style={{ width: "100%", height: 500 }} />,
 });
-import parisImg from "@/assets/images/wedding.png";
+import parisImg from "@/assets/images/wedding.webp";
 import { trackEvent } from "@/lib/analytics";
 
 export function HeroSection() {

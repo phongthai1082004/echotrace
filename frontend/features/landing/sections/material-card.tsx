@@ -30,7 +30,7 @@ export function MaterialCard({
       }}
     >
       <div style={{ height: 200, overflow: "hidden", position: "relative", background: "#e8e6e0" }}>
-        <img src={imgUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={imgUrl} alt={name} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", top: 10, left: 10 }}>
           <span className="sticker-label" style={{ background: accent, color: "#fff", borderColor: "#222" }}>
             {badge}

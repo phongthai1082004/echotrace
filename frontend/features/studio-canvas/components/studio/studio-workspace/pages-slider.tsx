@@ -21,7 +21,7 @@ function PageThumb({
       className={`w-full h-full overflow-hidden bg-white ${active ? "border-2 border-[#222] shadow-[2px_2px_0_#222]" : "border-2 border-[#222]/30 hover:border-[#222]/60"} cursor-pointer transition-all`}
     >
       {thumb ? (
-        <img src={thumb} alt="" className="w-full h-full object-cover" />
+        <img src={thumb} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-white flex items-center justify-center">
           <span className="font-mono text-[7px] font-bold text-[#999]">{idx + 1}</span>

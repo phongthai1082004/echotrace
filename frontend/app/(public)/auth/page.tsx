@@ -167,7 +167,7 @@ export default function AuthPage() {
           className="object-cover"
         />
         <div className="absolute top-10 left-10 flex items-center gap-3">
-          <Image src={logoImg} alt="Better Memoire" style={{ height: 48, width: "auto" }} className="rounded-full bg-[#F8F2E5]/90 p-1" priority />
+          <Image src={logoImg} alt="Better Memoire" style={{ height: 48, width: "auto" }} className="rounded-full bg-[#F8F2E5]/90 p-1" />
           <p className="text-white text-2xl font-bold tracking-tight">Better Memoire</p>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#222] border-t-[3px] border-white/20">

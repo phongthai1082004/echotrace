@@ -15,6 +15,10 @@ export interface NotifItem {
 
 const LIMIT = 10; // ponytail: trang load ít, scroll gần đáy append tiếp
 
+// ponytail: dedup + throttle — 2 mount cùng gọi + hover chuông liên tục = spam /notifications.
+let inFlight: Promise<void> | null = null;
+let lastOk = 0;
+
 // ponytail: admin broadcast đa ngữ — text theo lang nằm ở cột i18n,
 // tin cũ (trước migration) rớt về metadata.i18n, thiếu nữa thì về title/message gốc.
 export function notifText(n: NotifItem, field: "title" | "message", lang?: string | null): string {
@@ -46,12 +50,20 @@ export const useNotifStore = create<NotifState>((set, get) => ({
   hasMore: true,
   loadingMore: false,
 
-  refresh: async () => {
-    try {
-      const items = await apiFetch<NotifItem[]>(`/api/notifications?limit=${LIMIT}`, undefined);
-      const list = Array.isArray(items) ? items : [];
-      set({ items: list, hasMore: list.length >= LIMIT });
-    } catch {}
+  refresh: () => {
+    if (inFlight) return inFlight;
+    if (Date.now() - lastOk < 30_000) return Promise.resolve();
+    inFlight = (async () => {
+      try {
+        const items = await apiFetch<NotifItem[]>(`/api/notifications?limit=${LIMIT}`, undefined);
+        const list = Array.isArray(items) ? items : [];
+        lastOk = Date.now();
+        useNotifStore.setState({ items: list, hasMore: list.length >= LIMIT });
+      } catch {}
+    })().finally(() => {
+      inFlight = null;
+    });
+    return inFlight;
   },
 
   loadMore: async () => {
@@ -89,7 +101,12 @@ export const useNotifStore = create<NotifState>((set, get) => ({
   setUnread: (id) =>
     set((s) => ({ items: s.items.map((x) => (x.id === id ? { ...x, isRead: false } : x)) })),
 
-  reset: () => set({ items: [], hasMore: true, loadingMore: false }),
+  reset: () => {
+    // ponytail: reset cả throttle để test/đăng xuất không kẹt cửa sổ 30s.
+    inFlight = null;
+    lastOk = 0;
+    set({ items: [], hasMore: true, loadingMore: false });
+  },
 }));
 
 export const useUnreadCount = () => useNotifStore((s) => s.items.filter((n) => !n.isRead).length);

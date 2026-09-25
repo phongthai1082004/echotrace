@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
+import dynamic from "next/dynamic";
+// ponytail: qrcode chỉ cần ở step thanh toán — dynamic khỏi ôm vào bundle checkout ban đầu.
+const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG), {
+  ssr: false,
+  loading: () => <div style={{ width: 192, height: 192 }} />,
+});
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import { DiscountModal } from "@/components/discount-modal";

@@ -124,7 +124,7 @@ export function FilterPanel() {
             className="flex flex-col items-center gap-1.5 px-2 py-2 cursor-pointer hover:bg-[#e8e6e0] transition-[background-color] rounded-lg border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222]"
           >
             <div className="w-full h-12 rounded-[3px] border-[2px] border-[#222] overflow-hidden relative">
-              <img src={exampleImg.src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={exampleImg.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
               <div className={`absolute inset-0 bg-gradient-to-br ${f.gradient}`} />
             </div>
             <span className="font-mono text-[7px] font-bold tracking-widest uppercase text-center leading-tight">

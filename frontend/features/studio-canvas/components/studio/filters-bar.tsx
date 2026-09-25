@@ -63,6 +63,8 @@ export function FiltersBar() {
                 <img
                   src={selectedSrc}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover"
                   style={p.cssFilter ? { filter: p.cssFilter } : undefined}
                 />
