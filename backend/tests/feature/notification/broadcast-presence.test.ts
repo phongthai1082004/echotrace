@@ -7,7 +7,7 @@ import { mock } from "jest-mock-extended";
 import { container } from "../../../src/di/container.js";
 import { NotificationChannel, NotificationType } from "@echotrace/shared";
 import { broadcastNotification } from "../../../src/modules/notification/notify/broadcast.js";
-import { getMaintenanceStatus } from "../../../src/shared/maintenance/maintenance.service.js";
+import { getMaintenanceStatus, clearMaintenanceStatusCache } from "../../../src/shared/maintenance/maintenance.service.js";
 import { PresenceService } from "../../../src/modules/notification/channels/presence.service.js";
 import { NotificationRepository } from "../../../src/modules/notification/channels/notification.repository.js";
 import { NotificationController } from "../../../src/modules/notification/notification.controller.js";
@@ -30,6 +30,7 @@ let resolveSpy: jest.SpyInstance;
 beforeEach(() => {
 	db = fakeDb();
 	presence = presenceFake();
+	clearMaintenanceStatusCache(); // ponytail: service cache 30s — test nào mock DB riêng test đó
 	resolveSpy = jest.spyOn(container, "resolve").mockImplementation(((token: any) =>
 		typeof token === "string" ? (presence as any) : { db }) as any);
 });
@@ -91,6 +92,7 @@ describe("maintenance flip race (N-11)", () => {
 
 		db.maintenanceWindow.updateMany.mockResolvedValue({ count: 1 });
 		db.user.findMany.mockResolvedValue([{ id: 1 }]);
+		clearMaintenanceStatusCache(); // lần 1 đã cache active — xả để lần 2 chạy thật
 		await getMaintenanceStatus();
 		expect(db.notification.createMany).toHaveBeenCalledTimes(1);
 		expect(db.maintenanceWindow.updateMany).toHaveBeenCalledWith(

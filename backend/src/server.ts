@@ -69,7 +69,9 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
 			app.use(cors({ origin: allowedOrigins, credentials: true }));
 		app.use(express.json({ limit: '1mb' }));
-		app.use(handle(i18next));
+		// ponytail: cast qua typeof handle — pnpm lồng 2 bản i18next types
+		// (middleware pin TS khác root) nên structural check báo thừa; runtime cùng 1 object.
+		app.use(handle(i18next as unknown as Parameters<typeof handle>[0]));
 		// ponytail: cờ bảo trì — chặn API khi bật, trừ webhook/auth/admin/health.
 		// Đăng ký trước routers để bao hết; /health nông đăng ký sớm hơn nên luôn sống.
 		app.use(maintenanceMiddleware);
