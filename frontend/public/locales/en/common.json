@@ -391,6 +391,7 @@
 			"style": "Style",
 			"align": "Align",
 			"wrongHalf": "That frame is on the other half — switch view or drop on this side",
+			"tapFrame": "Photo picked — tap a frame to place, tap again to cancel",
 			"selectElement": "Select an element",
 			"canvas": "Canvas",
 			"format": "Format",

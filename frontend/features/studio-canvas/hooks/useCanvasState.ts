@@ -93,6 +93,9 @@ interface CanvasStore {
   incrementLayerVersion: () => void;
   autoPlaced: boolean;
   setAutoPlaced: (v: boolean) => void;
+  // ponytail: mobile không có DnD touch — tap ảnh để "cầm", tap canvas để đặt vào khung.
+  armedPhotoUrl: string | null;
+  setArmedPhotoUrl: (u: string | null) => void;
   viewMode: "left" | "right" | "spread";
   setViewMode: (v: "left" | "right" | "spread") => void;
   ctxMenu: { x: number; y: number; objects: import("fabric").FabricObject[] } | null;
@@ -129,6 +132,7 @@ const INITIAL_STATE: Partial<CanvasStore> = {
   pasteCount: 0,
   layerVersion: 0,
   autoPlaced: false,
+  armedPhotoUrl: null,
   viewMode: "left",
 };
 
@@ -200,6 +204,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   incrementLayerVersion: () => set((s) => ({ layerVersion: s.layerVersion + 1 })),
   incrementUndoVersion: () => set((s) => ({ undoVersion: s.undoVersion + 1 })),
   setAutoPlaced: (v) => set({ autoPlaced: v }),
+  setArmedPhotoUrl: (u) => set({ armedPhotoUrl: u }),
   setViewMode: (v) => set({ viewMode: v }),
   ctxMenu: null,
   setCtxMenu: (m) => set({ ctxMenu: m }),

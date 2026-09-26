@@ -73,6 +73,9 @@ export function StudioProperties() {
     const txt = selected as fabric.IText;
     txt.set(typeof patch === "function" ? patch(txt) : patch);
     canvas?.renderAll();
+    // ponytail: fabric mutate không báo React — bump version để panel vẽ lại
+    // highlight active (align/B/I/U/màu) ngay khi ấn, khỏi chờ lần chọn sau.
+    useCanvasStore.getState().incrementSelectionVersion();
   };
 
   const applyFont = (fontFamily: string) => applyText({ fontFamily });

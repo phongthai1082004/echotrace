@@ -391,6 +391,7 @@
 			"style": "Estilo",
 			"align": "Alinear",
 			"wrongHalf": "Ese marco está en la otra mitad — cambia de vista o suelta en este lado",
+			"tapFrame": "Foto elegida — toca un marco para colocarla, toca de nuevo para cancelar",
 			"selectElement": "Seleccionar un elemento",
 			"canvas": "Lienzo",
 			"format": "Formato",

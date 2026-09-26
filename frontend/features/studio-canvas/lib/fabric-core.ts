@@ -69,9 +69,15 @@ export function syncFrameBorders(canvas: fabric.Canvas) {
 export function canvasPointer(canvas: fabric.Canvas, clientX: number, clientY: number): { x: number; y: number } {
   const el = canvas.getElement();
   const rect = el.getBoundingClientRect();
-  return {
-    x: (clientX - rect.left) * (canvas.getWidth() / rect.width),
-    y: (clientY - rect.top) * (canvas.getHeight() / rect.height),
-  };
+  const p = new fabric.Point(
+    (clientX - rect.left) * (canvas.getWidth() / rect.width),
+    (clientY - rect.top) * (canvas.getHeight() / rect.height),
+  );
+  // ponytail: invert cả viewportTransform — vpt identity thì ra đúng điểm cũ,
+  // ngày nào bật zoom/pan fabric thì drop/hover khỏi lệch hệ thống.
+  const vpt = (canvas as any).viewportTransform;
+  if (!vpt) return { x: p.x, y: p.y };
+  const scene = (fabric as any).util.transformPoint(p, (fabric as any).util.invertTransform(vpt));
+  return { x: scene.x, y: scene.y };
 }
 

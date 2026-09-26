@@ -421,7 +421,11 @@ export function reviveObject(o: any, object: any, _err: any) {
   if (o.customProperties) (object as any).customProperties = o.customProperties;
   if (o._selId) (object as any)._selId = o._selId;
   if (o.customProperties?.layer === "photo") {
-    object.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+    // ponytail: chỉ khóa khi JSON ghi rõ (false được giữ lúc serialize) —
+    // trước đây ép liệt MỌI photo mỗi lần load nên ảnh template mở lên là đơ.
+    if (o.selectable === false || o.evented === false || o.hasControls === false) {
+      object.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+    }
   }
   // ponytail: child locks don't serialize -- re-lock group children on every load,
   // otherwise a reloaded group lets children drift and breaks their clips.
@@ -474,15 +478,26 @@ export function applyInteractionLock(
   }
   if (viewMode === "left") {
     canvas.getObjects().forEach((o: any) => {
-      if ((o.left || 0) >= pageW)
+      if (halfOf(o, pageW) === "right")
         o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
     });
   } else {
     canvas.getObjects().forEach((o: any) => {
-      if ((o.left || 0) < pageW)
+      if (halfOf(o, pageW) === "left")
         o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
     });
   }
+}
+
+// ponytail: nửa nào chứa CENTER của object (tôn trọng xoay/origin) —
+// so o.left thô là khung xoay/gốc-center gần gáy bị liệt nhầm nửa.
+function halfOf(o: any, pageW: number): "left" | "right" {
+  try {
+    const c = o.getCenterPoint?.();
+    if (c && Number.isFinite(c.x)) return c.x >= pageW ? "right" : "left";
+  } catch {}
+  const w = (o.width || 0) * (o.scaleX || 1);
+  return (o.left || 0) + w / 2 >= pageW ? "right" : "left";
 }
 
 

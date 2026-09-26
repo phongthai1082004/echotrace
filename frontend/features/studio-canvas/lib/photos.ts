@@ -132,6 +132,80 @@ export async function placeFreeImage(
   return true;
 }
 
+// ponytail: core chung cho drop chuột (react-dnd) và tap mobile — tìm khung,
+// fill/thay thế, rớt ra ngoài thì ảnh rời. findFrame inject từ ngoài để tránh
+// cycle import frames<->photos (hitTestFrame sống ở frames.ts).
+export async function placeDroppedPhoto(
+  canvas: fabric.Canvas,
+  x: number,
+  y: number,
+  url: string,
+  findFrame: (canvas: fabric.Canvas, x: number, y: number) => fabric.FabricObject | undefined,
+  onWrongHalf?: () => void,
+): Promise<"filled" | "free" | "rejected" | "failed"> {
+  const st = useCanvasStore.getState();
+  const snapPage = st.activePageIndex;
+  const snapView = st.viewMode;
+  st.pushUndo();
+  let img: fabric.FabricImage;
+  try {
+    img = await fabric.FabricImage.fromURL(url, { crossOrigin: "anonymous" });
+  } catch {
+    return "failed";
+  }
+  const st0 = useCanvasStore.getState();
+  const samePage = st0.activePageIndex === snapPage && st0.viewMode === snapView;
+  const frame = samePage ? findFrame(canvas, x, y) : undefined;
+
+  if (frame) {
+    const effView = isCoverPage(st0.activePageIndex, st0.pages.length) ? "spread" : st0.viewMode;
+    if (effView !== "spread") {
+      const halfW = (canvas.getWidth() || 840) / 2;
+      // ponytail: center thật qua getCenterPoint (tôn trọng xoay).
+      const fc = frame.getCenterPoint();
+      if ((effView === "left" && fc.x >= halfW) || (effView === "right" && fc.x < halfW)) {
+        onWrongHalf?.();
+        return "rejected";
+      }
+    }
+    if (replacePhotoInFrame(canvas, frame, img)) {
+      // ponytail: fitPhotoToFrame đã ra tọa độ group-local cho khung lồng —
+      // add ảnh VÀO group, không phải canvas root, rồi relocalize clip.
+      const parentGroup = (frame as any).group;
+      if (parentGroup && typeof parentGroup.add === "function") {
+        parentGroup.add(img);
+        relocalizeClipToPhoto(img, frame);
+        parentGroup.setCoords();
+      } else {
+        canvas.add(img);
+      }
+      canvas.setActiveObject(frame);
+      canvas.renderAll();
+      enforceZLayers(canvas);
+      return "filled";
+    }
+  }
+
+  const maxSize = 300;
+  const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
+
+  img.set({
+    left: x,
+    top: y,
+    originX: "center",
+    originY: "center",
+    scaleX: s,
+    scaleY: s,
+    customProperties: { z: Date.now(), layer: "element" },
+  } as any);
+  (img as any)._selId = `photo-${Date.now()}`;
+  canvas.add(img);
+  canvas.setActiveObject(img);
+  canvas.renderAll();
+  enforceZLayers(canvas);
+  return "free";
+}
+
 export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const canvas = (frame as any).canvas;
   if (canvas && findPhotoInFrame(canvas, frame)) return false;  const frameZ = (frame as any).customProperties?.z ?? 50;
@@ -332,7 +406,24 @@ export function resolveFrameForPhoto(
 
 export function unlockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImage) {
   const frame = resolveFrameForPhoto(canvas, photo);
-  if (!frame) return;
+  if (!frame) {
+    // ponytail: mất frame (xóa/group lệch frameId) thì mở khóa chính tấm ảnh —
+    // trước đây return im, photo kẹt liệt vĩnh viễn không đường thoát.
+    photo.set({
+      hasControls: true,
+      hasBorders: true,
+      lockMovementX: false,
+      lockMovementY: false,
+      lockScalingX: false,
+      lockScalingY: false,
+      lockRotation: false,
+      selectable: true,
+      evented: true,
+    } as any);
+    photo.setCoords();
+    canvas.renderAll();
+    return;
+  }
   (photo as any).__savedZ = (photo as any).customProperties?.z;
   (photo as any).customProperties = { ...((photo as any).customProperties || {}), z: 998 };
   photo.set({

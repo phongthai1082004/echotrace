@@ -28,6 +28,13 @@ export function MyJournalsClient({
   return (
     <>
       <div className="pb-8">
+        {/* ponytail: lỗi chỉ hiện khi đang không có sách để khoe — có sách rồi thì thôi,
+            khỏi dọa user (banner server cũ kẹt lại kể cả khi đã tải được). */}
+        {fetchError && journals.length === 0 && !loading && (
+          <p suppressHydrationWarning className="text-[10px] text-red-500 mb-3">
+            {t("customer.myJournals.error", { message: fetchError })}
+          </p>
+        )}
         {journals.length === 0 && !fetchError ? (
           loading ? (
             <SkeletonGrid count={8} variant="journal" />

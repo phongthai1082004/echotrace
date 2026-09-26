@@ -19,8 +19,7 @@ import {
   applyInteractionLock,
 } from "../../../lib/frames";
 import {
-  replacePhotoInFrame,
-  relocalizeClipToPhoto,
+  placeDroppedPhoto,
   movePhotoWithFrame,
   unlockPhotoInFrame,
   lockPhotoInFrame,
@@ -83,61 +82,12 @@ export function StudioWorkspace() {
         if (!off) return;
         const p = canvasPointer(c, off.x, off.y);
         if (item.type === "PHOTO") {
-          useCanvasStore.getState().pushUndo();
-          fabric.FabricImage.fromURL(item.url, { crossOrigin: "anonymous" }).then((img) => {
-            const frame = hitTestFrame(c, p.x, p.y);
-
-            if (frame) {
-              const st = useCanvasStore.getState();
-              const effView = isCoverPage(st.activePageIndex, st.pages.length) ? "spread" : st.viewMode;
-              if (effView !== "spread") {
-                const halfW = (c.getWidth() || 840) / 2;
-                const frameCenter = (frame.left || 0) + ((frame.width || 0) * (frame.scaleX || 1)) / 2;
-                if ((effView === "left" && frameCenter >= halfW) || (effView === "right" && frameCenter < halfW)) {
-                  // ponytail: trước đây return im lặng (đã pushUndo) — báo để user biết vì sao không khớp.
-                  showToast("customer.studio.wrongHalf", "warning");
-                  return;
-                }
-              }
-              // ponytail: khung đã có ảnh thì thay thế tại chỗ (replacePhotoInFrame),
-              // không đẻ ảnh rời đè lên như trước.
-              if (replacePhotoInFrame(c, frame, img)) {
-                // ponytail: fitPhotoToFrame already yields group-local coords for a nested
-                // frame -- add the photo INTO the group, not canvas root, then relocalize clip.
-                const parentGroup = (frame as any).group;
-                if (parentGroup && typeof parentGroup.add === "function") {
-                  parentGroup.add(img);
-                  relocalizeClipToPhoto(img, frame);
-                  parentGroup.setCoords();
-                } else {
-                  c.add(img);
-                }
-                c.setActiveObject(frame);
-                c.renderAll();
-                enforceZLayers(c);
-                return;
-              }
-            }
-
-            const maxSize = 300;
-            const s = Math.min(maxSize / (img.width || 1), maxSize / (img.height || 1));
-
-
-            img.set({
-              left: p.x,
-              top: p.y,
-              originX: "center",
-              originY: "center",
-              scaleX: s,
-              scaleY: s,
-              customProperties: { z: Date.now(), layer: "element" },
-            } as any);
-            (img as any)._selId = `photo-${Date.now()}`;
-            c.add(img);
-            c.setActiveObject(img);
-            c.renderAll();
-            enforceZLayers(c);
-          });
+          useCanvasStore.getState().setAutoPlaced(false);
+          // ponytail: core dùng chung với tap mobile (placeDroppedPhoto) —
+          // snapshot trang/view, guard nửa, thay-thế, ảnh rời đều nằm trong đó.
+          void placeDroppedPhoto(c, p.x, p.y, item.url, hitTestFrame, () =>
+            showToast("customer.studio.wrongHalf", "warning"),
+          );
         } else if (item.type === "STICKER" && item.url) {
           useCanvasStore.getState().pushUndo();
           fabric.FabricImage.fromURL(item.url, { crossOrigin: "anonymous" }).then((img) => {
@@ -562,6 +512,33 @@ export function StudioWorkspace() {
     }
   }, [isDraggingPhoto]);
 
+  // ponytail: mobile tap-to-place — tap ảnh để "cầm" (photos-panel arm),
+  // tap canvas để đặt vào khung (fill/thay thế) hoặc ảnh rời. Không cần TouchBackend.
+  const storeCanvas = useCanvasStore((s) => s.canvas);
+  useEffect(() => {
+    if (!storeCanvas) return;
+    const handler = (opt: any) => {
+      const st = useCanvasStore.getState();
+      const url = st.armedPhotoUrl;
+      if (!url) return;
+      const e = opt?.e as MouseEvent | TouchEvent | undefined;
+      const cx =
+        e instanceof MouseEvent ? e.clientX : (e as any)?.changedTouches?.[0]?.clientX;
+      const cy =
+        e instanceof MouseEvent ? e.clientY : (e as any)?.changedTouches?.[0]?.clientY;
+      if (cx === undefined || cy === undefined) return;
+      st.setArmedPhotoUrl(null);
+      const p = canvasPointer(storeCanvas, cx, cy);
+      void placeDroppedPhoto(storeCanvas, p.x, p.y, url, hitTestFrame, () =>
+        showToast("customer.studio.wrongHalf", "warning"),
+      );
+    };
+    storeCanvas.on("mouse:down", handler);
+    return () => {
+      storeCanvas.off("mouse:down", handler);
+    };
+  }, [storeCanvas]);
+
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -640,6 +617,9 @@ export function StudioWorkspace() {
                     width: "50%",
                     height: "100%",
                     background: "rgba(128,128,128,0.18)",
+                    // ponytail: chỉ phủ mờ thôi — không có dòng này là nó nuốt hết
+                    // chuột nửa không focus, object nhìn như "in vào trang".
+                    pointerEvents: "none",
                   }}
                 />
               )}

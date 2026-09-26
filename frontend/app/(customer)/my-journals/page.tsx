@@ -58,11 +58,10 @@ export default async function MyJournalsPage() {
         >
           {t("customer.myJournals.history")}
         </p>
-        {initialError && (
-          <p suppressHydrationWarning className="text-[10px] text-red-500 mb-3">
-            {t("customer.myJournals.error", { message: initialError })}
-          </p>
-        )}
+        {/*
+          ponytail: không render banner lỗi ở server — island tự fetch lại qua proxy
+          khi server lỗi, banner tĩnh sẽ kẹt lại kể cả khi sách đã hiện (bug đã gặp).
+        */}
         <MyJournalsClient initialJournals={initialJournals} initialError={initialError} />
       </div>
     </div>
