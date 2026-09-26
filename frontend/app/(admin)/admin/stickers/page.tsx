@@ -12,7 +12,7 @@ export default async function AdminAssetsPage() {
     try {
       initialAssets = (await apiFetch<Asset[]>("/api/admin/stickers", token)) ?? [];
     } catch {
-      initialAssets = [];
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

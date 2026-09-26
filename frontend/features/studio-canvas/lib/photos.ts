@@ -134,8 +134,7 @@ export async function placeFreeImage(
 
 export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
   const canvas = (frame as any).canvas;
-  if (canvas && findPhotoInFrame(canvas, frame)) return false;
-  const frameZ = (frame as any).customProperties?.z ?? 50;
+  if (canvas && findPhotoInFrame(canvas, frame)) return false;  const frameZ = (frame as any).customProperties?.z ?? 50;
   fitPhotoToFrame(frame, img);
   // save baseline scales so movePhotoWithFrame doesn't double-count
   (img as any).__frameLockScaleX = frame.scaleX || 1;
@@ -165,6 +164,26 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
   } as any);
   (img as any)._selId = `photo-frame-${Date.now()}`;
   return true;
+}
+
+// ponytail: thả ảnh mới vào khung đã có ảnh = thay thế tại chỗ.
+// Trước đây placePhotoInFrame trả false → drop handler đẻ ảnh rời đè lên, tưởng "không khớp".
+export function replacePhotoInFrame(
+  canvas: fabric.Canvas,
+  frame: fabric.FabricObject,
+  img: fabric.FabricImage,
+): boolean {
+  const old = canvas ? findPhotoInFrame(canvas, frame) : undefined;
+  if (old) {
+    const g = (old as any).group;
+    if (g && g.type === "group" && typeof g.remove === "function") g.remove(old);
+    else canvas.remove(old);
+    try {
+      (old as any).dispose?.();
+    } catch {}
+  }
+  // gỡ xong thì khung lại trống → place thường (giữ nguyên guard cho autofill)
+  return placePhotoInFrame(frame, img);
 }
 
 

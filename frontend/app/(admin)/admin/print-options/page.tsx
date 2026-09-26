@@ -13,7 +13,7 @@ export default async function AdminPrintOptionsPage() {
       const d = await apiFetch<{ items: PrintOption[] }>("/api/admin/print-options", token);
       initialOptions = d?.items ?? [];
     } catch {
-      initialOptions = [];
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

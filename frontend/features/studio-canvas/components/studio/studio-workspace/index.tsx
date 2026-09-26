@@ -19,7 +19,7 @@ import {
   applyInteractionLock,
 } from "../../../lib/frames";
 import {
-  placePhotoInFrame,
+  replacePhotoInFrame,
   relocalizeClipToPhoto,
   movePhotoWithFrame,
   unlockPhotoInFrame,
@@ -37,6 +37,7 @@ import { PagesSlider } from "./pages-slider";
 import { FiltersBar } from "../filters-bar";
 import { ContextMenu } from "../context-menu";
 import { StudioSelectionTooltip } from "../studio-selection-tooltip";
+import { useToast } from "@/components/toast";
 
 export function StudioWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -55,6 +56,8 @@ export function StudioWorkspace() {
   const undoVersion = useCanvasStore((s) => s.undoVersion);
   const ctxMenu = useCanvasStore((s) => s.ctxMenu);
   const setCtxMenu = useCanvasStore((s) => s.setCtxMenu);
+  // ponytail: showToast ổn định (useCallback) nên closure trong useDrop deps [] vẫn đúng.
+  const { showToast } = useToast();
 
   useElementControls();
   useStudioKeyboard();
@@ -90,10 +93,15 @@ export function StudioWorkspace() {
               if (effView !== "spread") {
                 const halfW = (c.getWidth() || 840) / 2;
                 const frameCenter = (frame.left || 0) + ((frame.width || 0) * (frame.scaleX || 1)) / 2;
-                if ((effView === "left" && frameCenter >= halfW) || (effView === "right" && frameCenter < halfW))
+                if ((effView === "left" && frameCenter >= halfW) || (effView === "right" && frameCenter < halfW)) {
+                  // ponytail: trước đây return im lặng (đã pushUndo) — báo để user biết vì sao không khớp.
+                  showToast("customer.studio.wrongHalf", "warning");
                   return;
+                }
               }
-              if (placePhotoInFrame(frame, img)) {
+              // ponytail: khung đã có ảnh thì thay thế tại chỗ (replacePhotoInFrame),
+              // không đẻ ảnh rời đè lên như trước.
+              if (replacePhotoInFrame(c, frame, img)) {
                 // ponytail: fitPhotoToFrame already yields group-local coords for a nested
                 // frame -- add the photo INTO the group, not canvas root, then relocalize clip.
                 const parentGroup = (frame as any).group;

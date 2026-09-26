@@ -389,6 +389,8 @@
 			"reset": "Restablecer",
 			"selectFrame": "Seleccionar marco",
 			"style": "Estilo",
+			"align": "Alinear",
+			"wrongHalf": "Ese marco está en la otra mitad — cambia de vista o suelta en este lado",
 			"selectElement": "Seleccionar un elemento",
 			"canvas": "Lienzo",
 			"format": "Formato",

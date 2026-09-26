@@ -1,15 +1,19 @@
-import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth.config";
+import { cookies, headers } from "next/headers";
+import { getToken } from "next-auth/jwt";
 import { getT } from "@/lib/i18n-server";
 
-// ponytail: helper chung cho page server — lang từ cookie + token từ session,
-// khỏi lặp 6 dòng ở mỗi page (mẫu explore/page.tsx).
+// ponytail: helper chung cho page server — lang từ cookie + token THẬT.
+// session.accessToken chỉ là chuỗi "client" giả (chống lộ token ra JS, xem auth.config),
+// token thật chỉ đọc được từ httpOnly cookie qua getToken (kèm xoay vòng khi hết hạn).
 export async function getPageContext() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
-  const session = await getServerSession(authOptions);
+  const cookieHeader = (await headers()).get("cookie") ?? "";
+  const jwt = await getToken({
+    req: { headers: { cookie: cookieHeader } } as any,
+    secret: process.env.NEXTAUTH_SECRET,
+  }).catch(() => null);
   return {
     t: getT(lng),
-    token: (session as any)?.accessToken as string | undefined,
+    token: (jwt as any)?.accessToken as string | undefined,
   };
 }

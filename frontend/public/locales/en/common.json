@@ -389,6 +389,8 @@
 			"reset": "Reset",
 			"selectFrame": "Select Frame",
 			"style": "Style",
+			"align": "Align",
+			"wrongHalf": "That frame is on the other half — switch view or drop on this side",
 			"selectElement": "Select an element",
 			"canvas": "Canvas",
 			"format": "Format",

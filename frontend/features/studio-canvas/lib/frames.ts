@@ -127,7 +127,105 @@ export function setFrameBorderWidth(canvas: fabric.Canvas, frame: fabric.FabricO
 
 
 
-// ponytail: rect-bounds fallback for a frame whose containsPoint misses on rotated/scaled shapes.
+// ponytail: drop trượt viền 1px là miss → tha 6px canvas quanh bbox.
+const HIT_TOLERANCE = 6;
+
+type Pt = { x: number; y: number };
+
+// ponytail: ray-casting even-odd — test góc khung tròn/sao/tam giác,
+// khỏi false-positive như bbox (drop trúng góc trong-suốt vẫn fill).
+function pointInPolygon(p: Pt, vs: Pt[]): boolean {
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    const xi = vs[i].x,
+      yi = vs[i].y,
+      xj = vs[j].x,
+      yj = vs[j].y;
+    if (yi > p.y !== yj > p.y && p.x < ((xj - xi) * (p.y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function polygonVertices(w: number, h: number, sides: number): Pt[] {
+  const cx = w / 2,
+    cy = h / 2,
+    r = Math.min(w, h) / 2,
+    step = (2 * Math.PI) / sides,
+    out: Pt[] = [];
+  for (let i = 0; i < sides; i++) {
+    const a = i * step - Math.PI / 2;
+    out.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+  }
+  return out;
+}
+
+function starVertices(w: number, h: number, points = 5, inner = 0.5): Pt[] {
+  const cx = w / 2,
+    cy = h / 2,
+    outer = Math.min(w, h) / 2,
+    ir = outer * inner,
+    step = Math.PI / points,
+    out: Pt[] = [];
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outer : ir;
+    const a = i * step - Math.PI / 2;
+    out.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+  }
+  return out;
+}
+
+// ponytail: test trong không gian path gốc (chưa scale) — cùng công thức vẽ ở shapes.ts.
+// Trả null khi shape không test được (Heart/cong) → giữ bbox.
+export function shapeContainsPoint(shapeName: string | undefined, w: number, h: number, lx: number, ly: number): boolean | null {
+  switch (shapeName) {
+    case "Circle": {
+      const r = Math.min(w, h) / 2;
+      const dx = (lx - w / 2) / (r || 1),
+        dy = (ly - h / 2) / (r || 1);
+      return dx * dx + dy * dy <= 1;
+    }
+    case "Ellipse": {
+      const dx = (lx - w / 2) / (w / 2 || 1),
+        dy = (ly - h / 2) / (h / 2 || 1);
+      return dx * dx + dy * dy <= 1;
+    }
+    case "Triangle":
+      return pointInPolygon({ x: lx, y: ly }, [
+        { x: w / 2, y: 0 },
+        { x: w, y: h },
+        { x: 0, y: h },
+      ]);
+    case "Diamond":
+      return pointInPolygon({ x: lx, y: ly }, [
+        { x: w / 2, y: 0 },
+        { x: w, y: h / 2 },
+        { x: w / 2, y: h },
+        { x: 0, y: h / 2 },
+      ]);
+    case "Pentagon":
+      return pointInPolygon({ x: lx, y: ly }, polygonVertices(w, h, 5));
+    case "Hexagon":
+      return pointInPolygon({ x: lx, y: ly }, polygonVertices(w, h, 6));
+    case "Octagon":
+      return pointInPolygon({ x: lx, y: ly }, polygonVertices(w, h, 8));
+    case "Star":
+      return pointInPolygon({ x: lx, y: ly }, starVertices(w, h));
+    default:
+      return null;
+  }
+}
+
+// ponytail: điểm canvas → không gian local của frame (kể cả lồng trong group, đã scale/xoay).
+export function frameLocalPoint(frame: any, x: number, y: number): Pt | null {
+  try {
+    const m = frame.calcTransformMatrix();
+    const inv = (fabric as any).util.invertTransform(m);
+    const p = (fabric as any).util.transformPoint(new (fabric as any).Point(x, y), inv);
+    return { x: p.x, y: p.y };
+  } catch {
+    return null;
+  }
+}
 function frameContainsPoint(o: any, x: number, y: number): boolean {
   if ((o as fabric.FabricObject).containsPoint(new fabric.Point(x, y))) return true;
   const l = o.left || 0;
@@ -159,12 +257,28 @@ function searchFrameRecursive(obj: any, x: number, y: number): fabric.FabricObje
     return undefined;
   }
   if (!isFrameObject(obj)) return undefined;
-  // ponytail: absolute bbox first -- covers nested children with no toLocalPoint needed
+  // ponytail: absolute bbox first -- covers nested children with no toLocalPoint needed.
+  // Bbox nới HIT_TOLERANCE để drop trượt viền vẫn khớp; khung có shape thì test
+  // point-in-shape tiếp để loại góc trong-suốt (tròn/sao/tam giác...).
   if (typeof obj.getBoundingRect === "function") {
     try {
       const r = obj.getBoundingRect(true, true);
-      if (x >= r.left && x <= r.left + r.width && y >= r.top && y <= r.top + r.height)
+      if (
+        x >= r.left - HIT_TOLERANCE &&
+        x <= r.left + r.width + HIT_TOLERANCE &&
+        y >= r.top - HIT_TOLERANCE &&
+        y <= r.top + r.height + HIT_TOLERANCE
+      ) {
+        const shapeName = (obj as any).customProperties?.shapeName as string | undefined;
+        if (shapeName) {
+          const lp = frameLocalPoint(obj, x, y);
+          const w = (obj as any).width || 0,
+            h = (obj as any).height || 0;
+          const inside = lp ? shapeContainsPoint(shapeName, w, h, lp.x, lp.y) : null;
+          if (inside === false) return undefined;
+        }
         return obj as fabric.FabricObject;
+      }
     } catch {
       /* fall through to containsPoint */
     }

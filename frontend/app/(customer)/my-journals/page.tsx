@@ -22,7 +22,8 @@ export default async function MyJournalsPage() {
     try {
       initialJournals = (await apiFetch<JournalBook[]>("/api/user/my-books", token)) ?? [];
     } catch (err) {
-      initialJournals = [];
+      // ponytail: server lỗi thì để undefined cho island tự fetch lại qua proxy —
+      // gán [] ở đây là kẹt luôn màn hình lỗi/trống (bug đã gặp).
       initialError = err instanceof Error ? err.message : String(err);
     }
   }

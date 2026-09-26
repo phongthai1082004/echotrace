@@ -389,6 +389,8 @@
 			"reset": "Đặt lại",
 			"selectFrame": "Chọn khung",
 			"style": "Kiểu",
+			"align": "Căn lề",
+			"wrongHalf": "Khung đó ở nửa bên kia — đổi view hoặc thả vào nửa này",
 			"selectElement": "Chọn một phần tử",
 			"canvas": "Canvas",
 			"format": "Khổ giấy",

@@ -12,7 +12,7 @@ export default async function AdminCouponsPage() {
     try {
       initialCoupons = (await apiFetch<Coupon[]>("/api/admin/coupons", token)) ?? [];
     } catch {
-      initialCoupons = [];
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

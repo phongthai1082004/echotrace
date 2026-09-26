@@ -15,8 +15,7 @@ export default async function AdminSuppliersPage() {
       initialSuppliers = d?.items ?? [];
       initialNextCursor = d?.nextCursor ?? null;
     } catch {
-      initialSuppliers = [];
-      initialNextCursor = null;
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

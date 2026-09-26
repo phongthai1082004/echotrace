@@ -16,8 +16,7 @@ export default async function AdminUsersPage() {
       initialUsers = d?.users ?? [];
       initialNextCursor = d?.nextCursor ?? null;
     } catch {
-      initialUsers = [];
-      initialNextCursor = null;
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

@@ -18,8 +18,7 @@ export default async function AdminSampleBooksPage() {
       initialItems = d?.items ?? [];
       initialNextCursor = d?.nextCursor ?? null;
     } catch {
-      initialItems = [];
-      initialNextCursor = null;
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

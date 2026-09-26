@@ -19,7 +19,7 @@ export default async function OrdersPage() {
     try {
       initialOrders = (await apiFetch<OrderDTO[]>("/api/orders", token)) ?? [];
     } catch {
-      initialOrders = [];
+      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

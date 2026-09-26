@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NeoSelect } from "@/components/neo-select";
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FONTS, TEXT_COLOR_PRESETS, resolveFormat } from "../../types";
 import * as fabric from "fabric";
@@ -253,6 +254,30 @@ export function StudioProperties() {
                 >
                   U
                 </button>
+              </div>
+            </div>
+            <div>
+              <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-2 text-[#666]">
+                {t("customer.studio.align")}
+              </p>
+              <div className="flex gap-1">
+                {(
+                  [
+                    { v: "left", Icon: AlignLeft },
+                    { v: "center", Icon: AlignCenter },
+                    { v: "right", Icon: AlignRight },
+                    { v: "justify", Icon: AlignJustify },
+                  ] as const
+                ).map(({ v, Icon }) => (
+                  <button
+                    key={v}
+                    onClick={() => applyText({ textAlign: v })}
+                    aria-label={v}
+                    className={`flex-1 py-1.5 rounded-md border-2 border-[#222] flex items-center justify-center transition-all ${((selected as any)?.textAlign ?? "left") === v ? "bg-[#222] text-white" : "bg-white hover:bg-[#e8e6e0]"}`}
+                  >
+                    <Icon size={14} />
+                  </button>
+                ))}
               </div>
             </div>
             <div>
