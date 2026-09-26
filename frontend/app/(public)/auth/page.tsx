@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 import { roleHome, withLang, langFromPath } from "@/lib/routing";
 import { useToast } from "@/components/toast";
@@ -100,7 +100,10 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      goHome(data?.user?.role);
+      // ponytail: role từ session tươi (signIn xong mới có) — response login có thể
+      // thiếu role là rớt về landing rồi kẹt ở đó tới khi bấm link customer.
+      const fresh = await getSession();
+      goHome((fresh?.user as { role?: string } | undefined)?.role ?? data?.user?.role);
     } catch (err: any) {
       const msg = err.message || "Verification failed";
       setError(msg);
@@ -128,7 +131,8 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error(result.error);
-      goHome(data?.user?.role);
+      const fresh = await getSession();
+      goHome((fresh?.user as { role?: string } | undefined)?.role ?? data?.user?.role);
     } catch (err: any) {
       const msg = err.message || "Account not found or invalid password";
       setError(msg);
