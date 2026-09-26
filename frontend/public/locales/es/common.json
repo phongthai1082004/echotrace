@@ -429,7 +429,8 @@
 			"yourPhotos": "Tus fotos",
 			"upload": "+ Subir",
 			"noPhotos": "Sin fotos aún. Haz clic en \"+ Subir\" para añadir.",
-			"addedToCart": "¡Añadido al carrito!"
+			"addedToCart": "¡Añadido al carrito!",
+			"background": "Fondo"
 		},
 		"orders": {
 			"title": "Mis Pedidos",

@@ -429,7 +429,8 @@
 			"yourPhotos": "Ảnh của bạn",
 			"upload": "+ Tải lên",
 			"noPhotos": "Chưa có ảnh. Nhấn \"+ Tải lên\" để thêm ảnh.",
-			"addedToCart": "Đã thêm vào giỏ hàng!"
+			"addedToCart": "Đã thêm vào giỏ hàng!",
+			"background": "Màu nền"
 		},
 		"orders": {
 			"title": "Đơn hàng của tôi",

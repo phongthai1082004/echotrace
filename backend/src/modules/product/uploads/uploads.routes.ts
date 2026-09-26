@@ -13,17 +13,6 @@ const uploadCtrl = container.resolve(UploadController);
 router.use(authGuard());
 
 router.get(
-	'/admin/uploads/images',
-	authGuard('admin'),
-	asyncHandler((req, res) => uploadCtrl.listAdminImages(req, res)),
-);
-router.delete(
-	'/admin/uploads/images/:id',
-	authGuard('admin'),
-	asyncHandler((req, res) => uploadCtrl.deleteAdminImage(req, res)),
-);
-
-router.get(
 	'/get-upload-signature',
 	asyncHandler((req, res) => uploadCtrl.getSignature(req, res)),
 );

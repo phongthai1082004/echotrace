@@ -14,7 +14,7 @@ import { navItems } from "./studio-sidebar/nav-items";
 import { StudioSidebarPanel } from "./studio-sidebar-panel";
 import { StudioProperties } from "./studio-properties";
 
-type TabId = "template" | "sticker" | "image" | "frame" | "filter" | "text";
+type TabId = "template" | "sticker" | "image" | "frame" | "filter" | "background" | "text";
 
 const TABS: { id: TabId; menu: string | null; labelKey: string }[] = [
   { id: "template", menu: "Layouts", labelKey: "customer.studio.layouts" },
@@ -22,6 +22,7 @@ const TABS: { id: TabId; menu: string | null; labelKey: string }[] = [
   { id: "image", menu: "Photos", labelKey: "customer.studio.image" },
   { id: "frame", menu: "Frames", labelKey: "customer.studio.sectionFrames" },
   { id: "filter", menu: "Filter", labelKey: "customer.studio.smartFilters" },
+  { id: "background", menu: "Background", labelKey: "customer.studio.background" },
   { id: "text", menu: null, labelKey: "customer.studio.text" },
 ];
 
@@ -31,6 +32,7 @@ const MENU_ICON: Record<string, React.ReactNode> = {
   Photos: navItems.find((n) => n.label === "Photos")?.icon,
   Frames: navItems.find((n) => n.label === "Frames")?.icon,
   Filter: navItems.find((n) => n.label === "Filter")?.icon,
+  Background: navItems.find((n) => n.label === "Background")?.icon,
 };
 
 function addDefaultText(defaultLabel: string) {
@@ -125,7 +127,7 @@ export function StudioMobileNav() {
           {t("customer.studio.autoFill")}
         </button>
       </div>
-      <div className="grid grid-cols-6 shrink-0">
+      <div className="grid grid-cols-7 shrink-0">
         {TABS.map((item) => {
           const active = tab === item.id;
           const icon =

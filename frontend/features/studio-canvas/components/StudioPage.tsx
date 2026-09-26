@@ -11,6 +11,7 @@ import { StudioWorkspace } from "./studio/studio-workspace";
 import { StudioProperties } from "./studio/studio-properties";
 import { StudioMobileNav } from "./studio/studio-mobile-nav";
 import { StudioProvider } from "../context/studio-context";
+import { ensureStudioFonts } from "../lib/fonts";
 import type { StudioAPI } from "../api/studio-api";
 
 type Props = {
@@ -25,6 +26,7 @@ export function StudioPage({ api, hideOrder, noPadding, backHref, isAdmin }: Pro
   useEffect(() => {
     const fn = (e: MouseEvent) => e.preventDefault();
     document.addEventListener("contextmenu", fn);
+    ensureStudioFonts();
     return () => document.removeEventListener("contextmenu", fn);
   }, []);
   return (

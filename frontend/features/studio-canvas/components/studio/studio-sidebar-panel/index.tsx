@@ -2,6 +2,7 @@
 
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { PhotosPanel } from "./photos-panel";
+import { BackgroundPanel } from "./background-panel";
 import { StickersPanel } from "./stickers-panel";
 import { FilterPanel } from "./filter-panel";
 import { LayoutsPanel } from "./layouts-panel";
@@ -13,6 +14,7 @@ export function StudioSidebarPanel() {
   const panels: Record<string, React.ReactNode> = {
     Layouts: <LayoutsPanel />,
     Photos: <PhotosPanel />,
+    Background: <BackgroundPanel />,
     Stickers: <StickersPanel />,
     Frames: <FramesPanel />,
     Filter: <FilterPanel />,

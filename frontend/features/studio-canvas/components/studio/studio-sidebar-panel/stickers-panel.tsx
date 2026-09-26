@@ -6,9 +6,11 @@ import { useDrag } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { placeFreeImage, isCoarsePointer } from "../../../lib/photos";
 import { useSession } from "next-auth/react";
-import { ASSET_CATEGORIES, CATEGORY_LABELS } from "@echotrace/shared";
+import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@echotrace/shared";
 import { Search, X } from "lucide-react";
 import { apiFetch } from "@/lib/api.fetch";
+import { uploadToR2 } from "@/lib/upload";
+import { UploadModal } from "@/app/(admin)/admin/stickers/_components/upload-modal";
 
 interface Sticker {
   id: number;
@@ -55,8 +57,12 @@ export function StickersPanel() {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_KEY);
   const [search, setSearch] = useState("");
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  // ponytail: sticker là asset chung mọi admin thấy; chỉ admin được up mới.
+  const isAdmin = (session as any)?.role === "admin" || (session?.user as any)?.role === "admin";
 
-  useEffect(() => {
+  const fetchStickers = () => {
     if (!token) return;
     const params = new URLSearchParams();
     params.set("type", "sticker");
@@ -64,7 +70,26 @@ export function StickersPanel() {
     apiFetch<any[]>("/api/admin/stickers?" + params.toString(), token)
       .then((d) => setStickers(d || []))
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchStickers();
   }, [token, categoryFilter]);
+
+  const handleUpload = async (file: File, name: string, category: AssetCategory | "") => {
+    if (!file || !token || !name.trim()) return false;
+    setUploading(true);
+    try {
+      const { url, publicId } = await uploadToR2(file, "sticker", token);
+      const body: any = { url, publicId, name: name.trim() };
+      if (category) body.category = category;
+      await apiFetch("/api/admin/stickers", token, { method: "POST", body: JSON.stringify(body) });
+      fetchStickers();
+      return true;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const filtered = stickers.filter((s) => {
     const q = search.toLowerCase();
@@ -73,9 +98,19 @@ export function StickersPanel() {
 
   return (
     <div className="p-4">
-      <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
-        {t("customer.studio.sticker")}
-      </p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
+          {t("customer.studio.sticker")}
+        </p>
+        {isAdmin && (
+          <button
+            onClick={() => setShowUpload(true)}
+            className="font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md border-2 border-[#222] shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-all bg-white"
+          >
+            {t("customer.studio.upload")}
+          </button>
+        )}
+      </div>
       <div className="flex items-center gap-1 bg-white rounded border-2 border-[#222] px-2 mb-2">
         <Search size={11} className="text-[#999] shrink-0" />
         <input
@@ -133,6 +168,9 @@ export function StickersPanel() {
             </div>
           ))}
         </div>
+      )}
+      {showUpload && (
+        <UploadModal uploading={uploading} onUpload={handleUpload} onClose={() => setShowUpload(false)} />
       )}
     </div>
   );

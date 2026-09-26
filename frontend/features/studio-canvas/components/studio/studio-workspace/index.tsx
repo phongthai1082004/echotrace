@@ -167,7 +167,7 @@ export function StudioWorkspace() {
             .loadFromJSON(coverParsed ?? {}, reviveObject)
             .then(() => {
 				if (destroyedRef.current) return;
-              c.backgroundColor = "#fff";
+              // ponytail: loadFromJSON đã dựng background đã lưu — không force trắng.
               try {
                 reviveDeep(coverParsed?.objects || [], c.getObjects());
               } catch {
@@ -189,15 +189,20 @@ export function StudioWorkspace() {
       }
     } else {
       const latestPages = useCanvasStore.getState().pages;
-      const merged: any = { version: "7.4", background: "#fff", objects: [] };
       const leftPg = latestPages[idx];
-      if (leftPg?.canvasJson) {
-        parsePageJson(leftPg.canvasJson)?.objects?.forEach((o: any) => merged.objects.push(o));
-      }
       const rightPg = latestPages[rightIdx];
-      if (rightPg?.canvasJson && rightPg !== leftPg) {
-        const rj = parsePageJson(rightPg.canvasJson);
-        rj?.objects?.forEach((o: any) => {
+      const leftParsed = parsePageJson(leftPg?.canvasJson);
+      const rightParsed = rightPg?.canvasJson && rightPg !== leftPg ? parsePageJson(rightPg.canvasJson) : null;
+      // ponytail: nền view gộp lấy từ trang trái đã lưu (trắng nếu chưa tô) —
+      // save split giữ nguyên background cả 2 nửa nên tô 1 bên là cả spread cùng màu.
+      const merged: any = {
+        version: "7.4",
+        background: (leftParsed?.background as string) || (rightParsed?.background as string) || "#fff",
+        objects: [],
+      };
+      leftParsed?.objects?.forEach((o: any) => merged.objects.push(o));
+      if (rightParsed) {
+        rightParsed?.objects?.forEach((o: any) => {
           o.left = (o.left || 0) + pageW;
           merged.objects.push(o);
         });
@@ -208,7 +213,7 @@ export function StudioWorkspace() {
             .loadFromJSON(merged, reviveObject)
             .then(() => {
 				if (destroyedRef.current) return;
-              c.backgroundColor = "#fff";
+              // ponytail: background đã nằm trong merged — không force trắng.
               reviveDeep(merged.objects || [], c.getObjects());
               // Remove old spine line if exists
               c.getObjects()

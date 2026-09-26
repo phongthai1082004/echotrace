@@ -27,15 +27,6 @@ export class UserImagesRepository {
 		});
 	}
 
-	// ponytail: kho ảnh chung của admin — chỉ ảnh do tài khoản role=admin up,
-	// ảnh customer riêng tư không bao giờ lọt vào.
-	listByAdmins(tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).userImage.findMany({
-			where: { isDelete: false, user: { role: 'admin' } },
-			orderBy: { id: 'desc' },
-		});
-	}
-
 	deleteUserImage(id: number, userId: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).userImage.updateMany({
 			where: { id, userId, isDelete: false },
@@ -43,17 +34,4 @@ export class UserImagesRepository {
 		});
 	}
 
-	findByIdWithOwner(id: number, tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).userImage.findFirst({
-			where: { id, isDelete: false },
-			include: { user: { select: { role: true } } },
-		});
-	}
-
-	softDeleteById(id: number, tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).userImage.update({
-			where: { id },
-			data: { isDelete: true, deletedAt: new Date() },
-		});
-	}
 }

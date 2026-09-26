@@ -98,11 +98,9 @@ export function PhotosPanel() {
   const [userImages, setUserImages] = useState<{ id: number; url: string }[]>([]);
   const [uploadingIds, setUploadingIds] = useState<string[]>([]);
   const token = (session as any)?.accessToken;
-  // ponytail: admin thấy kho ảnh chung của mọi admin (đầu /admin), customer chỉ thấy ảnh mình.
-  const isAdmin = (session as any)?.role === "admin" || (session?.user as any)?.role === "admin";
-  const listPath = isAdmin ? "/api/admin/uploads/images" : "/api/uploads/images";
-  const deletePath = (id: number) =>
-    isAdmin ? `/api/admin/uploads/images/${id}` : `/api/uploads/images/${id}`;
+  // ponytail: ảnh private theo userId — admin cũng chỉ thấy ảnh mình up.
+  const listPath = "/api/uploads/images";
+  const deletePath = (id: number) => `/api/uploads/images/${id}`;
 
   const fetchImages = async () => {
     if (!token) return;

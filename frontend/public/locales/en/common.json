@@ -429,7 +429,8 @@
 			"yourPhotos": "Your Photos",
 			"upload": "+ Upload",
 			"noPhotos": "No photos yet. Click \"+ Upload\" to add some.",
-			"addedToCart": "Added to cart!"
+			"addedToCart": "Added to cart!",
+			"background": "Background"
 		},
 		"orders": {
 			"title": "My Orders",

@@ -152,6 +152,13 @@ export const FONTS: { name: string; css: string; preview: string }[] = [
   { name: "Raleway", css: "'Raleway', sans-serif", preview: "Raleway" },
   { name: "Quicksand", css: "'Quicksand', sans-serif", preview: "Quicksand" },
   { name: "Comfortaa", css: "'Comfortaa', sans-serif", preview: "Comfortaa" },
+  // ponytail: calligraphy có subset vietnamese — tải lazy khi vào studio (lib/fonts.ts).
+  { name: "Dancing Script", css: "'Dancing Script', cursive", preview: "Dancing Script" },
+  { name: "Great Vibes", css: "'Great Vibes', cursive", preview: "Great Vibes" },
+  { name: "Pacifico", css: "'Pacifico', cursive", preview: "Pacifico" },
+  { name: "Lobster", css: "'Lobster', cursive", preview: "Lobster" },
+  { name: "Satisfy", css: "'Satisfy', cursive", preview: "Satisfy" },
+  { name: "Allura", css: "'Allura', cursive", preview: "Allura" },
 ];
 
 export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0];

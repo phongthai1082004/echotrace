@@ -9,6 +9,7 @@ const sidebarLabelKeys: Record<string, string> = {
   Stickers: "customer.studio.sticker",
   Frames: "customer.studio.sectionFrames",
   Filter: "customer.studio.smartFilters",
+  Background: "customer.studio.background",
 };
 
 export function SidebarItem({ label, children }: { label: string; children: React.ReactNode }) {

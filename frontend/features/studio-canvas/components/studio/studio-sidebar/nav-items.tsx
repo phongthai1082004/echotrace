@@ -48,4 +48,13 @@ export const navItems: { label: string; icon: React.ReactNode }[] = [
       </>
     ),
   },
+  {
+    label: "Background",
+    icon: (
+      <>
+        <path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 1.4 3.4 1.4H18a2 2 0 0 0 2-2v-4.4c0-1.2-.5-2.4-1.4-3.2Z" />
+        <path d="m5 2 5 5" />
+      </>
+    ),
+  },
 ];
