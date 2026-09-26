@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Undo2, Redo2, Type, Trash2, Eye } from "lucide-react";
+import { Undo2, Redo2, Type, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -221,6 +221,8 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
 
   const { autoFill: handleAutoFill } = useAutoFill(token);
 
+
+
   return (
       <div
         className="h-12 flex items-center px-4 sm:px-5 gap-2 bg-[#FFF7D6] shrink-0 border-b-[3px] border-[#222] overflow-x-auto overflow-y-hidden overscroll-x-contain [&>*]:shrink-0"
@@ -396,13 +398,6 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
             +
           </button>
         </div>
-        <button
-          disabled
-          onClick={() => router.push(`/studio/preview?id=${useCanvasStore.getState().bookMeta.id ?? ""}`)}
-          className={`${neoBtnSm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed`}
-        >
-          <Eye size={11} /> {t("customer.studio.preview")}
-        </button>
         <button
           onClick={handleAutoFill}
           className={`${neoBtnPrimarySm} flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5`}

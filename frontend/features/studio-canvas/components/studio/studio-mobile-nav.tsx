@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as fabric from "fabric";
-import { ChevronLeft, ChevronRight, Eye, Sparkles, Type } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Type } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { usePageManager } from "../../hooks/usePageManager";
 import { useAutoFill } from "../../hooks/useAutoFill";
@@ -57,7 +56,6 @@ function addDefaultText(defaultLabel: string) {
 
 export function StudioMobileNav() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
   const { autoFill } = useAutoFill(token);
@@ -66,7 +64,6 @@ export function StudioMobileNav() {
   const setActiveMenu = useCanvasStore((s) => s.setActiveMenu);
   const pages = useCanvasStore((s) => s.pages);
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
-  const bookMeta = useCanvasStore((s) => s.bookMeta);
 
   const onTap = (id: TabId, menu: string | null) => {
     if (tab === id) {
@@ -108,15 +105,6 @@ export function StudioMobileNav() {
           <ChevronRight size={20} strokeWidth={2.5} />
         </button>
         <div className="flex-1" />
-        <button
-          type="button"
-          aria-label={t("customer.studio.preview")}
-          onClick={() => router.push(`/studio/preview?id=${bookMeta.id ?? ""}`)}
-          className="h-10 px-3 flex items-center gap-1.5 rounded-[8px] font-mono text-[10px] font-bold tracking-widest uppercase text-[#222] hover:bg-[#e8e6e0] transition-colors"
-        >
-          <Eye size={16} strokeWidth={2.5} />
-          {t("customer.studio.preview")}
-        </button>
         <button
           type="button"
           aria-label={t("customer.studio.autoFill")}

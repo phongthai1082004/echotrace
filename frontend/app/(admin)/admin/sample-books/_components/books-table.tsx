@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, PenTool } from "lucide-react";
+import { Pencil, PenTool } from "lucide-react";
 import { SampleBookDTO } from "@echotrace/shared";
 import { chip, neoBtn } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
@@ -93,19 +93,6 @@ export function BooksTable({
             >
               <PenTool size={14} />
             </Link>
-            {s.status === "published" ? (
-              <Link href={`/studio/preview?id=${s.id}`} title={t("admin.sampleBooks.preview")} className={`${neoBtn} p-1.5`}>
-                <Eye size={14} />
-              </Link>
-            ) : (
-              <button
-                disabled
-                title={t("admin.sampleBooks.preview")}
-                className={`${neoBtn} p-1.5 opacity-30 cursor-not-allowed`}
-              >
-                <Eye size={14} />
-              </button>
-            )}
             <button onClick={() => onEdit(s)} title={t("admin.sampleBooks.editInfo")} className={`${neoBtn} p-1.5`}>
               <Pencil size={14} />
             </button>

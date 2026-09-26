@@ -345,7 +345,6 @@
 		"studio": {
 			"title": "Estudio de Diseño",
 			"save": "Guardar",
-			"preview": "Vista previa",
 			"publish": "Publicar",
 			"export": "Exportar",
 			"undo": "Deshacer",
@@ -1142,7 +1141,6 @@
 			"pages": "Páginas",
 			"pg": "pág",
 			"status": "Estado",
-			"preview": "Vista previa",
 			"edit": "Editar",
 			"editInfo": "Editar información",
 			"updated": "Plantilla actualizada",

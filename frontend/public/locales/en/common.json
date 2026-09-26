@@ -345,7 +345,6 @@
 		"studio": {
 			"title": "Design Studio",
 			"save": "Save",
-			"preview": "Preview",
 			"publish": "Publish",
 			"export": "Export",
 			"undo": "Undo",
@@ -1145,7 +1144,6 @@
 			"pages": "Pages",
 			"pg": "pg",
 			"status": "Status",
-			"preview": "Preview",
 			"edit": "Edit",
 			"editInfo": "Edit Info",
 			"updated": "Template updated",

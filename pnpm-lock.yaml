@@ -303,9 +303,6 @@ importers:
       next-auth:
         specifier: ^4.24.14
         version: 4.24.15(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      page-flip:
-        specifier: ^2.0.7
-        version: 2.0.7
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.4)
@@ -358,9 +355,6 @@ importers:
       '@types/node':
         specifier: ^20.19.43
         version: 20.19.43
-      '@types/page-flip':
-        specifier: ^2.0.4
-        version: 2.0.4
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
@@ -3136,9 +3130,6 @@ packages:
 
   '@types/offscreencanvas@2019.7.3':
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
-
-  '@types/page-flip@2.0.4':
-    resolution: {integrity: sha512-TFwXiROtCU6tVQ9r6Xp91qwGOk0ZDT4OWgEhLFHkWjlBmRmiE09BTT1z5ZUycdcP6fiAAo8gwY8TGFvCIQSZHw==}
 
   '@types/pg@8.20.0':
     resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
@@ -5935,9 +5926,6 @@ packages:
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
-
-  page-flip@2.0.7:
-    resolution: {integrity: sha512-96lQFUUz7r/LZzEUZJ3yBIMEKU9+m8HMFDzTvTdD6P7Ag/wXINjp9n0W7b4wanwnDbQETo4uNUoL3zMqpFxwGA==}
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
@@ -9764,8 +9752,6 @@ snapshots:
 
   '@types/offscreencanvas@2019.7.3': {}
 
-  '@types/page-flip@2.0.4': {}
-
   '@types/pg@8.20.0':
     dependencies:
       '@types/node': 26.1.1
@@ -12981,8 +12967,6 @@ snapshots:
       p-limit: 3.1.0
 
   p-try@2.2.0: {}
-
-  page-flip@2.0.7: {}
 
   pako@1.0.11: {}
 

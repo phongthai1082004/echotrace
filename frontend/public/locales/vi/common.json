@@ -345,7 +345,6 @@
 		"studio": {
 			"title": "Studio Thiết kế",
 			"save": "Lưu",
-			"preview": "Xem trước",
 			"publish": "Xuất bản",
 			"export": "Xuất file",
 			"undo": "Hoàn tác",
@@ -1144,7 +1143,6 @@
 			"pages": "Số trang",
 			"pg": "tr",
 			"status": "Trạng thái",
-			"preview": "Xem trước",
 			"edit": "Sửa",
 			"editInfo": "Sửa thông tin",
 			"updated": "Đã cập nhật mẫu",
