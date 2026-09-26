@@ -98,11 +98,16 @@ export function PhotosPanel() {
   const [userImages, setUserImages] = useState<{ id: number; url: string }[]>([]);
   const [uploadingIds, setUploadingIds] = useState<string[]>([]);
   const token = (session as any)?.accessToken;
+  // ponytail: admin thấy kho ảnh chung của mọi admin (đầu /admin), customer chỉ thấy ảnh mình.
+  const isAdmin = (session as any)?.role === "admin" || (session?.user as any)?.role === "admin";
+  const listPath = isAdmin ? "/api/admin/uploads/images" : "/api/uploads/images";
+  const deletePath = (id: number) =>
+    isAdmin ? `/api/admin/uploads/images/${id}` : `/api/uploads/images/${id}`;
 
   const fetchImages = async () => {
     if (!token) return;
     try {
-      const data = await apiFetch<any[]>("/api/uploads/images", token, { cache: "no-cache" });
+      const data = await apiFetch<any[]>(listPath, token, { cache: "no-cache" });
       if (data) setUserImages(data);
     } catch {}
   };
@@ -142,7 +147,7 @@ export function PhotosPanel() {
     if (!token) return;
     setUserImages((prev) => prev.filter((img) => img.id !== id));
     try {
-      await apiFetch(`/api/uploads/images/${id}`, token, { method: "DELETE" });
+      await apiFetch(deletePath(id), token, { method: "DELETE" });
     } catch {}
   };
 

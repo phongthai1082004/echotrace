@@ -56,6 +56,18 @@ export class UploadController {
 		res.json(ApiResponse.success(images));
 	};
 
+	// ponytail: kho ảnh chung của admin — controller mỏng, scope nằm ở service.
+	listAdminImages = async (_req: AuthRequest, res: Response) => {
+		const images = await this.userImageService.listByAdmins();
+		res.json(ApiResponse.success(images));
+	};
+
+	deleteAdminImage = async (req: AuthRequest, res: Response) => {
+		const id = parseInt(String(req.params.id));
+		await this.userImageService.deleteByAdmin(id);
+		res.json(ApiResponse.message('Image deleted'));
+	};
+
 	deleteImage = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
 		const id = parseInt(String(req.params.id));

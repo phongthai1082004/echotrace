@@ -9,6 +9,9 @@ export interface IUserImageService {
 	create(data: SaveImageDTO & { userId: number }): Promise<ImageDTO>;
 	listByUser(userId: number, bookId?: number): Promise<ImageDTO[]>;
 	delete(id: number, userId: number): Promise<void>;
+	// ponytail: kho chung admin (chỉ ảnh của admin) + xóa ảnh của admin khác.
+	listByAdmins(): Promise<ImageDTO[]>;
+	deleteByAdmin(id: number): Promise<void>;
 }
 
 @injectable()
@@ -33,9 +36,27 @@ export class UserImageService implements IUserImageService {
 		return ImageMapper.toDTOList(images);
 	}
 
+	public async listByAdmins() {
+		const images = await this.userImagesRepo.listByAdmins();
+		return ImageMapper.toDTOList(images);
+	}
+
 	public async delete(id: number, userId: number) {
 		const image = await this.getById(id, userId);
 		await this.userImagesRepo.deleteUserImage(id, userId);
+		if (image.publicId) {
+			const { R2ImageService } = await import('../../../shared/r2/r2.service.js');
+			const r2 = new R2ImageService();
+			await r2.deleteAsset(image.publicId).catch(() => {});
+		}
+	}
+
+	// ponytail: admin xóa ảnh của admin khác — nhưng chỉ khi chủ ảnh cũng là admin,
+	// không cho chạm vào ảnh customer qua đầu này.
+	public async deleteByAdmin(id: number) {
+		const image = await this.userImagesRepo.findByIdWithOwner(id);
+		if (!image || (image as any).user?.role !== 'admin') throw new AppError(ErrorCode.IMAGE_NOT_FOUND, 404);
+		await this.userImagesRepo.softDeleteById(id);
 		if (image.publicId) {
 			const { R2ImageService } = await import('../../../shared/r2/r2.service.js');
 			const r2 = new R2ImageService();
