@@ -150,7 +150,6 @@ export class CheckoutService implements ICheckoutService {
 					}
 
 				const itemsSnapshot = quote.items.map((item) => toOrderItem(item));
-				// ponytail: snapshot UTM từ Book (ghim lúc tạo sách) sang Order —
 				// đơn nhiều sách khác camp thì lấy book đầu tiên có UTM
 				const pinned = await this.orderRepo.findBooksAttribution(bookIds, tx);
 				const byId = new Map(pinned.map((b) => [b.id, b]));
@@ -225,7 +224,6 @@ export class CheckoutService implements ICheckoutService {
 
 			this.pdfQueue.enqueue(result.orderId).catch(() => {});
 
-			// ponytail: báo admin đơn mới — bỏ qua đơn admin tự tạo (createAlbumOrder)
 			if (!idempotencyKey.startsWith('admin-album-')) {
 				const tNew = orderText('newOrderAdmin', { code: result.orderCode, total: result.total });
 				await notifyAdmins(this.subject, this.orderRepo.client, {
@@ -295,7 +293,6 @@ export class CheckoutService implements ICheckoutService {
 			couponCode: input.couponCode ?? null,
 		});
 		return this.createOrder(`admin-album-${customerId}-${sampleBookId}-${Date.now()}`, body, customerId).then(async (result) => {
-			// ponytail: admin chọn nguồn tay (đơn gọi điện/zalo) — đè lên UTM kế thừa từ sách.
 			// Không chọn thì giữ nguyên (sách online → đúng kênh, thuần offline → unknown).
 			const source = String(input.utmSource ?? '').trim().toLowerCase().slice(0, 64);
 			if (source) {

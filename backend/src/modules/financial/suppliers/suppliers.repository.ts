@@ -2,7 +2,6 @@ import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature suppliers ra khỏi service.
 @injectable()
 export class SupplierRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}

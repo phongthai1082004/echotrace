@@ -41,7 +41,6 @@ function DraggablePhoto({
   const handleTapAdd = () => {
     if (!isCoarsePointer()) return;
     const st = useCanvasStore.getState();
-    // ponytail: mobile tap lần 1 "cầm" ảnh (viền đen), tap canvas để đặt vào khung,
     // tap lại ảnh để hủy — thay cho drag không tồn tại trên touch.
     if (st.armedPhotoUrl === url) {
       st.setArmedPhotoUrl(null);
@@ -98,7 +97,6 @@ export function PhotosPanel() {
   const [userImages, setUserImages] = useState<{ id: number; url: string }[]>([]);
   const [uploadingIds, setUploadingIds] = useState<string[]>([]);
   const token = (session as any)?.accessToken;
-  // ponytail: ảnh private theo userId — admin cũng chỉ thấy ảnh mình up.
   const listPath = "/api/uploads/images";
   const deletePath = (id: number) => `/api/uploads/images/${id}`;
 

@@ -152,7 +152,6 @@ export const FONTS: { name: string; css: string; preview: string }[] = [
   { name: "Raleway", css: "'Raleway', sans-serif", preview: "Raleway" },
   { name: "Quicksand", css: "'Quicksand', sans-serif", preview: "Quicksand" },
   { name: "Comfortaa", css: "'Comfortaa', sans-serif", preview: "Comfortaa" },
-  // ponytail: calligraphy có subset vietnamese — tải lazy khi vào studio (lib/fonts.ts).
   { name: "Dancing Script", css: "'Dancing Script', cursive", preview: "Dancing Script" },
   { name: "Great Vibes", css: "'Great Vibes', cursive", preview: "Great Vibes" },
   { name: "Pacifico", css: "'Pacifico', cursive", preview: "Pacifico" },

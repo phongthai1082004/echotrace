@@ -3,7 +3,6 @@ import { PrismaService } from '../../../../lib/db.service.js';
 import { NotificationChannel, NotificationType } from '@echotrace/shared';
 import { PresenceService } from '../channels/presence.service.js';
 
-// ponytail: broadcast toàn bộ user — 1 row/user (scope broadcast) + push online.
 // Đi thẳng DB (createMany 1 query, vài ms với 500 users) thay vì qua subject
 // từng user. Offline thì thôi, lần sau vào app fetch là thấy.
 export async function broadcastNotification(opts: {

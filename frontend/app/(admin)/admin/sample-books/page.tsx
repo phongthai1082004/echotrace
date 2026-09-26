@@ -3,7 +3,6 @@ import { getPageContext } from "@/lib/page-context";
 import type { SampleBookDTO } from "@echotrace/shared";
 import { SampleBooksClient } from "./_components/sample-books-client";
 
-// ponytail: page server — rows đầu render sẵn, khỏi fetch sau session ở client.
 export default async function AdminSampleBooksPage() {
   const { token } = await getPageContext();
 
@@ -18,7 +17,6 @@ export default async function AdminSampleBooksPage() {
       initialItems = d?.items ?? [];
       initialNextCursor = d?.nextCursor ?? null;
     } catch {
-      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

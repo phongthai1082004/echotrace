@@ -4,7 +4,6 @@ export function isFrameObject(obj: fabric.FabricObject): boolean {
   return (obj as any).customProperties?.layer === "frame";
 }
 
-// ponytail: per-object user lock — move/scale/rotate frozen, stays selectable
 // (with border, no handles) so it can be unlocked from the tooltip.
 export function isObjectLocked(o: any): boolean {
   return !!(
@@ -73,7 +72,6 @@ export function canvasPointer(canvas: fabric.Canvas, clientX: number, clientY: n
     (clientX - rect.left) * (canvas.getWidth() / rect.width),
     (clientY - rect.top) * (canvas.getHeight() / rect.height),
   );
-  // ponytail: invert cả viewportTransform — vpt identity thì ra đúng điểm cũ,
   // ngày nào bật zoom/pan fabric thì drop/hover khỏi lệch hệ thống.
   const vpt = (canvas as any).viewportTransform;
   if (!vpt) return { x: p.x, y: p.y };

@@ -24,7 +24,6 @@ export async function notifyOrderUser(
 			userId: String(opts.userId),
 			email: user?.email ?? undefined,
 			type: opts.type,
-			// ponytail: PUSH auto-kèm ở choke point này — mọi notif đơn đều realtime,
 			// khỏi sửa từng call site lifecycle/returns
 			channels: Array.from(new Set([...opts.channels, NotificationChannel.PUSH])),
 			title: opts.title,
@@ -37,7 +36,6 @@ export async function notifyOrderUser(
 	}
 }
 
-// ponytail: quạt cho mọi acc admin (in-app only — admin không nhận mail).
 // Dùng cho sự kiện cần admin xử lý: đơn mới, khách hủy, yêu cầu đổi trả.
 export async function notifyAdmins(
 	subject: NotificationSubject,

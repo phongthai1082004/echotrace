@@ -4,7 +4,6 @@ import { getToken } from "next-auth/jwt";
 const BACKEND =
   process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
 
-// ponytail: pipe SSE trực tiếp, không buffer (proxy /api/proxy chung buffer
 // arrayBuffer nên không stream được). Auth bằng session cookie server-side.
 export async function GET(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });

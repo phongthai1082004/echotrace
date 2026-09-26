@@ -54,13 +54,11 @@ export function serializeCanvasState(canvas: fabric.Canvas): string {
 	// PDF render needs the real page ratio -- fabric toJSON drops viewport dims
 	parsed.width = canvas.getWidth();
 	parsed.height = canvas.getHeight();
-  // ponytail: toJSON neither propagates SERIALIZE_KEYS into group children nor
   // drops helpers there -- backfill recursively so grouped nodes keep identity.
   backfillCustomProps(
     parsed.objects,
     canvas.getObjects().filter((o: any) => !(o as any).excludeFromExport),
   );
-  // ponytail: sparse — strip fabric defaults before storing to jsonb (see sparse-json.ts).
   stripSparsePage(parsed);
   return JSON.stringify(parsed);
 }
@@ -84,7 +82,6 @@ export function isCoverPage(index: number, total: number): boolean {
 
 
 export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { leftJson: string; rightJson: string } {
-  // ponytail: parse hydrates stripped defaults so the split sees complete objects.
   const parsed = parsePageJson(jsonStr) ?? { objects: [] };
   const leftObjs: any[] = [],
     rightObjs: any[] = [];
@@ -97,7 +94,6 @@ export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { left
     }
   });
   const mkJson = (objs: any[]) => {
-    // ponytail: keep stored halves sparse — split hydrates for the midpoint math above.
     const half = { ...parsed, objects: objs };
     stripSparsePage(half);
     return JSON.stringify(half);

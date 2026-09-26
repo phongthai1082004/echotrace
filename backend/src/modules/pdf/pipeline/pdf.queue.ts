@@ -7,9 +7,7 @@ export class DbPdfQueue implements IPdfQueue {
 	constructor(@inject('PdfRepository') private pdfRepo: PdfRepository) {}
 
 	async enqueue(orderId: number): Promise<void> {
-		// ponytail: idempotent — 1 order = 1 pdf job (unique orderId). Reset về PENDING để replay.
 		await this.pdfRepo.upsertPdfJob(orderId);
-		// ponytail: đánh thức worker đang ngủ backoff — PDF mới chạy trong vài giây, DB vẫn ngủ khi rỗi.
 		try {
 			container.resolve<{ kick?: () => void }>('PdfWorker')?.kick?.();
 		} catch {

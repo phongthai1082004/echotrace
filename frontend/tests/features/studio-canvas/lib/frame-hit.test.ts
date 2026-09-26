@@ -62,7 +62,6 @@ describe("frameLocalPoint", () => {
   });
 });
 
-// ponytail: stub áº£nh thay vÃ¬ load tháº­t â€” place/replace chá»‰ cáº§n set/setCoords/width.
 const stubImg = () => {
   const o: any = {
     width: 200,
@@ -241,7 +240,7 @@ describe("reviveObject photo locks", () => {
     return o;
   };
 
-  it("json ghi false -> revive khóa l?i", () => {
+  it("json ghi false -> revive khï¿½a l?i", () => {
     const live = livePhoto();
     reviveObject(
       { customProperties: { layer: "photo" }, selectable: false, evented: false, hasControls: false },
@@ -252,7 +251,7 @@ describe("reviveObject photo locks", () => {
     expect((live as any).evented).toBe(false);
   });
 
-  it("json không ghi c? -> revive gi? tuong tác (không ép li?t)", () => {
+  it("json khï¿½ng ghi c? -> revive gi? tuong tï¿½c (khï¿½ng ï¿½p li?t)", () => {
     const live = livePhoto();
     reviveObject({ customProperties: { layer: "photo" } }, live as any, null);
     expect((live as any).selectable).toBe(true);
@@ -261,7 +260,7 @@ describe("reviveObject photo locks", () => {
 });
 
 describe("unlockPhotoInFrame without frame", () => {
-  it("m?t frame -> m? khóa chính t?m ?nh thay vì return im", () => {
+  it("m?t frame -> m? khï¿½a chï¿½nh t?m ?nh thay vï¿½ return im", () => {
     const canvas = { getObjects: () => [], renderAll: vi.fn() };
     const photo: any = {
       customProperties: { layer: "photo" },

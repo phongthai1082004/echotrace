@@ -52,7 +52,6 @@ export function useUsers(initialUsers?: UserResponse["users"], initialNextCursor
 
   useEffect(() => {
     if (!token || !queryUrl) return;
-    // ponytail: server đã nạp trang đầu (filter/search/cursor mặc định) — bỏ qua
     // đúng 1 lần fetch đầu, mọi đổi filter/search/cursor sau đó vẫn fetch bình thường.
     if (provided && !consumedInitial.current && filter === "all" && !debouncedSearch && !cursor && refreshKey === 0) {
       consumedInitial.current = true;

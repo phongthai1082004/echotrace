@@ -29,7 +29,6 @@ export default function AuthPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   const otpValue = otp.join("");
-  // ponytail: full-reload post-login must keep the lang prefix explicitly —
   // relying on the cookie redirect here is what silently reset UI language.
   const seg = langFromPath(usePathname());
   const goHome = (role?: string | null) => {
@@ -100,7 +99,6 @@ export default function AuthPage() {
 
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) throw new Error("Login failed, please try signing in");
-      // ponytail: role từ session tươi (signIn xong mới có) — response login có thể
       // thiếu role là rớt về landing rồi kẹt ở đó tới khi bấm link customer.
       const fresh = await getSession();
       goHome((fresh?.user as { role?: string } | undefined)?.role ?? data?.user?.role);

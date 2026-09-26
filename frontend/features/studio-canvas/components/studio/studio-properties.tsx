@@ -73,7 +73,6 @@ export function StudioProperties() {
     const txt = selected as fabric.IText;
     txt.set(typeof patch === "function" ? patch(txt) : patch);
     canvas?.renderAll();
-    // ponytail: fabric mutate không báo React — bump version để panel vẽ lại
     // highlight active (align/B/I/U/màu) ngay khi ấn, khỏi chờ lần chọn sau.
     useCanvasStore.getState().incrementSelectionVersion();
   };
@@ -116,7 +115,6 @@ export function StudioProperties() {
     setHexInput(currentColor.replace("#", ""));
   }, [currentColor, selectionVersion]);
 
-  // ponytail: ô số xài state local + commit khi blur/Enter — bind thẳng vào
   // fabric thì xóa trắng về 0/NaN, gõ dở cũng bị render đè (không nhập được số).
   const [sizeInput, setSizeInput] = useState("24");
   useEffect(() => {

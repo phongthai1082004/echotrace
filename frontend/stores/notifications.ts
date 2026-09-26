@@ -13,13 +13,11 @@ export interface NotifItem {
   i18n?: { title?: Record<string, unknown>; message?: Record<string, unknown> } | null;
 }
 
-const LIMIT = 10; // ponytail: trang load ít, scroll gần đáy append tiếp
+const LIMIT = 10;
 
-// ponytail: dedup + throttle — 2 mount cùng gọi + hover chuông liên tục = spam /notifications.
 let inFlight: Promise<void> | null = null;
 let lastOk = 0;
 
-// ponytail: admin broadcast đa ngữ — text theo lang nằm ở cột i18n,
 // tin cũ (trước migration) rớt về metadata.i18n, thiếu nữa thì về title/message gốc.
 export function notifText(n: NotifItem, field: "title" | "message", lang?: string | null): string {
   const l = (lang || "vi").slice(0, 2).toLowerCase();
@@ -102,7 +100,6 @@ export const useNotifStore = create<NotifState>((set, get) => ({
     set((s) => ({ items: s.items.map((x) => (x.id === id ? { ...x, isRead: false } : x)) })),
 
   reset: () => {
-    // ponytail: reset cả throttle để test/đăng xuất không kẹt cửa sổ 30s.
     inFlight = null;
     lastOk = 0;
     set({ items: [], hasMore: true, loadingMore: false });

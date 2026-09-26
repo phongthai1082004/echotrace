@@ -2,7 +2,6 @@ import { injectable, inject } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature sample-books ra khỏi service.
 // Mỗi method nhận tx? để tái dùng trong $transaction.
 @injectable()
 export class SampleBookRepository {
@@ -45,12 +44,10 @@ export class SampleBookRepository {
 	update(id: number, data: Record<string, unknown>, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.update({ where: { id }, data: data as Prisma.SampleBookUpdateInput });
 	}
-	// ponytail: soft-archive 1 bản, trả count để service biết có tồn tại hay không
 	archive(id: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.updateMany({ where: { id, isDelete: false }, data: { status: 'archive', isActive: false } });
 	}
 
-	// ponytail: stock check for cart — active + not deleted + quantity null (unlimited) or >= requested.
 	findForStock(id: number, quantity: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.findFirst({
 			where: {

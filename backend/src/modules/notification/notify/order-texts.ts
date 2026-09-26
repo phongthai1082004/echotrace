@@ -4,7 +4,6 @@ export interface TriText {
 	i18n: { title: Record<string, string>; message: Record<string, string> };
 }
 
-// ponytail: mọi notif đơn/ship/hoàn/trả tập trung ở đây — vi giữ nguyên từng byte
 // (test cũ assert), en/es dịch sẵn. Tiền dùng chung 1 format vi-VN + đ mọi thứ tiếng.
 const vnd = (n: number | string) => `${Number(n).toLocaleString('vi-VN')}đ`;
 
@@ -151,7 +150,6 @@ const D: Record<string, T> = {
 			es: (v) => `Solicitud de devolución del pedido ${v.code}`,
 		},
 		message: {
-			// ponytail: reason do khách gõ (tiếng Việt) — en/es giữ nguyên, không dịch máy
 			vi: (v) => `<p>Khách vừa gửi yêu cầu đổi trả đơn <b>${v.code}</b>${v.reason ? `: ${v.reason}` : ''}.</p>`,
 			en: (v) => `<p>Customer requested a return for order <b>${v.code}</b>${v.reason ? `: ${v.reason}` : ''}.</p>`,
 			es: (v) => `<p>El cliente solicitó una devolución del pedido <b>${v.code}</b>${v.reason ? `: ${v.reason}` : ''}.</p>`,

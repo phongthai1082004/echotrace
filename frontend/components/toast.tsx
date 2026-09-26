@@ -64,7 +64,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               >
                 {s.icon}
               </span>
-              {/* ponytail: SCREAMING_SNAKE messages are backend ErrorCodes → translate via errorCodes.*, plain text passes through t() unchanged */}
               <p className="text-sm font-bold whitespace-pre-wrap break-words max-w-[320px]">
                 {/^[A-Z][A-Z0-9_]+$/.test(toast.message)
                   ? t(`errorCodes.${toast.message}`, { defaultValue: toast.message })

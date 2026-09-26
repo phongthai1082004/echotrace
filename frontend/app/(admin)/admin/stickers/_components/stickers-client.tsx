@@ -10,7 +10,6 @@ import { useStickers, type Asset } from "../_hooks/use-stickers";
 import { StickerGrid } from "./sticker-grid";
 import { UploadModal } from "./upload-modal";
 
-// ponytail: island tương tác — grid lần đầu từ server, filter/search/upload giữ nguyên client.
 export function StickersClient({ initialAssets }: { initialAssets?: Asset[] }) {
   const { t } = useTranslation();
   const {

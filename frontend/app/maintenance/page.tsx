@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import logoImg from "@/assets/images/Logo.png";
 
-// ponytail: trang tĩnh, không gọi API/session — sống được cả khi backend bảo trì.
 export default function MaintenancePage() {
   const { t } = useTranslation();
   return (

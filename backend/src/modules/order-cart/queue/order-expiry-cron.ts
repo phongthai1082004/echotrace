@@ -2,7 +2,6 @@ import { handleOrderExpiry } from "./redis-delayed-queue.js";
 import { container } from "tsyringe";
 import { OrderRepository } from "../repositories/order.repository.js";
 
-// ponytail: không interval — Redis delayed job hẹn giờ hủy từng đơn (Redis-only, rẻ).
 // Scan boot 1 lần để dọn đơn tồn khi Redis rớt/mất job. DB được ngủ khi rỗi.
 const BATCH_SIZE = 200;
 
@@ -10,7 +9,6 @@ export function startOrderExpiryCron(): void {
   const orderRepo = container.resolve<OrderRepository>("OrderRepository");
   const scan = async () => {
     try {
-      // ponytail: phân trang theo id tăng dần để không load 1 lần; lặp tới khi hết.
       let lastId = 0;
       let processed = 0;
       for (;;) {
@@ -29,6 +27,5 @@ export function startOrderExpiryCron(): void {
     }
   };
 
-  // ponytail: 1 lần khi boot để dọn đơn tồn đọng — không lặp, khỏi giữ Neon thức.
   void scan();
 }

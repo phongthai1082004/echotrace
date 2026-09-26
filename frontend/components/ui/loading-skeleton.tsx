@@ -2,7 +2,6 @@
 
 import React from "react";
 
-// ponytail: faint site-wide, matches components/skeleton.tsx.
 const faint = "opacity-60";
 
 const shimmerKeyframes = `

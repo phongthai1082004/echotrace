@@ -9,7 +9,6 @@ interface UploadTicket {
   uploadUrl: string;
 }
 
-// ponytail: per-type caps. gallery = print source (2–4MB, high res); others kept small.
 const TYPE_CONFIG: Record<
   string,
   { maxSide: number; minBytes: number; maxBytes: number }
@@ -22,7 +21,6 @@ const TYPE_CONFIG: Record<
 
 type UploadType = keyof typeof TYPE_CONFIG;
 
-// ponytail: HEIC (iPhone) can't decode via createImageBitmap; lazy-load heic2any only on failure.
 async function decodeImage(file: File): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(file);
@@ -40,10 +38,8 @@ interface Normalized {
   height: number;
 }
 
-// ponytail: stickers keep alpha (PNG/WebP); photos flatten to JPEG (print has no transparency).
 const KEEP_ALPHA_TYPES: ReadonlySet<string> = new Set(["sticker"]);
 
-// ponytail: short-circuit — if it's already a compliant JPEG, skip re-encode (no generation loss, faster).
 async function normalizeImage(
   file: File,
   cfg: { maxSide: number; minBytes: number; maxBytes: number },
@@ -59,7 +55,6 @@ async function normalizeImage(
       bmp.close?.();
       return { blob: file, width: w, height: h };
     }
-    // ponytail: PNG has no quality knob — shrink dimensions until it fits maxBytes.
     let scale = Math.min(1, cfg.maxSide / Math.max(bmp.width, bmp.height));
     for (let i = 0; i < 6; i++) {
       const w = Math.max(1, Math.round(bmp.width * scale));
@@ -98,7 +93,6 @@ async function normalizeImage(
   ctx.drawImage(bmp, 0, 0, w, h);
   bmp.close?.();
 
-  // ponytail: binary-search quality to hit the size band; never upscale for the floor.
   let lo = 0.7;
   let hi = 0.97;
   let q = 0.92;

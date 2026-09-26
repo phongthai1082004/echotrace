@@ -11,7 +11,6 @@ import { useUsers } from "../_hooks/use-users";
 import { UsersTable } from "./users-table";
 import { UserDetailDrawer } from "./user-detail-drawer";
 
-// ponytail: island tương tác — AdminHeader tĩnh + rows lần đầu do page server render,
 // khỏi waterfall session → token → fetch.
 export function UsersClient({
   initialUsers,

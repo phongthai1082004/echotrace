@@ -37,7 +37,6 @@ const PORT = process.env.BACKEND_PORT;
 const SUPPORTED_LANGS = ['en', 'vi', 'es'];
 const DEFAULT_LANG = 'en';
 
-// ponytail: buildApp tách riêng để integration test (supertest) dùng chung app
 // thật mà không listen/không chạy workers. opts.jobs=false trong test.
 export async function buildApp(opts: { jobs?: boolean } = {}) {
 	const app = express();
@@ -69,10 +68,8 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
 			app.use(cors({ origin: allowedOrigins, credentials: true }));
 		app.use(express.json({ limit: '1mb' }));
-		// ponytail: cast qua typeof handle — pnpm lồng 2 bản i18next types
 		// (middleware pin TS khác root) nên structural check báo thừa; runtime cùng 1 object.
 		app.use(handle(i18next as unknown as Parameters<typeof handle>[0]));
-		// ponytail: cờ bảo trì — chặn API khi bật, trừ webhook/auth/admin/health.
 		// Đăng ký trước routers để bao hết; /health nông đăng ký sớm hơn nên luôn sống.
 		app.use(maintenanceMiddleware);
 
@@ -89,7 +86,6 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			// Webhook MUST be mounted first: several routers call router.use(authGuard()) and are
 			// mounted on '/' — a later mount would 401 the PayOS webhook before it matches.
 			apiRouter.use('/', paymentRoutes);
-			// ponytail: maintenance status public (frontend proxy đọc, không auth) —
 			// cùng lý do webhook, mount sớm kẻo dính authGuard('/') của router khác.
 			apiRouter.use('/', maintenanceRoutes);
 

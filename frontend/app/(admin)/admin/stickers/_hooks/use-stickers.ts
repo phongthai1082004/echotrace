@@ -20,7 +20,6 @@ export interface Asset {
 export function useStickers(initialAssets?: Asset[]) {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
-  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
   const [assets, setAssets] = useState<Asset[]>(initialAssets ?? []);
   const [loading, setLoading] = useState(initialAssets === undefined);
   const [uploading, setUploading] = useState(false);

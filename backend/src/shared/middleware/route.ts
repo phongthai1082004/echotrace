@@ -11,7 +11,6 @@ interface RouteOptions {
 	dto?: new (...args: unknown[]) => object;
 }
 
-// ponytail: gom authGuard + validateDto + asyncHandler thành 1 call duy nhất,
 // giảm lặp boilerplate ở mỗi route file.
 export function route(
 	router: Router,

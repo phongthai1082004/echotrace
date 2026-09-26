@@ -16,14 +16,12 @@ import { readFirstTouch } from "@/lib/attribution";
 
 const lastThumbUpload = new Map<string, string>();
 
-// ponytail: single in-flight save — manual Save + autosave tick racing must not
 // POST two books (duplicate creates) or interleave PATCHes.
 let saveInflight: Promise<{ ok: boolean; error?: string; id?: number }> | null = null;
 
 export function useAutoSave() {
   const api = useStudioAPI();
 
-  // ponytail: join the in-flight save instead of racing it (duplicate creates).
   const saveFull = (token?: string): Promise<{ ok: boolean; error?: string; id?: number }> =>
     guardedSave(api, token);
 
@@ -56,7 +54,6 @@ async function runSaveFull(
         canvasJson: rightJson,
         ...layoutField,
       };
-      // ponytail: spread pages share one canvas render — upload each dataURL thumb once.
       const [leftThumb, rightThumb] = await Promise.all([
         remoteThumb(updatedPages[s.activePageIndex].thumbnailUrl, token),
         rightIdx === s.activePageIndex
@@ -94,7 +91,6 @@ async function runSaveFull(
       spreadLayout: p.spreadLayout,
       canvasJson: p.canvasJson,
       thumbnailUrl: p.thumbnailUrl,
-      // ponytail: chuẩn hóa sẵn trên frontend, gửi kèm canvasJson (giữ edit cũ).
       // Backend merge content.pages theo index nên elements được lưu cùng trang.
       elements: serializePage(p.canvasJson, p.index)?.elements ?? [],
     }));
@@ -110,7 +106,7 @@ async function runSaveFull(
 
     const payload: Record<string, unknown> = {
       version: 3,
-      schema: 2, // ponytail: đánh dấu content đã có elements chuẩn hóa mm sẵn sàng cho pdf-lib
+      schema: 2,
       id: s.bookMeta.id || undefined,
       title: s.bookMeta.title,
       kind: s.bookMeta.kind,
@@ -121,12 +117,10 @@ async function runSaveFull(
       spineWidth,
     };
 
-    // ponytail: snapshot phiên làm việc — gửi chỉ trang dirty, reset khi reload là đủ an toàn.
     const bookKey = String(s.bookMeta.id ?? "new");
     const prev = lastSavedBooks.get(bookKey);
     if (!prev) {
       payload.pages = pagesAll; // lần đầu / book mới → full sync
-      // ponytail: ghim UTM vào Book lúc tạo — design kéo dài nhiều ngày nên
       // attribution theo project, không theo session lúc thanh toán
       const touch = readFirstTouch();
       if (touch?.source) {
@@ -141,7 +135,6 @@ async function runSaveFull(
       if (dirty.length === 0 && prev.metaSig === metaSig) {
         return { ok: true, id: s.bookMeta.id ?? undefined }; // chẳng gì đổi → bỏ qua network
       }
-      // ponytail: object-level delta — dirty pages send only changed/removed
       // objects (by _selId); backend merges into the stored canvasJson.
       payload.changedPages = dirty.map(({ p, prev: prevSnap }) => {
         const prevJson = prevSnap?.canvasJson ?? null;
@@ -180,7 +173,6 @@ function guardedSave(
   return saveInflight;
 }
 
-// ponytail: level-1 batching — one save per minute max, silent, skip-when-idle.
 // saveFull already returns early with zero network when nothing changed, so an
 // idle tab costs a local serialize per tick and nothing else.
 export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
@@ -189,7 +181,6 @@ export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
   const tokenRef = useRef(token);
   const busyRef = useRef(false);
 
-  // ponytail: sync latest closure/token every commit — interval below reads refs only.
   useEffect(() => {
     saveRef.current = saveFull;
     tokenRef.current = token;
@@ -209,7 +200,6 @@ export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
       }
     };
     const id = setInterval(tick, intervalMs);
-    // ponytail: last-chance flush when the tab closes; best-effort, never blocks.
     const flush = () => {
       if (!busyRef.current && tokenRef.current) void saveRef.current(tokenRef.current).catch(() => {});
     };
@@ -232,12 +222,10 @@ type PageSnapshot = {
 const lastSavedBooks = new Map<string, { pages: PageSnapshot[]; metaSig: string }>();
 
 function samePage(a: PageSnapshot | undefined, b: PageSnapshot): boolean {
-  // ponytail: thumbnailUrl excluded — local dataURL thumbs refresh on their own
   // cadence and must never mark a page dirty by themselves (phantom empty saves).
   return !!a && a.canvasJson === b.canvasJson && a.layout === b.layout && a.spreadLayout === b.spreadLayout;
 }
 
-// ponytail: inner pages never get a fresh canvas render of their own — just make
 // sure no raw dataURL thumb is ever sent/stored; upload once, R2 URLs pass through.
 async function remoteThumb(thumbnailUrl: string | null, token?: string): Promise<string | null> {
   if (!token || !thumbnailUrl || !thumbnailUrl.startsWith("data:")) return thumbnailUrl;

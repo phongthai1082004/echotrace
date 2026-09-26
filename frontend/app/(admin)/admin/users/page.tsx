@@ -3,7 +3,6 @@ import { getPageContext } from "@/lib/page-context";
 import type { UserResponse } from "@/models/users/user.list";
 import { UsersClient } from "./_components/users-client";
 
-// ponytail: page server — AdminHeader (h1 LCP) + rows đầu render sẵn thành HTML.
 // Props initialUsers/initialNextCursor nối vào đúng chỗ đã chờ sẵn ở island.
 export default async function AdminUsersPage() {
   const { token } = await getPageContext();
@@ -16,7 +15,6 @@ export default async function AdminUsersPage() {
       initialUsers = d?.users ?? [];
       initialNextCursor = d?.nextCursor ?? null;
     } catch {
-      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

@@ -53,7 +53,6 @@ export function usePageManager() {
     if (newIndex === activePageIndex || newIndex >= pages.length || newIndex < 0) return;
     saveCurrentPage();
     setActivePageIndex(newIndex);
-    // ponytail: first/last pages are singles — pin to 2P now so panels never see a stale L/R.
     const effView = isCoverPage(newIndex, pages.length) ? "spread" : viewMode;
     if (effView !== viewMode) setViewMode(effView);
     const spread = effView === "spread" && !isCoverPage(newIndex, pages.length);
@@ -108,7 +107,6 @@ export function usePageManager() {
     useCanvasStore.setState({ activeLayout: targetLayout });
   };
 
-  // ponytail: middle pages move as spread chunks; covers (first/last) never move.
   // Chunk = the pair shown as one spread thumbnail in PagesSlider.
   const getSpreadChunks = () => {
     const { pages } = useCanvasStore.getState();
@@ -143,7 +141,6 @@ export function usePageManager() {
     const [moved] = pairs.splice(from, 1);
     pairs.splice(to, 0, moved);
     const updated = [cur[0], ...pairs.flat(), cur[n - 1]].map((p, i) => ({ ...p, index: i }));
-    // ponytail: select what you dragged — its new start index.
     const pairSizes = pairs.map((p) => p.length);
     const newStart = 1 + pairSizes.slice(0, to).reduce((a, b) => a + b, 0);
     setPages(updated);
@@ -180,7 +177,7 @@ export function usePageManager() {
     saveCurrentPage();
     const idxs = [chunk.leftIdx, ...(chunk.rightIdx !== chunk.leftIdx ? [chunk.rightIdx] : [])];
     setPageClipboard(clonePages(idxs));
-    setClipboard(null); // ponytail: one clipboard wins — page copy clears object copy so Ctrl+V is unambiguous
+    setClipboard(null);
     return true;
   };
 

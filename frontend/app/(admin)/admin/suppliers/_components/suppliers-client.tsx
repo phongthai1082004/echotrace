@@ -20,7 +20,6 @@ import { isAuthenticatedSession } from "@/types/auth";
 import { detectSearchTarget } from "@/lib/search-detector";
 import { apiFetch } from "@/lib/api.fetch";
 
-// ponytail: island tương tác — rows đầu từ server, search/filter/cursor giữ nguyên client.
 export function SuppliersClient({
   initialSuppliers,
   initialNextCursor,
@@ -59,7 +58,6 @@ export function SuppliersClient({
 
   useEffect(() => {
     if (!token || !queryUrl) return;
-    // ponytail: server đã nạp trang đầu — bỏ qua đúng 1 lần fetch mặc định.
     if (provided && !consumedInitial.current && filter === "all" && !debouncedSearch && !cursor) {
       consumedInitial.current = true;
       setLoading(false);

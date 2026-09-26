@@ -7,7 +7,6 @@ import type { OrderDTO } from "@/lib/order.dto";
 export function useCustomerOrders(initial?: OrderDTO[] | null) {
   const { showToast } = useToast();
   const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
-  // ponytail: có initial từ server thì khỏi fetch lại — hết waterfall + flash skeleton.
   const [orders, setOrders] = useState<OrderDTO[] | null>(initial ?? null);
   const [selectedOrder, setSelectedOrder] = useState<OrderDTO | null>(null);
 
@@ -69,7 +68,6 @@ export function useCustomerOrders(initial?: OrderDTO[] | null) {
 
   const pollVerify = useCallback((id: number, status: string) => {
     if (!token || !id || status !== "pending_payment") return;
-    // ponytail: 12s + skip tab ẩn — webhook là luồng chính, poll chỉ fallback.
     const interval = setInterval(async () => {
       if (document.hidden) return;
       try {

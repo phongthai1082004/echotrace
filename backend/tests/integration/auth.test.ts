@@ -31,7 +31,6 @@ describe('I-2 refresh rotation', () => {
 		expect(ref.status).toBe(200);
 		expect(ref.body.data.accessToken).toBeDefined();
 		const r2 = ref.body.data.refreshToken;
-		// ponytail: JWT cùng giây ký ra chuỗi giống nhau nên chứng minh xoay bằng row DB:
 		// row cũ phải mất
 		const { db } = await import('./db.js');
 		const rows = await db().token.findMany({ where: { tokenType: 'session' } });

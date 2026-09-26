@@ -7,7 +7,6 @@ export function generateAccessToken(userId: string, role: string) {
 }
 
 export async function generateRefreshToken(authRepo: AuthRepository, userId: string) {
-	// ponytail: jti random — 2 login cùng giây vẫn khác chuỗi (tránh unique violation)
 	const rt = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '30d', jwtid: randomUUID() });
 	await authRepo.createSessionToken(parseInt(userId), rt, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 	return rt;

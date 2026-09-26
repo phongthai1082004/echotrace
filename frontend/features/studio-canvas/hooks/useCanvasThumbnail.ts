@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useCanvasStore } from "./useCanvasState";
 
-// ponytail: debounced thumbnail sync (was inline in StudioWorkspace)
 export function useCanvasThumbnail() {
   const thumbnailVersion = useCanvasStore((s) => s.layerVersion);
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
@@ -20,7 +19,7 @@ export function useCanvasThumbnail() {
       let thumb: string | null = null;
       try {
         thumb = c.toDataURL({ format: "jpeg", quality: 0.4, multiplier: 0.5 });
-      } catch {} // ponytail: skip if tainted
+      } catch {}
       if (thumb) s.setPage(idx, { thumbnailUrl: thumb });
     }, 400);
   }, [thumbnailVersion, activePageIndex]);

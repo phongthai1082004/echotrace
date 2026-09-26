@@ -6,7 +6,6 @@ import { neoBtnPrimary, neoBtn, neoBtnDanger, input } from "@/lib/styles";
 import { AssignModal } from "@/components/assign-modal";
 import type { OrderDTO } from "@/lib/order.dto";
 
-// ponytail: extracted from the order-detail-drawer god-component (A2).
 // Owns the admin-only footer actions + the assign modal + its local state.
 export function OrderAdminActions({
   order,
@@ -40,7 +39,6 @@ export function OrderAdminActions({
   const refundable =
     (order.status === "paid" || order.status === "partially_paid") && order.paidAmount > 0;
 
-  // ponytail: export thật (tải .txt hoá đơn) thay vì alert placeholder.
   const exportInvoice = () => {
     const lines = [
       `INVOICE ${order.orderCode ?? "#" + order.id}`,

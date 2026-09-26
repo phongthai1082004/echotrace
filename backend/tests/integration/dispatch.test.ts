@@ -47,7 +47,6 @@ beforeEach(async () => {
 	adminTok = (await loginAs('admin@test.local', 'Password123!')).body.data.accessToken;
 	userTok = (await loginAs('user@test.local', 'Password123!')).body.data.accessToken;
 	({ bookId } = await seedShop(userId));
-	// ponytail: assign ghi supplierId (FK) — seed 1 NCC
 	const sup = await db().supplier.create({
 		data: { name: 'NCC Test', contact: '0912345678', email: 'ncc@test.local' },
 	});
@@ -87,7 +86,6 @@ async function paySuccess(created: any) {
 const events = (id: number, body: any, tok: string) =>
 	request(apiSync()).post(`/api/admin/orders/${id}/events`).set(authz(tok)).send(body);
 
-// ponytail: api() là singleton promise — lấy nhanh cho helper sync-style
 let _app: any = null;
 function apiSync() {
 	if (!_app) throw new Error('api not ready');

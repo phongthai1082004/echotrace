@@ -50,7 +50,6 @@ export function LanguageSwitcher({ compact, inline }: { compact?: boolean; inlin
   const [open, setOpen] = useState(false);
   const current = langs.find((l) => i18n.language.startsWith(l.code)) || langs[0];
 
-  // ponytail: disable on studio page
   if (pathname?.includes("studio")) return null;
 
   if (inline) {

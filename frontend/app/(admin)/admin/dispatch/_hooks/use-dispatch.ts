@@ -38,7 +38,6 @@ export function useDispatch() {
     apiFetch<OrderDTO[]>("/api/admin/orders", token)
       .then(setOrders)
       .catch(() => setOrders([]));
-    // ponytail: supplier list là nhỏ (admin config); cap 1000 tránh truncate silent,
     // không cần phân trang UI ở scale này.
     apiFetch<{ items: SupplierRow[] }>("/api/admin/suppliers?status=active&limit=1000", token)
       .then((r) => setSuppliers(r.items ?? []))
@@ -102,7 +101,6 @@ export function useDispatch() {
     setSelectedOrder((p) => (p?.id === updated.id ? updated : p));
   }, []);
 
-  // ponytail: chỉ fetch 1 đơn thay vì whole list (B1) — patch vào local state.
   const refreshOrder = useCallback(
     async (id: number) => {
       const o = await apiFetch<OrderDTO>(`/api/admin/orders/${id}`, token).catch(() => null);
@@ -161,7 +159,6 @@ export function useDispatch() {
     [token, refreshOrder],
   );
 
-  // ponytail: hàng lỗi chỉ là state; mark = reported, resolve = PATCH defectState.
   const markDefective = useCallback(
     async (id: number) => {
       try {

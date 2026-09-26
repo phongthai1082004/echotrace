@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 import { readFirstTouch, readSyncedUserId, markAttributionSynced } from "@/lib/attribution";
 
-// ponytail: flush first-touch 1 lần khi đã login — cover cả password, OTP,
 // Google lẫn user cũ còn token. Backend write-once nên gọi thừa cũng vô hại.
 export function AttributionFlush() {
   const { data: session, status } = useSession();

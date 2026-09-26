@@ -41,8 +41,6 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`h-full antialiased ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-full flex flex-col">
-        {/* ponytail: React 19 hoists preconnect lên head — handshake unsplash/R2
-            xong trước khi ảnh below-fold cần tới, không tốn render-blocking. */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://cloudfarer2.cabinetdememoire.workers.dev" />
         <I18nClientProvider>

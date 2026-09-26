@@ -3,7 +3,6 @@ import { getPageContext } from "@/lib/page-context";
 import { StickersClient } from "./_components/stickers-client";
 import type { Asset } from "./_hooks/use-stickers";
 
-// ponytail: page server — grid stickers lần đầu render sẵn, khỏi fetch sau session ở client.
 export default async function AdminAssetsPage() {
   const { token } = await getPageContext();
 
@@ -12,7 +11,6 @@ export default async function AdminAssetsPage() {
     try {
       initialAssets = (await apiFetch<Asset[]>("/api/admin/stickers", token)) ?? [];
     } catch {
-      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

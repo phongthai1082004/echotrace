@@ -32,7 +32,6 @@ export interface MarketingSummary {
   bySource: MarketingSourceRow[];
 }
 
-// ponytail: 1 API gộp DB (đơn/sách theo UTM) + GA (visitors/events theo source).
 export function useMarketingSummary(days = 30) {
   const { data: session } = useSession();
   const accessToken = (session as any)?.accessToken;

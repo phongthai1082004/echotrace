@@ -3,7 +3,6 @@ import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import { TransactionStatus, IdempotencyKeyType, OrderStatus } from '@echotrace/shared';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature order ra khỏi service.
 // Service chỉ biết OrderRepository; mỗi method nhận tx? (transaction client) để gộp chung $transaction.
 @injectable()
 export class OrderRepository {
@@ -38,7 +37,6 @@ export class OrderRepository {
 		return (tx ?? this.client).user.findUnique({ where: { id: userId }, select: { name: true, email: true, phone: true, address: true } });
 	}
 
-	// ponytail: đọc UTM đã ghim trên Book để snapshot sang Order lúc tạo đơn
 	findBooksAttribution(bookIds: number[], tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).book.findMany({
 			where: { id: { in: bookIds } },
@@ -88,7 +86,6 @@ export class OrderRepository {
 	}
 
 	// --- marketing summary (groupBy trực tiếp, 2 admin nên không cache) ---
-	// ponytail: chỉ tính user thường — admin xài chung studio/đặt đơn test,
 	// tính vào là bẩn số marketing
 	summarizeOrdersBySource(from: Date, to: Date) {
 		return this.client.order.groupBy({
@@ -113,7 +110,6 @@ export class OrderRepository {
 		return (tx ?? this.client).order.update({ where: { id }, data: data as Prisma.OrderUpdateInput });
 	}
 
-	// ponytail: expiry cron/queue — chỉ lấy field cần cancel + restock
 	findForExpiry(id: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).order.findUnique({
 			where: { id },
@@ -121,7 +117,6 @@ export class OrderRepository {
 		});
 	}
 	markCancelled(orderId: number, tx?: Prisma.TransactionClient) {
-		// ponytail: conditional update — only cancels when still PENDING_PAYMENT.
 		// Returns count=0 when another path (user cancel, webhook, cron) already flipped the status,
 		// which lets the caller skip the restock and prevents double-increment of stock.
 		return (tx ?? this.client).order.updateMany({

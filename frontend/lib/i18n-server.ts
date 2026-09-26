@@ -3,7 +3,6 @@ import en from "@/public/locales/en/common.json";
 import vi from "@/public/locales/vi/common.json";
 import es from "@/public/locales/es/common.json";
 
-// ponytail: server-only i18n instance (không fetch, không dùng document).
 // Dùng cho server component render text đúng ngôn ngữ. Client vẫn dùng useTranslation riêng.
 const instance = i18n.createInstance();
 instance.init({

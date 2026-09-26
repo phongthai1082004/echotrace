@@ -1,4 +1,3 @@
-// ponytail: sparse JSON for book pages — strip fabric props that equal v7 defaults
 // before storing to jsonb, refill them on load. Pure functions (no fabric import)
 // so the same tables can run on client, in self-checks, and beside the PDF renderer.
 //
@@ -266,7 +265,6 @@ export function diffPageObjects(
   const nextKeys = new Set(nextObjs.map((o, i) => objectKey(o, i)));
   const changed = nextObjs.filter((o, i) => prevByKey.get(objectKey(o, i)) !== JSON.stringify(o));
   const removed = [...prevByKey.keys()].filter((k) => !nextKeys.has(k));
-  // ponytail: comparison needs hydrated objects, but the wire keeps them sparse.
   stripSparsePage({ objects: changed });
   return { changed, removed };
 }

@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { ErrorCode } from '@echotrace/shared';
 
-// ponytail: E2E_NO_RATELIMIT=1 chỉ trong e2e (mọi login đi chung IP server-to-server)
 const E2E_BYPASS = process.env.E2E_NO_RATELIMIT === '1';
 
 export const authLimiter = rateLimit({

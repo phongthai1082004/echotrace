@@ -11,7 +11,6 @@ export function makeBookSave(
     try {
       const { [titleField]: title, paperHeight, paperWidth, kind, sampleBookId, attribution, ...content } = payload;
       const body: Record<string, unknown> = { content, [titleField]: title };
-      // ponytail: attribution chỉ đi kèm lúc POST tạo sách (ghim 1 lần)
       if (!bookId && attribution) body.attribution = attribution;
       if (paperHeight !== undefined && paperHeight !== null) body.paperHeight = paperHeight;
       if (paperWidth !== undefined && paperWidth !== null) body.paperWidth = paperWidth;

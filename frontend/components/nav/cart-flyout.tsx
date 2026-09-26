@@ -14,7 +14,6 @@ export function CartFlyout({ token }: { token?: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
-  // ponytail: badge count qua query key chung với nav (stale 60s, dedup);
   // preview items chỉ refetch khi hover thưa (>30s), khỏi spam /api/cart.
   const { data: cartCount = 0 } = useCartCount(!!token);
   const lastFetch = useRef(0);

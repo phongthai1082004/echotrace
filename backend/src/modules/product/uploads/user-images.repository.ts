@@ -2,7 +2,6 @@ import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature uploads/user-images ra khỏi service.
 // Service chỉ biết UserImagesRepository; mỗi method nhận tx? (transaction client) để gộp chung $transaction.
 @injectable()
 export class UserImagesRepository {

@@ -2,7 +2,6 @@ import { test, expect, request as pwRequest } from '@playwright/test';
 
 // E-8: mặc định tiếng Việt khắp nơi.
 test('fresh profile / redirects to /vi', async ({ page }) => {
-	// ponytail: run trước có thể kẹt cờ ON (rewrite giữ URL, không redirect) — tắt trước
 	const api = await pwRequest.newContext({ baseURL: 'http://localhost:4101' });
 	const login = await api.post('/api/auth/login', {
 		data: { email: 'admin@test.local', password: 'Password123!' },

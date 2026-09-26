@@ -2,7 +2,6 @@
 // duplicate inserts copy right after, paste inserts after active spread.
 import { vi } from "vitest";
 
-// ponytail: layout-engine pulls the fabric runtime; chunk ops only need the
 // zustand pages array (canvas is null in tests → saveCurrentPage early-returns).
 vi.mock("@/features/studio-canvas/lib/layout-engine", () => ({
   serializeCanvasState: () => "{}",

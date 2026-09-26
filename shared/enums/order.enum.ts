@@ -12,7 +12,6 @@ export const OrderStatus = {
 
 export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
 
-// ponytail: lifecycle đổi trả/bảo hành. none = không có yêu cầu.
 export const ReturnState = {
   NONE: 'none',
   REQUESTED: 'requested',
@@ -25,7 +24,6 @@ export const ReturnState = {
 
 export type ReturnState = typeof ReturnState[keyof typeof ReturnState];
 
-// ponytail: lỗi do mình (self) => phải reconcile/ghi expense; lỗi nhà in (supplier) => không trả tiền, bỏ qua expense.
 export const ReturnFault = {
   SELF: 'self',
   SUPPLIER: 'supplier',
@@ -33,7 +31,6 @@ export const ReturnFault = {
 
 export type ReturnFault = typeof ReturnFault[keyof typeof ReturnFault];
 
-// ponytail: hàng lỗi chỉ là 1 state (không phải status chính). none = bình thường.
 export const DefectState = {
   NONE: 'none',
   REPORTED: 'reported',

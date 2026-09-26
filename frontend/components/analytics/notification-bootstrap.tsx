@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useNotifStore } from "@/stores/notifications";
 
-// ponytail: 1 stream duy nhất cho cả app — mount 1 lần trong Providers.
 // EventSource tự reconnect; poll 60s cũ ở chuông giữ làm backup.
 export function NotificationBootstrap() {
   const { status } = useSession();

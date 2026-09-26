@@ -37,14 +37,12 @@ function pick(r: any): MaintenanceWindowDTO {
 	};
 }
 
-// ponytail: cache 30s trong process — middleware chạy mỗi request, không query Neon mỗi lần.
 // Cờ đổi vài lần/năm, trễ vài chục giây chấp nhận được. Write path (start/stop/schedule) xóa cache.
 let statusCache: { at: number; value: MaintenanceStatus } | null = null;
 export function clearMaintenanceStatusCache(): void {
 	statusCache = null;
 }
 
-// ponytail: dòng live = dòng bao giờ-hiện-tại (ưu tiên tạo sau cùng); quá giờ
 // tự lật completed nên làm sớm quên tắt cũng tự mở lại. Redis reset không ảnh hưởng.
 export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
 	if (statusCache && Date.now() - statusCache.at < 30_000) return statusCache.value;
@@ -58,7 +56,6 @@ export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
 	const live = rows.find(covers);
 	if (live) {
 		if (live.status === 'scheduled') {
-			// ponytail: guard notifiedAt — nhiều process cùng lật thì 1 bên thắng, khỏi bắn trùng
 			const flipped = await db().maintenanceWindow.updateMany({
 				where: { id: live.id, notifiedAt: null },
 				data: { status: 'active', notifiedAt: now },
@@ -123,7 +120,6 @@ export async function stopMaintenanceNow(by?: string): Promise<MaintenanceStatus
 }
 
 export async function scheduleMaintenance(startAt: Date, endAt: Date, by?: string, reason?: string | null) {
-	// ponytail: validate trong service (không phải routes) để test được trực tiếp:
 	// ISO hợp lệ, endAt > startAt, endAt tương lai, cửa sổ tối đa 24h (chống gõ nhầm năm)
 	const t0 = startAt instanceof Date ? startAt.getTime() : NaN;
 	const t1 = endAt instanceof Date ? endAt.getTime() : NaN;

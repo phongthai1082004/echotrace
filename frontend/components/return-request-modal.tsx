@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { neoBtn, input } from "@/lib/styles";
 import type { OrderDTO } from "@/lib/order.dto";
 
-// ponytail: extracted from the order-detail-drawer god-component (A2).
 // Owns the user return-request modal + its local state.
 export function ReturnRequestModal({
   open,

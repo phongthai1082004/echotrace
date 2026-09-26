@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
-// ponytail: qrcode chỉ render sau khi tạo đơn — dynamic khỏi vào bundle dispatch ban đầu.
 const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG), {
   ssr: false,
   loading: () => <div style={{ width: 192, height: 192 }} />,
@@ -65,7 +64,6 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
   const [city, setCity] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>(PaymentPlan.FULL);
-  // ponytail: nguồn tay cho đơn gọi điện/zalo — để trống = kế thừa UTM từ sách
   const [utmSource, setUtmSource] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -76,7 +74,6 @@ export function AlbumOrderModal({ onClose, onCreated }: { onClose: () => void; o
     apiFetch<any>("/api/admin/sample-books?type=ALBUM&status=published&limit=100", token)
       .then((d) => setAlbums(d?.items ?? d ?? []))
       .catch(() => setAlbums([]));
-    // ponytail: cover/paper admin chọn lúc tạo đơn (size lấy từ album)
     const opts = (type: string, set: (v: { code: string; label: string }[]) => void) =>
       apiFetch<any>(`/api/admin/print-options?type=${type}&limit=100`, token)
         .then((d) => {

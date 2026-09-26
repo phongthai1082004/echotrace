@@ -32,7 +32,6 @@ function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	const cover = optByKey.get(`cover:${item.cover}`)?.price;
 	const paper = optByKey.get(`paper:${item.paper}`)?.price;
 	if (cover == null || paper == null) return { ...item, price: null };
-	// ponytail: paperSize multiplier is ALWAYS derived from dimensions (A4-area ratio).
 	// The admin price field on paperSize rows is ignored �?" it's not a cost, it used to be
 	// a hidden override that silently beat the dimension math.
 	// Album items have no paperSize code (size cố định từ lúc tạo album) → lấy từ
@@ -154,7 +153,6 @@ export class CartService implements ICartService {
 		const quantity = Math.max(1, Math.floor(input.quantity ?? 1));
 		if (!Number.isFinite(sampleBookId)) throw new AppError('sampleBookId không hợp lệ', 400);
 
-		// ponytail: bypass DTO cache — need raw row (cover, style, font, content, etc.) and stock check.
 		const sample = await this.sampleBookService.getByIdForStock(sampleBookId, quantity);
 		if (!sample) throw new AppError('Album đã hết hàng hoặc không đủ số lượng tồn kho', 400);
 
@@ -174,7 +172,6 @@ export class CartService implements ICartService {
 				content: (sample.content as object) ?? {},
 			});
 		}
-		// ponytail: cover/paper do admin chọn lúc tạo đơn (size lấy từ dims album);
 		// cover rớt về sample.cover, paper bắt buộc (thiếu → 400 ở calculateCart).
 		return this.upsertItem(userId, { bookId: book.id, quantity, cover: input.cover ?? sample.cover, paper: input.paper ?? null, paperSize: null });
 	}
@@ -185,7 +182,6 @@ export class CartService implements ICartService {
 		couponCode?: string | null,
 		bookIds?: number[] | null,
 	): Promise<CartQuote> {
-		// ponytail: fetch cart, options, and optional coupon in parallel — no batch transaction needed
 		// because these are all independent reads and none mutates state.
 		const [cart, optRows, coupon] = await Promise.all([
 			this.cartRepo.getCartWithItems(userId),

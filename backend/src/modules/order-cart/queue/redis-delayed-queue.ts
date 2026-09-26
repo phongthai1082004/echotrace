@@ -19,7 +19,6 @@ function client(): Redis {
   return redis;
 }
 
-// ponytail: delayed job đơn giản trên Redis Sorted Set (score = run-at timestamp)
 export function scheduleDelayedJob(name: string, payload: unknown, delayMs: number): void {
   const member = JSON.stringify({ name, payload });
   client().zadd(QUEUE_KEY, Date.now() + delayMs, member);
@@ -31,7 +30,7 @@ async function processDue(): Promise<void> {
   const due = await client().zrangebyscore(QUEUE_KEY, 0, now);
   for (const member of due) {
     const removed = await client().zrem(QUEUE_KEY, member);
-    if (!removed) continue; // ponytail: tránh xử lý 2 lần nếu có nhiều worker
+    if (!removed) continue;
     try {
       const job = JSON.parse(member) as { name: string; payload: { orderId: number } };
       if (job.name === "order_expiry") await handleOrderExpiry(job.payload.orderId);
@@ -45,10 +44,8 @@ export async function handleOrderExpiry(orderId: number): Promise<void> {
   const orderRepo = container.resolve<OrderRepository>("OrderRepository");
   const stockService = container.resolve<IStockService>("IStockService");
   const order = await orderRepo.findForExpiry(orderId);
-  // ponytail: early exit if already handled by another path (user cancel, webhook cancel).
   if (!order || order.status !== OrderStatus.PENDING_PAYMENT) return;
   if (order.expiredAt && order.expiredAt.getTime() > Date.now()) return;
-  // ponytail: markCancelled uses updateMany WHERE status=PENDING_PAYMENT — count=0 means
   // another concurrent path already flipped the status; skip restock to prevent double-increment.
   await orderRepo.client.$transaction(async (tx) => {
     const { count } = await orderRepo.markCancelled(orderId, tx);

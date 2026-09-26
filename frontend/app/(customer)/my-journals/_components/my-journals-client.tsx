@@ -9,7 +9,6 @@ import { YesNoPopup } from "@/components/yes-no-popup";
 import { useMyBooks, type JournalBook } from "../_hooks/use-my-books";
 import { JournalCard } from "./journal-card";
 
-// ponytail: island tương tác (grid/delete) — header tĩnh do page server render sẵn,
 // data lần đầu từ server (initialJournals) nên không còn waterfall session → fetch.
 export function MyJournalsClient({
   initialJournals,
@@ -28,8 +27,6 @@ export function MyJournalsClient({
   return (
     <>
       <div className="pb-8">
-        {/* ponytail: lỗi chỉ hiện khi đang không có sách để khoe — có sách rồi thì thôi,
-            khỏi dọa user (banner server cũ kẹt lại kể cả khi đã tải được). */}
         {fetchError && journals.length === 0 && !loading && (
           <p suppressHydrationWarning className="text-[10px] text-red-500 mb-3">
             {t("customer.myJournals.error", { message: fetchError })}

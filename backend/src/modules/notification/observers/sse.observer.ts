@@ -3,7 +3,6 @@ import type { NotificationPayload, Observer } from '../events/notification-event
 import { NotificationChannel } from '@echotrace/shared';
 import { PresenceService } from '../channels/presence.service.js';
 
-// ponytail: fast-lane realtime — user online thì đẩy event, offline thì thôi
 // (DatabaseObserver vẫn ghi DB, client fetch bù lúc load/reconnect).
 // Push mang id tạm `live-*`; poll 60s replace list nên tự hết trùng.
 @injectable()

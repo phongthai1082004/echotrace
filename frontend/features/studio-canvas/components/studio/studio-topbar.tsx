@@ -148,7 +148,6 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
     if (!canvas) return;
     if (!canvas.getActiveObjects().length) return;
     pushUndo();
-    // ponytail: canvas.remove(active) drops an ActiveSelection wrapper but keeps
     // its children -- route through the group-aware delete instead.
     deleteSelectedObjects(canvas);
     clearRedo();
@@ -163,7 +162,6 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
     if (!canvas) return;
     pushUndo();
     const id = `text-${Date.now()}`;
-    // ponytail: left-origin text — keep x=100, shifted into the right half when editing R.
     const st = useCanvasStore.getState();
     const cw = canvas.getWidth() || 840;
     const halfX =

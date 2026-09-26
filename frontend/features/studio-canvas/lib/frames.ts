@@ -127,12 +127,10 @@ export function setFrameBorderWidth(canvas: fabric.Canvas, frame: fabric.FabricO
 
 
 
-// ponytail: drop trượt viền 1px là miss → tha 6px canvas quanh bbox.
 const HIT_TOLERANCE = 6;
 
 type Pt = { x: number; y: number };
 
-// ponytail: ray-casting even-odd — test góc khung tròn/sao/tam giác,
 // khỏi false-positive như bbox (drop trúng góc trong-suốt vẫn fill).
 function pointInPolygon(p: Pt, vs: Pt[]): boolean {
   let inside = false;
@@ -174,7 +172,6 @@ function starVertices(w: number, h: number, points = 5, inner = 0.5): Pt[] {
   return out;
 }
 
-// ponytail: test trong không gian path gốc (chưa scale) — cùng công thức vẽ ở shapes.ts.
 // Trả null khi shape không test được (Heart/cong) → giữ bbox.
 export function shapeContainsPoint(shapeName: string | undefined, w: number, h: number, lx: number, ly: number): boolean | null {
   switch (shapeName) {
@@ -215,7 +212,6 @@ export function shapeContainsPoint(shapeName: string | undefined, w: number, h: 
   }
 }
 
-// ponytail: điểm canvas → không gian local của frame (kể cả lồng trong group, đã scale/xoay).
 export function frameLocalPoint(frame: any, x: number, y: number): Pt | null {
   try {
     const m = frame.calcTransformMatrix();
@@ -235,7 +231,6 @@ function frameContainsPoint(o: any, x: number, y: number): boolean {
   return x >= l && x <= r && y >= t && y <= b;
 }
 
-// ponytail: searches inside groups too -- frame at any nesting depth is hit-testable.
 // Group transforms map the canvas point into the group's local space before recursing.
 export function hitTestFrame(canvas: fabric.Canvas, x: number, y: number): fabric.FabricObject | undefined {
   const objects = canvas.getObjects();
@@ -257,7 +252,6 @@ function searchFrameRecursive(obj: any, x: number, y: number): fabric.FabricObje
     return undefined;
   }
   if (!isFrameObject(obj)) return undefined;
-  // ponytail: absolute bbox first -- covers nested children with no toLocalPoint needed.
   // Bbox nới HIT_TOLERANCE để drop trượt viền vẫn khớp; khung có shape thì test
   // point-in-shape tiếp để loại góc trong-suốt (tròn/sao/tam giác...).
   if (typeof obj.getBoundingRect === "function") {
@@ -297,7 +291,6 @@ export function removeDragOverlays(canvas: fabric.Canvas) {
 }
 
 
-// ponytail: absolute canvas-space rect -- frame.left/top are group-relative
 // for frames inside a group, which put the old overlay at the top.
 function absoluteRect(o: any): { left: number; top: number; width: number; height: number } {
   try {
@@ -314,7 +307,6 @@ function absoluteRect(o: any): { left: number; top: number; width: number; heigh
 }
 
 export function addFrameDragOverlays(canvas: fabric.Canvas) {
-  // ponytail: inline removal to batch into single renderAll instead of two
   canvas
     .getObjects()
     .filter((o: any) => o[OVERLAY_KEY] === true)
@@ -398,12 +390,9 @@ export function showGuides(
 
 // Content is always visible in every view; L/R/2P only changes editing focus.
 // The non-interactive side is greyed by an overlay + locked by applyInteractionLock.
-// ponytail: removed the layoutKind visibility gating -- it made elements "disappear" on view switch.
 
 
 // Fabric v7 loadFromJSON drops custom properties; re-apply them from the JSON data
-// ponytail: use Fabric v7's built-in reviver instead of post-processing
-// ponytail: loadFromJSON's reviver only fires for top-level objects -- group children
 // would lose customProperties/_selId on every reload. Walk JSON + live side by side.
 export function reviveDeep(jsonObjs: any[], liveObjs: any[]) {
   jsonObjs.forEach((o: any, i: number) => {
@@ -421,13 +410,11 @@ export function reviveObject(o: any, object: any, _err: any) {
   if (o.customProperties) (object as any).customProperties = o.customProperties;
   if (o._selId) (object as any)._selId = o._selId;
   if (o.customProperties?.layer === "photo") {
-    // ponytail: chỉ khóa khi JSON ghi rõ (false được giữ lúc serialize) —
     // trước đây ép liệt MỌI photo mỗi lần load nên ảnh template mở lên là đơ.
     if (o.selectable === false || o.evented === false || o.hasControls === false) {
       object.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
     }
   }
-  // ponytail: child locks don't serialize -- re-lock group children on every load,
   // otherwise a reloaded group lets children drift and breaks their clips.
   if (object.type === "group" && typeof object.getObjects === "function") {
     object.getObjects().forEach((c: any) => {
@@ -470,7 +457,6 @@ export function applyInteractionLock(
   if (isCover || viewMode === "spread") return;
   if (enableAll) {
     canvas.getObjects().forEach((o: any) => {
-      // ponytail: skip locked photos so they don't become selectable during view-mode switch
       if ((o as any)._spine || (o as any).excludeFromExport) return;
       if ((o as any).customProperties?.layer === "photo" && !(o as any).hasControls) return;
       o.set({ selectable: true, evented: true, hasControls: true, hasBorders: true } as any);
@@ -489,7 +475,6 @@ export function applyInteractionLock(
   }
 }
 
-// ponytail: nửa nào chứa CENTER của object (tôn trọng xoay/origin) —
 // so o.left thô là khung xoay/gốc-center gần gáy bị liệt nhầm nửa.
 function halfOf(o: any, pageW: number): "left" | "right" {
   try {
@@ -501,7 +486,6 @@ function halfOf(o: any, pageW: number): "left" | "right" {
 }
 
 
-// ponytail: grouped objects must leave via their group, canvas.remove can't reach them.
 // ActiveSelection children ALSO carry .group -- only real groups route there.
 function detachObject(canvas: fabric.Canvas, o: any) {
   if (o?.group && o.group.type === "group" && typeof o.group.remove === "function") o.group.remove(o);

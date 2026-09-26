@@ -8,7 +8,6 @@ import { neoBtnPrimary } from "@/lib/styles";
 import type { JournalBook } from "./_hooks/use-my-books";
 import { MyJournalsClient } from "./_components/my-journals-client";
 
-// ponytail: page server — header + data lần đầu render sẵn thành HTML,
 // khỏi waterfall session → token → fetch ở client (mẫu explore/page.tsx).
 export default async function MyJournalsPage() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
@@ -22,7 +21,6 @@ export default async function MyJournalsPage() {
     try {
       initialJournals = (await apiFetch<JournalBook[]>("/api/user/my-books", token)) ?? [];
     } catch (err) {
-      // ponytail: server lỗi thì để undefined cho island tự fetch lại qua proxy —
       // gán [] ở đây là kẹt luôn màn hình lỗi/trống (bug đã gặp).
       initialError = err instanceof Error ? err.message : String(err);
     }
@@ -58,10 +56,6 @@ export default async function MyJournalsPage() {
         >
           {t("customer.myJournals.history")}
         </p>
-        {/*
-          ponytail: không render banner lỗi ở server — island tự fetch lại qua proxy
-          khi server lỗi, banner tĩnh sẽ kẹt lại kể cả khi sách đã hiện (bug đã gặp).
-        */}
         <MyJournalsClient initialJournals={initialJournals} initialError={initialError} />
       </div>
     </div>

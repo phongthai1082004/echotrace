@@ -11,7 +11,6 @@ export class PdfService {
 		@inject('PdfRepository') private pdfRepo: PdfRepository,
 	) {}
 
-	// ponytail: xử lý 1 job: render → upload R2 → gán pdfUrl vào order + từng order item.
 	async process(jobId: number, orderId: number): Promise<void> {
 		const pdfBuf = await this.renderer.renderOrderToPdf(orderId);
 		const url = await this.r2.uploadBuffer(pdfBuf, PDF_FOLDER);
@@ -19,7 +18,6 @@ export class PdfService {
 		const order = await this.pdfRepo.findOrderById(orderId);
 		const items: any[] = Array.isArray(order?.orderItems) ? order!.orderItems : [];
 
-		// ponytail: chỉ gán pdfUrl cho item renderable (không phải ALBUM).
 		const bookIds = items.map((i) => i?.bookId).filter((id: any) => typeof id === 'number');
 		const books = bookIds.length
 			? await this.pdfRepo.findBooksByIds(bookIds)

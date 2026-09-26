@@ -2,7 +2,6 @@ import { injectable, inject } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách truy cập Prisma của feature finance (period / income / expense / cashflow / raw SQL).
 @injectable()
 export class FinanceRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}
@@ -29,7 +28,6 @@ export class FinanceRepository {
 	listFinancePeriods() {
 		return this.client.financePeriod.findMany({ orderBy: { period: 'desc' }, take: 12 });
 	}
-	// ponytail: raw SQL tính công nợ NCC từ orderItems jsonb — giữ nguyên logic, chỉ chuyển vào repo.
 	getSupplierDebtsRaw(termsDays: number, monthStart: Date, monthEnd: Date): Promise<any[]> {
 		return this.client.$queryRaw<any[]>`
 			WITH item_debts AS (
@@ -61,7 +59,6 @@ export class FinanceRepository {
 	createExpense(data: Prisma.ExpenseUncheckedCreateInput, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).expense.create({ data });
 	}
-	// ponytail: list helper dùng chung cho income/expense/cashflow (phân trang theo id desc)
 	private listModel(model: 'income' | 'expense' | 'cashflow', where: any, limit: number, cursor?: number) {
 		return (this.client as any)[model].findMany({
 			where,

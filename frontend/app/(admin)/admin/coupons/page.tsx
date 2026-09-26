@@ -3,7 +3,6 @@ import { getPageContext } from "@/lib/page-context";
 import { CouponsClient } from "./_components/coupons-client";
 import type { Coupon } from "./_hooks/use-coupons";
 
-// ponytail: page server — rows coupons lần đầu render sẵn, khỏi fetch sau session ở client.
 export default async function AdminCouponsPage() {
   const { token } = await getPageContext();
 
@@ -12,7 +11,6 @@ export default async function AdminCouponsPage() {
     try {
       initialCoupons = (await apiFetch<Coupon[]>("/api/admin/coupons", token)) ?? [];
     } catch {
-      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 

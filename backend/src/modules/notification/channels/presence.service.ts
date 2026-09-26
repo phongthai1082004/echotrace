@@ -1,7 +1,6 @@
 import { injectable } from 'tsyringe';
 import type { Response } from 'express';
 
-// ponytail: 1 chủ duy nhất cho connection realtime — Map<userId, Set<res>>.
 // Single-instance là đủ (hiện tại 1 container); scale nhiều instance thì lót
 // Redis pub/sub giữa notify và sendTo. Fail-open mọi chỗ: push lỗi không chặn notify.
 @injectable()
@@ -17,7 +16,6 @@ export class PresenceService {
 		}
 		set.add(res);
 		if (!this.timer) {
-			// ponytail: heartbeat 25s giữ nginx khỏi kill idle (default 60s)
 			this.timer = setInterval(() => this.beat(), 25_000);
 			this.timer.unref?.();
 		}

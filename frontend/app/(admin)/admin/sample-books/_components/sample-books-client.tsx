@@ -19,7 +19,6 @@ import { EditModal } from "./edit-modal";
 const CATEGORY_OPTIONS = Object.values(Category);
 const STATUS_OPTIONS = Object.values(SampleBookStatus);
 
-// ponytail: island tương tác — rows đầu từ server, filter/search/modal giữ nguyên client.
 export function SampleBooksClient({
   initialItems,
   initialNextCursor,

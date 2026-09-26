@@ -2,7 +2,6 @@ import { cookies, headers } from "next/headers";
 import { getToken } from "next-auth/jwt";
 import { getT } from "@/lib/i18n-server";
 
-// ponytail: helper chung cho page server — lang từ cookie + token THẬT.
 // session.accessToken chỉ là chuỗi "client" giả (chống lộ token ra JS, xem auth.config),
 // token thật chỉ đọc được từ httpOnly cookie qua getToken (kèm xoay vòng khi hết hạn).
 export async function getPageContext() {

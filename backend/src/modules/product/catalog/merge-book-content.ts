@@ -7,7 +7,6 @@ export function resolveContent(existing: unknown, incoming: any): any {
 	for (const cp of changedPages) {
 		if (!cp || typeof cp.index !== "number") continue;
 		const prev = pages[cp.index] ?? { index: cp.index };
-		// ponytail: object-level delta — merge changed/removed objects into the
 		// stored canvasJson instead of replacing the whole page.
 		if (cp.changedObjects && typeof prev.canvasJson === "string") {
 			try {

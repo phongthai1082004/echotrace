@@ -11,7 +11,6 @@ import { GoogleAnalytics } from "./analytics/google-analytics";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    // ponytail: no refetch-on-focus — admin tab focus firing /session + refetch storm feels like "ấn load lâu".
     <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
       <GoogleAnalytics />
       <QueryProvider>

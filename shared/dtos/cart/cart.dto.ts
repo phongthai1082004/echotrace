@@ -149,7 +149,6 @@ export function computeCouponDiscount(coupon: CartCoupon | null | undefined, sub
       : subtotal >= (coupon.minOrderAmount ?? 0);
   if (!meetsMin) return 0;
   const type = (coupon.discountType || "").toLowerCase();
-  // ponytail: integer money — percentage discounts would otherwise leak fractions into
   // totals and PayOS rejects non-integer amounts. Also never discount more than the
   // subtotal (oversized FIXED coupons would corrupt order.discountAmount reporting).
   let raw =

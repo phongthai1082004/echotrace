@@ -43,7 +43,6 @@ export function usePrintOptions(initialOptions?: PrintOption[]) {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
 
-  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
   const [options, setOptions] = useState<PrintOption[]>(initialOptions ?? []);
   const [loading, setLoading] = useState(initialOptions === undefined);
   const [filter, setFilter] = useState("all");

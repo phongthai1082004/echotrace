@@ -3,7 +3,6 @@ import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import { TokenType } from '@echotrace/shared';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature auth ra khỏi service.
 // Service chỉ biết AuthRepository; không có $transaction ở feature này nên không cần tx?.
 @injectable()
 export class AuthRepository {
@@ -45,7 +44,6 @@ export class AuthRepository {
 			data: { email, refreshToken: hashed, tokenType: TokenType.OTP, expiresAt },
 		});
 	}
-	// ponytail: atomic replace — delete all prior OTP tokens for the email and create the
 	// new one in a single transaction so a crash between the two ops cannot leave the user
 	// with no valid OTP and no error surfaced.
 	replaceOtpToken(email: string, hashed: string, expiresAt: Date) {
@@ -81,7 +79,6 @@ export class AuthRepository {
 			data: { userId, refreshToken: rt, tokenType: TokenType.SESSION, expiresAt },
 		});
 	}
-	// ponytail: atomic single-token rotation for /refresh — deletes only the old token row
 	// (by id) and creates the new one in a single $transaction.
 	// Does NOT invalidate other device sessions (multi-device support).
 	rotateSessionToken(oldTokenId: number, userId: number, newRt: string, expiresAt: Date) {

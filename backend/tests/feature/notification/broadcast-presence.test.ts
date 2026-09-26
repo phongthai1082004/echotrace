@@ -30,7 +30,7 @@ let resolveSpy: jest.SpyInstance;
 beforeEach(() => {
 	db = fakeDb();
 	presence = presenceFake();
-	clearMaintenanceStatusCache(); // ponytail: service cache 30s — test nào mock DB riêng test đó
+	clearMaintenanceStatusCache();
 	resolveSpy = jest.spyOn(container, "resolve").mockImplementation(((token: any) =>
 		typeof token === "string" ? (presence as any) : { db }) as any);
 });

@@ -47,7 +47,6 @@ export function PagesSlider() {
   const singleW = Math.round(h * ratio); // thumbnail keeps the canvas aspect ratio
   const spreadW = singleW * 2 + 1; // 2 pages + spine
 
-  // ponytail: native HTML5 drag — no new dep for a thumbnail strip.
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; item: Item } | null>(null);

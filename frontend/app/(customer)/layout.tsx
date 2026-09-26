@@ -8,7 +8,6 @@ import { Nav } from "@/components/nav";
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   const role = (session?.user as { role?: string } | undefined)?.role;
-  // ponytail: logged-out users go to /auth (resolves lang via cookie) —
   // never hardcode a lang prefix here, it would clobber the user's language.
   if (!session) redirect("/auth");
   if (role === "admin") {

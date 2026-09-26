@@ -2,7 +2,6 @@ import { injectable, inject } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách truy cập Prisma của feature stickers (decorAsset) ra khỏi controller.
 @injectable()
 export class DecorAssetRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}

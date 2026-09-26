@@ -36,7 +36,6 @@ export function OptionFormModal({
 
   const handleSave = async () => {
     setSaving(true);
-    // ponytail: paperSize price is derived from width×height — never send an override
     const payload = form.type === "paperSize" ? { ...form, price: null } : form;
     const ok = await onSave(option, payload);
     setSaving(false);

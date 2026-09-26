@@ -22,7 +22,6 @@ export class UserImageService implements IUserImageService {
 	}
 
 	public async create(data: SaveImageDTO & { userId: number }) {
-		// ponytail: publicId NOT NULL ở DB nhưng DTO không có (upload trực tiếp) —
 		// default rỗng như stickers, tránh 500 Prisma validation
 		const image = await this.userImagesRepo.createUserImage({ ...data, publicId: data.publicId || '' } as any);
 		return ImageMapper.toDTO(image);

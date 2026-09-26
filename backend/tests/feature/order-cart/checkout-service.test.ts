@@ -26,7 +26,6 @@ const validBody = () =>
 
 const build = () => {
 	const orderRepo = mock<OrderRepository>();
-	// ponytail: service dùng cả 2 kiểu $transaction — array (đọc idempotency)
 	// lẫn callback (ghi đơn). Mock cover cả hai.
 	(orderRepo as any).client = {
 		$transaction: jest.fn((ops: any, _opts?: any) => (Array.isArray(ops) ? Promise.all(ops) : ops({}))),
@@ -34,7 +33,7 @@ const build = () => {
 	const cart = mock<ICartService>();
 	const payment = mock<PaymentService>();
 	const pdf = mock<IPdfQueue>();
-	pdf.enqueue.mockResolvedValue(undefined as any); // ponytail: mock-extended trả undefined, src cần Promise để .catch
+	pdf.enqueue.mockResolvedValue(undefined as any);
 	const stock = mock<IStockService>();
 	const samples = mock<ISampleBookService>();
 	const coupons = mock<ICouponService>();
@@ -67,7 +66,7 @@ const build = () => {
 	orderRepo.deleteCartItems.mockResolvedValue({} as any);
 	orderRepo.markIdempotencySuccess.mockResolvedValue({} as any);
 	orderRepo.markIdempotencyFailed.mockResolvedValue({} as any);
-	orderRepo.updateOrder.mockResolvedValue({} as any); // ponytail: src gọi .catch lên Promise này (C-5)
+	orderRepo.updateOrder.mockResolvedValue({} as any);
 	coupons.validateAndIncrementCoupon.mockResolvedValue(undefined as any);
 	return { svc, orderRepo, cart, payment, stock, samples, coupons, subject };
 };
@@ -118,7 +117,7 @@ describe("createAlbumOrder UTM override", () => {
 		customerId: 5,
 		sampleBookId: 3,
 		quantity: 1,
-		name: "Nguyen Van A", // ponytail: src validate tên >= 2 ký tự
+		name: "Nguyen Van A",
 		phone: "0912345678",
 		address: "123 Duong ABC",
 		city: "Ha Noi",

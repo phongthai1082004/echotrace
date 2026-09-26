@@ -4,8 +4,6 @@ function Pulse({ className = "" }: SkeletonProps) {
   return <div className={`animate-pulse bg-[#e8e6e0]/50 rounded ${className}`} />;
 }
 
-// ponytail: shells reuse the real neo-card + same grids/aspects so no layout shift on load.
-// ponytail: one knob for faintness — bump opacity if skeletons look too ghostly.
 const faint = "opacity-60";
 
 type CardVariant = "journal" | "sample" | "order";
@@ -63,7 +61,6 @@ function OrderSkeletonCard() {
 }
 
 const variantGrid: Record<CardVariant, string> = {
-  // ponytail: grids copy the real page grids exactly.
   journal: "grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4",
   sample: "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 sm:gap-5",
   order: "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3",
@@ -84,7 +81,6 @@ export function SkeletonGrid({
   aspect?: string;
   variant?: CardVariant;
 }) {
-  // ponytail: aspect kept for compat (admin stickers), maps to closest variant.
   const v: CardVariant | null =
     variant ?? (aspect === "landscape" ? "order" : aspect === "portrait" ? "journal" : null);
   if (v) {

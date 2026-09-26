@@ -31,7 +31,6 @@ export function formatCurrency(n: number | null | undefined) {
   return `${(n ?? 0).toLocaleString("vi-VN")}₫`;
 }
 
-// ponytail: timeline mock — derive từ status, chưa có bảng OrderHistory; thay khi có audit log
 const PROGRESSION = ["placed", "paymentConfirmed", "printing", "shipped", "delivered"] as const;
 const STAGE_OF: Record<OrderStatus, number> = {
   pending_payment: 0,

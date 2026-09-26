@@ -7,7 +7,6 @@ import type {IR2FileService} from '../render/pdf.types.js';
 export class R2FileService implements IR2FileService {
 	constructor(@inject('IR2ImageService') private r2: IR2ImageService) {}
 
-	// ponytail: worker chỉ nhận POST với header X-Echotrace-* (HMAC của `${folder}:${expiry}`),
 	// folder phải bắt đầu "echotrace/". issueUpload() đã tính token đúng. Response { url }.
 	async uploadBuffer(buffer: Buffer, folder: string = PDF_FOLDER): Promise<string> {
 		const { token, expiry, uploadUrl } = await this.r2.issueUpload(folder);

@@ -5,7 +5,6 @@ import vi from "@/public/locales/vi/common.json";
 const LANGS = ["en", "vi", "es"] as const;
 type Lang = (typeof LANGS)[number];
 
-// ponytail: vi (mặc định, 45KB) bundle sync để SSR/first-paint đủ chữ;
 // en/es lazy theo nhu cầu — đỡ ~80KB JS ban đầu. Thiếu bundle thì i18next
 // fallback về vi (fallbackLng), không bao giờ hiện key thô.
 const loaders: Record<Lang, () => Promise<{ default: unknown }>> = {
@@ -33,7 +32,6 @@ export function ensureLang(lang: string): Promise<void> {
     .catch(() => {});
 }
 
-// ponytail: sync at module eval (runs before hydration render) so the client's first
 // render matches the server's language — no hydration mismatch, no render-time changeLanguage.
 if (typeof document !== "undefined") {
   const cookie = document.cookie.match(/(?:^|;\s*)i18nextLng=([^;]+)/)?.[1];

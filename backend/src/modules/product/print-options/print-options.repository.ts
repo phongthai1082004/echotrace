@@ -2,7 +2,6 @@ import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature print-options ra khỏi service.
 @injectable()
 export class PrintOptionRepository {
 	constructor(@inject('PrismaService') private prismaService: PrismaService) {}
@@ -15,7 +14,6 @@ export class PrintOptionRepository {
 		return this.client.printOption.findMany({ where, orderBy });
 	}
 
-	// ponytail: raw price/dimension rows used by cart pricing; accepts tx for transactional reads.
 	listRaw(tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).printOption.findMany({
 			where: { isDelete: false },

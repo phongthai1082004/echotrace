@@ -2,7 +2,6 @@ import * as fabric from "fabric";
 import { isFrameObject, enforceZLayers } from "./fabric-core";
 import { findPhotoInFrame, applyFrameClip } from "./photos";
 
-// ponytail: enlivened photos lose their lock flags (not in toJSON keys) and keep a
 // stale absolute clip -- without this the pasted photo is invisible AND blocks its frame.
 function restorePastedPhoto(photo: any, frame: any) {
   photo.set({
@@ -19,7 +18,6 @@ function restorePastedPhoto(photo: any, frame: any) {
   applyFrameClip(frame, photo);
 }
 
-// ponytail: pasted copy lands just below-right of the original, cascading on repeat pastes.
 const PASTE_STEP = 15;
 
 export function serializeSel(canvas: fabric.Canvas, obj: fabric.FabricObject): string {
@@ -98,7 +96,6 @@ export function pasteClipboard(
 			items.forEach((it: any, i: number) => {
 				if (it.frame && it.photo) {
 					const selId = `frame-${Date.now()}-${i}`;
-					// ponytail: read customProperties from JSON -- enlivenObjects drops them.
 					it.frame.set({
 						left: (it.frame.left || 0) + off,
 						top: (it.frame.top || 0) + off,
@@ -119,7 +116,6 @@ export function pasteClipboard(
 					it.obj.set({
 						left: (it.obj.left || 0) + off,
 						top: (it.obj.top || 0) + off,
-						// ponytail: enlivened objects lose customProperties -- restore from JSON
 						// or an empty pasted frame stops being a frame (can't drop photos in).
 						customProperties: { layer: "element", ...it.entry?.customProperties, z: baseZ - i * 2 },
 					} as any);

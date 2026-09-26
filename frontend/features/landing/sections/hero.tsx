@@ -13,7 +13,6 @@ import { trackEvent } from "@/lib/analytics";
 
 export function HeroSection() {
   const { t } = useTranslation();
-  // ponytail: three.js (~600KB) must not race LCP text — mount after paint/idle.
   const [show3D, setShow3D] = useState(false);
   useEffect(() => {
     const mount = () => setShow3D(true);

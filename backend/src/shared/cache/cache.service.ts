@@ -44,7 +44,6 @@ export class CacheService {
 		}
 	}
 
-	// ponytail: atomic increment with TTL — used for rate/attempt counters that must be
 	// shared across process instances (e.g. OTP brute-force protection).
 	// Returns the new value, or Infinity when Redis is unavailable (fail-open: do not block).
 	async increment(key: string, ttlSeconds: number): Promise<number> {

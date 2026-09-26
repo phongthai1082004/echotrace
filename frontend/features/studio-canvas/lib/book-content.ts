@@ -1,4 +1,3 @@
-// ponytail: normalize Fabric canvasJson -> mm-based, top-left-origin element list so pdf-lib
 // can render without parsing Fabric internals. canvasJson is kept for the editor (old optimization).
 import { PX_PER_MM, PT_PER_PX } from "./unit-conversion";
 import { parsePageJson } from "./sparse-json";
@@ -60,7 +59,6 @@ function bboxPx(o: any) {
 
 export function serializePage(canvasJson: string | null, index: number): PageContent | null {
 	if (!canvasJson) return null;
-	// ponytail: parse hydrates sparse pages so element extraction sees complete objects.
 	const parsed = parsePageJson(canvasJson);
 	if (!parsed) return null;
 	const widthMm = r2((parsed.width || 0) / PX_PER_MM);
@@ -77,7 +75,6 @@ export function serializePage(canvasJson: string | null, index: number): PageCon
 		const ew = r2(w / PX_PER_MM);
 		const eh = r2(h / PX_PER_MM);
 
-		// ponytail: saved JSON uses capitalized types ("Image"), live objects lowercase.
 		const t = String(o.type || "").toLowerCase();
 		if (t === "image") {
 			if (!o.src) continue;
@@ -121,7 +118,6 @@ export function serializePage(canvasJson: string | null, index: number): PageCon
 				strokeWidthMm: o.strokeWidth ? r2(o.strokeWidth / PX_PER_MM) : undefined,
 			});
 		}
-		// ponytail: groups/paths skipped in v1; add flattening if grouping is used in the wild
 	}
 
 	return { index, widthMm, heightMm, elements };

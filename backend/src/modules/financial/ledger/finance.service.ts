@@ -42,7 +42,6 @@ export class FinanceService implements IFinanceService {
 	constructor(@inject('FinanceRepository') private readonly financeRepo: FinanceRepository) {}
 
 	async getSummary(): Promise<{ summary: Record<string, number>; monthly: { period: string; revenue: number; orders: number }[] }> {
-		// ponytail: mọi chỉ số đã được trigger ghi vào FinancePeriod, chỉ SUM 1 truy vấn
 		const agg = await this.financeRepo.aggregateFinancePeriod();
 		const s = agg._sum;
 		const summary: Record<string, number> = {

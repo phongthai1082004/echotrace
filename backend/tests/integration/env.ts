@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 
-// ponytail: setupFiles chạy TRƯỚC mọi import — secrets dummy + DB test phải có
 // trước khi container dựng PayOS và PrismaClient nối DB.
 process.env.DATABASE_URL = 'postgresql://postgres:123abc@localhost:5432/echotrace_test';
 process.env.JWT_ACCESS_SECRET = 'test-access-secret';
@@ -13,7 +12,6 @@ process.env.BACKEND_PORT = '4001';
 process.env.CANCEL_URL = '/cancel';
 process.env.RETURN_URL = '/success';
 delete process.env.WEBHOOK_URL;
-// ponytail: cấm gửi mail thật — set rỗng (không delete: dotenv sẽ load lại key thật)
 process.env.RESEND_API_KEY = '';
 process.env.SMTP_HOST = '';
 process.env.SMTP_USER = '';

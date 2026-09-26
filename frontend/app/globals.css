@@ -423,8 +423,6 @@
     line-height: 1.4;
   }
 
-  /* ponytail: single type scale site-wide — Space Grotesk for prose/headings,
-     JetBrains Mono for labels. Sizes are type-only; colors stay contextual. */
   .t-display {
     font-family: var(--font-space-grotesk), sans-serif;
     font-weight: 700;
@@ -518,8 +516,6 @@
   width: auto;
 }
 
-/* ponytail: landing CSS build-time (từng inject qua useEffect sau paint → FOUC
-   + .reveal giấu content nếu JS chậm). Nằm đây để có mặt ngay ở HTML đầu. */
 @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 @keyframes floatBadge { 0%,100%{transform:translateY(0px) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
 .marquee-inner { animation: marquee 24s linear infinite; will-change: transform; }

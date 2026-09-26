@@ -1,4 +1,3 @@
-// ponytail: thin wrapper over window.gtag — no lib, no-ops when GA blocked/absent.
 let disabled = false;
 export function setAnalyticsDisabled(v: boolean) {
   disabled = v;

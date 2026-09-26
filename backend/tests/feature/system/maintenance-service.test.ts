@@ -1,10 +1,3 @@
-/**
- * Part 1/P0 — Maintenance windows (function-based service).
- * Fake DB behind container.resolve (kiểu broadcast-presence.test.ts);
- * broadcast chạy thật trên fake (2 users → createMany asserted).
- * ponytail: không jest.mock db.service — factory hoisted chạy trước const (TDZ)
- * và còn chặn luôn dotenv side-effect khiến PayOS thiếu env.
- */
 import { container } from "../../../src/di/container.js";
 import {
 	getMaintenanceStatus,
@@ -28,12 +21,11 @@ let resolveSpy: jest.SpyInstance;
 
 beforeEach(() => {
 	jest.clearAllMocks();
-	clearMaintenanceStatusCache(); // ponytail: cache 30s trong service — test nào mock DB riêng test đó
+	clearMaintenanceStatusCache();
 	mockMw.findMany.mockResolvedValue([]);
 	mockMw.updateMany.mockResolvedValue({ count: 0 });
 	mockUser.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }]);
 	mockNotification.createMany.mockResolvedValue({ count: 2 });
-	// ponytail: class token → fake db; string token (PresenceService) → offline fake
 	resolveSpy = jest.spyOn(container, "resolve").mockImplementation(((token: any) =>
 		typeof token === "string"
 			? ({ sendTo: () => false, online: () => false } as any)

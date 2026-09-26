@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-// ponytail: qrcode chỉ cần ở step thanh toán — dynamic khỏi ôm vào bundle checkout ban đầu.
 const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG), {
   ssr: false,
   loading: () => <div style={{ width: 192, height: 192 }} />,
@@ -135,7 +134,6 @@ export default function CheckoutPage() {
   };
 
   // Poll trạng thái đơn mỗi 12s + skip khi tab ẩn — gọi verify (hỏi PayOS trực tiếp) vì webhook localhost không nhận được
-  // ponytail: 12s đủ nhanh cho QR, khỏi nện Neon mỗi 3s; webhook là luồng chính khi deploy thật.
   const orderId = orderInfo?.orderId;
   useEffect(() => {
     if (!orderId) return;

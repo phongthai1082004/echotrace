@@ -41,7 +41,6 @@ router.post('/admin/orders/:id/return-approve', authGuard('admin'), asyncHandler
 router.post('/admin/orders/:id/return-reshipped', authGuard('admin'), asyncHandler((req, res) => returnsCtrl.markReshipped(req, res)));
 router.post('/admin/orders/:id/mark-defective', authGuard('admin'), asyncHandler((req, res) => returnsCtrl.markDefective(req, res)));
 
-// ponytail: admin hoặc chủ đơn có thể đẩy đơn vào queue sinh PDF lại (khi item chưa có pdfUrl).
 router.post('/orders/:id/pdf', authGuard(), asyncHandler(async (req, res) => {
 	const orderId = Number(req.params.id);
 	const order = await orderRepo.findOrderById(orderId);
@@ -68,7 +67,6 @@ router.post('/admin/orders/:id/pdf', authGuard('admin'), asyncHandler(async (req
 	res.json(ApiResponse.success({ queued: true }));
 }));
 
-// ponytail: marketing summary — DB (đơn/sách theo UTM) + GA Data API
 // (visitors/events theo sessionSource). Chưa cấu hình GA → gaConfigured=false.
 router.get('/admin/marketing/summary', authGuard('admin'), asyncHandler(async (req, res) => {
 	const days = Math.min(Math.max(parseInt(String(req.query.days ?? '30')) || 30, 1), 365);

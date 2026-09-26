@@ -80,7 +80,6 @@ export function useAutoFill(token: string | undefined) {
       if (photoIdx >= unused.length) break;
       const pgStr = updatedPages[task.pageIdx].canvasJson;
       if (!pgStr) continue;
-      // ponytail: hydrate như mọi đường load thật (workspace/PDF) — JSON thô
       // thiếu defaults, fabric tự đắp kiểu khác là lệch tọa độ.
       const parsed = parsePageJson(pgStr);
       if (!parsed) continue;
@@ -88,7 +87,6 @@ export function useAutoFill(token: string | undefined) {
       await tc.loadFromJSON(parsed).then(() => {
         tc.renderAll();
       });
-      // ponytail: reviveDeep thay vì copy tay theo index — bản tay không đệ quy
       // vào group con, _selId/customProperties của khung grouped bị mất.
       try {
         reviveDeep(parsed.objects || [], tc.getObjects());
@@ -106,7 +104,6 @@ export function useAutoFill(token: string | undefined) {
         const img = await fabric.FabricImage.fromURL(unused[photoIdx].url, { crossOrigin: "anonymous" });
         placePhotoInFrame(frame, img);
         applyFrameClip(frame, img);
-        // ponytail: mirror manual drop (studio-workspace) — khung grouped thì ảnh
         // phải vào TRONG group (tọa độ group-relative). tc.add ra root là lệch
         // đúng bằng transform của group. Clip đã relocalize 1 lần trong
         // applyFrameClip nên không gọi lại (gọi 2 lần là chia đôi scale).

@@ -8,7 +8,6 @@ import { OrderDetailDrawer } from "@/components/order-detail-drawer";
 import { useCustomerOrders } from "../_hooks/use-customer-orders";
 import type { OrderDTO } from "@/lib/order.dto";
 
-// ponytail: island tương tác — list lần đầu từ server (initialOrders), hết waterfall + flash skeleton.
 export function OrdersClient({ initialOrders }: { initialOrders?: OrderDTO[] | null }) {
   const { t } = useTranslation();
   const {

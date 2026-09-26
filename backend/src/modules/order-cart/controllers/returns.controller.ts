@@ -11,7 +11,6 @@ export class ReturnsController {
 	constructor(@inject('IReturnsService') private readonly returnsService: IReturnsService) {}
 
 	requestReturn = async (req: AuthRequest, res: Response) => {
-		// ponytail: shape đã validate ở route (RequestReturnDTO) — đây chỉ tách field
 		const { reason, items } = req.body ?? {};
 		await this.returnsService.requestReturn(parseInt(req.params.id as string), parseInt(req.userId!), { reason, items });
 		res.json(ApiResponse.message('Return requested'));

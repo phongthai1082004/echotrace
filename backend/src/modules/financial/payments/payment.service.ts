@@ -68,11 +68,9 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 					},
 				});
 
-				// ponytail: không hồi sinh đơn đã huỷ/hoàn khi nhận webhook muộn (link hết hạn mà PayOS vẫn báo)
 				if (order && (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED)) return;
 
 				if (result.status === TransactionStatus.SUCCESS && order) {
-					// ponytail: chặn đúp paidAmount/Income khi có ≥2 mã giao dịch SUCCESS khác nhau
 					// (renew link, webhook retransmit mã khác). txn hiện tại chưa SUCCESS (đã qua guard dòng 28)
 					// nên count chỉ đếm mã khác → >0 nghĩa là trùng, bỏ qua. Serializable → race-safe.
 					const dupPaid = await tx.transaction.count({ where: { orderId: order.id, status: TransactionStatus.SUCCESS, id: { not: txn.id } } });
@@ -97,7 +95,6 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 							},
 						});
 					}
-					// ponytail: Income ghi nhận tại DELIVERED (order.service.deliverOrder); trigger cộng counters.
 					// Ở đây chỉ ghi Cashflow IN (tiền thực thu), tách biệt với doanh thu.
 
 					if (order.user?.email) {
@@ -113,7 +110,6 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 						};
 					}
 				} else if (result.status === TransactionStatus.CANCELLED && order) {
-					// ponytail: flip status first using a conditional updateMany (WHERE status=PENDING_PAYMENT).
 					// count=0 means another path (user cancel, expiry) already cancelled — skip restock
 					// to prevent double-increment of stock.
 					if (order.status === OrderStatus.PENDING_PAYMENT) {
@@ -133,7 +129,6 @@ export class PaymentWebhookService implements IPaymentWebhookService {
 			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
 		);
 
-		// ponytail: one fan-out replaces the old direct mail — channels route it.
 		if (email) {
 			const t = email.fullyPaid
 				? orderText('paidFull', { code: email.orderCode, name: email.name || '', paid: email.paid })

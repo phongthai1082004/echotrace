@@ -41,7 +41,6 @@ export class PdfRepository {
 	}
 
 	async claimPdfJob() {
-		// ponytail: atomic single-statement claim (FOR UPDATE SKIP LOCKED) - the previous
 		// findFirst+update let two backend instances claim the same job concurrently.
 		const rows = await this.prismaService.db.$queryRaw<any[]>(Prisma.sql`
 			UPDATE "OrderPdfJob" SET status = 'PROCESSING', "lockedAt" = now(), "updatedAt" = now()

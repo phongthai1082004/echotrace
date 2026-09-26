@@ -8,7 +8,6 @@ import { infoBox, chip } from "@/lib/styles";
 import { apiFetch } from "@/lib/api.fetch";
 import type { OrderDTO } from "@/lib/order.dto";
 
-// ponytail: extracted from the order-detail-drawer god-component (A2).
 export function OrderItems({
   order,
   admin,
@@ -73,8 +72,6 @@ export function OrderItems({
                   )}
                 </div>
               )}
-              {/* ponytail: 2 icon cho item template (không phải ALBUM):
-                  có pdfUrl → tải xuống; chưa có → đẩy vào queue sinh lại. */}
               {admin && item.type !== "album" && (
                 <div className="mt-1.5 flex items-center gap-1.5">
                   {item.pdfUrl ? (

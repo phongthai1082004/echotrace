@@ -18,7 +18,6 @@ export interface IOrderFinanceService {
 export class OrderFinanceService implements IOrderFinanceService {
 	constructor(@inject('FinanceRepository') private readonly financeRepo: FinanceRepository) {}
 
-	// ponytail: single place for Expense + Cashflow OUT writes (NCC/hoàn tiền/bảo hành).
 	async recordOutflow(
 		tx: Prisma.TransactionClient,
 		orderId: number,

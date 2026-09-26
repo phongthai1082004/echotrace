@@ -59,7 +59,6 @@ export function useCoupons(initialCoupons?: Coupon[]) {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
 
-  // ponytail: có initial từ server thì khỏi fetch lại lần đầu.
   const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons ?? []);
   const [loading, setLoading] = useState(initialCoupons === undefined);
   const [search, setSearch] = useState("");

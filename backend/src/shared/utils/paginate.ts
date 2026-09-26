@@ -2,7 +2,6 @@ import { QueryProcessor, PaginationConfig, PaginationOptions } from '@echotrace/
 
 type FindManyDelegate = { findMany(args: any): Promise<any[]> };
 
-// ponytail: thay thế BaseService.findAll — chỉ là cursor pagination + soft-delete,
 // không cần class repo. Dùng trực tiếp delegate (prisma.x) để thống nhất data-access.
 export async function paginate(
 	delegate: FindManyDelegate,
@@ -12,7 +11,6 @@ export async function paginate(
 ): Promise<{ items: any[]; nextCursor: number | null }> {
 	const q: any = new QueryProcessor(config, options).build();
 	q.where = Object.assign({}, q.where, { isDelete: false }, extraWhere);
-	// ponytail: fetch limit+1 to probe for a next page — a full page no longer advertises
 	// nextCursor (which used to make "Next" show an empty table on exact-multiple totals).
 	const limit = Number(config.limit);
 	const items = await delegate.findMany({ ...q, take: limit + 1 });

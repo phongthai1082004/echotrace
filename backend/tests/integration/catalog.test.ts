@@ -4,7 +4,6 @@
 import request from 'supertest';
 import { api, truncate, seedUsers, loginAs, authz, db } from './db.js';
 
-// ponytail: R2 worker thật không đụng — stub ở biên fetch (giống uploads.test.ts)
 const realFetch = globalThis.fetch;
 beforeAll(() => {
 	globalThis.fetch = (async (url: any, init: any) => {
@@ -72,7 +71,6 @@ describe('I-30 stickers', () => {
 			.expect(201);
 		const id = created.body.data.id;
 		await request(a).delete(`/api/admin/stickers/${id}`).set(authz(adminTok)).expect(200);
-		// ponytail: stickers xóa cứng (deleteMany), không soft như supplier/coupon
 		expect(await db().decorAsset.findUnique({ where: { id } })).toBeNull();
 	});
 });

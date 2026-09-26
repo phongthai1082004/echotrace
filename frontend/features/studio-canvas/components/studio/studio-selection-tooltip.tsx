@@ -41,7 +41,6 @@ export function StudioSelectionTooltip() {
   active.setCoords();
   const zoom = ZOOM_LEVELS[zoomIndex] ?? 1;
   const r = active.getBoundingRect(true, true);
-  // ponytail: dock tooltip at the corner with room (prefer top-right) — never top-center (rotate handle).
   const GAP = 12;
   const EST_W = 180;
   const EST_H = 52;

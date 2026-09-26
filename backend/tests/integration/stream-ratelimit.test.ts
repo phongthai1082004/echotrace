@@ -11,7 +11,6 @@ let closeServer: (() => Promise<void>) | null = null;
 beforeEach(async () => {
 	await truncate();
 	await seedUsers();
-	// ponytail: SSE stream không bao giờ tự hết — supertest buffer treo, phải listen port thật
 	const app = await api();
 	await new Promise<void>((resolve) => {
 		const server = app.listen(0, () => {
@@ -37,7 +36,6 @@ describe('SSE stream endpoint', () => {
 			headers: { Authorization: `Bearer ${token}` },
 			signal: ctrl.signal,
 		});
-		// ponytail: stream không bao giờ tự hết — đọc chunk đầu rồi cắt
 		expect(res.status).toBe(200);
 		expect(res.headers.get('content-type')).toContain('text/event-stream');
 		const reader = res.body!.getReader();

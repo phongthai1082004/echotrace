@@ -29,7 +29,6 @@ const COLS = [
 
 const EXPENSE_CATS = ["OPERATING", "PAYROLL", "MARKETING", "DEBT", "OTHER", "SUPPLIER", "DEFECTIVE"] as const;
 
-// ponytail: dùng đúng theme — nút như "+ New Supplier", select/date như neo-input
 const addBtnCls = `${neoBtnPrimary} flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-widest uppercase px-4 py-2.5`;
 
 function money(v?: number) {

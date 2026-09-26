@@ -4,7 +4,6 @@ import { isFrameObject, enforceZLayers } from "./fabric-core";
 import { isCoverPage } from "./layout-engine";
 import { useCanvasStore } from "../hooks/useCanvasState";
 
-// ponytail: everything about binding a photo into a frame -- fit, clip, lookup,
 // edit-mode lock/unlock. Shares the frameId/_selId + clipPath conventions.
 
 const DIM_OVERLAY_KEY = "_dimOverlay";
@@ -22,7 +21,6 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
     ft = frame.top || 0;
   const imgW = img.width || 1,
     imgH = img.height || 1;
-  // ponytail: cover -- image fills the frame edge to edge; the clipPath keeps it from spilling
   const s = Math.max(fw / imgW, fh / imgH);
   const shapeName = (frame as any).customProperties?.shapeName;
   let clip;
@@ -60,7 +58,6 @@ function fitPhotoToFrame(frame: fabric.FabricObject, img: fabric.FabricImage) {
 }
 
 
-// ponytail: absolute clip (canvas coords) -> photo-local clip, so it survives
 // the group layout rewrite (children become group-relative, clip would stay behind).
 // Photo center == frame center, so the frame box recenters on photo-local origin.
 export function relocalizeClipToPhoto(photo: any, frame: any) {
@@ -91,7 +88,6 @@ export function isCoarsePointer(): boolean {
   return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 }
 
-// ponytail: center-x of the focused editing half — new objects land where the user
 // looks instead of the dead middle of the 2P spread when editing L/R.
 export function focusCenterX(canvas: fabric.Canvas): number {
   const w = canvas.getWidth() || 840;
@@ -132,7 +128,6 @@ export async function placeFreeImage(
   return true;
 }
 
-// ponytail: core chung cho drop chuột (react-dnd) và tap mobile — tìm khung,
 // fill/thay thế, rớt ra ngoài thì ảnh rời. findFrame inject từ ngoài để tránh
 // cycle import frames<->photos (hitTestFrame sống ở frames.ts).
 export async function placeDroppedPhoto(
@@ -161,7 +156,6 @@ export async function placeDroppedPhoto(
     const effView = isCoverPage(st0.activePageIndex, st0.pages.length) ? "spread" : st0.viewMode;
     if (effView !== "spread") {
       const halfW = (canvas.getWidth() || 840) / 2;
-      // ponytail: center thật qua getCenterPoint (tôn trọng xoay).
       const fc = frame.getCenterPoint();
       if ((effView === "left" && fc.x >= halfW) || (effView === "right" && fc.x < halfW)) {
         onWrongHalf?.();
@@ -169,7 +163,6 @@ export async function placeDroppedPhoto(
       }
     }
     if (replacePhotoInFrame(canvas, frame, img)) {
-      // ponytail: fitPhotoToFrame đã ra tọa độ group-local cho khung lồng —
       // add ảnh VÀO group, không phải canvas root, rồi relocalize clip.
       const parentGroup = (frame as any).group;
       if (parentGroup && typeof parentGroup.add === "function") {
@@ -240,7 +233,6 @@ export function placePhotoInFrame(frame: fabric.FabricObject, img: fabric.Fabric
   return true;
 }
 
-// ponytail: thả ảnh mới vào khung đã có ảnh = thay thế tại chỗ.
 // Trước đây placePhotoInFrame trả false → drop handler đẻ ảnh rời đè lên, tưởng "không khớp".
 export function replacePhotoInFrame(
   canvas: fabric.Canvas,
@@ -287,12 +279,10 @@ export function applyFrameClip(frame: fabric.FabricObject, img: fabric.FabricIma
   }
   img.setCoords();
   img.dirty = true;
-  // ponytail: grouped frame lives in group space -- absolute clip would stay behind.
   if ((frame as any).group) relocalizeClipToPhoto(img, frame);
 }
 
 
-// ponytail: photos live inside groups after grouping -- search one level deep too,
 // otherwise delete/move of a grouped frame orphans its photo.
 export function allPhotoCandidates(canvas: fabric.Canvas): any[] {
   const out: any[] = [];
@@ -330,7 +320,6 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   const fh = (frame.height || 100) * (frame.scaleY || 1);
   const imgW = photo.width || 1,
     imgH = photo.height || 1;
-  // ponytail: always re-cover-fit to the current frame size (same as initial place);
   // user scale/offset edits from lockPhotoInFrame are kept as relative deltas so they survive resizes
   const coverS = Math.max(fw / imgW, fh / imgH);
   const relSX = (photo as any).__photoRelScaleX ?? 1;
@@ -372,7 +361,6 @@ export function movePhotoWithFrame(frame: fabric.FabricObject, photo: fabric.Fab
   } as any);
   photo.setCoords();
   photo.dirty = true;
-  // ponytail: grouped frame lives in group space -- absolute clip would stay behind.
   if ((frame as any).group) relocalizeClipToPhoto(photo, frame);
 }
 
@@ -382,7 +370,6 @@ export function resolveFrameForPhoto(
   photo: fabric.FabricImage,
 ): fabric.FabricObject | undefined {
   const fid = (photo as any).customProperties?.frameId;
-  // ponytail: grouped photo's frame may live in the same group -- check there first.
   const parentGroup = (photo as any).group;
   if (fid && parentGroup && Array.isArray(parentGroup._objects)) {
     const frame = parentGroup._objects.find((o: any) => isFrameObject(o) && (o as any)._selId === fid);
@@ -407,7 +394,6 @@ export function resolveFrameForPhoto(
 export function unlockPhotoInFrame(canvas: fabric.Canvas, photo: fabric.FabricImage) {
   const frame = resolveFrameForPhoto(canvas, photo);
   if (!frame) {
-    // ponytail: mất frame (xóa/group lệch frameId) thì mở khóa chính tấm ảnh —
     // trước đây return im, photo kẹt liệt vĩnh viễn không đường thoát.
     photo.set({
       hasControls: true,

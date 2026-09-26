@@ -2,7 +2,6 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { google } from 'googleapis';
 
-// ponytail: đọc GA4 Data API cho đầu phễu (visitors + events theo sessionSource).
 // Chưa cấu hình (thiếu GA_PROPERTY_ID/credentials) → trả null, UI hiện "…".
 
 export interface GaSourceRow {
@@ -25,7 +24,6 @@ export async function getGaTrafficBySource(days: number): Promise<GaSourceRow[] 
 	const propertyId = process.env.GA_PROPERTY_ID;
 	if (!propertyId) return null;
 	try {
-		// ponytail: keyFile resolve theo nhiều base — dev chạy CWD=backend,
 		// docker chạy CWD=root, khỏi đoán path trong env
 		const keyPath = process.env.GA_CREDENTIALS_PATH;
 		const candidates = keyPath

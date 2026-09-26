@@ -7,7 +7,6 @@ import { NotificationChannel } from '@echotrace/shared';
 export class DatabaseObserver implements Observer {
     constructor(@inject('NotificationRepository') private notirepo: NotificationRepository) {}
     async update(payload: NotificationPayload): Promise<void> {
-        // ponytail: channels is the routing switch — skip when 'db' not listed.
         // No channels = legacy broadcast = write.
         if (payload.channels && !payload.channels.includes(NotificationChannel.DB)) return;
         await this.notirepo.client.notification.create({

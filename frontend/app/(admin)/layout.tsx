@@ -8,7 +8,6 @@ import { AdminLayoutClient } from "./admin-layout-client";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   const role = (session?.user as { role?: string } | undefined)?.role;
-  // ponytail: same as customer layout — /auth preserves language, "/en" would not.
   if (!session) redirect("/auth");
   if (role !== "admin") {
     const cookieLang = (await cookies()).get("i18nextLng")?.value;

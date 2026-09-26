@@ -59,7 +59,6 @@ export function StickersPanel() {
   const [search, setSearch] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
-  // ponytail: sticker là asset chung mọi admin thấy; chỉ admin được up mới.
   const isAdmin = (session as any)?.role === "admin" || (session?.user as any)?.role === "admin";
 
   const fetchStickers = () => {

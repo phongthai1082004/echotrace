@@ -75,7 +75,6 @@ export function Nav({ user }: NavProps) {
 
   const token = (session as any)?.accessToken;
   const currentUser = user ?? session?.user ?? null;
-  // ponytail: count qua query key chung với CartFlyout (stale 60s, dedup) —
   // trước đây mở menu mobile là 1 GET /cart riêng, hover flyout 1 cái nữa.
   const { data: cartCount = 0 } = useCartCount(!!token);
 
@@ -84,13 +83,11 @@ export function Nav({ user }: NavProps) {
   const loadMore = useNotifStore((s) => s.loadMore);
   const loadingMore = useNotifStore((s) => s.loadingMore);
 
-  // ponytail: NotificationBootstrap trong Providers đã refresh 1 lần khi login —
   // nav từng refresh trùng (2x GET/notifications mỗi mount). Hover chuông vẫn refresh
   // nhưng store đã dedup + throttle 30s nên không spam.
 
   const openNotif = async (n: any) => {
     setNotifOpen(false);
-    // ponytail: tin live id tạm (string) không có trên DB — chỉ đánh dấu local
     if (!n.isRead && typeof n.id === "number" && token) {
       try {
         await apiFetch(`/api/notifications/${n.id}/read`, token, { method: "PATCH" });
@@ -100,7 +97,6 @@ export function Nav({ user }: NavProps) {
     router.push(n.metadata?.actionUrl || "/orders");
   };
 
-  // ponytail: menu fixed theo viewport (thoát khung scroll của dropdown)
   const openMenu = (e: React.MouseEvent<HTMLButtonElement>, n: NotifItem) => {
     e.stopPropagation();
     const r = e.currentTarget.getBoundingClientRect();
@@ -206,7 +202,6 @@ export function Nav({ user }: NavProps) {
                       onScroll={(e) => {
                         setMenu(null);
                         const el = e.currentTarget;
-                        // ponytail: cursor append khi scroll gần đáy
                         if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) void loadMore();
                       }}
                     >

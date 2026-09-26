@@ -12,7 +12,6 @@ import { usePrintOptions } from "../_hooks/use-print-options";
 import { OptionsTable } from "./options-table";
 import { OptionFormModal } from "./option-form-modal";
 
-// ponytail: island tương tác — rows đầu từ server, filter/modal giữ nguyên client.
 export function PrintOptionsClient({ initialOptions }: { initialOptions?: PrintOption[] }) {
   const { t, i18n } = useTranslation();
 

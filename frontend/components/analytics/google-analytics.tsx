@@ -8,7 +8,6 @@ import { setAnalyticsDisabled } from "@/lib/analytics";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-// ponytail: gtag via next/script + manual page_view (App Router client-nav
 // doesn't fire page_view by itself). Renders nothing without an ID —
 // và tắt hẳn khi là admin (admin xài chung studio, đo vào là bẩn số marketing).
 export function GoogleAnalytics() {

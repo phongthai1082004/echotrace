@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
 
-// ponytail: migrate + seed DB test trước cả suite (không đụng Neon/dev).
 export default async function globalSetup() {
 	const env = {
 		...process.env,

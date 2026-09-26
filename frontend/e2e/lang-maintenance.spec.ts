@@ -1,7 +1,6 @@
 import { test, expect, request as pwRequest } from '@playwright/test';
 import { loginAs } from './helpers';
 
-// ponytail: self-heal — run trước abort giữa chừng có thể kẹt cờ ON;
 // tắt thẳng qua API trước khi assert (idempotent).
 async function maintenanceOff() {
 	const api = await pwRequest.newContext({ baseURL: 'http://localhost:4101' });
@@ -41,7 +40,6 @@ test('maintenance gate blocks customer, admin reopens', async ({ browser }) => {
 
 	const userCtx = await browser.newContext();
 	const user = await userCtx.newPage();
-	// ponytail: proxy REWRITE (giữ URL) chứ không redirect — assert content.
 	// Poll kèm reload để qua ngưỡng cache cờ 10s của proxy.
 	await expect
 		.poll(async () => {

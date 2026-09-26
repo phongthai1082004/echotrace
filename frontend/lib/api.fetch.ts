@@ -1,13 +1,11 @@
 const PROXY = "/api/proxy";
 
-// ponytail: the real token refresh happens inside the NextAuth jwt callback — every
 // proxy request calls getToken(), which rotates an expired access token automatically.
 // Here we only retry once (fresh cookie) and hard-fail to /auth when it's still 401.
 function expireSession() {
   import("next-auth/react")
     .then(async (m) => {
       await m.signOut({ redirect: false });
-      // ponytail: prefix lang explicitly — bare "/auth" relies on the cookie,
       // and a stale cookie is exactly how the UI silently reset to English.
       const { withLang, langFromCookie } = await import("@/lib/routing");
       window.location.href = withLang("/auth?error=expired", langFromCookie());

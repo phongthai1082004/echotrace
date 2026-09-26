@@ -16,7 +16,6 @@ const LANGS = [
   { code: "es", field: "messageEs" },
 ] as const;
 
-// ponytail: island tương tác — list đọc từ store chung (bootstrap đã nạp + SSE live),
 // form broadcast giữ nguyên client. Header tĩnh do page server render.
 export function NotificationsClient() {
   const { t, i18n } = useTranslation();
@@ -36,7 +35,6 @@ export function NotificationsClient() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
-  // ponytail: menu fixed theo viewport (thoát khung scroll, khỏi bị cắt như absolute)
   const [menu, setMenu] = useState<{ id: NotifItem["id"]; x: number; y: number } | null>(null);
 
   const openMenu = (e: React.MouseEvent<HTMLButtonElement>, n: NotifItem) => {
@@ -52,7 +50,6 @@ export function NotificationsClient() {
       } catch {}
     }
     if (!n.isRead) useNotifStore.getState().setRead(n.id);
-    // ponytail: broadcast từ gà không có actionUrl — ở lại trang, không đá ra dispatch
     if (n.metadata?.actionUrl) router.push(n.metadata.actionUrl);
   };
 
@@ -119,7 +116,6 @@ export function NotificationsClient() {
             onScroll={(e) => {
               setMenu(null);
               const el = e.currentTarget;
-              // ponytail: cursor append khi scroll gần đáy
               if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) void loadMore();
             }}
           >

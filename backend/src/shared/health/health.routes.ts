@@ -8,7 +8,6 @@ export const healthRoutes = Router();
 const ok = <T>(p: Promise<T>) => p.then(() => true, () => false);
 
 healthRoutes.get('/ready', async (_req: Request, res: Response) => {
-	// ponytail: 3s cap so a hung DB/Redis doesn't hold the health probe
 	const withTimeout = (p: Promise<boolean>) =>
 		Promise.race([ok(p), new Promise<false>((r) => setTimeout(() => r(false), 3000))]);
 

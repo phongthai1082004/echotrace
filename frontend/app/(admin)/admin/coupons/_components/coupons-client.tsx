@@ -10,7 +10,6 @@ import { Coupon, useCoupons } from "../_hooks/use-coupons";
 import { CouponsTable } from "./coupons-table";
 import { CouponDrawer } from "./coupon-drawer";
 
-// ponytail: island tương tác — rows lần đầu từ server, search/filter/drawer giữ nguyên client.
 export function CouponsClient({ initialCoupons }: { initialCoupons?: Coupon[] }) {
   const { t } = useTranslation();
   const { filtered, loading, search, setSearch, filter, setFilter, saving, create, deactivate } =

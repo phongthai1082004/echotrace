@@ -6,7 +6,6 @@ import { apiFetch } from "@/lib/api.fetch";
 
 type ListResp<T> = { items: T[]; nextCursor: number | null };
 
-// ponytail: generic cursor pagination hook shared by the finance lists.
 export function useCursorList<T>(endpoint: string, filters: Record<string, string>) {
   const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
   const [items, setItems] = useState<T[]>([]);

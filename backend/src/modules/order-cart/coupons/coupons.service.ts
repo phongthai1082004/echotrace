@@ -64,7 +64,6 @@ export class CouponService implements ICouponService {
 		}
 	}
 
-	// ponytail: inactive là một chiều — không có đường reactivate.
 	async deactivate(id: number) {
 		await this.couponRepo.deactivateCoupon(id);
 	}
@@ -84,7 +83,6 @@ export class CouponService implements ICouponService {
 	}
 
 	async validateAndIncrementCoupon(couponId: number, tx: Prisma.TransactionClient): Promise<void> {
-		// ponytail: re-read inside the Serializable transaction so concurrent orders see
 		// each other's increments. Without this, two orders using the same maxUsageCount=1
 		// coupon would both read usedCount=0 in calculateCart and both pass.
 		const coupon = await this.couponRepo.findByIdInTx(couponId, tx);

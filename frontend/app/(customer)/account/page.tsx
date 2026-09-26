@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { getT } from "@/lib/i18n-server";
 import { AccountSettings } from "@/components/account-settings";
 
-// ponytail: page server — header tĩnh render sẵn; form AccountSettings là island client.
 export default async function AccountPage() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
   const t = getT(lng);

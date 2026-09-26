@@ -8,18 +8,15 @@ import type {IOrderPdfRenderer} from './pdf.types.js';
 import { OrderRepository } from '../../order-cart/repositories/order.repository.js';
 import { BookRepository } from '../../product/books/books.repository.js';
 
-// ponytail: 1x1 gray placeholder — fallback khi ảnh fail hết retry (PDF vẫn ra, không đổ vỡ).
 const GRAY_1X1 =
 	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
 
 const PDF_FONT_FAMILY = process.env.PDF_FONT_FAMILY || 'PDFVi';
 let fontReady = false;
 
-// ponytail: export raster at 300 DPI, not the 4px/mm (~101 DPI) edit scale.
 const EXPORT_PX_PER_MM = 300 / 25.4;
 const MM_TO_PT = 2.834645669;
 
-// ponytail: tiếng Việt cần font có glyph dấu. Ưu tiên PDF_FONT_PATH env;
 // thiếu → thử font hệ thống có hỗ trợ tiếng Việt (Arial Win / DejaVuSans Linux / Arial macOS).
 // Variants optional — thiếu file nào thì canvas fallback về regular, không crash.
 const CANDIDATE_FONT_SETS: { family: string; regular: string; bold?: string; italic?: string; boldItalic?: string }[] = [
@@ -72,7 +69,6 @@ function ensureFont() {
 			/* try next */
 		}
 	}
-	// ponytail: không có font tiếng Việt → node-canvas dùng fallback mặc định (dấu có thể vỡ).
 	fontReady = true;
 }
 
@@ -92,12 +88,10 @@ function parseCanvasJson(canvasJson: unknown): any {
 	return null;
 }
 
-// ponytail: chỉ lấy src http(s) của image object (và background) để tải.
 // Đệ quy qua objects lồng nhau — ảnh trong group không nằm top-level, bỏ sót là PDF mất ảnh.
 function eachImageObject(json: any, fn: (o: any) => void) {
 	if (Array.isArray(json?.objects)) {
 		for (const o of json.objects) {
-			// ponytail: saved JSON uses capitalized types ("Image"), live objects lowercase.
 			if (String(o?.type || '').toLowerCase() === 'image') fn(o);
 			if (Array.isArray((o as any)?.objects)) eachImageObject(o, fn);
 		}
@@ -140,7 +134,6 @@ export class FabricRenderer implements IOrderPdfRenderer {
 			const bookId = item?.bookId;
 			if (!bookId) continue;
 			const book = await this.bookRepo.findBookById(bookId);
-			// ponytail: chỉ render book không phải ALBUM (theo SampleBook.type).
 			if (!isRenderableBookType(book?.type)) continue;
 			const content = book?.content as any;
 			const pages: any[] = Array.isArray(content?.pages) ? content.pages : [];
@@ -149,7 +142,6 @@ export class FabricRenderer implements IOrderPdfRenderer {
 				if (!json) continue;
 				const png = await this.renderPage(json, book ?? undefined);
 				const img = await pdf.embedPng(png);
-				// ponytail: page size must be real mm→pt, not raster px — px-as-pt made an
 				// 8-inch page out of 150mm of paper.
 				const pw = (Number(book?.paperWidth) || 150) * MM_TO_PT;
 				const ph = (Number(book?.paperHeight) || 150) * MM_TO_PT;
@@ -162,15 +154,12 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		return Buffer.from(bytes);
 	}
 
-	// ponytail: render 1 trang fabric JSON → PNG buffer.
 	private async renderPage(json: any, book?: { paperWidth?: number | null; paperHeight?: number | null }): Promise<Buffer> {
-		// ponytail: old saves have no width/height -> derive base px from book paper (4 px/mm,
 		// same scale as the studio FORMATS: 150mm -> 600px). json.width wins when present.
 		const mmW = Number(book?.paperWidth) || 150;
 		const mmH = Number(book?.paperHeight) || 150;
 		const baseW = Number(json.width) || Math.round(mmW * 4);
 		const baseH = Number(json.height) || Math.round(mmH * 4);
-		// ponytail: load at base size, then zoom the viewport to 300 DPI. Bigger PNGs =
 		// bigger PDFs + slower render; the price of print-sharp output without a vector rewrite.
 		const zoom = EXPORT_PX_PER_MM / 4;
 		const srcs = collectImageSrcs(json);
@@ -184,7 +173,6 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		const canvas = new StaticCanvas(undefined, { width: Math.round(baseW * zoom), height: Math.round(baseH * zoom) });
 		await canvas.loadFromJSON(json);
 		canvas.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
-		// ponytail: ép font có dấu tiếng Việt cho mọi text object (fix font tiếng việt).
 		// Weight/style pass through from JSON — bold/italic variants registered in ensureFont.
 		const family = process.env.PDF_FONT_FAMILY || PDF_FONT_FAMILY;
 		for (const obj of canvas.getObjects()) {
@@ -198,7 +186,6 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		return Buffer.from(b64, 'base64');
 	}
 
-	// ponytail: tải 1 ảnh, retry 3 lần (backoff x2). Fail → placeholder, tiếp tục.
 	private async downloadOne(url: string, retries = 3): Promise<string> {
 		for (let i = 0; i <= retries; i++) {
 			try {

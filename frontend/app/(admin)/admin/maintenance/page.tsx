@@ -24,7 +24,6 @@ interface AdminStatus {
   history: WindowDTO[];
 }
 
-// ponytail: native datetime-local, không thêm lib picker cho 2 ô nhập.
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

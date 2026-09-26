@@ -10,7 +10,6 @@ import {
 	listMaintenanceHistory,
 } from './maintenance.service.js';
 
-// ponytail: bảo trì trong DB — status public (frontend proxy đọc, không auth),
 // còn lại chỉ admin. Validate nằm trong service.
 const router = Router();
 

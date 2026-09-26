@@ -7,7 +7,6 @@ export function roleHome(role?: string | null): string {
 export const SUPPORTED_LANGS = ["en", "vi", "es"] as const;
 export type SupportedLang = (typeof SUPPORTED_LANGS)[number];
 
-// ponytail: full-reload navigations (window.location, signOut callbackUrl) bypass
 // the cookie redirect, so prefix the lang explicitly — otherwise they land on
 // bare paths and any stale cookie silently resets the UI language.
 export function langFromPath(pathname?: string | null): SupportedLang {

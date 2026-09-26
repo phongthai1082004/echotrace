@@ -47,7 +47,6 @@ export class QueryProcessor {
       }));
     }
 
-    // ponytail: limit comes from query strings — clamp to a sane positive integer
     // (Number(-5) is truthy, so a plain `|| 10` lets negatives through and Prisma throws).
     const limitNum = Number(limit);
     const take = Number.isFinite(limitNum) && limitNum > 0 ? Math.floor(limitNum) : 10;

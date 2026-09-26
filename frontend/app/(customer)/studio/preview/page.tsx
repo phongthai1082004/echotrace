@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BookPreview } from "@/features/book-slider/book";
+import { FlipPreview } from "@/features/book-slider/flip-preview";
 import { customerAPI } from "@/features/studio-canvas/api/customer-api";
 import { renderBookImages, type BookPageImage } from "@/features/book-slider/render-book-images";
 import { resolveFormat, type PageState } from "@/features/studio-canvas/types";
@@ -62,7 +62,7 @@ export default function StudioPreviewPage() {
           Rendering pages…
         </div>
       ) : (
-        <BookPreview images={images} />
+        <FlipPreview images={images} />
       )}
     </div>
   );

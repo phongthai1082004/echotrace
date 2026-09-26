@@ -6,7 +6,6 @@ import { jest } from '@jest/globals';
 import request from 'supertest';
 import { randomUUID } from 'crypto';
 
-// ponytail: ESM không hoist jest.mock — mock SDK PayOS (biên mạng) trước khi
 // db.ts kéo cả server/container lên (dynamic import sau mock).
 jest.unstable_mockModule('@payos/node', () => ({
 	PayOS: class {
@@ -66,7 +65,6 @@ beforeEach(async () => {
 		},
 	});
 	bookId = book.id;
-	// ponytail: calculateCart đọc CartItem (body items chỉ để lọc bookIds)
 	const cart = await db().cart.create({ data: { userId } });
 	await db().cartItem.create({
 		data: { cartId: cart.id, bookId, quantity: 1, cover: 'soft', paper: 'matt', paperSize: 'A4' },

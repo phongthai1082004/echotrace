@@ -42,7 +42,6 @@ export function useCheckoutForm(token?: string) {
   return { form, setField };
 }
 
-// ponytail: validate thông tin khách ở frontend (backend cũng validate) — trả map field → i18n key
 export function validateCheckoutForm(form: CheckoutForm): Partial<Record<keyof CheckoutForm, string>> {
   const errors: Partial<Record<keyof CheckoutForm, string>> = {};
   const name = (form.name ?? '').trim();

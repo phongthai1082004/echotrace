@@ -31,7 +31,6 @@ export class NotificationController {
 		res.json(ApiResponse.success({ marked }));
 	};
 
-	// ponytail: admin broadcast tay — DB + SSE only (không mail).
 	// i18n 3 thứ tiếng nằm trong metadata (không migration); title/message gốc = tiếng Việt.
 	broadcast = async (req: AuthRequest, res: Response) => {
 		const body = req.body as BroadcastNotificationDTO;
@@ -43,7 +42,7 @@ export class NotificationController {
 			type: NotificationType.SYSTEM,
 			title: titleVi,
 			message: messageVi,
-			sendBy: 'shop', // ponytail: admin tự gõ — không để system
+			sendBy: 'shop',
 			i18n: {
 				title: { vi: titleVi, en: pick(body.titleEn, titleVi, 120), es: pick(body.titleEs, titleVi, 120) },
 				message: { vi: messageVi, en: pick(body.messageEn, messageVi, 2000), es: pick(body.messageEs, messageVi, 2000) },
@@ -52,7 +51,6 @@ export class NotificationController {
 		res.json(ApiResponse.success(result));
 	};
 
-	// ponytail: SSE fast-lane — giữ connection trong PresenceService, client
 	// EventSource tự reconnect; req close thì gỡ khỏi map chống connection ma.
 	stream = async (req: AuthRequest, res: Response) => {
 		const userId = Number(req.userId!);

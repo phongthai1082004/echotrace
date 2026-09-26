@@ -2,7 +2,6 @@ import { inject, injectable } from 'tsyringe';
 import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
-// ponytail: repository layer — tách toàn bộ truy cập Prisma của feature cart ra khỏi service.
 // Service chỉ biết CartRepository; mỗi method nhận tx? (transaction client) để gộp chung $transaction.
 const CART_INCLUDE = {
 	items: { include: { book: true }, orderBy: { id: 'asc' } },
@@ -16,7 +15,6 @@ export class CartRepository {
 		return this.prismaService.db;
 	}
 
-	// ponytail: fetch cart with all items+books in one query; used by getCart and calculateCart.
 	getCartWithItems(userId: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).cart.findUnique({ where: { userId }, include: CART_INCLUDE });
 	}

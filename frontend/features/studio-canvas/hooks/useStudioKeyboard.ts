@@ -9,7 +9,6 @@ import { enforceZLayers } from "../lib/fabric-core";
 import { applyUndo, applyRedo } from "../lib/history";
 import { ZOOM_LEVELS } from "../types";
 
-// ponytail: fabric hides custom props from its types — one local shape instead of `any`.
 type CustomProps = {
   _dragOverlay?: boolean;
   _spine?: boolean;
@@ -23,7 +22,6 @@ const setZ = (o: fabric.FabricObject, z: number) => {
   cp.customProperties = { ...cp.customProperties, z };
 };
 
-// ponytail: studio keyboard shortcuts in one place (was inline in StudioWorkspace)
 export function useStudioKeyboard() {
   const { addPage, copySpread, pasteCopiedSpread } = usePageManager();
   const addPageRef = useRef(addPage);
@@ -92,7 +90,6 @@ export function useStudioKeyboard() {
           useCanvasStore.getState().resetPasteCount();
           useCanvasStore.getState().setPageClipboard(null);
         } else {
-          // ponytail: no object selected → copy the active spread (pasted as next pages)
           const t = e.target as HTMLElement;
           if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || t?.isContentEditable) return;
           pageOpsRef.current.copySpread();
@@ -112,7 +109,6 @@ export function useStudioKeyboard() {
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         e.preventDefault();
         const { clipboard, pasteCount, bumpPasteCount, pageClipboard } = useCanvasStore.getState();
-        // ponytail: object copy wins if present; page copy clears it on copy so no ambiguity
         if (clipboard) {
           pasteClipboard(c, clipboard, pasteCount, bumpPasteCount, () => useCanvasStore.getState().pushUndo());
         } else if (pageClipboard?.length) {
@@ -156,7 +152,6 @@ export function useStudioKeyboard() {
         if (!objs.length) return;
         useCanvasStore.getState().pushUndo();
         const front = e.key === "]";
-        // ponytail: same z-swap stacking as the right-click menu (fabric v7 has no bringForward).
         const all = c.getObjects().filter((o) => !customProps(o)._dragOverlay);
         const others = all.filter((a) => !objs.includes(a));
         if (!others.length) return;

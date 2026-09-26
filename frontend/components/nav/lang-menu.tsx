@@ -11,7 +11,6 @@ export function LangMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  // ponytail: disable on studio page
   if (pathname?.includes("studio")) return null;
 
   const langs = [

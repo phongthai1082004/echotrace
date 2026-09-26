@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from './api.response.js';
 import { getMaintenanceStatus } from '../maintenance/maintenance.service.js';
 
-// ponytail: chặn API khi bảo trì, trừ: health, PayOS webhook (tiền vẫn chạy),
 // login/auth (admin cần vào), /api/admin (authGuard bên trong vẫn chặn non-admin),
 // status endpoint (frontend proxy đọc, không auth). Cờ nằm trong DB nên
 // rebuild container không mất. Fail-open khi DB lỗi.

@@ -38,7 +38,6 @@ export function useSampleBooks(initialItems?: SampleBookDTO[], initialNextCursor
 
   useEffect(() => {
     if (!accessToken) return;
-    // ponytail: server đã nạp trang đầu (filter mặc định) — bỏ qua đúng 1 lần fetch đầu.
     if (
       provided &&
       !consumedInitial.current &&

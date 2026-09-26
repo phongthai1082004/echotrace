@@ -7,7 +7,6 @@ import { FunnelChart } from "@/components/charts";
 import { AdminHeader } from "@/components/admin-header";
 import { useMarketingSummary } from "./_hooks/use-marketing-summary";
 
-// ponytail: funnel 5 nấc — 3 nấc đầu từ GA Data API, 2 nấc cuối từ DB.
 // Chưa cấu hình GA (gaConfigured=false) thì đầu phễu hiện 0 + dòng chú thích.
 const CHANNEL_LABELS: Record<string, string> = {
   facebook: "channelFacebookAds",

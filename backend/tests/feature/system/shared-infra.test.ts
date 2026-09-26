@@ -21,7 +21,6 @@ const fakeRedis = () => ({
 	expire: jest.fn(),
 });
 
-// ponytail: swap the private client instead of mocking ioredis — CacheService
 // connects lazily, so constructing it never touches the network.
 const svcWith = (client: any) => {
 	const s = new CacheService(60);

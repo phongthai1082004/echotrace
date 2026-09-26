@@ -1,4 +1,3 @@
-// ponytail: first/last-touch UTM trong localStorage (cùng origin nên OAuth
 // redirect không mất). first bất biến, last ghi đè khi landing có UTM mới.
 export interface AttributionTouch {
   source: string;

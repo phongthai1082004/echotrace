@@ -98,7 +98,6 @@ export class SupplierService implements ISupplierService {
 		await this.supplierRepo.client.$transaction(async (tx) => {
 			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
 			const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
-			// ponytail: 1 updateMany thay vì lặp từng link (N+1)
 			const toDeleteIds = existing
 				.filter((l: any) => !wanted.has(l.printOptionId) && !l.isDelete)
 				.map((l: any) => l.id);

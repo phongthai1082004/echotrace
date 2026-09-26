@@ -131,7 +131,6 @@ export class SampleBookService implements ISampleBookService {
 
 	private visibleStatuses = ['published', 'active'];
 
-	// ponytail: giữ cache full-list, slice theo cursor/limit/category ở bộ nhớ (catalog bé, không đổi schema)
 	async explore(params: { cursor?: number; limit?: number; category?: string } = {}): Promise<{ items: SampleBookDTO[]; nextCursor: number | null }> {
 		const all = await this.getExploreList();
 		return this.paginate(all, params);
@@ -160,7 +159,6 @@ export class SampleBookService implements ISampleBookService {
 		return dtos;
 	}
 
-	// ponytail: ID-based cursor — the full list is cached ordered by id DESC.
 	// cursor is the id of the last item seen (exclusive); pass 0 or omit for the first page.
 	// This is stable: inserting or archiving items between fetches never causes skips/duplicates
 	// because the position is anchored to a real row id, not an integer offset.
@@ -187,7 +185,6 @@ export class SampleBookService implements ISampleBookService {
 		return dto;
 	}
 
-	// ponytail: stock check for cart — goes straight to DB (no cache), returns full row so cart can
 	// copy metadata (cover, style, font, etc.) without an extra fetch.
 	async getByIdForStock(id: number, quantity: number, tx?: Prisma.TransactionClient): Promise<SampleBookRow> {
 		return this.sampleRepo.findForStock(id, quantity, tx);

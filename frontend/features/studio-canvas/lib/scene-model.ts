@@ -1,4 +1,3 @@
-// ponytail: canonical model, zero runtime deps and zero imports from fabric/pdf-lib.
 // Types only -- nothing consumes it yet; the PDF exporter (8.4) will.
 
 export type NodeType = "frame" | "image" | "text" | "sticker" | "shape" | "group";

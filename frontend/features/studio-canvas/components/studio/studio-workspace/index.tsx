@@ -55,7 +55,6 @@ export function StudioWorkspace() {
   const undoVersion = useCanvasStore((s) => s.undoVersion);
   const ctxMenu = useCanvasStore((s) => s.ctxMenu);
   const setCtxMenu = useCanvasStore((s) => s.setCtxMenu);
-  // ponytail: showToast ổn định (useCallback) nên closure trong useDrop deps [] vẫn đúng.
   const { showToast } = useToast();
 
   useElementControls();
@@ -83,7 +82,6 @@ export function StudioWorkspace() {
         const p = canvasPointer(c, off.x, off.y);
         if (item.type === "PHOTO") {
           useCanvasStore.getState().setAutoPlaced(false);
-          // ponytail: core dùng chung với tap mobile (placeDroppedPhoto) —
           // snapshot trang/view, guard nửa, thay-thế, ảnh rời đều nằm trong đó.
           void placeDroppedPhoto(c, p.x, p.y, item.url, hitTestFrame, () =>
             showToast("customer.studio.wrongHalf", "warning"),
@@ -160,14 +158,12 @@ export function StudioWorkspace() {
       const pg = useCanvasStore.getState().pages[idx];
       const coverJson = pg?.canvasJson;
       if (coverJson) {
-        // ponytail: single parse+hydrate — loadFromJSON tolerates the refilled defaults.
         const coverParsed = parsePageJson(coverJson);
         try {
           void c
             .loadFromJSON(coverParsed ?? {}, reviveObject)
             .then(() => {
 				if (destroyedRef.current) return;
-              // ponytail: loadFromJSON đã dựng background đã lưu — không force trắng.
               try {
                 reviveDeep(coverParsed?.objects || [], c.getObjects());
               } catch {
@@ -193,7 +189,6 @@ export function StudioWorkspace() {
       const rightPg = latestPages[rightIdx];
       const leftParsed = parsePageJson(leftPg?.canvasJson);
       const rightParsed = rightPg?.canvasJson && rightPg !== leftPg ? parsePageJson(rightPg.canvasJson) : null;
-      // ponytail: nền view gộp lấy từ trang trái đã lưu (trắng nếu chưa tô) —
       // save split giữ nguyên background cả 2 nửa nên tô 1 bên là cả spread cùng màu.
       const merged: any = {
         version: "7.4",
@@ -213,7 +208,6 @@ export function StudioWorkspace() {
             .loadFromJSON(merged, reviveObject)
             .then(() => {
 				if (destroyedRef.current) return;
-              // ponytail: background đã nằm trong merged — không force trắng.
               reviveDeep(merged.objects || [], c.getObjects());
               // Remove old spine line if exists
               c.getObjects()
@@ -297,7 +291,6 @@ export function StudioWorkspace() {
       decorateRotateControl(o);
       if ((o as any).customProperties?.layer === "frame") styleFrame(o);
     }
-    // ponytail: white glyph inside the mtr circle — same render pass as the circle, always centered.
     function decorateRotateControl(o: any) {
       const mtr = o.controls?.mtr;
       if (!mtr || mtr._glyph) return;
@@ -421,7 +414,6 @@ export function StudioWorkspace() {
       enforceZLayers(c);
       useCanvasStore.getState().incrementLayerVersion();
     });
-    // ponytail: ActiveSelection builds its own controls — decorate on select.
     const decorateActive = () => {
       const a = c.getActiveObject() as any;
       if (a) decorateRotateControl(a);
@@ -472,7 +464,6 @@ export function StudioWorkspace() {
     c.backgroundColor = "#fff";
     c.renderAll();
     setCanvas(c);
-    // ponytail: without this call the import above is dead -- no object:moving
     // handler, no snapping. Detach on cleanup to avoid duplicate handlers.
     const smartGuides = attachSmartGuides(c);
     loadPage(c);
@@ -517,7 +508,6 @@ export function StudioWorkspace() {
     }
   }, [isDraggingPhoto]);
 
-  // ponytail: mobile tap-to-place — tap ảnh để "cầm" (photos-panel arm),
   // tap canvas để đặt vào khung (fill/thay thế) hoặc ảnh rời. Không cần TouchBackend.
   const storeCanvas = useCanvasStore((s) => s.canvas);
   useEffect(() => {
@@ -622,7 +612,6 @@ export function StudioWorkspace() {
                     width: "50%",
                     height: "100%",
                     background: "rgba(128,128,128,0.18)",
-                    // ponytail: chỉ phủ mờ thôi — không có dòng này là nó nuốt hết
                     // chuột nửa không focus, object nhìn như "in vào trang".
                     pointerEvents: "none",
                   }}

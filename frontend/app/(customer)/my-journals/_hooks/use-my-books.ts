@@ -17,7 +17,6 @@ export interface JournalBook {
 export function useMyBooks(token?: string, initial?: JournalBook[], initialErr?: string | null) {
   const [journals, setJournals] = useState<JournalBook[]>(initial ?? []);
   const [fetchError, setFetchError] = useState<string | null>(initialErr ?? null);
-  // ponytail: có initial từ server (kể cả []) thì khỏi fetch lại — hết waterfall + flash skeleton.
   // initial === undefined (server không có token) mới fetch ở client.
   const [loading, setLoading] = useState(initial === undefined);
   const [deleteTarget, setDeleteTarget] = useState<JournalBook | null>(null);

@@ -3,7 +3,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api.fetch";
 
-// ponytail: 1 query key cho badge giỏ hàng — nav + flyout từng apiFetch riêng,
 // hover vài lần là spam /api/cart. staleTime 60s + dedup của react-query lo.
 export const cartCountKey = ["cart", "count"] as const;
 

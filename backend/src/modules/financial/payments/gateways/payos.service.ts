@@ -91,7 +91,6 @@ export class PayOSGateway implements IPaymentStrategy {
 			await this.payOS.paymentRequests.cancel(orderCode, 'refund by admin');
 			return true;
 		} catch (e: any) {
-			// ponytail: already paid -> SDK can't auto-refund; mark manual in caller
 			console.warn('[payos] refund(cancel) failed:', e?.message || e);
 			return false;
 		}

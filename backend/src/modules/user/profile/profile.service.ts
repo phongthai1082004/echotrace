@@ -69,7 +69,6 @@ export class ProfileService implements IProfileService {
 
 		const hashed = await bcrypt.hash(body.newPassword, 10);
 		await this.userRepo.updateUser(parseInt(userId), { password: hashed });
-		// ponytail: cảnh báo bảo mật personal — DB+PUSH+EMAIL, observer nào lỗi cũng không rollback đổi pass
 		this.subject?.notify({
 			userId: String(userId),
 			email: user.email ?? undefined,
@@ -81,7 +80,6 @@ export class ProfileService implements IProfileService {
 		return { message: 'Password updated successfully' };
 	}
 
-	// ponytail: first-touch marketing attribution — write-once, 1 query, không đọc trước
 	async stampAttribution(userId: string, touch: { source?: unknown; medium?: unknown; campaign?: unknown }) {
 		const source = String(touch?.source ?? '').trim().toLowerCase().slice(0, 64);
 		if (!source) return { stamped: false };

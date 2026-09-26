@@ -35,7 +35,6 @@ export type UndoEntry =
       bytes?: number;
     };
 
-// ponytail: undo is in-memory — cap total bytes (not just entry count) so big
 // books can't balloon the tab. Oldest entries drop first, minimum 5 kept.
 const UNDO_BYTE_BUDGET = 20 * 1024 * 1024;
 const UNDO_MIN_ENTRIES = 5;
@@ -93,7 +92,6 @@ interface CanvasStore {
   incrementLayerVersion: () => void;
   autoPlaced: boolean;
   setAutoPlaced: (v: boolean) => void;
-  // ponytail: mobile không có DnD touch — tap ảnh để "cầm", tap canvas để đặt vào khung.
   armedPhotoUrl: string | null;
   setArmedPhotoUrl: (u: string | null) => void;
   viewMode: "left" | "right" | "spread";

@@ -6,7 +6,6 @@ import { getT } from "@/lib/i18n-server";
 import type { OrderDTO } from "@/lib/order.dto";
 import { OrdersClient } from "./_components/orders-client";
 
-// ponytail: page server — header + list lần đầu render sẵn thành HTML,
 // khỏi waterfall session → token → fetch ở client.
 export default async function OrdersPage() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
@@ -19,7 +18,6 @@ export default async function OrdersPage() {
     try {
       initialOrders = (await apiFetch<OrderDTO[]>("/api/orders", token)) ?? [];
     } catch {
-      // ponytail: để undefined cho island fetch lại qua proxy, đừng gán [] (kẹt trống).
     }
   }
 
