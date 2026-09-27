@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { TEXT_COLOR_PRESETS } from "../../../types";
+import { isCoverPage, isPageLocked, pageBackground } from "../../../lib/layout-engine";
+import { syncHalfBackgrounds } from "../../../lib/frames";
 
 export function BackgroundPanel() {
   const { t } = useTranslation();
@@ -20,10 +22,27 @@ export function BackgroundPanel() {
   }, [current, activePageIndex, undoVersion]);
 
   const apply = (color: string) => {
-    const c = useCanvasStore.getState().canvas;
-    if (!c) return;
+    const st = useCanvasStore.getState();
+    const c = st.canvas;
+    if (!c || isPageLocked(st.pages, st.activePageIndex)) return;
     useCanvasStore.getState().pushUndo();
     c.set({ backgroundColor: color });
+    // L/R: canvas bg là màu nửa focus, rect vẽ nửa còn lại giữ màu đã lưu.
+    // 2P: rect nửa phải ăn màu mới theo để cả 2 cùng đổi.
+    const n = st.pages.length;
+    const idx = st.activePageIndex;
+    const halfW = (c.getWidth() || 840) / 2;
+    if (!isCoverPage(idx, n) && c.getWidth() > 400) {
+      const rightIdx = Math.min(idx + 1, n - 1);
+      const mode = st.viewMode === "spread" ? "spread" : st.viewMode;
+      const otherBg =
+        mode === "spread"
+          ? color
+          : pageBackground((mode === "left" ? st.pages[rightIdx] : st.pages[idx])?.canvasJson);
+      syncHalfBackgrounds(c, halfW, c.getHeight(), mode, otherBg);
+    } else {
+      syncHalfBackgrounds(c, halfW, c.getHeight(), "cover", undefined);
+    }
     c.renderAll();
     setHexInput(color.replace("#", ""));
   };

@@ -1,7 +1,7 @@
 import * as fabric from "fabric";
 import type { PageState } from "../types";
 import type { UndoEntry } from "../hooks/useCanvasState";
-import { splitCanvasByMidpoint, serializeCanvasState, isCoverPage } from "./layout-engine";
+import { splitCanvasForView, serializeCanvasState, isCoverPage } from "./layout-engine";
 import { removeDragOverlays } from "./frames";
 import { removePhotoDimOverlays } from "./photos";
 
@@ -49,7 +49,15 @@ export function applyUndo(
   if (prev.type === "canvas") {
     const { pageIdx, canvasJson } = prev;
     if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
-      const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
+      // undo cũng tách theo view đang đứng để khỏi ghi đè màu nửa kia.
+      const rightIdx = Math.min(pageIdx + 1, pageCount - 1);
+      const { leftJson, rightJson } = splitCanvasForView(
+        canvasJson,
+        canvas.getWidth() / 2,
+        stateSnapshot.viewMode,
+        stateSnapshot.pages[pageIdx]?.canvasJson,
+        stateSnapshot.pages[rightIdx]?.canvasJson,
+      );
       setPage(pageIdx, { canvasJson: leftJson });
       setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
     } else {
@@ -70,6 +78,11 @@ export function applyRedo(
   popRedo: () => UndoEntry | undefined,
   pushUndo: () => void,
   pushUndoPages: () => void,
+  stateSnapshot: {
+    pages: PageState[];
+    activePageIndex: number;
+    viewMode: "left" | "right" | "spread";
+  },
   setPage: (i: number, p: Partial<PageState>) => void,
   setPages: (p: PageState[]) => void,
   setActivePageIndex: (i: number) => void,
@@ -92,7 +105,14 @@ export function applyRedo(
   if (next.type === "canvas") {
     const { pageIdx, canvasJson } = next;
     if (!isCoverPage(pageIdx, pageCount) && canvas.getWidth() > 400) {
-      const { leftJson, rightJson } = splitCanvasByMidpoint(canvasJson, canvas.getWidth() / 2);
+      const rightIdx = Math.min(pageIdx + 1, pageCount - 1);
+      const { leftJson, rightJson } = splitCanvasForView(
+        canvasJson,
+        canvas.getWidth() / 2,
+        stateSnapshot.viewMode,
+        stateSnapshot.pages[pageIdx]?.canvasJson,
+        stateSnapshot.pages[rightIdx]?.canvasJson,
+      );
       setPage(pageIdx, { canvasJson: leftJson });
       setPage(Math.min(pageIdx + 1, pageCount - 1), { canvasJson: rightJson });
     } else {

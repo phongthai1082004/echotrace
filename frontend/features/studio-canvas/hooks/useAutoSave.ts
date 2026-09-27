@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useCanvasStore } from "./useCanvasState";
 import { calculateSpineWidth } from "../lib/spine";
-import { serializeCanvasState, isCoverPage, splitCanvasByMidpoint } from "../lib/layout-engine";
+import { serializeCanvasState, isCoverPage, splitCanvasForView, samePageBackground } from "../lib/layout-engine";
 import { useStudioAPI } from "../context/studio-context";
 import type { StudioAPI } from "../api/studio-api";
 import { resolveFormat } from "../types";
@@ -43,12 +43,19 @@ async function runSaveFull(
     const updatedPages = [...s.pages];
     const spread = !isCoverPage(s.activePageIndex, pageCount) && s.viewMode === "spread";
     if (!isCoverPage(s.activePageIndex, pageCount) && c.getWidth() > 400) {
-      const { leftJson, rightJson } = splitCanvasByMidpoint(currentJson, c.getWidth() / 2);
+      const rightIdx = Math.min(s.activePageIndex + 1, pageCount - 1);
+      // L/R chỉ đổi màu nửa focus, nửa kia giữ màu đã lưu; 2P đổi cả hai.
+      const { leftJson, rightJson } = splitCanvasForView(
+        currentJson,
+        c.getWidth() / 2,
+        s.viewMode,
+        s.pages[s.activePageIndex]?.canvasJson,
+        s.pages[rightIdx]?.canvasJson,
+      );
       const layoutField = spread
         ? { spreadLayout: s.activeLayout, layout: null }
         : { layout: s.activeLayout, spreadLayout: null };
       updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: leftJson, ...layoutField };
-      const rightIdx = Math.min(s.activePageIndex + 1, pageCount - 1);
       updatedPages[rightIdx] = {
         ...updatedPages[rightIdx],
         canvasJson: rightJson,
@@ -91,6 +98,7 @@ async function runSaveFull(
       spreadLayout: p.spreadLayout,
       canvasJson: p.canvasJson,
       thumbnailUrl: p.thumbnailUrl,
+      locked: p.locked ?? false,
       // Backend merge content.pages theo index nên elements được lưu cùng trang.
       elements: serializePage(p.canvasJson, p.index)?.elements ?? [],
     }));
@@ -140,7 +148,8 @@ async function runSaveFull(
         const prevJson = prevSnap?.canvasJson ?? null;
         const d = diffPageObjects(prevJson, p.canvasJson);
         const nextCount = parsePageJson(p.canvasJson)?.objects?.length ?? 0;
-        if (prevJson && d.removed.length + d.changed.length < nextCount) {
+        // màu nền nằm ngoài objects nên delta không mang theo — đổi màu thì gửi full trang.
+        if (prevJson && samePageBackground(prevJson, p.canvasJson) && d.removed.length + d.changed.length < nextCount) {
           const rest: Record<string, unknown> = { ...p };
           delete rest.canvasJson;
           return { ...rest, changedObjects: d };
@@ -215,6 +224,7 @@ type PageSnapshot = {
   index: number;
   layout: unknown;
   spreadLayout: unknown;
+  locked: unknown;
   canvasJson: string | null;
   thumbnailUrl: string | null;
 };
@@ -223,7 +233,13 @@ const lastSavedBooks = new Map<string, { pages: PageSnapshot[]; metaSig: string 
 
 function samePage(a: PageSnapshot | undefined, b: PageSnapshot): boolean {
   // cadence and must never mark a page dirty by themselves (phantom empty saves).
-  return !!a && a.canvasJson === b.canvasJson && a.layout === b.layout && a.spreadLayout === b.spreadLayout;
+  return (
+    !!a &&
+    a.canvasJson === b.canvasJson &&
+    a.layout === b.layout &&
+    a.spreadLayout === b.spreadLayout &&
+    a.locked === b.locked
+  );
 }
 
 // sure no raw dataURL thumb is ever sent/stored; upload once, R2 URLs pass through.

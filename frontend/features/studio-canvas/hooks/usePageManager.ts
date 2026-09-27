@@ -2,7 +2,7 @@
 
 import { useCanvasStore } from "./useCanvasState";
 import type { PageState } from "../types";
-import { serializeCanvasState, isCoverPage, splitCanvasByMidpoint } from "../lib/layout-engine";
+import { serializeCanvasState, isCoverPage, splitCanvasForView } from "../lib/layout-engine";
 
 export function usePageManager() {
   const saveCurrentPage = () => {
@@ -19,8 +19,15 @@ export function usePageManager() {
     const cw = c.getWidth();
     if (!isCoverPage(activePageIndex, n) && cw > 400) {
       const mid = cw / 2;
-      const { leftJson, rightJson } = splitCanvasByMidpoint(json, mid);
       const rightIdx = Math.min(activePageIndex + 1, n - 1);
+      // L/R chỉ đổi màu nửa focus, nửa kia giữ màu đã lưu; 2P đổi cả hai.
+      const { leftJson, rightJson } = splitCanvasForView(
+        json,
+        mid,
+        viewMode,
+        pages[activePageIndex]?.canvasJson,
+        pages[rightIdx]?.canvasJson,
+      );
 
 
       if (viewMode === "spread") {
@@ -94,6 +101,7 @@ export function usePageManager() {
   const deletePage = (index: number) => {
     const { pages, activePageIndex, setPages, setActivePageIndex, viewMode } = useCanvasStore.getState();
     if (index === 0 || index >= pages.length - 1) return;
+    if (pages[index]?.locked) return; // trang khóa => viewonly, không xóa
     saveCurrentPage();
     useCanvasStore.getState().pushUndoPages();
     const updated = pages.filter((_, i) => i !== index).map((p, i) => ({ ...p, index: i }));
@@ -198,5 +206,18 @@ export function usePageManager() {
     return true;
   };
 
-  return { saveCurrentPage, switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread, chunkOfPage };
+  // khóa/mở theo cụm hiển thị: cover khóa lẻ, spread khóa cả cặp (left+right).
+  const togglePageLock = (index?: number) => {
+    const st = useCanvasStore.getState();
+    const idx = index ?? st.activePageIndex;
+    const n = st.pages.length;
+    const chunk = chunkOfPage(idx);
+    const idxs = chunk ? [chunk.leftIdx, ...(chunk.rightIdx !== chunk.leftIdx ? [chunk.rightIdx] : [])] : [idx];
+    const next = !idxs.every((i) => st.pages[i]?.locked);
+    st.pushUndoPages();
+    st.setPages(st.pages.map((p, i) => (idxs.includes(i) ? { ...p, index: i, locked: next } : p)));
+    return next;
+  };
+
+  return { saveCurrentPage, switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread, chunkOfPage, togglePageLock };
 }

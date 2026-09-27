@@ -67,6 +67,7 @@ export function useStudioEditor(
               thumbnailUrl: p.thumbnailUrl ?? null,
               layout: p.layout ?? null,
               spreadLayout: p.spreadLayout ?? null,
+              locked: p.locked ?? false,
             })),
           );
         }

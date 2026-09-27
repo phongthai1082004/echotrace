@@ -7,6 +7,7 @@ import { groupSelectedObjects, ungroupSelectedObjects } from "../lib/groups";
 import { deleteSelectedObjects } from "../lib/frames";
 import { enforceZLayers } from "../lib/fabric-core";
 import { applyUndo, applyRedo } from "../lib/history";
+import { isPageLocked } from "../lib/layout-engine";
 import { ZOOM_LEVELS } from "../types";
 
 type CustomProps = {
@@ -35,8 +36,12 @@ export function useStudioKeyboard() {
     const onKeyDown = (e: KeyboardEvent) => {
       const c = useCanvasStore.getState().canvas;
       if (!c) return;
+      // trang khóa => viewonly: chỉ cho copy/zoom/chuyển trang, chặn mọi biến đổi.
+      const ls = useCanvasStore.getState();
+      const locked = isPageLocked(ls.pages, ls.activePageIndex);
       if (customProps(c.getActiveObject()).isEditing) return;
       if (e.key === "Delete" || e.key === "Backspace") {
+        if (locked) return;
         const t = e.target as HTMLElement;
         if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || t?.isContentEditable) return;
         if (!c.getActiveObjects().length) return;
@@ -46,6 +51,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
+        if (locked) return;
         const s = useCanvasStore.getState();
         if (!s.undoStack.length) return;
         applyUndo(
@@ -63,6 +69,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key === "z") || e.key === "y")) {
         e.preventDefault();
+        if (locked) return;
         const s = useCanvasStore.getState();
         if (!s.redoStack.length) return;
         applyRedo(
@@ -70,6 +77,7 @@ export function useStudioKeyboard() {
           s.popRedo,
           s.pushUndo,
           s.pushUndoPages,
+          { pages: s.pages, activePageIndex: s.activePageIndex, viewMode: s.viewMode },
           s.setPage,
           s.setPages,
           s.setActivePageIndex,
@@ -97,6 +105,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "x") {
         e.preventDefault();
+        if (locked) return;
         const a2 = c.getActiveObject();
         if (a2 && !customProps(a2)._dragOverlay) {
           useCanvasStore.getState().setClipboard(serializeSel(c, a2));
@@ -108,6 +117,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         e.preventDefault();
+        if (locked) return;
         const { clipboard, pasteCount, bumpPasteCount, pageClipboard } = useCanvasStore.getState();
         if (clipboard) {
           pasteClipboard(c, clipboard, pasteCount, bumpPasteCount, () => useCanvasStore.getState().pushUndo());
@@ -117,6 +127,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g") {
         e.preventDefault();
+        if (locked) return;
         const s = useCanvasStore.getState();
         s.pushUndo();
         (e.shiftKey ? ungroupSelectedObjects : groupSelectedObjects)(c);
@@ -138,6 +149,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && !inField) {
         e.preventDefault();
+        if (locked) return;
         const a = c.getActiveObject();
         if (!a || customProps(a)._dragOverlay) return;
         const st = useCanvasStore.getState();
@@ -148,6 +160,7 @@ export function useStudioKeyboard() {
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === "]" || e.key === "[")) {
         e.preventDefault();
+        if (locked) return;
         const objs = c.getActiveObjects();
         if (!objs.length) return;
         useCanvasStore.getState().pushUndo();

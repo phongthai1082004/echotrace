@@ -429,7 +429,10 @@
 			"upload": "+ Upload",
 			"noPhotos": "No photos yet. Click \"+ Upload\" to add some.",
 			"addedToCart": "Added to cart!",
-			"background": "Background"
+			"background": "Background",
+			"lockPage": "Lock page",
+			"unlockPage": "Unlock page",
+			"viewOnly": "View only"
 		},
 		"orders": {
 			"title": "My Orders",

@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Sparkles, Type } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { usePageManager } from "../../hooks/usePageManager";
 import { useAutoFill } from "../../hooks/useAutoFill";
+import { isPageLocked } from "../../lib/layout-engine";
 import { FONTS } from "../../types";
 import { navItems } from "./studio-sidebar/nav-items";
 import { StudioSidebarPanel } from "./studio-sidebar-panel";
@@ -35,8 +36,9 @@ const MENU_ICON: Record<string, React.ReactNode> = {
 };
 
 function addDefaultText(defaultLabel: string) {
-  const c = useCanvasStore.getState().canvas;
-  if (!c) return;
+  const st = useCanvasStore.getState();
+  const c = st.canvas;
+  if (!c || isPageLocked(st.pages, st.activePageIndex)) return;
   const active = c.getActiveObject();
   if (active && (active.type === "i-text" || active.type === "textbox")) return;
   useCanvasStore.getState().pushUndo();

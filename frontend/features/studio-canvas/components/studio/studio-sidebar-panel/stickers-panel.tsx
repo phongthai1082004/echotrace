@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useDrag } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { placeFreeImage, isCoarsePointer } from "../../../lib/photos";
+import { isPageLocked } from "../../../lib/layout-engine";
 import { useSession } from "next-auth/react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@echotrace/shared";
 import { Search, X } from "lucide-react";
@@ -33,6 +34,8 @@ function DraggableStickerImg({ url, name }: { url: string; name: string }) {
 
   const handleTapAdd = () => {
     if (!isCoarsePointer()) return;
+    const st0 = useCanvasStore.getState();
+    if (isPageLocked(st0.pages, st0.activePageIndex)) return;
     const c = useCanvasStore.getState().canvas;
     if (!c) return;
     useCanvasStore.getState().pushUndo();

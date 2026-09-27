@@ -429,7 +429,10 @@
 			"upload": "+ Subir",
 			"noPhotos": "Sin fotos aún. Haz clic en \"+ Subir\" para añadir.",
 			"addedToCart": "¡Añadido al carrito!",
-			"background": "Fondo"
+			"background": "Fondo",
+			"lockPage": "Bloquear página",
+			"unlockPage": "Desbloquear página",
+			"viewOnly": "Solo lectura"
 		},
 		"orders": {
 			"title": "Mis Pedidos",

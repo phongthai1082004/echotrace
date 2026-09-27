@@ -36,6 +36,7 @@ export function useAutoFill(token: string | undefined) {
     const pageEmptyFrames: { pageIdx: number; frameIdx: number; frameSelId: string }[] = [];
 
     for (let i = 0; i < s.pages.length; i++) {
+      if (s.pages[i].locked) continue; // trang khóa => viewonly, không fill
       const pgJson = s.pages[i].canvasJson;
       if (!pgJson) continue;
       let objects: any[];

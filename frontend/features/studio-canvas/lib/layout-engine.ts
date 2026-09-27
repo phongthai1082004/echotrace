@@ -80,8 +80,23 @@ export function isCoverPage(index: number, total: number): boolean {
   return index === 0 || index === total - 1 || total <= 2;
 }
 
+// trang khóa => viewonly: không sửa/xóa gì bên trong. Canvas render trang đang
+// xem + trang kề (spread) nên khóa 1 trong 2 là khóa cả view.
+// ponytail: check O(1) theo index, không duyệt pages.
+export function isPageLocked(pages: { locked?: boolean }[], index: number): boolean {
+  if (pages[index]?.locked) return true;
+  const n = pages.length;
+  if (!isCoverPage(index, n) && pages[Math.min(index + 1, n - 1)]?.locked) return true;
+  return false;
+}
 
-export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { leftJson: string; rightJson: string } {
+
+export function splitCanvasByMidpoint(
+  jsonStr: string,
+  midpoint: number,
+  // L/R view: nửa không focus giữ màu đã lưu, chỉ nửa focus ăn màu mới; 2P đổi cả hai.
+  bg?: { left?: unknown; right?: unknown },
+): { leftJson: string; rightJson: string } {
   const parsed = parsePageJson(jsonStr) ?? { objects: [] };
   const leftObjs: any[] = [],
     rightObjs: any[] = [];
@@ -93,11 +108,42 @@ export function splitCanvasByMidpoint(jsonStr: string, midpoint: number): { left
       rightObjs.push(o);
     }
   });
-  const mkJson = (objs: any[]) => {
+  const mkJson = (objs: any[], background?: unknown) => {
     const half = { ...parsed, objects: objs };
+    if (background !== undefined) half.background = background;
     stripSparsePage(half);
     return JSON.stringify(half);
   };
-  return { leftJson: mkJson(leftObjs), rightJson: mkJson(rightObjs) };
+  return { leftJson: mkJson(leftObjs, bg?.left), rightJson: mkJson(rightObjs, bg?.right) };
+}
+
+// màu nền nằm ở canvas-level trong page JSON (string hoặc object gradient/pattern).
+// ponytail: JSON.parse thô, khỏi parsePageJson để không spam warn version.
+export function pageBackground(canvasJson: string | null | undefined): unknown {
+  if (!canvasJson) return undefined;
+  try {
+    return (JSON.parse(canvasJson) as any)?.background;
+  } catch {
+    return undefined;
+  }
+}
+
+export function samePageBackground(a: string | null | undefined, b: string | null | undefined): boolean {
+  return JSON.stringify(pageBackground(a) ?? null) === JSON.stringify(pageBackground(b) ?? null);
+}
+
+// tách spread theo view: L/R chỉ đổi màu nửa focus (nửa kia giữ màu đã lưu), 2P đổi cả hai.
+// ponytail: 1 chỗ duy nhất, save/undo/redo đều qua đây để khỏi lệch màu nhau.
+export function splitCanvasForView(
+  jsonStr: string,
+  midpoint: number,
+  viewMode: "left" | "right" | "spread",
+  leftStoredJson: string | null | undefined,
+  rightStoredJson: string | null | undefined,
+): { leftJson: string; rightJson: string } {
+  return splitCanvasByMidpoint(jsonStr, midpoint, {
+    left: viewMode === "right" ? pageBackground(leftStoredJson) : undefined,
+    right: viewMode === "left" ? pageBackground(rightStoredJson) : undefined,
+  });
 }
 

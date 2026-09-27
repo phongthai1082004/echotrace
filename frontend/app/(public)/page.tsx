@@ -1,3 +1,8 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { authOptions } from "@/lib/auth.config";
+import { withLang } from "@/lib/routing";
 import { LandingReveal } from "@/features/landing/landing-reveal";
 import { HeroSection } from "@/features/landing/sections/hero";
 import { Marquee } from "@/features/landing/sections/marquee";
@@ -9,7 +14,14 @@ import { TestimonialSection } from "@/features/landing/sections/testimonial";
 import { CtaSection } from "@/features/landing/sections/cta";
 import { FooterSection } from "@/features/landing/sections/footer";
 
-export default function HomePage() {
+export default async function HomePage() {
+	// token admin vào trang chủ thì đến thẳng analytics, khỏi xem landing.
+	const session = await getServerSession(authOptions);
+	if ((session?.user as { role?: string } | undefined)?.role === "admin") {
+		const langs = ["en", "vi", "es"];
+		const raw = (await headers()).get("x-i18n-lang") ?? (await cookies()).get("i18nextLng")?.value;
+		redirect(withLang("/admin/analytics", langs.includes(raw ?? "") ? raw! : undefined));
+	}
 	return (
 		<LandingReveal>
 			<div style={{ background: "#F8F2E5", minHeight: "92vh", overflowX: "hidden", paddingTop: 60 }}>

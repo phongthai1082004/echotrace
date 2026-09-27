@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Undo2, Redo2, Type, Trash2 } from "lucide-react";
+import { Undo2, Redo2, Type, Trash2, Lock, LockOpen } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,7 @@ import { useToast } from "@/components/toast";
 import { apiFetch } from "@/lib/api.fetch";
 import { neoBtnSm, neoBtnPrimarySm } from "@/lib/styles";
 import { ZOOM_LEVELS, FONTS } from "../../types";
-import { isCoverPage, serializeCanvasState } from "../../lib/layout-engine";
+import { isCoverPage, serializeCanvasState, isPageLocked } from "../../lib/layout-engine";
 import { applyUndo, applyRedo } from "../../lib/history";
 import { isFrameObject } from "../../lib/fabric-core";
 import { deleteSelectedObjects } from "../../lib/frames";
@@ -85,7 +85,8 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   const viewMode = useCanvasStore((s) => s.viewMode);
   useCanvasStore((s) => s.selectionVersion);
   const { saveFull } = useAutoSave();
-  const { saveCurrentPage } = usePageManager();
+  const { saveCurrentPage, togglePageLock } = usePageManager();
+  const pageLocked = useCanvasStore((s) => isPageLocked(s.pages, s.activePageIndex));
   const { showToast } = useToast();
   const { data: session } = useSession();
   const router = useRouter();
@@ -135,6 +136,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
       s.popRedo,
       s.pushUndo,
       s.pushUndoPages,
+      { pages: s.pages, activePageIndex: s.activePageIndex, viewMode: s.viewMode },
       s.setPage,
       s.setPages,
       s.setActivePageIndex,
@@ -146,6 +148,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
 
   const handleDelete = () => {
     if (!canvas) return;
+    if (pageLocked) return;
     if (!canvas.getActiveObjects().length) return;
     pushUndo();
     // its children -- route through the group-aware delete instead.
@@ -159,7 +162,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   };
 
   const handleAddText = (preset?: (typeof TEXT_PRESETS)[number]) => {
-    if (!canvas) return;
+    if (!canvas || pageLocked) return;
     pushUndo();
     const id = `text-${Date.now()}`;
     const st = useCanvasStore.getState();
@@ -182,7 +185,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   };
 
   const handleFlipH = () => {
-    if (!canvas) return;
+    if (!canvas || pageLocked) return;
     const active = canvas.getActiveObject();
     if (active) {
       pushUndo();
@@ -201,7 +204,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
   };
 
   const handleFlipV = () => {
-    if (!canvas) return;
+    if (!canvas || pageLocked) return;
     const active = canvas.getActiveObject();
     if (active) {
       pushUndo();
@@ -292,6 +295,19 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
       </div>
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <DelBtn icon={<Trash2 size={iconSize} />} label={t("customer.studio.deleteBtn")} onClick={handleDelete} />
+      <div className="relative group">
+        <button
+          onClick={() => togglePageLock()}
+          className={`p-1.5 rounded-[6px] border-2 transition-all ${pageLocked ? "bg-[#222] text-white border-[#222]" : "border-transparent hover:bg-[#FFF7D6] hover:border-[#222] text-[#222]"}`}
+        >
+          {pageLocked ? <Lock size={iconSize} /> : <LockOpen size={iconSize} />}
+        </button>
+        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none">
+          <div className="bg-[#222] text-white font-mono text-[8px] font-bold tracking-widest uppercase px-2 py-1 rounded-md whitespace-nowrap">
+            {pageLocked ? t("customer.studio.unlockPage") : t("customer.studio.lockPage")}
+          </div>
+        </div>
+      </div>
       <div className="w-[3px] h-4 bg-[#222] rounded-full" />
       <ToolBtn
         icon={

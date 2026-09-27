@@ -6,6 +6,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import * as fabric from "fabric";
 import exampleImg from "@/assets/images/example.jpg";
 import { FILTER_PRESETS, parseFilterSliders } from "../../../lib/filters";
+import { isPageLocked } from "../../../lib/layout-engine";
 import { YesNoPopup } from "@/components/yes-no-popup";
 
 function filtersToJSON(filters: fabric.filters.BaseFilter<any, any, any>[]): Record<string, any>[] {
@@ -15,7 +16,7 @@ function filtersToJSON(filters: fabric.filters.BaseFilter<any, any, any>[]): Rec
 function injectFiltersToAllPages(filterData: Record<string, any>[]) {
   const s = useCanvasStore.getState();
   const updatedPages = s.pages.map((pg) => {
-    if (!pg.canvasJson) return pg;
+    if (!pg.canvasJson || pg.locked) return pg; // trang khóa => viewonly, giữ nguyên
     try {
       const parsed = JSON.parse(pg.canvasJson);
       parsed.objects?.forEach((obj: any) => {
@@ -68,6 +69,11 @@ export function FilterPanel() {
 
   const doApply = (f: (typeof FILTER_PRESETS)[number]) => {
     if (!canvas) return;
+    const st = useCanvasStore.getState();
+    if (isPageLocked(st.pages, st.activePageIndex)) {
+      setConfirm(null);
+      return;
+    }
     pushUndo();
     applyToAllPhotos(canvas, f.apply());
     const active = canvas.getActiveObject();
@@ -80,6 +86,8 @@ export function FilterPanel() {
 
   const handleReset = () => {
     if (!canvas) return;
+    const st = useCanvasStore.getState();
+    if (isPageLocked(st.pages, st.activePageIndex)) return;
     pushUndo();
     clearAllPhotos(canvas);
     setFilterSliderValues({ Brightness: 0, Contrast: 0, Saturation: 0, Vibrance: 0 });

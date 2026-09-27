@@ -7,9 +7,44 @@ const CSS_FAMILIES = [
   "Lobster",
   "Satisfy",
   "Allura",
+  "Playfair+Display:wght@400;700",
+  "Cormorant+Garamond:wght@400;700",
+  "Righteous",
+  "Permanent+Marker",
+  "Abril+Fatface",
+  "Bebas+Neue",
+  "Oswald:wght@400;700",
+  "Montserrat:wght@400;700",
+  "Poppins:wght@400;700",
+  "Raleway:wght@400;700",
+  "Quicksand:wght@400;700",
+  "Comfortaa:wght@400;700",
+  "DM+Mono:wght@400;700",
 ];
 
-const LOAD_NAMES = ["Dancing Script", "Great Vibes", "Pacifico", "Lobster", "Satisfy", "Allura"];
+// Space Grotesk / Inter / JetBrains Mono đã có qua next/font ở layout chung.
+
+const LOAD_NAMES = [
+  "Dancing Script",
+  "Great Vibes",
+  "Pacifico",
+  "Lobster",
+  "Satisfy",
+  "Allura",
+  "Playfair Display",
+  "Cormorant Garamond",
+  "Righteous",
+  "Permanent Marker",
+  "Abril Fatface",
+  "Bebas Neue",
+  "Oswald",
+  "Montserrat",
+  "Poppins",
+  "Raleway",
+  "Quicksand",
+  "Comfortaa",
+  "DM Mono",
+];
 
 const LOAD_SAMPLE = "Tiếng Việt có dấu 123";
 

@@ -6,6 +6,7 @@ import { NeoSelect } from "@/components/neo-select";
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FONTS, TEXT_COLOR_PRESETS, resolveFormat } from "../../types";
+import { isPageLocked } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
 import { toggleFrameBorder, setFrameBorderWidth } from "../../lib/frames";
@@ -26,6 +27,7 @@ export function StudioProperties() {
   const canvas = useCanvasStore((s) => s.canvas);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const selectionVersion = useCanvasStore((s) => s.selectionVersion);
+  const pageLocked = useCanvasStore((s) => isPageLocked(s.pages, s.activePageIndex));
   const incrementSelectionVersion = useCanvasStore((s) => s.incrementSelectionVersion);
   const storeSliderValues = useCanvasStore((s) => s.filterSliderValues);
   const setFilterSliderValues = useCanvasStore((s) => s.setFilterSliderValues);
@@ -69,6 +71,7 @@ export function StudioProperties() {
   };
 
   const applyText = (patch: Record<string, unknown> | ((txt: fabric.IText) => Record<string, unknown>)) => {
+    if (pageLocked) return;
     if (!selected || (selected.type !== "i-text" && selected.type !== "textbox")) return;
     const txt = selected as fabric.IText;
     txt.set(typeof patch === "function" ? patch(txt) : patch);
@@ -139,8 +142,11 @@ export function StudioProperties() {
         <p className="font-mono text-[9px] font-bold tracking-widest uppercase mb-3 text-[#666]">
           {t("customer.studio.properties")}
         </p>
-        {isImage ? (
-          <div className="space-y-4">
+        {pageLocked ? (
+          <p className="font-mono text-[10px] font-bold text-[#999]">
+            {t("customer.studio.viewOnly")} — {t("customer.studio.unlockPage")}
+          </p>
+        ) : isImage ? (          <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[9px] font-bold tracking-widest uppercase text-[#666]">
@@ -210,7 +216,7 @@ export function StudioProperties() {
                 onChange={applyFont}
                 placeholder={t("customer.studio.font")}
                 className="w-full"
-                options={FONTS.map((f) => ({ value: f.css, label: f.name }))}
+                options={FONTS.map((f) => ({ value: f.css, label: f.name, style: { fontFamily: f.css } }))}
               />
             </div>
             {selected && (

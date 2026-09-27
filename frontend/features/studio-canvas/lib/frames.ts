@@ -1,8 +1,8 @@
 ﻿import * as fabric from "fabric";
 import type { LayoutConfig } from "../types/layout";
-import { isFrameObject, styleFrame, nextFrameZ, isObjectLocked } from "./fabric-core";
+import { isFrameObject, styleFrame, nextFrameZ, isObjectLocked, enforceZLayers } from "./fabric-core";
 import { DESIGN_W, DESIGN_H, layoutSlotTransform } from "./layout-engine";
-import { resolveFrameForPhoto, allPhotoCandidates, resetCanvasInteractions, applyFrameClip } from "./photos";
+import { resolveFrameForPhoto, allPhotoCandidates, resetCanvasInteractions, applyFrameClip, lockPhotoInFrame } from "./photos";
 
 const OVERLAY_KEY = "_dragOverlay";
 
@@ -475,9 +475,82 @@ export function applyInteractionLock(
   }
 }
 
+// khóa trang (viewonly): liệt toàn bộ object, mở lại thì dựng đúng trạng thái cũ
+// (ảnh nằm trong khung giữ nguyên khóa, nửa không focus giữ nguyên liệt).
+// ponytail: không snapshot state, dựng lại theo quy tắc frame/view.
+export function applyPageLock(
+  canvas: fabric.Canvas,
+  locked: boolean,
+  pageW: number,
+  isCover: boolean,
+  viewMode: "left" | "right" | "spread",
+) {
+  if (locked) {
+    canvas.discardActiveObject();
+    canvas.getObjects().forEach((o: any) => {
+      if (o._spine || o._dragOverlay || o._dimOverlay || o.excludeFromExport) return;
+      o.set({ selectable: false, evented: false, hasControls: false, hasBorders: false } as any);
+    });
+    canvas.selection = false;
+  } else {
+    canvas.selection = true;
+    canvas.getObjects().forEach((o: any) => {
+      if (o._spine || o._dragOverlay || o._dimOverlay || o.excludeFromExport) return;
+      if (o.customProperties?.layer === "photo" && resolveFrameForPhoto(canvas, o)) {
+        lockPhotoInFrame(canvas, o);
+        return;
+      }
+      o.set({ selectable: true, evented: true, hasControls: true, hasBorders: true } as any);
+    });
+    applyInteractionLock(canvas, pageW, isCover, viewMode);
+  }
+  canvas.requestRenderAll();
+}
+
+// nền nửa không focus là 1 rect đứng sau cùng: không serialize, không bắt sự kiện,
+// không selectable — chỉ để preview đúng màu từng nửa lúc live.
+// ponytail: canvas backgroundColor vẽ được đúng 1 màu, đây là cách duy nhất preview
+// 2 màu mà không chạm model lưu trữ (rect có excludeFromExport nên toJSON bỏ qua).
+export function syncHalfBackgrounds(
+  canvas: fabric.Canvas,
+  pageW: number,
+  pageH: number,
+  mode: "left" | "right" | "spread" | "cover",
+  otherBg: unknown,
+) {
+  canvas
+    .getObjects()
+    .filter((o: any) => (o as any)._pageBg)
+    .forEach((o) => canvas.remove(o));
+  // cover: canvas bg phủ hết; spread/L: canvas bg là màu nửa trái, rect vẽ nửa phải.
+  const side = mode === "right" ? "left" : mode === "cover" ? null : "right";
+  if (!side || typeof otherBg !== "string") {
+    canvas.requestRenderAll();
+    return;
+  }
+  const r = new fabric.Rect({
+    left: side === "left" ? 0 : pageW,
+    top: 0,
+    width: pageW,
+    height: pageH,
+    originX: "left",
+    originY: "top",
+    fill: otherBg || "#fff",
+    selectable: false,
+    evented: false,
+    hasControls: false,
+    hasBorders: false,
+    excludeFromExport: true,
+  });
+  (r as any)._pageBg = side;
+  (r as any).customProperties = { z: -1000, layer: "pageBg" };
+  canvas.add(r);
+  enforceZLayers(canvas);
+  canvas.requestRenderAll();
+}
+
 // so o.left thô là khung xoay/gốc-center gần gáy bị liệt nhầm nửa.
-function halfOf(o: any, pageW: number): "left" | "right" {
-  try {
+function halfOf(o: any, pageW: number): "left" | "right" {  try {
     const c = o.getCenterPoint?.();
     if (c && Number.isFinite(c.x)) return c.x >= pageW ? "right" : "left";
   } catch {}

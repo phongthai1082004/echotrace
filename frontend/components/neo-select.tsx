@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { ChevronDown } from "lucide-react";
 import { card } from "@/lib/styles";
 
@@ -8,6 +8,7 @@ interface NeoSelectOption {
   value: string;
   label: string;
   color?: string;
+  style?: CSSProperties;
 }
 
 interface NeoSelectProps {
@@ -40,7 +41,7 @@ export function NeoSelect({ options, value, onChange, placeholder = "Select…",
       >
         <span className="truncate">
           {selected ? (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2" style={selected.style}>
               {selected.color && <span className={`w-2 h-2 rounded-full shrink-0 ${selected.color}`} />}
               {selected.label}
             </span>
@@ -67,6 +68,7 @@ export function NeoSelect({ options, value, onChange, placeholder = "Select…",
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-bold text-left transition-[background-color] cursor-pointer ${
                 opt.value === value ? "bg-[#222] text-white" : "hover:bg-[#222]/10 text-[#222]"
               }`}
+              style={opt.style}
             >
               {opt.color && (
                 <span

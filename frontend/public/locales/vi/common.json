@@ -429,7 +429,10 @@
 			"upload": "+ Tải lên",
 			"noPhotos": "Chưa có ảnh. Nhấn \"+ Tải lên\" để thêm ảnh.",
 			"addedToCart": "Đã thêm vào giỏ hàng!",
-			"background": "Màu nền"
+			"background": "Màu nền",
+			"lockPage": "Khóa trang",
+			"unlockPage": "Mở khóa trang",
+			"viewOnly": "Chỉ xem"
 		},
 		"orders": {
 			"title": "Đơn hàng của tôi",

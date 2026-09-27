@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Lock } from "lucide-react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { usePageManager } from "../../../hooks/usePageManager";
+import { isPageLocked } from "../../../lib/layout-engine";
 
 function PageThumb({
   thumb,
@@ -39,7 +41,7 @@ export function PagesSlider() {
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
   const bookMeta = useCanvasStore((s) => s.bookMeta);
   const pageClipboard = useCanvasStore((s) => s.pageClipboard);
-  const { switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread } =
+  const { switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread, togglePageLock } =
     usePageManager();
   const n = pages.length;
   const h = 54;
@@ -92,6 +94,7 @@ export function PagesSlider() {
   }
 
   const handleDelete = (item: (typeof items)[0]) => {
+    // deletePage đã chặn trang khóa; đây chỉ ẩn nút × cho gọn.
     if (item.type === "spread") {
       // delete right page first so indices don't shift
       deletePage(item.rightIdx);
@@ -101,12 +104,22 @@ export function PagesSlider() {
     }
   };
 
+  const itemLocked = (item: (typeof items)[0]) => isPageLocked(pages, item.leftIdx);
+
   const menuItems = menu
     ? [
+        ...(menu.item.isCover
+          ? []
+          : [
+              {
+                label: itemLocked(menu.item) ? "Unlock" : "Lock",
+                fn: () => togglePageLock(menu.item.leftIdx),
+              },
+            ]),
         { label: "Duplicate", fn: () => duplicateSpread(menu.item.leftIdx) },
         { label: "Copy", fn: () => copySpread(menu.item.leftIdx) },
         { label: "Paste", disabled: !pageClipboard?.length, fn: () => pasteCopiedSpread() },
-        { label: "Delete", fn: () => handleDelete(menu.item) },
+        { label: "Delete", disabled: itemLocked(menu.item), fn: () => handleDelete(menu.item) },
       ]
     : [];
 
@@ -120,6 +133,7 @@ export function PagesSlider() {
           const active = activePageIndex === item.leftIdx || activePageIndex === item.rightIdx;
           const dragging = dragFrom === item.leftIdx;
           const isTarget = dropTarget === item.leftIdx && dragFrom !== item.leftIdx;
+          const locked = itemLocked(item);
           return (
             <div
               key={item.idx}
@@ -204,13 +218,21 @@ export function PagesSlider() {
                     onClick={() => switchPage(item.idx)}
                   />
                 )}
-                {!item.isCover && (
+                {!item.isCover && !locked && (
                   <button
                     onClick={() => handleDelete(item)}
                     className="absolute -top-1 -right-1 w-6 h-6 sm:w-4 sm:h-4 flex items-center justify-center bg-[#B54843] text-white rounded-full text-[8px] leading-none font-bold opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
                   >
                     ×
                   </button>
+                )}
+                {locked && (
+                  <div
+                    title="View only"
+                    className="absolute -top-1 -right-1 w-6 h-6 sm:w-4 sm:h-4 flex items-center justify-center bg-[#222] text-white rounded-full z-10"
+                  >
+                    <Lock size={10} strokeWidth={3} className="sm:w-2 sm:h-2" />
+                  </div>
                 )}
                 {active && <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#222]" />}
               </div>
@@ -219,6 +241,7 @@ export function PagesSlider() {
               >
                 {item.idx + 1}
                 {item.type === "spread" ? `/${item.rightIdx + 1}` : ""}
+                {locked ? " · viewonly" : ""}
               </span>
             </div>
           );

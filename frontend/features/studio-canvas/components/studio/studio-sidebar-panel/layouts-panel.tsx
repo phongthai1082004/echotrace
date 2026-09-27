@@ -6,6 +6,7 @@ import { LAYOUT_LIST, SPREAD_LAYOUT_LIST } from "../../../types/layout";
 import type { LayoutConfig } from "../../../types/layout";
 import { clearLayoutFrames, showGuides } from "../../../lib/frames";
 import { enforceZLayers } from "../../../lib/fabric-core";
+import { isPageLocked } from "../../../lib/layout-engine";
 
 type AnyLayout = LayoutConfig;
 
@@ -56,6 +57,8 @@ export function LayoutsPanel() {
 
   const handleSelect = (layout: AnyLayout) => {
     if (!canvas) return;
+    const st0 = useCanvasStore.getState();
+    if (isPageLocked(st0.pages, st0.activePageIndex)) return;
 
     pushUndo();
     const activePageIndex = useCanvasStore.getState().activePageIndex;
@@ -105,6 +108,8 @@ export function LayoutsPanel() {
 
   const handleClear = () => {
     if (!canvas) return;
+    const st1 = useCanvasStore.getState();
+    if (isPageLocked(st1.pages, st1.activePageIndex)) return;
 
     pushUndo();
     const pages = useCanvasStore.getState().pages;

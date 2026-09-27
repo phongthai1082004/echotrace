@@ -17,6 +17,8 @@ import {
   reclipPhotos,
   reviveObject,
   applyInteractionLock,
+  applyPageLock,
+  syncHalfBackgrounds,
 } from "../../../lib/frames";
 import {
   placeDroppedPhoto,
@@ -27,7 +29,7 @@ import {
   resolveFrameForPhoto,
   findPhotoInFrame,
 } from "../../../lib/photos";
-import { isCoverPage } from "../../../lib/layout-engine";
+import { isCoverPage, isPageLocked, pageBackground } from "../../../lib/layout-engine";
 import { parsePageJson } from "../../../lib/sparse-json";
 import { attachSmartGuides } from "../../../lib/smart-guides";
 
@@ -55,6 +57,7 @@ export function StudioWorkspace() {
   const undoVersion = useCanvasStore((s) => s.undoVersion);
   const ctxMenu = useCanvasStore((s) => s.ctxMenu);
   const setCtxMenu = useCanvasStore((s) => s.setCtxMenu);
+  const pageLocked = useCanvasStore((s) => isPageLocked(s.pages, s.activePageIndex));
   const { showToast } = useToast();
 
   useElementControls();
@@ -66,6 +69,8 @@ export function StudioWorkspace() {
       accept: ["PHOTO", "STICKER"],
       hover: (item: any, monitor) => {
         if (item.type !== "PHOTO" || useCanvasStore.getState().autoPlaced) return;
+        const st = useCanvasStore.getState();
+        if (isPageLocked(st.pages, st.activePageIndex)) return;
         const c = useCanvasStore.getState().canvas;
         if (!c) return;
         const off = monitor.getClientOffset();
@@ -75,6 +80,8 @@ export function StudioWorkspace() {
       },
       drop: (item: any, monitor) => {
         if (item.type === "PHOTO") useCanvasStore.getState().setAutoPlaced(false);
+        const st0 = useCanvasStore.getState();
+        if (isPageLocked(st0.pages, st0.activePageIndex)) return;
         const c = useCanvasStore.getState().canvas;
         if (!c) return;
         const off = monitor.getClientOffset();
@@ -140,9 +147,13 @@ export function StudioWorkspace() {
       loadedUndoVerRef.current === undoVersion &&
       loadedViewRef.current === effectiveView
     ) {
-      applyInteractionLock(c, pageW, isCover, effectiveView, true);
-      if (!isCover) {
-        c.renderAll();
+      // ponytail: trang khóa thì liệt hẳn, khỏi applyInteractionLock mở lại.
+      if (isPageLocked(s.pages, idx)) applyPageLock(c, true, pageW, isCover, effectiveView);
+      else {
+        applyInteractionLock(c, pageW, isCover, effectiveView, true);
+        if (!isCover) {
+          c.renderAll();
+        }
       }
       return;
     }
@@ -170,6 +181,8 @@ export function StudioWorkspace() {
                 /* keep top-level revive only */
               }
               reclipPhotos(c);
+              const ls = useCanvasStore.getState();
+              if (isPageLocked(ls.pages, ls.activePageIndex)) applyPageLock(c, true, pageW, true, effectiveView);
               c.renderAll();
             })
             .catch(() => {
@@ -189,10 +202,13 @@ export function StudioWorkspace() {
       const rightPg = latestPages[rightIdx];
       const leftParsed = parsePageJson(leftPg?.canvasJson);
       const rightParsed = rightPg?.canvasJson && rightPg !== leftPg ? parsePageJson(rightPg.canvasJson) : null;
-      // save split giữ nguyên background cả 2 nửa nên tô 1 bên là cả spread cùng màu.
+      // mỗi nửa giữ background riêng (save split theo view) nên merge ưu tiên màu nửa đang xem.
       const merged: any = {
         version: "7.4",
-        background: (leftParsed?.background as string) || (rightParsed?.background as string) || "#fff",
+        background:
+          (effectiveView === "right"
+            ? rightParsed?.background || leftParsed?.background
+            : leftParsed?.background || rightParsed?.background) || "#fff",
         objects: [],
       };
       leftParsed?.objects?.forEach((o: any) => merged.objects.push(o));
@@ -226,6 +242,17 @@ export function StudioWorkspace() {
               c.selection = true;
               applyInteractionLock(c, pageW, isCover, effectiveView);
               reclipPhotos(c);
+              const ls = useCanvasStore.getState();
+              if (isPageLocked(ls.pages, ls.activePageIndex)) applyPageLock(c, true, pageW, isCover, effectiveView);
+              // vẽ nền nửa còn lại đúng màu đã lưu (canvas bg chỉ mang màu nửa focus).
+              const rIdx = Math.min(ls.activePageIndex + 1, ls.pages.length - 1);
+              syncHalfBackgrounds(
+                c,
+                pageW,
+                ch,
+                effectiveView,
+                pageBackground((effectiveView === "right" ? ls.pages[ls.activePageIndex] : ls.pages[rIdx])?.canvasJson),
+              );
               c.renderAll();
             })
             .catch(() => {
@@ -486,6 +513,14 @@ export function StudioWorkspace() {
     }
   }, [activePageIndex, viewMode, undoVersion]);
 
+  // bật/tắt khóa trên canvas đang mở, khỏi reload trang.
+  useEffect(() => {
+    const c = fabricRef.current || useCanvasStore.getState().canvas;
+    if (!c) return;
+    applyPageLock(c, pageLocked, pageW, isCover, effectiveView);
+    useCanvasStore.getState().incrementSelectionVersion();
+  }, [pageLocked]);
+
   const isDraggingPhoto = useCanvasStore((s) => s.isDraggingPhoto);
   useEffect(() => {
     const c = fabricRef.current;
@@ -514,6 +549,7 @@ export function StudioWorkspace() {
     if (!storeCanvas) return;
     const handler = (opt: any) => {
       const st = useCanvasStore.getState();
+      if (isPageLocked(st.pages, st.activePageIndex)) return;
       const url = st.armedPhotoUrl;
       if (!url) return;
       const e = opt?.e as MouseEvent | TouchEvent | undefined;

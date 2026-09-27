@@ -4,6 +4,7 @@ import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { SHAPE_NAMES, makeShapeFrame } from "../../../lib/shapes";
 import { focusCenterX } from "../../../lib/photos";
 import { nextFrameZ, enforceZLayers } from "../../../lib/fabric-core";
+import { isPageLocked } from "../../../lib/layout-engine";
 
 export function FramesPanel() {
   const canvas = useCanvasStore((s) => s.canvas);
@@ -12,6 +13,8 @@ export function FramesPanel() {
 
   const handleAdd = (name: string) => {
     if (!canvas) return;
+    const st = useCanvasStore.getState();
+    if (isPageLocked(st.pages, st.activePageIndex)) return;
     pushUndo();
     const size = 120;
     const left = focusCenterX(canvas) - size / 2;
