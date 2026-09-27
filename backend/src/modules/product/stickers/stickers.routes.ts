@@ -9,7 +9,7 @@ const stickerCtrl = container.resolve(StickerController);
 
 
 router.get(
-	'/admin/stickers',
+	'/stickers',
 	authGuard(),
 	asyncHandler((req, res) => stickerCtrl.list(req, res)),
 );

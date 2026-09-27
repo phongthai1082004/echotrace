@@ -11,7 +11,7 @@ const otpTemplate = (otp: string) => `
         <div style="background:#222;border-radius:8px;padding:16px;margin-bottom:24px">
           <span style="font-size:36px;font-weight:700;color:#fff;letter-spacing:8px">${otp}</span>
         </div>
-        <p style="font-size:12px;color:#999;margin:0">This code expires in <strong style="color:#222">24 hours</strong>.</p>
+        <p style="font-size:12px;color:#999;margin:0">This code expires in <strong style="color:#222">15 minutes</strong>.</p>
         <p style="font-size:10px;color:#999;margin:8px 0 0">If you didn't request this, please ignore this email.</p>
       </td></tr>
     </table>
@@ -21,10 +21,9 @@ const otpTemplate = (otp: string) => `
 </html>`;
 
 export async function sendOtpEmail(to: string, otp: string) {
-	console.log(`\n═══════════════════════════════`);
-	console.log(`📧 OTP for ${to}: ${otp}`);
-	console.log(`⏳ Expires in 24 hours`);
-	console.log(`═══════════════════════════════\n`);
+	if (process.env.OTP_DEBUG_LOG === '1') {
+		console.log(`[Mailer:debug] OTP for ${to}: ${otp}`);
+	}
 
 	const apiKey = process.env.RESEND_API_KEY;
 	if (!apiKey) {

@@ -22,6 +22,11 @@ const res = () => {
   return r;
 };
 
+// isR2PublicUrl so hostname với R2_WORKER_URL nên test ép host giả (hermetic,
+// khỏi phụ thuộc .env thật nếu chuỗi import có load dotenv).
+process.env.R2_WORKER_URL = "https://r2.test.workers.dev";
+const R2U = "https://r2.test.workers.dev/echotrace/gallery/user_1/a.jpg";
+
 const optRow = (over: any = {}) => ({
   id: 1,
   type: "cover",
@@ -73,8 +78,17 @@ describe("StickerController", () => {
   it("create with invalid category -> 400 UPLOAD_CATEGORY_INVALID", async () => {
     const { ctrl, repo } = build();
     await expect(
-      ctrl.create({ body: { url: "u", category: "junk" }, userId: "1" } as any, res()),
+      ctrl.create({ body: { url: R2U, category: "junk" }, userId: "1" } as any, res()),
     ).rejects.toMatchObject({ statusCode: 400, errorCode: "UPLOAD_CATEGORY_INVALID" });
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+
+  it("create with non-R2 url -> 400 VALIDATION_FAILED", async () => {
+    const { ctrl, repo } = build();
+    await expect(ctrl.create({ body: { url: "https://evil.example/x.png" }, userId: "1" } as any, res())).rejects.toMatchObject({
+      statusCode: 400,
+      errorCode: "VALIDATION_FAILED",
+    });
     expect(repo.create).not.toHaveBeenCalled();
   });
 
@@ -82,9 +96,9 @@ describe("StickerController", () => {
     const { ctrl, repo } = build();
     (repo.create as jest.Mock).mockResolvedValue({ id: 1 });
     const r = res();
-    await ctrl.create({ body: { url: "u" }, userId: "3" } as any, r);
+    await ctrl.create({ body: { url: R2U }, userId: "3" } as any, r);
     expect(repo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ url: "u", publicId: "", type: "sticker", name: "", category: null, createdBy: 3 }),
+      expect.objectContaining({ url: R2U, publicId: "", type: "sticker", name: "", category: null, createdBy: 3 }),
     );
     expect(r.status).toHaveBeenCalledWith(201);
   });
@@ -200,8 +214,12 @@ describe("UploadController + UserImageService", () => {
     const ctrl = new UploadController(r2, images);
     (r2.issueUpload as jest.Mock).mockResolvedValue({ token: "t", folder: "f", expiry: 1, uploadUrl: "http://x" });
     const r = res();
-    await ctrl.getSignature({ query: { type: "sticker" }, userId: "4" } as any, r);
+    await ctrl.getSignature({ query: { type: "sticker" }, userId: "4", userRole: "admin" } as any, r);
     expect(r2.issueUpload).toHaveBeenCalledWith("echotrace/stickers");
+    await expect(ctrl.getSignature({ query: { type: "sticker" }, userId: "4", userRole: "user" } as any, res())).rejects.toMatchObject({
+      statusCode: 403,
+      errorCode: "ADMIN_ACCESS_REQUIRED",
+    });
     await ctrl.getSignature({ query: {}, userId: "4" } as any, res());
     expect(r2.issueUpload).toHaveBeenCalledWith("echotrace/gallery/user_4");
     await ctrl.getSignature({ query: { type: "book-thumb" }, userId: "4" } as any, res());
@@ -219,9 +237,19 @@ describe("UploadController + UserImageService", () => {
     });
     (images.create as jest.Mock).mockResolvedValue({ id: 1 });
     const r = res();
-    await ctrl.saveImage({ body: { url: "u", width: 10, height: 10 }, userId: "1" } as any, r);
-    expect(images.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 1, url: "u" }));
+    await ctrl.saveImage({ body: { url: R2U, width: 10, height: 10 }, userId: "1" } as any, r);
+    expect(images.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 1, url: R2U }));
     expect(r.status).toHaveBeenCalledWith(201);
+  });
+
+  it("saveImage with non-R2 url -> 400 VALIDATION_FAILED", async () => {
+    const r2 = mock<IR2ImageService>();
+    const images = mock<IUserImageService>();
+    const ctrl = new UploadController(r2, images);
+    await expect(
+      ctrl.saveImage({ body: { url: "https://evil.example/x.png" }, userId: "1" } as any, res()),
+    ).rejects.toMatchObject({ statusCode: 400, errorCode: "VALIDATION_FAILED" });
+    expect(images.create).not.toHaveBeenCalled();
   });
 
   it("UserImageService.getById missing -> 404 IMAGE_NOT_FOUND; create/list passthrough", async () => {

@@ -27,6 +27,7 @@ export class OAuthService implements IOAuthService {
 		}
 		const payload = ticket.getPayload();
 		if (!payload?.email) throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
+		if (payload.email_verified !== true) throw new AppError(ErrorCode.AUTH_INVALID_GOOGLE_TOKEN, 401);
 
 		let user = await this.authRepo.findUserByGoogleOrEmail(payload.email, payload.sub);
 		if (!user) {

@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import type { AuthRepository } from '../repositories/auth.repository.js';
 
 export function generateAccessToken(userId: string, role: string) {
-	return jwt.sign({ userId, role }, process.env.JWT_ACCESS_SECRET!, { expiresIn: '1h' });
+	return jwt.sign({ userId, role }, process.env.JWT_ACCESS_SECRET!, { expiresIn: '15m' });
 }
 
 export async function generateRefreshToken(authRepo: AuthRepository, userId: string) {

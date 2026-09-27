@@ -50,7 +50,6 @@ function bearerToken(request: Request): string | null {
 
 function detectUploadMime(b: Uint8Array): string | null {
   const ascii = (start: number, len: number) => String.fromCharCode(...b.slice(start, start + len));
-  // ponytail: PDF đầu bằng "%PDF-". Cho phép upload file PDF (in ấn) qua worker.
   if (b.length >= 5 && ascii(0, 5) === "%PDF-") return "application/pdf";
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
@@ -93,7 +92,6 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   url.pathname = `/${key}`;
   url.search = "";
-  // ponytail: thumbnail = on-the-fly Cloudflare Images transform (w_800), reuses handleGet; no extra R2 storage.
   const thumbUrl = `${url.origin}/w_800/${key}`;
   return json({ url: url.toString(), publicId: key, thumbUrl }, 201);
 }
@@ -124,9 +122,6 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
   object.writeHttpMetadata(headers);
   headers.set("Etag", object.httpEtag ?? "");
   headers.set("access-control-allow-origin", "*");
-  // ponytail: key là UUID không bao giờ ghi đè -> original cache vĩnh viễn an toàn,
-  // delete thi URL chet 404 (browser khong co co che xoa cache tu xa);
-  // rieng ban transform (cung key, noi dung phai sinh) moi can TTL ngang de het hanh trong ngay
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   if (request.method === "HEAD") return new Response(null, { headers });
 
@@ -141,8 +136,6 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
       headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
       return new Response(transformed.body, { headers });
     } catch {
-      // ponytail: fall back to original if transform fails (e.g. unsupported input)
-      // — giữ Cache-Control immutable mặc định vì đây là byte gốc
       const retry = await env.R2.get(path);
       if (retry) return new Response(retry.body, { headers });
     }

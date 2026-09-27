@@ -1,4 +1,3 @@
-// ponytail: migrate deploy lên echotrace_test 1 lần trước cả suite (không đụng Neon).
 const { execSync } = require('child_process');
 
 module.exports = async () => {

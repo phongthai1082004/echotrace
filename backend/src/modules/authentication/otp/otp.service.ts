@@ -9,7 +9,8 @@ import { generateAccessToken, generateRefreshToken } from '../shared/token-issue
 import { sendOtpEmail } from '../../notification/channels/mailer.js';
 
 const MAX_OTP_ATTEMPTS = 5;
-const OTP_FAIL_TTL_SECONDS = 24 * 60 * 60;
+const OTP_TTL_MS = 15 * 60 * 1000;
+const OTP_FAIL_TTL_SECONDS = 60 * 60;
 
 export interface IOtpService {
 	sendOtp(email: string): Promise<void>;
@@ -31,7 +32,7 @@ export class OtpService implements IOtpService {
 		const otp = String(randomInt(100000, 1000000));
 		const hashed = await bcrypt.hash(otp, 10);
 
-		await this.authRepo.replaceOtpToken(email, hashed, new Date(Date.now() + 24 * 60 * 60 * 1000));
+		await this.authRepo.replaceOtpToken(email, hashed, new Date(Date.now() + OTP_TTL_MS));
 
 		await sendOtpEmail(email, otp);
 	}
@@ -43,7 +44,7 @@ export class OtpService implements IOtpService {
 
 		const valid = await bcrypt.compare(otp, record.refreshToken);
 		if (!valid) {
-			const failKey = `otp_fail:${record.id}`;
+			const failKey = `otp_fail:${email}`;
 			const fails = await this.cache.increment(failKey, OTP_FAIL_TTL_SECONDS);
 			if (fails >= MAX_OTP_ATTEMPTS) {
 				await this.authRepo.revokeToken(record.id);
@@ -51,7 +52,7 @@ export class OtpService implements IOtpService {
 			}
 			throw new AppError(ErrorCode.AUTH_INVALID_OTP, 400);
 		}
-		await this.cache.delete(`otp_fail:${record.id}`);
+		await this.cache.delete(`otp_fail:${email}`);
 
 		await this.authRepo.revokeToken(record.id);
 

@@ -1,7 +1,5 @@
 import { defineConfig } from '@playwright/test';
 
-// ponytail: system stage chạy trên cổng riêng (4101/3100) để không đụng dev
-// đang chạy (4000/3000); backend dí vào DB test disposable, mail/PayOS stub ở biên.
 const TEST_DB = 'postgresql://postgres:123abc@localhost:5432/echotrace_test';
 
 export default defineConfig({

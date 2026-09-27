@@ -5,6 +5,17 @@ export interface IR2ImageService {
 	deleteAsset(publicId: string): Promise<unknown>;
 }
 
+export function isR2PublicUrl(url: unknown): boolean {
+	if (typeof url !== 'string') return false;
+	try {
+		const u = new URL(url);
+		if (u.protocol !== 'https:') return false;
+		return u.hostname === new URL(process.env.R2_WORKER_URL!).hostname;
+	} catch {
+		return false;
+	}
+}
+
 @injectable()
 export class R2ImageService implements IR2ImageService {
 	private workerUrl = process.env.R2_WORKER_URL!;

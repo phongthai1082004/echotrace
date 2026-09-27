@@ -38,7 +38,6 @@ model User {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  // ponytail: first-touch marketing attribution, write-once (null mới ghi)
   firstUtmSource   String?
   firstUtmMedium   String?
   firstUtmCampaign String?
@@ -52,8 +51,6 @@ model User {
   cart        Cart?
   notifications Notification[]
 
-  // ponytail: giữ role (giá trị hiếm admin=~0.1%, planner dùng được);
-  // isDelete boolean bị bỏ (selectivity kém, chỉ tốn chi phí ghi).
   @@index([role])
 }
 
@@ -65,13 +62,10 @@ model Notification {
   sendBy    String  @default("system")
   type      String  @default("info")
   channels  String[] @default([])
-  // ponytail: personal = 1 user, broadcast = toàn bộ (500 rows/đợt, vài ms)
   scope     String  @default("personal")
   email     String?
   phone     String?
   metadata  Json?
-  // ponytail: bản dịch title/message {title:{vi,en,es},message:{...}} — cột riêng,
-  // không nhét vào metadata (metadata giữ cho actionUrl/orderId/dispatch data).
   i18n      Json?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -177,7 +171,6 @@ model Order {
   returnReason String?
   defectState  DefectState? @default(none)
 
-  // ponytail: snapshot UTM copy server-side từ Book lúc tạo đơn — đơn bất biến
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
@@ -314,8 +307,6 @@ model Book {
   isDelete  Boolean  @default(false)
   deletedAt DateTime?
 
-  // ponytail: UTM ghim lúc tạo sách — phiên design kéo dài nhiều ngày nên
-  // attribution theo project, không theo session lúc thanh toán
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
@@ -496,9 +487,6 @@ model Coupon {
   @@index([expiresAt])
 }
 
-// ponytail: bảng counter tài chính theo tháng, cập nhật bởi DB trigger.
-// Schema (functions+triggers): prisma/triggers/finance_counters.sql (an toàn để paste vào migration).
-// Backfill dữ liệu 1 lần (không phải schema): prisma/triggers/backfill_finance_periods.sql.
 model FinancePeriod {
   period               String   @id // 'YYYY-MM'
   totalOrders          Int      @default(0)
@@ -515,8 +503,6 @@ model FinancePeriod {
   updatedAt            DateTime @updatedAt
 }
 
-// ponytail: cửa sổ bảo trì — 1 bảng vừa là cờ live (dòng scheduled/active mới
-// nhất) vừa là lịch sử. Sống trong DB nên rebuild container/Redis reset không mất.
 model MaintenanceWindow {
   id        Int      @id @default(autoincrement())
   startAt   DateTime
@@ -527,8 +513,6 @@ model MaintenanceWindow {
   createdAt DateTime @default(now())
   endedAt   DateTime?
   endedBy   Int?
-  // ponytail: đã bắn broadcast "đang bảo trì" chưa — guard chống bắn trùng
-  // khi nhiều process cùng lật cửa sổ hẹn sang active
   notifiedAt DateTime?
 
 }

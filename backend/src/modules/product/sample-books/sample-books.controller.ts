@@ -18,7 +18,7 @@ export class SampleBookController {
 			category: category as string | undefined,
 			status: status as string | undefined,
 			order: (order as string) || 'desc',
-			limit: limit ? Number(limit) : 12,
+			limit: clampLimit(limit),
 			cursor: cursor ? Number(cursor) : undefined,
 		});
 		res.json(ApiResponse.success({ items, nextCursor }));
@@ -82,4 +82,9 @@ export class SampleBookController {
 		const item = await this.sampleBookService.getPublishedById(id);
 		res.json(ApiResponse.success(item));
 	};
+}
+
+function clampLimit(v: unknown, def = 12): number {
+	const n = Number(v);
+	return Number.isFinite(n) ? Math.min(100, Math.max(1, Math.floor(n))) : def;
 }

@@ -66,12 +66,13 @@ export class OrderRepository {
 		return (tx ?? this.client).order.findUnique({ where: { id }, select: { status: true } });
 	}
 	listMyOrders(userId: number) {
-		return this.client.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+		return this.client.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 200 });
 	}
 	listAllOrders() {
 		return this.client.order.findMany({
 			where: {},
 			orderBy: { createdAt: 'desc' },
+			take: 500,
 			include: { user: { select: { id: true, name: true, email: true } }, supplier: { select: { id: true, name: true, contact: true, email: true } } },
 		});
 	}

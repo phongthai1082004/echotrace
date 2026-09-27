@@ -34,7 +34,7 @@ export function useStickers(initialAssets?: Asset[]) {
     }
     setLoading(true);
     try {
-      const data = await apiFetch<any[]>("/api/admin/stickers", token).catch(() => null);
+      const data = await apiFetch<any[]>("/api/stickers", token).catch(() => null);
       if (data) setAssets(data);
     } finally {
       setLoading(false);

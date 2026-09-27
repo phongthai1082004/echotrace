@@ -147,7 +147,6 @@ export function StudioWorkspace() {
       loadedUndoVerRef.current === undoVersion &&
       loadedViewRef.current === effectiveView
     ) {
-      // ponytail: trang khóa thì liệt hẳn, khỏi applyInteractionLock mở lại.
       if (isPageLocked(s.pages, idx)) applyPageLock(c, true, pageW, isCover, effectiveView);
       else {
         applyInteractionLock(c, pageW, isCover, effectiveView, true);

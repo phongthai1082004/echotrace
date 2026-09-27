@@ -27,6 +27,11 @@ function toOptKeyMap(rows: PrintOptionRawRow[]): OptKeyMap {
 	return m;
 }
 
+function clampQty(v: unknown): number {
+	const n = Math.floor(Number(v));
+	return Number.isFinite(n) ? Math.min(999, Math.max(1, n)) : 1;
+}
+
 function applyItemPrice(item: any, optByKey: OptKeyMap): any {
 	if (item.cover == null || item.paper == null) return { ...item, price: null };
 	const cover = optByKey.get(`cover:${item.cover}`)?.price;
@@ -65,8 +70,7 @@ export interface ICartService {
 }
 
 @injectable()
-export class CartService implements ICartService {
-	constructor(
+export class CartService implements ICartService {	constructor(
 		@inject('CartRepository') private cartRepo: CartRepository,
 		@inject('IPrintOptionService') private printOptionService: IPrintOptionService,
 		@inject('ICouponService') private couponService: ICouponService,
@@ -101,7 +105,7 @@ export class CartService implements ICartService {
 			const row = await tx.cartItem.upsert({
 				where: key,
 				update: {
-					quantity: Math.max(1, (existing?.quantity ?? 0) + (input.quantity ?? 1)),
+					quantity: clampQty((existing?.quantity ?? 0) + (input.quantity ?? 1)),
 					cover: input.cover ?? existing?.cover ?? null,
 					paper: input.paper ?? existing?.paper ?? null,
 					paperSize: input.paperSize ?? existing?.paperSize ?? null,
@@ -109,7 +113,7 @@ export class CartService implements ICartService {
 				create: {
 					cartId: cart.id,
 					bookId: input.bookId,
-					quantity: Math.max(1, input.quantity ?? 1),
+					quantity: clampQty(input.quantity ?? 1),
 					cover: input.cover ?? null,
 					paper: input.paper ?? null,
 					paperSize: input.paperSize ?? null,
@@ -132,7 +136,7 @@ export class CartService implements ICartService {
 			const [row, optMap] = await Promise.all([
 				this.cartRepo.updateCartItem(cart.id, bookId, {
 					...patch,
-					...(patch.quantity != null ? { quantity: Math.max(1, patch.quantity) } : {}),
+					...(patch.quantity != null ? { quantity: clampQty(patch.quantity) } : {}),
 				}),
 				this.printOptionService.listRaw().then(toOptKeyMap),
 			]);
@@ -150,7 +154,7 @@ export class CartService implements ICartService {
 
 	async addAlbumToCart(userId: number, input: { sampleBookId: number; quantity?: number; cover?: string | null; paper?: string | null }): Promise<CartItem> {
 		const sampleBookId = input.sampleBookId;
-		const quantity = Math.max(1, Math.floor(input.quantity ?? 1));
+		const quantity = clampQty(input.quantity ?? 1);
 		if (!Number.isFinite(sampleBookId)) throw new AppError('sampleBookId không hợp lệ', 400);
 
 		const sample = await this.sampleBookService.getByIdForStock(sampleBookId, quantity);

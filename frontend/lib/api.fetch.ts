@@ -1,7 +1,21 @@
 const PROXY = "/api/proxy";
 
-// proxy request calls getToken(), which rotates an expired access token automatically.
-// Here we only retry once (fresh cookie) and hard-fail to /auth when it's still 401.
+// Lazy refresh: chỉ đổi access khi backend trả 401, khỏi poll định kỳ.
+// Single-flight: nhiều request 401 cùng lúc chỉ refresh 1 lần, còn lại chờ
+// chung promise rồi retry — không dội bom /refresh, không race xoay RT.
+let refreshInflight: Promise<unknown> | null = null;
+function refreshSessionOnce() {
+  if (!refreshInflight) {
+    // getSession() chạy qua jwt() callback: quá hạn thì xoay token, cookie mới
+    // theo về browser (giá trị trả về chỉ là placeholder, không dùng).
+    refreshInflight = import("next-auth/react").then((m) => m.getSession()).finally(() => {
+      refreshInflight = null;
+    });
+  }
+  return refreshInflight;
+}
+
+// RT chết thật (refresh không cứu được) mới về đây: sign out rồi đá về /auth.
 function expireSession() {
   import("next-auth/react")
     .then(async (m) => {
@@ -42,8 +56,12 @@ export async function apiFetch<T = any>(
 
   let res = await fetch(url, { ...options, headers });
 
-  // 401 → the proxy's getToken() may have just rotated the access token; retry once
+  // 401 → refresh lười 1 lần rồi retry với cookie mới; RT chết thì refresh
+  // cũng vô ích, retry vẫn 401 rồi rớt xuống expireSession.
   if (!isServer && res.status === 401) {
+    try {
+      await refreshSessionOnce();
+    } catch {}
     res = await fetch(url, { ...options, headers });
   }
 

@@ -71,7 +71,7 @@ describe("OtpService.verifyOtpAndRegister (A-12/A-13)", () => {
 		repo.createPasswordUser.mockResolvedValue({ id: 7, email: "a@b.c", role: "user", name: "a" } as any);
 		repo.createSessionToken.mockResolvedValue({} as any);
 		const res = await svc.verifyOtpAndRegister("a@b.c", "123456", "secret1");
-		expect(cache.delete).toHaveBeenCalledWith("otp_fail:7");
+		expect(cache.delete).toHaveBeenCalledWith("otp_fail:a@b.c");
 		expect(repo.revokeToken).toHaveBeenCalledWith(7);
 		expect(repo.createPasswordUser).toHaveBeenCalledWith("a@b.c", expect.any(String));
 		expect(res.accessToken).toBeTruthy();
@@ -94,7 +94,7 @@ describe("OtpService.verifyOtpAndRegister (A-12/A-13)", () => {
 			errorCode: "AUTH_INVALID_OTP",
 		});
 		expect(repo.revokeToken).toHaveBeenCalledWith(7);
-		expect(cache.delete).toHaveBeenCalledWith("otp_fail:7");
+		expect(cache.delete).toHaveBeenCalledWith("otp_fail:a@b.c");
 	});
 
 	it("A-13b: no OTP requested -> 400; expired -> 400", async () => {
@@ -128,7 +128,7 @@ describe("OAuthService.loginWithGoogle (A-14)", () => {
 
 	it("A-14: unknown email -> find-or-create, returns tokens", async () => {
 		const { svc, repo } = build();
-		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid", name: "G", picture: "p" }) as any);
+		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid", name: "G", picture: "p", email_verified: true }) as any);
 		repo.findUserByGoogleOrEmail.mockResolvedValue(null);
 		repo.createGoogleUser.mockResolvedValue({ id: 3, email: "g@x.y", role: "user", name: "G" } as any);
 		repo.createSessionToken.mockResolvedValue({} as any);
@@ -141,12 +141,16 @@ describe("OAuthService.loginWithGoogle (A-14)", () => {
 
 	it("A-14b: existing user -> no create; banned -> 403; no email -> 401", async () => {
 		const { svc, repo } = build();
-		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid" }) as any);
+		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid", email_verified: true }) as any);
 		repo.findUserByGoogleOrEmail.mockResolvedValue({ id: 3, role: "user", isDelete: false } as any);
 		repo.createSessionToken.mockResolvedValue({} as any);
 		await svc.loginWithGoogle("tok");
 		expect(repo.createGoogleUser).not.toHaveBeenCalled();
 
+		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid", email_verified: false }) as any);
+		await expect(svc.loginWithGoogle("tok")).rejects.toMatchObject({ statusCode: 401 });
+
+		verify.mockResolvedValue(ticket({ email: "g@x.y", sub: "gid", email_verified: true }) as any);
 		repo.findUserByGoogleOrEmail.mockResolvedValue({ id: 3, role: "user", isDelete: true } as any);
 		await expect(svc.loginWithGoogle("tok")).rejects.toMatchObject({ statusCode: 403 });
 

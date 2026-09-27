@@ -23,7 +23,7 @@ export class FinanceController {
 	private listQuery(q: any) {
 		return {
 			cursor: q.cursor ? Number(q.cursor) : undefined,
-			limit: q.limit ? Number(q.limit) : undefined,
+			limit: q.limit ? clampLimit(Number(q.limit)) : undefined,
 			from: q.from as string | undefined,
 			to: q.to as string | undefined,
 			category: q.category as string | undefined,
@@ -42,4 +42,8 @@ export class FinanceController {
 	listCashflow = async (req: AuthRequest, res: Response) => {
 		res.json(ApiResponse.success(await this.financeService.listCashflow(this.listQuery(req.query))));
 	};
+}
+
+function clampLimit(n: number): number {
+	return Number.isFinite(n) ? Math.min(100, Math.max(1, Math.floor(n))) : 20;
 }

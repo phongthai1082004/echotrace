@@ -3,21 +3,19 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const SUPPORTED_LANGS = ["en", "vi", "es"];
-const DEFAULT_LANG = "vi"; // ponytail: mặc định tiếng Việt
+const DEFAULT_LANG = "vi";
 const BACKEND = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
 
-// ponytail: cache cờ bảo trì 60s trong process — khỏi gọi backend mỗi request, khỏi giữ Neon thức.
-// downStreak: fetch lỗi mạng 2 lần liên tiếp mới coi backend chết (tránh flapping
-// vì 1 timeout lẻ). Backend trả HTTP (kể cả 500) = còn sống.
 let flagCache: { at: number; on: boolean } | null = null;
 let downStreak = 0;
+// Cache 10' để Neon được ngủ (cần 5' im lặng). Bật bảo trì khẩn thì restart
+// frontend cho ăn ngay, khỏi chờ cache hết hạn.
 async function maintenanceState(): Promise<{ on: boolean; down: boolean }> {
-  if (flagCache && Date.now() - flagCache.at < 60_000) {
+  if (flagCache && Date.now() - flagCache.at < 600_000) {
     return { on: flagCache.on, down: downStreak >= 2 };
   }
   try {
     const ctrl = new AbortController();
-    // ponytail: 3s thay vì 1.5s — Neon cold-start hay quá 1.5s, tính down oan là rewrite /maintenance.
     const timer = setTimeout(() => ctrl.abort(), 3000);
     const res = await fetch(`${BACKEND}/api/maintenance/status`, { signal: ctrl.signal });
     clearTimeout(timer);
@@ -55,10 +53,6 @@ export async function proxy(request: NextRequest) {
   const firstSegment = pathname.split("/")[1];
   const bare = SUPPORTED_LANGS.includes(firstSegment) ? pathname.replace(`/${firstSegment}`, "") || "/" : pathname;
 
-  // ponytail: (1) backend chết (cloudflare sập/tunnel rớt/backend sập) →
-  // ai cũng thấy trang bảo trì, vì không backend thì trang nào cũng vỡ.
-  // (2) cờ bảo trì bật → /maintenance + /auth luôn mở (admin cần login để vào);
-  // còn lại chỉ admin (đọc JWT, fail-open nếu lỗi) được qua.
   if (bare !== "/maintenance") {
     const { on, down } = await maintenanceState();
     if (down) return rewriteWithLang(request, "/maintenance", langOf(request, firstSegment));

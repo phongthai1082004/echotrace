@@ -475,9 +475,6 @@ export function applyInteractionLock(
   }
 }
 
-// khóa trang (viewonly): liệt toàn bộ object, mở lại thì dựng đúng trạng thái cũ
-// (ảnh nằm trong khung giữ nguyên khóa, nửa không focus giữ nguyên liệt).
-// ponytail: không snapshot state, dựng lại theo quy tắc frame/view.
 export function applyPageLock(
   canvas: fabric.Canvas,
   locked: boolean,
@@ -507,10 +504,6 @@ export function applyPageLock(
   canvas.requestRenderAll();
 }
 
-// nền nửa không focus là 1 rect đứng sau cùng: không serialize, không bắt sự kiện,
-// không selectable — chỉ để preview đúng màu từng nửa lúc live.
-// ponytail: canvas backgroundColor vẽ được đúng 1 màu, đây là cách duy nhất preview
-// 2 màu mà không chạm model lưu trữ (rect có excludeFromExport nên toJSON bỏ qua).
 export function syncHalfBackgrounds(
   canvas: fabric.Canvas,
   pageW: number,

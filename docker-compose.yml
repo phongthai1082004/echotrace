@@ -76,12 +76,15 @@ services:
     depends_on:
       backend-service:
         condition: service_started
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+    # TẮT healthcheck frontend để 0 user = 0 query DB (mỗi lần check là 1 request
+    # qua proxy, làm cache bảo trì hết hạn rồi chọc Neon). Khi nào khách liên tục
+    # thì bỏ comment khối dưới để bật lại giám sát treo process.
+    # healthcheck:
+    #   test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 30s
 
 
 

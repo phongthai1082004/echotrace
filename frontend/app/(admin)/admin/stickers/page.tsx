@@ -9,7 +9,7 @@ export default async function AdminAssetsPage() {
   let initialAssets: Asset[] | undefined;
   if (token) {
     try {
-      initialAssets = (await apiFetch<Asset[]>("/api/admin/stickers", token)) ?? [];
+      initialAssets = (await apiFetch<Asset[]>("/api/stickers", token)) ?? [];
     } catch {
     }
   }

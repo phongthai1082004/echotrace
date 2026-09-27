@@ -20,7 +20,7 @@ const build = () => {
 const activeUser = { id: 5, email: "a@b.c", role: "user", isDelete: false, name: "Ann" };
 
 describe("token lifecycle (S-25..S-28)", () => {
-  it("S-25: access token = 1h, signed with ACCESS secret, carries userId + role", async () => {
+  it("S-25: access token = 15m, signed with ACCESS secret, carries userId + role", async () => {
     const { password, repo } = build();
     (repo.findActiveUserByEmailFull as jest.Mock).mockResolvedValue({ ...activeUser, password: bcrypt.hashSync("pw", 4) });
     (repo.createSessionToken as jest.Mock).mockResolvedValue({});
@@ -28,7 +28,7 @@ describe("token lifecycle (S-25..S-28)", () => {
     const decoded = jwt.verify(res.accessToken, process.env.JWT_ACCESS_SECRET!) as any;
     expect(decoded.userId).toBe("5");
     expect(decoded.role).toBe("user");
-    expect(decoded.exp - decoded.iat).toBe(3600);
+    expect(decoded.exp - decoded.iat).toBe(900);
     // refresh token signed with REFRESH secret, 30d
     const r = jwt.verify(res.refreshToken, process.env.JWT_REFRESH_SECRET!) as any;
     expect(r.exp - r.iat).toBe(30 * 24 * 3600);
@@ -63,6 +63,7 @@ describe("token lifecycle (S-25..S-28)", () => {
     const tok = jwt.sign({ userId: "5" }, process.env.JWT_REFRESH_SECRET!, { expiresIn: "30d" });
     (repo.findSessionByToken as jest.Mock).mockResolvedValue(null);
     await expect(sessions.refresh(tok)).rejects.toMatchObject({ statusCode: 401, errorCode: "AUTH_REFRESH_TOKEN_REVOKED" });
+    expect(repo.revokeSessionTokens).toHaveBeenCalledWith(5);
   });
 
   it("S-28b: two logins in the same second issue different refresh tokens (jti)", async () => {

@@ -156,7 +156,6 @@ BEGIN
     PERFORM fn_period_upsert(v_period, -1, 0, 0, 0, 0, 0, -v_old[1], -v_old[2]);
     RETURN OLD;
   ELSE
-    -- ponytail: skip the O(n) orderItems scan when no counter-relevant column changed
     IF OLD."orderItems" IS NOT DISTINCT FROM NEW."orderItems"
        AND OLD.status IS NOT DISTINCT FROM NEW.status
        AND OLD."paymentType" IS NOT DISTINCT FROM NEW."paymentType"

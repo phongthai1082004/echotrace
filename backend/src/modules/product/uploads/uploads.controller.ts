@@ -5,6 +5,7 @@ import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import type {IR2ImageService} from '../../../shared/r2/r2.service.js';
+import { isR2PublicUrl } from '../../../shared/r2/r2.service.js';
 import type {IUserImageService} from './user-images.service.js';
 
 @injectable()
@@ -17,6 +18,11 @@ export class UploadController {
 	getSignature = async (req: AuthRequest, res: Response) => {
 		const { type } = req.query as { type: 'gallery' | 'sticker' | 'book-thumb' };
 		const userId = req.userId!;
+
+		// sticker là kho chung, chỉ admin được ký upload vào.
+		if (type === 'sticker' && req.userRole !== 'admin') {
+			throw new AppError(ErrorCode.ADMIN_ACCESS_REQUIRED, 403);
+		}
 
 		const folder =
 			type === 'sticker'
@@ -41,6 +47,7 @@ export class UploadController {
 		const userId = parseInt(req.userId!);
 		const { url, publicId, width, height, size, thumbUrl } = req.body;
 		if (!url) throw new AppError(ErrorCode.UPLOAD_URL_REQUIRED, 400);
+		if (!isR2PublicUrl(url)) throw new AppError(ErrorCode.VALIDATION_FAILED, 400, { url: ['must be an R2 URL'] });
 
 		const image = await this.userImageService.create({ userId, url, publicId, width, height, size });
 

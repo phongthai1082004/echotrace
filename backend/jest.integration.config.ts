@@ -1,7 +1,5 @@
 import type { Config } from 'jest';
 
-// ponytail: integration chạy riêng khỏi unit — DB thật (echotrace_test, disposable),
-// PayOS SDK mock ở biên mạng, còn lại (router/guard/DTO/Prisma) thật hết.
 const config: Config = {
 	preset: 'ts-jest/presets/default-esm',
 	testEnvironment: 'node',

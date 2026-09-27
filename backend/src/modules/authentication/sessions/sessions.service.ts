@@ -28,7 +28,12 @@ export class SessionService implements ISessionService {
 		}
 
 		const existing = await this.authRepo.findSessionByToken(token);
-		if (!existing) throw new AppError(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED, 401);
+		if (!existing) {
+			try {
+				await this.authRepo.revokeSessionTokens(parseInt(payload.userId));
+			} catch {}
+			throw new AppError(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED, 401);
+		}
 
 		const user = await this.authRepo.findUserByIdRole(parseInt(payload.userId));
 		if (!user || user.isDelete) throw new AppError(ErrorCode.AUTH_ACCOUNT_BANNED, 403);

@@ -37,7 +37,8 @@ function pick(r: any): MaintenanceWindowDTO {
 	};
 }
 
-// Cờ đổi vài lần/năm, trễ vài chục giây chấp nhận được. Write path (start/stop/schedule) xóa cache.
+// Cờ đổi vài lần/năm, trễ vài phút chấp nhận được (để Neon ngủ: cache 5'.
+// Cần ăn ngay thì restart backend — write path đã xóa cache này).
 let statusCache: { at: number; value: MaintenanceStatus } | null = null;
 export function clearMaintenanceStatusCache(): void {
 	statusCache = null;
@@ -45,7 +46,7 @@ export function clearMaintenanceStatusCache(): void {
 
 // tự lật completed nên làm sớm quên tắt cũng tự mở lại. Redis reset không ảnh hưởng.
 export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
-	if (statusCache && Date.now() - statusCache.at < 30_000) return statusCache.value;
+	if (statusCache && Date.now() - statusCache.at < 300_000) return statusCache.value;
 	const now = new Date();
 	const rows = await db().maintenanceWindow.findMany({
 		where: { status: { in: ['scheduled', 'active'] } },

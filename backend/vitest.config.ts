@@ -5,7 +5,6 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['src/**/*.test.ts'],
-    // ponytail: these are pre-existing tsx console-log scratch scripts, not vitest suites
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

@@ -16,7 +16,7 @@ async function refreshAccessToken(token: any) {
     ...token,
     accessToken: data.data.accessToken,
     refreshToken: data.data.refreshToken ?? token.refreshToken,
-    accessTokenExpires: Date.now() + 55 * 60 * 1000,
+    accessTokenExpires: Date.now() + 10 * 60 * 1000,
   };
 }
 
@@ -85,7 +85,7 @@ export const authOptions = {
         token.refreshToken = user.refreshToken;
         token.role = user.role;
         token.dbId = user.dbId;
-        token.accessTokenExpires = Date.now() + 55 * 60 * 1000;
+        token.accessTokenExpires = Date.now() + 10 * 60 * 1000;
         if (user.image) token.picture = user.image;
         return token;
       }

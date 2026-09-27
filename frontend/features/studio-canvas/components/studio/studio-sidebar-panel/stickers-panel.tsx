@@ -69,7 +69,7 @@ export function StickersPanel() {
     const params = new URLSearchParams();
     params.set("type", "sticker");
     if (categoryFilter !== ALL_KEY) params.set("category", categoryFilter);
-    apiFetch<any[]>("/api/admin/stickers?" + params.toString(), token)
+    apiFetch<any[]>("/api/stickers?" + params.toString(), token)
       .then((d) => setStickers(d || []))
       .catch(() => {});
   };
