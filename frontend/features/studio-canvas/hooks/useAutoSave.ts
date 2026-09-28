@@ -145,7 +145,7 @@ async function runSaveFull(
       const dirty = pagesAll
         .map((p, i) => ({ p, prev: prev.pages[i] }))
         .filter(({ p, prev }) => !samePage(prev, p));
-      if (dirty.length === 0 && prev.metaSig === metaSig) {
+      if (dirty.length === 0 && prev.metaSig === metaSig && !opts?.flush) {
         return { ok: true, id: s.bookMeta.id ?? undefined }; // chẳng gì đổi → bỏ qua network
       }
       // objects (by _selId); backend merges into the stored canvasJson.

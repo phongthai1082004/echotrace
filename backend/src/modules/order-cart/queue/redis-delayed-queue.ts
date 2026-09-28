@@ -26,7 +26,9 @@ function client(): Redis {
 
 export function scheduleDelayedJob(name: string, payload: unknown, delayMs: number): void {
   const member = JSON.stringify({ name, payload });
-  client().zadd(QUEUE_KEY, Date.now() + delayMs, member);
+  client()
+    .zadd(QUEUE_KEY, Date.now() + delayMs, member)
+    .catch((e) => console.warn("[delayed] schedule failed (redis down?):", (e as Error)?.message || e));
   startDelayedWorker();
 }
 
