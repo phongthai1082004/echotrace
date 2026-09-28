@@ -6,12 +6,15 @@ import { SkeletonGrid } from "@/components/skeleton";
 import { OrderCard } from "./order-card";
 import { OrderDetailDrawer } from "@/components/order-detail-drawer";
 import { useCustomerOrders } from "../_hooks/use-customer-orders";
-import type { OrderDTO } from "@/lib/order.dto";
+import type { OrdersPage } from "../_hooks/use-customer-orders";
 
-export function OrdersClient({ initialOrders }: { initialOrders?: OrderDTO[] | null }) {
+export function OrdersClient({ initialOrders }: { initialOrders?: OrdersPage | null }) {
   const { t } = useTranslation();
   const {
     orders,
+    nextCursor,
+    loadingMore,
+    loadMore,
     selectedOrder,
     setSelectedOrder,
     requestPaymentLink,
@@ -42,6 +45,18 @@ export function OrdersClient({ initialOrders }: { initialOrders?: OrderDTO[] | n
           </div>
         )}
       </div>
+      {nextCursor != null && orders && orders.length > 0 && (
+        <div className="flex justify-center pb-8">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-2 rounded-md border-2 border-[#222] bg-white shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-px hover:shadow-none transition-all disabled:opacity-50"
+          >
+            {t("customer.orders.loadMore")}
+          </button>
+        </div>
+      )}
 
       {selectedOrder && (
         <OrderDetailDrawer

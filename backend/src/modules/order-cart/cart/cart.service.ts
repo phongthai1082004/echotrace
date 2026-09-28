@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount, PaymentPlan } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
-import { CartRepository } from './cart.repository.js';
+import { CartRepository, BOOK_SELECT } from './cart.repository.js';
 import type { IPrintOptionService, PrintOptionRawRow } from '../../product/print-options/print-options.service.js';
 import type { ICouponService } from '../coupons/coupons.service.js';
 import type { ISampleBookService } from '../../product/sample-books/sample-books.service.js';
@@ -95,34 +95,40 @@ export class CartService implements ICartService {	constructor(
 	}
 
 	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
-		return this.cartRepo.client.$transaction(async (tx) => {
-			const cart = await tx.cart.upsert({ where: { userId }, update: {}, create: { userId } });
-			const book = await tx.book.findFirst({ where: { id: input.bookId, userId, isDelete: false }, select: { id: true } });
-			if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		return this.cartRepo.client.$transaction(async (tx) => this.upsertItemTx(tx, userId, input));
+	}
 
-			const key = { cartId_bookId: { cartId: cart.id, bookId: input.bookId } };
-			const existing = await tx.cartItem.findUnique({ where: key });
-			const row = await tx.cartItem.upsert({
-				where: key,
-				update: {
-					quantity: clampQty((existing?.quantity ?? 0) + (input.quantity ?? 1)),
-					cover: input.cover ?? existing?.cover ?? null,
-					paper: input.paper ?? existing?.paper ?? null,
-					paperSize: input.paperSize ?? existing?.paperSize ?? null,
-				},
-				create: {
-					cartId: cart.id,
-					bookId: input.bookId,
-					quantity: clampQty(input.quantity ?? 1),
-					cover: input.cover ?? null,
-					paper: input.paper ?? null,
-					paperSize: input.paperSize ?? null,
-				},
-				include: { book: true },
-			});
-			const optMap = toOptKeyMap(await this.printOptionService.listRaw(tx));
-			return applyItemPrice(composeCartItem(row, row.book), optMap);
+	private async upsertItemTx(
+		tx: Prisma.TransactionClient,
+		userId: number,
+		input: Partial<CartItem> & { bookId: number },
+	): Promise<CartItem> {
+		const cart = await tx.cart.upsert({ where: { userId }, update: {}, create: { userId } });
+		const book = await tx.book.findFirst({ where: { id: input.bookId, userId, isDelete: false }, select: { id: true } });
+		if (!book) throw new AppError(ErrorCode.NOT_FOUND, 404);
+
+		const key = { cartId_bookId: { cartId: cart.id, bookId: input.bookId } };
+		const existing = await tx.cartItem.findUnique({ where: key });
+		const row = await tx.cartItem.upsert({
+			where: key,
+			update: {
+				quantity: clampQty((existing?.quantity ?? 0) + (input.quantity ?? 1)),
+				cover: input.cover ?? existing?.cover ?? null,
+				paper: input.paper ?? existing?.paper ?? null,
+				paperSize: input.paperSize ?? existing?.paperSize ?? null,
+			},
+			create: {
+				cartId: cart.id,
+				bookId: input.bookId,
+				quantity: clampQty(input.quantity ?? 1),
+				cover: input.cover ?? null,
+				paper: input.paper ?? null,
+				paperSize: input.paperSize ?? null,
+			},
+			include: { book: { select: BOOK_SELECT } },
 		});
+		const optMap = toOptKeyMap(await this.printOptionService.listRaw(tx));
+		return applyItemPrice(composeCartItem(row, row.book), optMap);
 	}
 
 	async patchItem(
@@ -160,24 +166,29 @@ export class CartService implements ICartService {	constructor(
 		const sample = await this.sampleBookService.getByIdForStock(sampleBookId, quantity);
 		if (!sample) throw new AppError('Album đã hết hàng hoặc không đủ số lượng tồn kho', 400);
 
-		let book = await this.cartRepo.findBookByUser(userId, sampleBookId);
-		if (!book) {
-			book = await this.cartRepo.createBook({
-				userId,
-				sampleBookId,
-				type: sample.type,
-				title: sample.name,
-				style: sample.style,
-				font: sample.font,
-				cover: sample.cover,
-				coverUrl: sample.coverUrl,
-				paperHeight: sample.paperHeight,
-				paperWidth: sample.paperWidth,
-				content: (sample.content as object) ?? {},
+		// upsert nguyên tử trên unique (userId, sampleBookId): 2 request cùng lúc
+		// cũng chỉ ra 1 Book (DB chặn trùng, khỏi race find-or-create).
+		return this.cartRepo.client.$transaction(async (tx) => {
+			const book = await tx.book.upsert({
+				where: { userId_sampleBookId: { userId, sampleBookId } },
+				update: {},
+				create: {
+					userId,
+					sampleBookId,
+					type: sample.type,
+					title: sample.name,
+					style: sample.style,
+					font: sample.font,
+					cover: sample.cover,
+					coverUrl: sample.coverUrl,
+					paperHeight: sample.paperHeight,
+					paperWidth: sample.paperWidth,
+					content: (sample.content as object) ?? {},
+				},
 			});
-		}
-		// cover rớt về sample.cover, paper bắt buộc (thiếu → 400 ở calculateCart).
-		return this.upsertItem(userId, { bookId: book.id, quantity, cover: input.cover ?? sample.cover, paper: input.paper ?? null, paperSize: null });
+			// cover rớt về sample.cover, paper bắt buộc (thiếu → 400 ở calculateCart).
+			return this.upsertItemTx(tx, userId, { bookId: book.id, quantity, cover: input.cover ?? sample.cover, paper: input.paper ?? null, paperSize: null });
+		});
 	}
 
 	async calculateCart(

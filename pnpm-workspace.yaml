@@ -26,3 +26,5 @@ onlyBuiltDependencies:
   - sharp
   - canvas
   - '@prisma/engines'
+overrides:
+  sharp: ^0.35.4

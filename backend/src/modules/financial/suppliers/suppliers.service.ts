@@ -1,4 +1,5 @@
 import { injectable, inject } from 'tsyringe';
+import { Prisma } from '../../../../generated/prisma/client.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { SupplierDTO, SupplierMapper, SupplierOption, AggregatedOptionsResponse, CatalogSize } from '@echotrace/shared';
@@ -62,10 +63,14 @@ export class SupplierService implements ISupplierService {
 
 	async createSupplier(dto: CreateSupplierDTO) {
 		const { optionIds, ...rest } = dto as any;
-		const supplier = await this.supplierRepo.createSupplier({ ...rest });
-		if (Array.isArray(optionIds) && optionIds.length) {
-			await this.updateSupplierOptions(supplier.id, optionIds);
-		}
+		const supplier = await this.supplierRepo.client.$transaction(async (tx) => {
+			const row = await this.supplierRepo.createSupplier({ ...rest }, tx);
+			if (Array.isArray(optionIds) && optionIds.length) {
+				await this.syncOptionsTx(tx, row.id, optionIds);
+			}
+			return row;
+		});
+		await this.optionCache.invalidateCatalogForTypes('paperSize', 'paper', 'cover');
 		return SupplierMapper.toDTO(await this.getSupplierById(supplier.id));
 	}
 
@@ -85,40 +90,47 @@ export class SupplierService implements ISupplierService {
 			if (data[key] !== undefined) cleanData[key] = data[key];
 		});
 
-		await this.supplierRepo.updateSupplier(id, cleanData);
-		if (Array.isArray(optionIds)) {
-			await this.updateSupplierOptions(id, optionIds);
-		}
+		await this.supplierRepo.client.$transaction(async (tx) => {
+			await this.supplierRepo.updateSupplier(id, cleanData, tx);
+			if (Array.isArray(optionIds)) {
+				await this.syncOptionsTx(tx, id, optionIds);
+			}
+		});
+		await this.optionCache.invalidateCatalogForTypes('paperSize', 'paper', 'cover');
 	}
 
 
 
 	async updateSupplierOptions(id: number, optionIds: number[] = []) {
-		const wanted = new Set(optionIds.map(Number).filter(Boolean));
 		await this.supplierRepo.client.$transaction(async (tx) => {
-			const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
-			const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
-			const toDeleteIds = existing
-				.filter((l: any) => !wanted.has(l.printOptionId) && !l.isDelete)
-				.map((l: any) => l.id);
-			if (toDeleteIds.length) {
-				await tx.supplierPrintOption.updateMany({
-					where: { id: { in: toDeleteIds } },
-					data: { isDelete: true, deletedAt: new Date() },
-				});
-			}
-			for (const poId of wanted) {
-				const row = existingById.get(poId);
-				if (row) {
-					if (row.isDelete) {
-						await tx.supplierPrintOption.updateMany({ where: { id: row.id }, data: { isDelete: false, deletedAt: null } });
-					}
-					continue;
-				}
-				await tx.supplierPrintOption.create({ data: { supplierId: id, printOptionId: poId } });
-			}
+			await this.syncOptionsTx(tx, id, optionIds);
 		});
 		await this.optionCache.invalidateCatalogForTypes('paperSize', 'paper', 'cover');
+	}
+
+	private async syncOptionsTx(tx: Prisma.TransactionClient, id: number, optionIds: number[]) {
+		const wanted = new Set(optionIds.map(Number).filter(Boolean));
+		const existing = await tx.supplierPrintOption.findMany({ where: { supplierId: id } });
+		const existingById = new Map(existing.map((l: any) => [l.printOptionId, l]));
+		const toDeleteIds = existing
+			.filter((l: any) => !wanted.has(l.printOptionId) && !l.isDelete)
+			.map((l: any) => l.id);
+		if (toDeleteIds.length) {
+			await tx.supplierPrintOption.updateMany({
+				where: { id: { in: toDeleteIds } },
+				data: { isDelete: true, deletedAt: new Date() },
+			});
+		}
+		for (const poId of wanted) {
+			const row = existingById.get(poId);
+			if (row) {
+				if (row.isDelete) {
+					await tx.supplierPrintOption.updateMany({ where: { id: row.id }, data: { isDelete: false, deletedAt: null } });
+				}
+				continue;
+			}
+			await tx.supplierPrintOption.create({ data: { supplierId: id, printOptionId: poId } });
+		}
 	}
 
 	async deleteSupplier(id: number) {

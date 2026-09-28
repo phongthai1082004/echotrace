@@ -448,6 +448,7 @@
 			"paymentSuccess": "Thanh toán thành công!",
 			"more": "+{{count}} món khác",
 			"itemsCount": "{{count}} món",
+			"loadMore": "Tải thêm đơn",
 			"pages": "trang",
 			"pg": "tr",
 			"payment": "Thanh toán",

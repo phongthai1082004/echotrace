@@ -28,6 +28,7 @@ export class PrintOptionService implements IPrintOptionService {
 
 	private async invalidateCache(type: string, code: string) {
 		await this.optionCache.invalidateOption(type, code);
+		await this.optionCache.invalidateRawPricing();
 	}
 	async list(type?: string, search?: string) {
 		const rows = await this.printOptionRepo.listPrintOptions(
@@ -42,7 +43,13 @@ export class PrintOptionService implements IPrintOptionService {
 	}
 
 	async listRaw(tx?: Prisma.TransactionClient): Promise<PrintOptionRawRow[]> {
-		return this.printOptionRepo.listRaw(tx);
+		// trong tx phải đọc fresh (read-your-writes); ngoài tx cache 10'.
+		if (tx) return this.printOptionRepo.listRaw(tx);
+		const cached = await this.optionCache.getRawPricing<PrintOptionRawRow[]>();
+		if (cached) return cached;
+		const rows = await this.printOptionRepo.listRaw();
+		await this.optionCache.setRawPricing(rows);
+		return rows;
 	}
 
 	async create(dto: CreatePrintOptionDTO) {

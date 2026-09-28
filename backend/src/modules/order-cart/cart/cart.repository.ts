@@ -3,8 +3,23 @@ import { PrismaService } from '../../../../lib/db.service.js';
 import { Prisma } from '../../../../generated/prisma/client.js';
 
 // Service chỉ biết CartRepository; mỗi method nhận tx? (transaction client) để gộp chung $transaction.
+// composeCartItem chỉ đọc các field này — select tường minh để khỏi lôi
+// userId/timestamps và mọi cột nặng tương lai (content vẫn cần: đếm pages + thumbnail).
+export const BOOK_SELECT = {
+	id: true,
+	title: true,
+	style: true,
+	font: true,
+	cover: true,
+	coverUrl: true,
+	paperHeight: true,
+	paperWidth: true,
+	type: true,
+	content: true,
+} satisfies Prisma.BookSelect;
+
 const CART_INCLUDE = {
-	items: { include: { book: true }, orderBy: { id: 'asc' } },
+	items: { include: { book: { select: BOOK_SELECT } }, orderBy: { id: 'asc' } },
 } satisfies Prisma.CartInclude;
 
 @injectable()
@@ -31,19 +46,11 @@ export class CartRepository {
 		return (tx ?? this.client).cartItem.update({
 			where: { cartId_bookId: { cartId, bookId } },
 			data: data as Prisma.CartItemUpdateInput,
-			include: { book: true },
+			include: { book: { select: BOOK_SELECT } },
 		});
 	}
 
 	deleteCartItems(cartId: number, bookId: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).cartItem.deleteMany({ where: { cartId, bookId } });
-	}
-
-	findBookByUser(userId: number, sampleBookId: number, tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).book.findFirst({ where: { userId, sampleBookId } });
-	}
-
-	createBook(data: Prisma.BookUncheckedCreateInput, tx?: Prisma.TransactionClient) {
-		return (tx ?? this.client).book.create({ data });
 	}
 }

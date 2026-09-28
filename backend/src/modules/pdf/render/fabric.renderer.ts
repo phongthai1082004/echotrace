@@ -115,6 +115,20 @@ function replaceSrc(json: any, from: string, to: string) {
 	if (json?.backgroundImage?.src === from) json.backgroundImage.src = to;
 }
 
+// tải song song có giới hạn — nhanh hơn tuần tự mà không ngợp băng thông/RAM.
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+	const out: R[] = new Array(items.length);
+	let next = 0;
+	const workers = Array.from({ length: Math.min(Math.max(limit, 1), items.length) }, async () => {
+		while (next < items.length) {
+			const i = next++;
+			out[i] = await fn(items[i]);
+		}
+	});
+	await Promise.all(workers);
+	return out;
+}
+
 @injectable()
 export class FabricRenderer implements IOrderPdfRenderer {
 	constructor(
@@ -130,11 +144,13 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		const items: any[] = Array.isArray(order.orderItems) ? order.orderItems : [];
 		const pdf = await PDFDocument.create();
 
+		const bookIds = items.map((i) => i?.bookId).filter((id) => typeof id === 'number');
+		const books = await this.bookRepo.findBooksByIds(bookIds);
+		const byId = new Map(books.map((b: any) => [b.id, b]));
 		for (const item of items) {
-			const bookId = item?.bookId;
-			if (!bookId) continue;
-			const book = await this.bookRepo.findBookById(bookId);
-			if (!isRenderableBookType(book?.type)) continue;
+			const book = byId.get(item?.bookId);
+			if (!book) continue;
+			if (!isRenderableBookType((book as any)?.type)) continue;
 			const content = book?.content as any;
 			const pages: any[] = Array.isArray(content?.pages) ? content.pages : [];
 			for (const page of pages) {
@@ -164,11 +180,9 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		const zoom = EXPORT_PX_PER_MM / 4;
 		const srcs = collectImageSrcs(json);
 
-		// TẢI TỪNG ẢNH 1 (sequential) — không ngợp băng thông. Retry chỉ ảnh đó.
-		for (const src of srcs) {
-			const dataUrl = await this.downloadOne(src);
-			replaceSrc(json, src, dataUrl);
-		}
+		// Tải song song tối đa 5 ảnh/lượt. Retry vẫn từng ảnh như cũ.
+		const datas = await mapLimit(srcs, 5, (src) => this.downloadOne(src));
+		datas.forEach((dataUrl, i) => replaceSrc(json, srcs[i], dataUrl));
 
 		const canvas = new StaticCanvas(undefined, { width: Math.round(baseW * zoom), height: Math.round(baseH * zoom) });
 		await canvas.loadFromJSON(json);

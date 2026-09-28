@@ -14,6 +14,11 @@ export class BookRepository {
 		return this.client.book.findUnique({ where: { id } });
 	}
 
+	findBooksByIds(ids: number[]) {
+		if (!ids.length) return Promise.resolve([]);
+		return this.client.book.findMany({ where: { id: { in: [...new Set(ids)] } } });
+	}
+
 	listBooksByUser(userId: number) {
 		return this.client.book.findMany({ where: { userId }, orderBy: { id: 'desc' } });
 	}

@@ -67,13 +67,14 @@ describe("OtpService.sendOtp (A-11)", () => {
 describe("OtpService.verifyOtpAndRegister (A-12/A-13)", () => {
 	it("A-12: correct OTP -> clears fail counter, revokes, creates user, returns tokens", async () => {
 		const { svc, repo, cache } = otpBuild();
+		(repo as any).client = { $transaction: (fn: any) => fn({}) };
 		repo.findValidOtp.mockResolvedValue(otpRecord() as any);
 		repo.createPasswordUser.mockResolvedValue({ id: 7, email: "a@b.c", role: "user", name: "a" } as any);
 		repo.createSessionToken.mockResolvedValue({} as any);
 		const res = await svc.verifyOtpAndRegister("a@b.c", "123456", "secret1");
 		expect(cache.delete).toHaveBeenCalledWith("otp_fail:a@b.c");
-		expect(repo.revokeToken).toHaveBeenCalledWith(7);
-		expect(repo.createPasswordUser).toHaveBeenCalledWith("a@b.c", expect.any(String));
+		expect(repo.revokeToken).toHaveBeenCalledWith(7, expect.anything());
+		expect(repo.createPasswordUser).toHaveBeenCalledWith("a@b.c", expect.any(String), expect.anything());
 		expect(res.accessToken).toBeTruthy();
 		expect(res.refreshToken).toBeTruthy();
 	});

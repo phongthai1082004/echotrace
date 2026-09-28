@@ -30,6 +30,7 @@ const rendererWith = (pages: any[], bookOver: Record<string, any> = {}) => {
 	const bookRepo = mock<BookRepository>();
 	orderRepo.findOrderById.mockResolvedValue({ id: 9, orderItems: [{ bookId: 1 }] } as any);
 	bookRepo.findBookById.mockResolvedValue(bookOf(pages, bookOver) as any);
+	bookRepo.findBooksByIds.mockResolvedValue([bookOf(pages, bookOver)] as any);
 	return new FabricRenderer(orderRepo, bookRepo);
 };
 

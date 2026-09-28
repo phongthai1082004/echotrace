@@ -9,6 +9,7 @@ export interface IDirectoryService {
 	findAll(filter: any, options?: any, extraWhere?: any): Promise<{ items: UserListDTO[]; nextCursor: number | null }>;
 	findById(id: number, extraWhere?: Record<string, any>): Promise<any>;
 	update(id: number, data: any, extraWhere?: Record<string, any>): Promise<void>;
+	setUserStatus(id: number, banned: boolean): Promise<{ id: number; name: string; email: string; banned: boolean }>;
 }
 
 @injectable()
@@ -29,5 +30,15 @@ export class DirectoryService implements IDirectoryService {
 	public async update(id: number, data: any, extraWhere: Record<string, any> = {}) {
 		const result = await this.userRepo.updateById(id, data, extraWhere);
 		if (result.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
+	}
+
+	public async setUserStatus(id: number, banned: boolean) {
+		const target = await this.userRepo.findRoleById(id);
+		if (!target) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		if (target.role === 'admin') {
+			throw new AppError(ErrorCode.ADMIN_CANNOT_BAN_ADMIN, 403);
+		}
+		const updated = await this.userRepo.updateUser(id, { isDelete: banned, deletedAt: banned ? new Date() : null });
+		return { id: updated.id, name: updated.name, email: updated.email, banned: updated.isDelete };
 	}
 }

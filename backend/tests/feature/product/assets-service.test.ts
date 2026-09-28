@@ -5,6 +5,7 @@
  */
 import { mock } from "jest-mock-extended";
 import { StickerController } from "../../../src/modules/product/stickers/stickers.controller.js";
+import { StickerService } from "../../../src/modules/product/stickers/stickers.service.js";
 import { DecorAssetRepository } from "../../../src/modules/product/stickers/stickers.repository.js";
 import { PrintOptionService } from "../../../src/modules/product/print-options/print-options.service.js";
 import { PrintOptionRepository } from "../../../src/modules/product/print-options/print-options.repository.js";
@@ -45,7 +46,7 @@ describe("StickerController", () => {
     const repo = mock<DecorAssetRepository>();
     const r2 = mock<IR2ImageService>();
     (r2.deleteAsset as jest.Mock).mockResolvedValue({});
-    return { ctrl: new StickerController(r2, repo), repo, r2 };
+    return { ctrl: new StickerController(new StickerService(r2, repo)), repo, r2 };
   };
 
   it("list without category -> type sticker + isDelete false only", async () => {
@@ -254,7 +255,7 @@ describe("UploadController + UserImageService", () => {
 
   it("UserImageService.getById missing -> 404 IMAGE_NOT_FOUND; create/list passthrough", async () => {
     const repo = mock<UserImagesRepository>();
-    const svc = new UserImageService(repo);
+    const svc = new UserImageService(repo, mock<IR2ImageService>());
     (repo.findByIdForUser as jest.Mock).mockResolvedValue(null);
     await expect(svc.getById(1, 1)).rejects.toMatchObject({ statusCode: 404, errorCode: "IMAGE_NOT_FOUND" });
 
@@ -268,10 +269,21 @@ describe("UploadController + UserImageService", () => {
 
   it("UserImageService.delete without publicId -> soft-delete, no R2 touch", async () => {
     const repo = mock<UserImagesRepository>();
-    const svc = new UserImageService(repo);
+    const svc = new UserImageService(repo, mock<IR2ImageService>());
     (repo.findByIdForUser as jest.Mock).mockResolvedValue(imgRow({ publicId: null }));
     (repo.deleteUserImage as jest.Mock).mockResolvedValue({ count: 1 });
     await svc.delete(1, 1);
     expect(repo.deleteUserImage).toHaveBeenCalledWith(1, 1);
+  });
+
+  it("UserImageService.delete with publicId -> injected R2 delete", async () => {
+    const repo = mock<UserImagesRepository>();
+    const r2 = mock<IR2ImageService>();
+    (r2.deleteAsset as jest.Mock).mockResolvedValue({});
+    const svc = new UserImageService(repo, r2);
+    (repo.findByIdForUser as jest.Mock).mockResolvedValue(imgRow({ publicId: "p1" }));
+    (repo.deleteUserImage as jest.Mock).mockResolvedValue({ count: 1 });
+    await svc.delete(1, 1);
+    expect(r2.deleteAsset).toHaveBeenCalledWith("p1");
   });
 });

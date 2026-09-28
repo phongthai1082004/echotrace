@@ -319,6 +319,7 @@ model Book {
 
   @@index([userId])
   @@index([sampleBookId])
+  @@unique([userId, sampleBookId])
 }
 
 model Cart {

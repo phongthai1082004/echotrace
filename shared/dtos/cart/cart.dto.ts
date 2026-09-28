@@ -62,6 +62,8 @@ export function firstPageThumbnail(content: ContentLike): string | null {
 }
 
 export function composeCartItem(row: { quantity: number; cover: string | null; paper: string | null; paperSize: string | null }, book: any): CartItem {
+  const pages = asPages(book.content);
+  const thumb = pages[0]?.thumbnailUrl;
   return {
     bookId: book.id,
     title: book.title,
@@ -72,13 +74,13 @@ export function composeCartItem(row: { quantity: number; cover: string | null; p
     paperSize: row.paperSize ?? null,
     paperHeight: book.paperHeight ?? 0,
     paperWidth: book.paperWidth ?? 0,
-    pages: bookPages(book.content),
+    pages: pages.length,
     price: null,
     coverUrl: book.coverUrl ?? null,
     pdfUrl: null,
     type: book.type ?? null,
     quantity: row.quantity || 1,
-    thumbnailUrl: firstPageThumbnail(book.content),
+    thumbnailUrl: typeof thumb === "string" ? thumb : null,
   };
 }
 

@@ -448,6 +448,7 @@
 			"paymentSuccess": "Payment successful!",
 			"more": "+{{count}} more",
 			"itemsCount": "{{count}} items",
+			"loadMore": "Load more orders",
 			"pages": "pages",
 			"pg": "pg",
 			"payment": "Payment",

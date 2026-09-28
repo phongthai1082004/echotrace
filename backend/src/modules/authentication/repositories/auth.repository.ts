@@ -28,8 +28,8 @@ export class AuthRepository {
 	findActiveUserByEmailFull(email: string) {
 		return this.client.user.findFirst({ where: { email, isDelete: false } });
 	}
-	createPasswordUser(email: string, hashed: string) {
-		return this.client.user.create({ data: { email, password: hashed, name: email.split('@')[0] } });
+	createPasswordUser(email: string, hashed: string, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).user.create({ data: { email, password: hashed, name: email.split('@')[0] } });
 	}
 	findUserByIdRole(id: number) {
 		return this.client.user.findUnique({ where: { id }, select: { isDelete: true, role: true } });
@@ -57,8 +57,8 @@ export class AuthRepository {
 	findValidOtp(email: string) {
 		return this.client.token.findFirst({ where: { email, tokenType: TokenType.OTP, isRevoked: false } });
 	}
-	revokeToken(id: number) {
-		return this.client.token.update({ where: { id }, data: { isRevoked: true } });
+	revokeToken(id: number, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).token.update({ where: { id }, data: { isRevoked: true } });
 	}
 	revokeSessionTokens(userId: number) {
 		return this.client.token.updateMany({
@@ -74,8 +74,8 @@ export class AuthRepository {
 	deleteSessionTokens(userId: number) {
 		return this.client.token.deleteMany({ where: { userId, tokenType: TokenType.SESSION } });
 	}
-	createSessionToken(userId: number, rt: string, expiresAt: Date) {
-		return this.client.token.create({
+	createSessionToken(userId: number, rt: string, expiresAt: Date, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).token.create({
 			data: { userId, refreshToken: rt, tokenType: TokenType.SESSION, expiresAt },
 		});
 	}

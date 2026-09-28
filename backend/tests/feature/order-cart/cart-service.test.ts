@@ -44,6 +44,7 @@ const row = (over: any = {}) => ({
 
 const build = () => {
   const cartRepo = mock<CartRepository>();
+  (cartRepo as any).client = { $transaction: jest.fn((fn: any) => fn({})) };
   const printOptions = mock<IPrintOptionService>();
   const coupons = mock<ICouponService>();
   const samples = mock<ISampleBookService>();
@@ -161,29 +162,39 @@ describe("CartService.addAlbumToCart (C-32)", () => {
     const { svc, samples, cartRepo } = build();
     samples.getByIdForStock.mockResolvedValue(null as any);
     await expect(svc.addAlbumToCart(1, { sampleBookId: 3 })).rejects.toMatchObject({ statusCode: 400 });
-    expect(cartRepo.findBookByUser).not.toHaveBeenCalled();
+    expect((cartRepo as any).client.$transaction).not.toHaveBeenCalled();
   });
 
-  it("C-32b: in stock + existing book -> reuse, no create", async () => {
+  it("C-32b: upsert nguyên tử theo unique (userId, sampleBookId), rồi upsert item", async () => {
     const { svc, samples, cartRepo } = build();
     samples.getByIdForStock.mockResolvedValue(sample as any);
-    cartRepo.findBookByUser.mockResolvedValue({ id: 7 } as any);
-    const upsert = jest.spyOn(svc, "upsertItem").mockResolvedValue({ bookId: 7 } as any);
-    await svc.addAlbumToCart(1, { sampleBookId: 3, quantity: 2 });
-    expect(cartRepo.createBook).not.toHaveBeenCalled();
-    expect(upsert).toHaveBeenCalledWith(1, { bookId: 7, quantity: 2, cover: "hard", paper: null, paperSize: null });
+    const txBookUpsert = jest.fn().mockResolvedValue({ id: 7 });
+    (cartRepo as any).client = { $transaction: (fn: any) => fn({ book: { upsert: txBookUpsert } }) };
+      const upsert = jest.spyOn(svc as any, "upsertItemTx").mockResolvedValue({ bookId: 7 } as any);
+      await svc.addAlbumToCart(1, { sampleBookId: 3, quantity: 2 });
+      expect(txBookUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_sampleBookId: { userId: 1, sampleBookId: 3 } },
+          update: {},
+        }),
+      );
+      expect(upsert).toHaveBeenCalledWith(expect.anything(), 1, { bookId: 7, quantity: 2, cover: "hard", paper: null, paperSize: null });
     upsert.mockRestore();
   });
 
-  it("C-32c: in stock + no book -> create then upsert", async () => {
+  it("C-32c: create payload mang field sample (title/style/font/cover/dims/content)", async () => {
     const { svc, samples, cartRepo } = build();
     samples.getByIdForStock.mockResolvedValue(sample as any);
-    cartRepo.findBookByUser.mockResolvedValue(null);
-    cartRepo.createBook.mockResolvedValue({ id: 9 } as any);
-    const upsert = jest.spyOn(svc, "upsertItem").mockResolvedValue({ bookId: 9 } as any);
-    await svc.addAlbumToCart(1, { sampleBookId: 3 });
-    expect(cartRepo.createBook).toHaveBeenCalledWith(expect.objectContaining({ userId: 1, sampleBookId: 3 }));
-    expect(upsert).toHaveBeenCalledWith(1, { bookId: 9, quantity: 1, cover: "hard", paper: null, paperSize: null });
+    const txBookUpsert = jest.fn().mockResolvedValue({ id: 9 });
+    (cartRepo as any).client = { $transaction: (fn: any) => fn({ book: { upsert: txBookUpsert } }) };
+      const upsert = jest.spyOn(svc as any, "upsertItemTx").mockResolvedValue({ bookId: 9 } as any);
+      await svc.addAlbumToCart(1, { sampleBookId: 3 });
+      expect(txBookUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ userId: 1, sampleBookId: 3, title: "Album", style: "PHOTOBOOK" }),
+        }),
+      );
+      expect(upsert).toHaveBeenCalledWith(expect.anything(), 1, { bookId: 9, quantity: 1, cover: "hard", paper: null, paperSize: null });
     upsert.mockRestore();
   });
 });

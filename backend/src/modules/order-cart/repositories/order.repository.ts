@@ -65,8 +65,20 @@ export class OrderRepository {
 	findOrderStatus(id: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).order.findUnique({ where: { id }, select: { status: true } });
 	}
-	listMyOrders(userId: number) {
-		return this.client.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 200 });
+	listMyOrders(userId: number, query?: { cursor?: number; take?: number }) {
+		const take = Math.min(Math.max(query?.take ?? 20, 1), 50);
+		const cursor = query?.cursor;
+		return this.client.order
+			.findMany({
+				where: { userId },
+				orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+				...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+				take: take + 1,
+			})
+			.then((rows) => ({
+				items: rows.slice(0, take),
+				nextCursor: rows.length > take ? rows[rows.length - 1].id : null,
+			}));
 	}
 	listAllOrders() {
 		return this.client.order.findMany({

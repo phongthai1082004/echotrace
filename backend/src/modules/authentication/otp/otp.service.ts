@@ -54,11 +54,19 @@ export class OtpService implements IOtpService {
 		}
 		await this.cache.delete(`otp_fail:${email}`);
 
-		await this.authRepo.revokeToken(record.id);
+		// 1 tx cho revoke + tạo user + session (2 verify cùng lúc khỏi đẻ trùng email).
+		try {
+			return await this.authRepo.client.$transaction(async (tx) => {
+				await this.authRepo.revokeToken(record.id, tx);
 
-		const hashed = await bcrypt.hash(password, 10);
-		const user = await this.authRepo.createPasswordUser(email, hashed);
+				const hashed = await bcrypt.hash(password, 10);
+				const user = await this.authRepo.createPasswordUser(email, hashed, tx);
 
-		return AuthMapper.toAuthResponse(user, generateAccessToken(String(user.id), user.role), await generateRefreshToken(this.authRepo, String(user.id)));
+				return AuthMapper.toAuthResponse(user, generateAccessToken(String(user.id), user.role), await generateRefreshToken(this.authRepo, String(user.id), tx));
+			});
+		} catch (e: any) {
+			if (e?.code === 'P2002') throw new AppError(ErrorCode.AUTH_INVALID_OTP, 400);
+			throw e;
+		}
 	}
 }

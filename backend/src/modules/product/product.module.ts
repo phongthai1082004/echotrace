@@ -5,6 +5,7 @@ import { SampleBookService } from './sample-books/sample-books.service.js';
 import { SampleBookRepository } from './sample-books/sample-books.repository.js';
 import { StockService } from './sample-books/stock.service.js';
 import { DecorAssetRepository } from './stickers/stickers.repository.js';
+import { StickerService } from './stickers/stickers.service.js';
 import { PrintOptionService } from './print-options/print-options.service.js';
 import { PrintOptionRepository } from './print-options/print-options.repository.js';
 import { UserImageService } from './uploads/user-images.service.js';
@@ -21,6 +22,7 @@ export function registerProduct(container: DependencyContainer): void {
 	container.registerSingleton('SampleBookRepository', SampleBookRepository);
 	container.registerSingleton('IStockService', StockService);
 	container.registerSingleton('DecorAssetRepository', DecorAssetRepository);
+	container.registerSingleton('IStickerService', StickerService);
 	container.registerSingleton('IPrintOptionService', PrintOptionService);
 	container.registerSingleton('PrintOptionRepository', PrintOptionRepository);
 	container.registerSingleton('IUserImageService', UserImageService);

@@ -30,4 +30,17 @@ export class OptionCatalogCacheService {
 	async invalidateCatalogForTypes(...types: string[]): Promise<void> {
 		await this.cache.delete(...types.map((t) => `catalog:${t}`));
 	}
+
+	// bảng giá tiny cho tính tiền giỏ — cache riêng vì listRaw không qua catalog/info.
+	async getRawPricing<T>(): Promise<T | undefined> {
+		return this.cache.get<T>('pricing:raw');
+	}
+
+	async setRawPricing(value: unknown): Promise<void> {
+		await this.cache.set('pricing:raw', value);
+	}
+
+	async invalidateRawPricing(): Promise<void> {
+		await this.cache.delete('pricing:raw');
+	}
 }

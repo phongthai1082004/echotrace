@@ -300,7 +300,7 @@ export class CheckoutService implements ICheckoutService {
 					utmSource: source,
 					utmMedium: String(input.utmMedium ?? '').trim().toLowerCase().slice(0, 64) || null,
 					utmCampaign: String(input.utmCampaign ?? '').trim().slice(0, 128) || null,
-				}).catch(() => {});
+				}).catch((e) => console.warn('[album-order] utm update failed:', (e as Error)?.message || e));
 			}
 			return result;
 		});

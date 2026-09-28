@@ -4,18 +4,44 @@ import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
 import type { OrderDTO } from "@/lib/order.dto";
 
-export function useCustomerOrders(initial?: OrderDTO[] | null) {
+export interface OrdersPage {
+  items: OrderDTO[];
+  nextCursor: number | null;
+}
+
+export function useCustomerOrders(initial?: OrdersPage | null) {
   const { showToast } = useToast();
   const token = (useSession().data as { accessToken?: string } | undefined)?.accessToken;
-  const [orders, setOrders] = useState<OrderDTO[] | null>(initial ?? null);
+  const [orders, setOrders] = useState<OrderDTO[] | null>(initial?.items ?? null);
+  const [nextCursor, setNextCursor] = useState<number | null>(initial?.nextCursor ?? null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDTO | null>(null);
 
   useEffect(() => {
     if (!token || initial !== undefined) return;
-    apiFetch<OrderDTO[]>("/api/orders", token)
-      .then(setOrders)
+    apiFetch<OrdersPage>("/api/orders?limit=20", token)
+      .then((p) => {
+        setOrders(p.items ?? []);
+        setNextCursor(p.nextCursor ?? null);
+      })
       .catch(() => setOrders([]));
   }, [token]);
+
+  const loadMore = useCallback(async () => {
+    if (!token || nextCursor == null || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const p = await apiFetch<OrdersPage>(`/api/orders?limit=20&cursor=${nextCursor}`, token);
+      setOrders((prev) => {
+        const seen = new Set((prev ?? []).map((o) => o.id));
+        return [...(prev ?? []), ...(p.items ?? []).filter((o) => !seen.has(o.id))];
+      });
+      setNextCursor(p.nextCursor ?? null);
+    } catch {
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [token, nextCursor, loadingMore]);
 
   const updateOrder = useCallback((id: number, patch: Partial<OrderDTO>) => {
     setOrders((prev) => (prev ? prev.map((o) => (o.id === id ? { ...o, ...patch } : o)) : prev));
@@ -84,6 +110,9 @@ export function useCustomerOrders(initial?: OrderDTO[] | null) {
 
   return {
     orders,
+    nextCursor,
+    loadingMore,
+    loadMore,
     selectedOrder,
     setSelectedOrder,
     requestPaymentLink,

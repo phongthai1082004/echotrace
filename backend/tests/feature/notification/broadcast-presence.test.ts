@@ -70,6 +70,19 @@ describe("broadcastNotification (N-10)", () => {
 		db.user.findMany.mockRejectedValue(new Error("down"));
 		await expect(broadcastNotification(opts)).resolves.toEqual({ users: 0 });
 	});
+
+	it("N-10c: 501 users -> 2 batches (500 + 1), 2 createMany", async () => {
+		const batch1 = Array.from({ length: 500 }, (_, i) => ({ id: i + 1 }));
+		db.user.findMany
+			.mockResolvedValueOnce(batch1)
+			.mockResolvedValueOnce([{ id: 501 }])
+			.mockResolvedValue([]);
+		await expect(broadcastNotification(opts)).resolves.toEqual({ users: 501 });
+		expect(db.notification.createMany).toHaveBeenCalledTimes(2);
+		expect(db.notification.createMany.mock.calls[0][0].data).toHaveLength(500);
+		expect(db.notification.createMany.mock.calls[1][0].data).toHaveLength(1);
+		expect(db.user.findMany.mock.calls[1][0]).toMatchObject({ where: { isDelete: false, id: { gt: 500 } } });
+	});
 });
 
 describe("maintenance flip race (N-11)", () => {

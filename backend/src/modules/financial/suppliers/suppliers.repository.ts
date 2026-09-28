@@ -10,16 +10,16 @@ export class SupplierRepository {
 		return this.prismaService.db;
 	}
 
-	findSupplierById(id: number) {
-		return this.client.supplier.findFirst({ where: { id } });
+	findSupplierById(id: number, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).supplier.findFirst({ where: { id } });
 	}
 
-	createSupplier(data: Prisma.SupplierUncheckedCreateInput) {
-		return this.client.supplier.create({ data });
+	createSupplier(data: Prisma.SupplierUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).supplier.create({ data });
 	}
 
-	updateSupplier(id: number, data: Record<string, unknown>) {
-		return this.client.supplier.updateMany({ where: { id }, data: data as Prisma.SupplierUpdateManyMutationInput });
+	updateSupplier(id: number, data: Record<string, unknown>, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).supplier.updateMany({ where: { id }, data: data as Prisma.SupplierUpdateManyMutationInput });
 	}
 
 	deleteSupplier(id: number) {

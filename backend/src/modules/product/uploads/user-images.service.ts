@@ -3,6 +3,7 @@ import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import { ImageDTO, SaveImageDTO, ImageMapper } from '@echotrace/shared';
 import { UserImagesRepository } from './user-images.repository.js';
+import type { IR2ImageService } from '../../../shared/r2/r2.service.js';
 
 export interface IUserImageService {
 	getById(id: number, userId: number): Promise<ImageDTO>;
@@ -13,7 +14,10 @@ export interface IUserImageService {
 
 @injectable()
 export class UserImageService implements IUserImageService {
-	constructor(@inject('UserImagesRepository') private userImagesRepo: UserImagesRepository) {}
+	constructor(
+		@inject('UserImagesRepository') private userImagesRepo: UserImagesRepository,
+		@inject('IR2ImageService') private r2: IR2ImageService,
+	) {}
 
 	public async getById(id: number, userId: number) {
 		const image = await this.userImagesRepo.findByIdForUser(id, userId);
@@ -36,9 +40,7 @@ export class UserImageService implements IUserImageService {
 		const image = await this.getById(id, userId);
 		await this.userImagesRepo.deleteUserImage(id, userId);
 		if (image.publicId) {
-			const { R2ImageService } = await import('../../../shared/r2/r2.service.js');
-			const r2 = new R2ImageService();
-			await r2.deleteAsset(image.publicId).catch(() => {});
+			await this.r2.deleteAsset(image.publicId).catch(() => {});
 		}
 	}
 }

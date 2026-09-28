@@ -40,7 +40,6 @@
 		"i18next-http-middleware": "^3.9.7",
 		"ioredis": "^6.0.0",
 		"jsonwebtoken": "^9.0.3",
-		"nodemailer": "^9.0.3",
 		"pdf-lib": "^1.17.1",
 		"pg": "^8.22.0",
 		"reflect-metadata": "^0.2.2",

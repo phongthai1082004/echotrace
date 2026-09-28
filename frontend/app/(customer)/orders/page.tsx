@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { apiFetch } from "@/lib/api.fetch";
 import { getT } from "@/lib/i18n-server";
-import type { OrderDTO } from "@/lib/order.dto";
+import type { OrdersPage } from "./_hooks/use-customer-orders";
 import { OrdersClient } from "./_components/orders-client";
 
 // khỏi waterfall session → token → fetch ở client.
@@ -13,10 +13,10 @@ export default async function OrdersPage() {
   const session = await getServerSession(authOptions);
   const token = (session as any)?.accessToken as string | undefined;
 
-  let initialOrders: OrderDTO[] | null | undefined;
+  let initialOrders: OrdersPage | null | undefined;
   if (token) {
     try {
-      initialOrders = (await apiFetch<OrderDTO[]>("/api/orders", token)) ?? [];
+      initialOrders = (await apiFetch<OrdersPage>("/api/orders?limit=20", token)) ?? { items: [], nextCursor: null };
     } catch {
     }
   }
