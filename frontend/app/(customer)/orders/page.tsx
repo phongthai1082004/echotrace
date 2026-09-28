@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth.config";
 import { apiFetch } from "@/lib/api.fetch";
+import { getPageContext } from "@/lib/page-context";
 import { getT } from "@/lib/i18n-server";
 import type { OrdersPage } from "./_hooks/use-customer-orders";
 import { OrdersClient } from "./_components/orders-client";
@@ -10,8 +9,7 @@ import { OrdersClient } from "./_components/orders-client";
 export default async function OrdersPage() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
   const t = getT(lng);
-  const session = await getServerSession(authOptions);
-  const token = (session as any)?.accessToken as string | undefined;
+  const { token } = await getPageContext();
 
   let initialOrders: OrdersPage | null | undefined;
   if (token) {

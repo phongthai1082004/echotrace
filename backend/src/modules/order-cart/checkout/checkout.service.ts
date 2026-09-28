@@ -15,6 +15,7 @@ import {
 } from '@echotrace/shared';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import type {ICartService} from '../cart/cart.service.js';
+import type {IBookService} from '../../product/books/books.service.js';
 import { NotificationSubject } from '../../notification/notification.subject.js';
 import { notifyAdmins } from '../../notification/notify/order.js';
 import { orderText } from '../../notification/notify/order-texts.js';
@@ -51,6 +52,7 @@ export interface ICheckoutService {
 export class CheckoutService implements ICheckoutService {
 	constructor(
 		@inject('ICartService') private cartService: ICartService,
+		@inject('IBookService') private bookService: IBookService,
 		@inject('IPaymentService') private paymentService: PaymentService,
 		@inject('IPdfQueue') private pdfQueue: IPdfQueue,
 		@inject('OrderRepository') private orderRepo: OrderRepository,
@@ -90,6 +92,8 @@ export class CheckoutService implements ICheckoutService {
 			if (custErr.length) throw new AppError(custErr.join('; '), 400);
 
 			const bookIds = createOrderDto.items.map((i) => i.bookId);
+			// ép flush delta treo trước khi snapshot đơn (đơn không đọc đồ cũ).
+			await this.bookService.flushBooks(bookIds);
 			const quote = await this.cartService.calculateCart(
 				userId,
 				createOrderDto.paymentMethod,

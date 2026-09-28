@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
 import { card } from "@/lib/styles";
+import { r2Thumb } from "@/lib/upload";
 import { SkeletonGrid } from "@/components/skeleton";
 import { CATEGORY_COLORS, ASSET_CATEGORIES, AssetCategory } from "@echotrace/shared";
 import type { Asset } from "../_hooks/use-stickers";
@@ -38,7 +39,7 @@ export function StickerGrid({
       {filtered.map((a) => (
         <div key={a.id} className={`${card} p-2 relative group`}>
           <div className="w-full aspect-square rounded-[6px] overflow-hidden bg-white border-2 border-[#222] flex items-center justify-center">
-            <img src={a.url} alt={a.name} className="w-full h-full object-contain" loading="lazy" />
+            <img src={r2Thumb(a.url, 200)} alt={a.name} className="w-full h-full object-contain" loading="lazy" />
           </div>
           <p className="font-mono text-[8px] font-bold tracking-widest uppercase mt-1.5 text-center text-[#666] truncate">
             {a.name}

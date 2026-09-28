@@ -11,6 +11,7 @@ const QRCodeSVG = dynamic(() => import("qrcode.react").then((m) => m.QRCodeSVG),
 });
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
+import { useVerifyPoll } from "@/hooks/use-verify-poll";
 import { DiscountModal } from "@/components/discount-modal";
 import { fetchPrintCatalog, PrintCatalog } from "@/lib/print-catalog";
 import { label, card, neoBtnPrimary, neoBtn, labelSm } from "@/lib/styles";
@@ -135,21 +136,14 @@ export default function CheckoutPage() {
 
   // Poll trạng thái đơn mỗi 12s + skip khi tab ẩn — gọi verify (hỏi PayOS trực tiếp) vì webhook localhost không nhận được
   const orderId = orderInfo?.orderId;
+  const pollVerify = useVerifyPoll(token);
   useEffect(() => {
     if (!orderId) return;
-    const id = setInterval(async () => {
-      if (document.hidden) return;
-      try {
-        const o = await apiFetch<{ status: string }>(`/api/orders/${orderId}/verify`, token, { method: "POST" });
-        if (o?.status && o.status !== "pending_payment") {
-          clearInterval(id);
-          setOrderInfo((prev: any) => ({ ...prev, status: o.status }));
-          showToast(t("customer.checkout.paymentSuccess"), "success");
-          router.push("/orders");
-        }
-      } catch {}
-    }, 12000);
-    return () => clearInterval(id);
+    return pollVerify(orderId, "pending_payment", (s) => {
+      setOrderInfo((prev: any) => ({ ...prev, status: s }));
+      showToast(t("customer.checkout.paymentSuccess"), "success");
+      router.push("/orders");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, token]);
 

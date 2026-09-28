@@ -28,13 +28,15 @@ export function useCursorList<T>(endpoint: string, filters: Record<string, strin
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    apiFetch<ListResp<T>>(query, token)
+    const ctrl = new AbortController();
+    apiFetch<ListResp<T>>(query, token, { signal: ctrl.signal })
       .then((d) => {
         setItems(d?.items || []);
         setNextCursor(d?.nextCursor ?? null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [token, query, nonce]);
 
   useEffect(() => {

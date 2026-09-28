@@ -47,7 +47,7 @@ export class BookController {
 	updatePages = async (req: AuthRequest, res: Response) => {
 		const id = parseInt(req.params.id as string);
 		const userId = parseInt(req.userId!);
-		const { content, title, paperHeight, paperWidth } = req.body;
+		const { content, title, paperHeight, paperWidth, flush } = req.body;
 		const updateData: any = {};
 		if (content) {
 			updateData.content = parseContentJson(content);
@@ -55,7 +55,7 @@ export class BookController {
 		if (title !== undefined) updateData.title = checkTitle(title);
 		if (paperHeight !== undefined) updateData.paperHeight = toPaperSize(paperHeight);
 		if (paperWidth !== undefined) updateData.paperWidth = toPaperSize(paperWidth);
-		await this.bookService.updatePages(id, userId, updateData);
+		await this.bookService.updatePages(id, userId, updateData, { flush: flush === true });
 		res.json(ApiResponse.success({ id }));
 	};
 }

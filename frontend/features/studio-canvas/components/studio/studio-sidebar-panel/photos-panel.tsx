@@ -6,6 +6,7 @@ import { useDrag } from "react-dnd";
 import { useSession } from "next-auth/react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { isCoarsePointer } from "../../../lib/photos";
+import { r2Thumb } from "@/lib/upload";
 import { useToast } from "@/components/toast";
 import { uploadToR2 } from "@/lib/upload";
 import { X, Loader2 } from "lucide-react";
@@ -57,7 +58,7 @@ function DraggablePhoto({
       className={`relative overflow-hidden bg-[#e8e6e0] rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] cursor-grab active:cursor-grabbing transition-opacity group ${isDragging ? "opacity-40" : "hover:shadow-[1px_1px_0_#222] hover:translate-x-px hover:translate-y-px"} ${armed ? "outline-4 outline-[#B54843] -outline-offset-2" : ""}`}
     >
       <img
-        src={url}
+        src={r2Thumb(url, 200)}
         alt={label || ""}
         className="w-full object-cover"
         style={{ aspectRatio: "1" }}

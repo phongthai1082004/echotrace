@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 
@@ -28,14 +28,22 @@ export function useExplore(token?: string) {
 	const [samplesNext, setSamplesNext] = useState<number | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [category, setCategoryState] = useState<string | null>(null);
+	const abortRef = useRef<AbortController | null>(null);
 
 	const loadSamples = useCallback(
 		async (cursor: number, cat: string | null, replace: boolean) => {
 			if (!accessToken) return;
+			abortRef.current?.abort();
+			const ctrl = new AbortController();
+			abortRef.current = ctrl;
 			const url = `/api/explore/samples?cursor=${cursor}&limit=${LIMIT}${cat ? `&category=${encodeURIComponent(cat)}` : ""}`;
-			const d = await apiFetch<{ items: ExploreSample[]; nextCursor: number | null }>(url, accessToken);
-			setSamples((prev) => (replace ? d.items : [...prev, ...d.items]));
-			setSamplesNext(d.nextCursor);
+			try {
+				const d = await apiFetch<{ items: ExploreSample[]; nextCursor: number | null }>(url, accessToken, {
+					signal: ctrl.signal,
+				});
+				setSamples((prev) => (replace ? d.items : [...prev, ...d.items]));
+				setSamplesNext(d.nextCursor);
+			} catch {}
 		},
 		[accessToken],
 	);

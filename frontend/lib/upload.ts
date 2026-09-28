@@ -38,6 +38,19 @@ interface Normalized {
   height: number;
 }
 
+// Ảnh thumb cho grid/panel: worker R2 transform on-the-fly (/w_{n}/key).
+// URL ngoài R2 (unsplash/dataURL) trả nguyên.
+export function r2Thumb(url: string, w = 200): string {
+  if (!url.startsWith("http")) return url;
+  try {
+    const u = new URL(url);
+    if (!u.pathname.startsWith("/echotrace/")) return url;
+    return `${u.origin}/w_${w}${u.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
 const KEEP_ALPHA_TYPES: ReadonlySet<string> = new Set(["sticker"]);
 
 async function normalizeImage(

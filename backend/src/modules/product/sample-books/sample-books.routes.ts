@@ -32,6 +32,13 @@ router.patch(
 	validateDto(UpdateSampleBookDTO),
 	asyncHandler((req, res) => sampleBookCtrl.update(req, res)),
 );
+// Alias POST cho sendBeacon lúc đóng tab (beacon không đổi method được).
+router.post(
+	'/admin/sample-books/:id',
+	authGuard('admin'),
+	validateDto(UpdateSampleBookDTO),
+	asyncHandler((req, res) => sampleBookCtrl.update(req, res)),
+);
 router.patch(
 	'/admin/sample-books/:id/status',
 	authGuard('admin'),

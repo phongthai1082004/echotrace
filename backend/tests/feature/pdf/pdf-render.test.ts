@@ -11,6 +11,7 @@ import { PDFDocument } from "pdf-lib";
 import { FabricRenderer } from "../../../src/modules/pdf/render/fabric.renderer.js";
 import type { OrderRepository } from "../../../src/modules/order-cart/repositories/order.repository.js";
 import type { BookRepository } from "../../../src/modules/product/books/books.repository.js";
+import type { IBookService } from "../../../src/modules/product/books/books.service.js";
 
 const blankPage = () => ({
 	canvasJson: { version: "7.0", width: 600, height: 600, objects: [], background: "#ffffff" },
@@ -28,10 +29,12 @@ const bookOf = (pages: any[], over: Record<string, any> = {}) => ({
 const rendererWith = (pages: any[], bookOver: Record<string, any> = {}) => {
 	const orderRepo = mock<OrderRepository>();
 	const bookRepo = mock<BookRepository>();
+	const books = mock<IBookService>();
+	books.flushBooks.mockResolvedValue({ flushed: 0 });
 	orderRepo.findOrderById.mockResolvedValue({ id: 9, orderItems: [{ bookId: 1 }] } as any);
 	bookRepo.findBookById.mockResolvedValue(bookOf(pages, bookOver) as any);
 	bookRepo.findBooksByIds.mockResolvedValue([bookOf(pages, bookOver)] as any);
-	return new FabricRenderer(orderRepo, bookRepo);
+	return new FabricRenderer(orderRepo, bookRepo, books);
 };
 
 const pdfHeader = (buf: Buffer) => buf.subarray(0, 5).toString();

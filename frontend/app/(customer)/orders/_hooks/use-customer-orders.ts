@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api.fetch";
 import { useToast } from "@/components/toast";
+import { useVerifyPoll } from "@/hooks/use-verify-poll";
 import type { OrderDTO } from "@/lib/order.dto";
 
 export interface OrdersPage {
@@ -92,21 +93,15 @@ export function useCustomerOrders(initial?: OrdersPage | null) {
     }
   }, [token, updateOrder, showToast]);
 
-  const pollVerify = useCallback((id: number, status: string) => {
-    if (!token || !id || status !== "pending_payment") return;
-    const interval = setInterval(async () => {
-      if (document.hidden) return;
-      try {
-        const r = await apiFetch<{ status: string }>(`/api/orders/${id}/verify`, token, { method: "POST" });
-        if (r?.status && r.status !== "pending_payment") {
-          clearInterval(interval);
-          showToast("customer.orders.paymentSuccess", "success");
-          updateOrder(id, { status: r.status as OrderDTO["status"], qrCode: undefined });
-        }
-      } catch {}
-    }, 12000);
-    return () => clearInterval(interval);
-  }, [token, updateOrder, showToast]);
+  const pollVerifyBase = useVerifyPoll(token);
+  const pollVerify = useCallback(
+    (id: number, status: string) =>
+      pollVerifyBase(id, status, (s) => {
+        showToast("customer.orders.paymentSuccess", "success");
+        updateOrder(id, { status: s as OrderDTO["status"], qrCode: undefined });
+      }),
+    [pollVerifyBase, showToast, updateOrder],
+  );
 
   return {
     orders,

@@ -316,6 +316,7 @@ model Book {
 
   user       User        @relation(fields: [userId], references: [id])
   cartItems  CartItem[]
+  deltas     BookPageDelta[]
 
   @@index([userId])
   @@index([sampleBookId])
@@ -516,4 +517,16 @@ model MaintenanceWindow {
   endedBy   Int?
   notifiedAt DateTime?
 
+}
+
+model BookPageDelta {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  pageIndex Int
+  payload   Json
+  createdAt DateTime @default(now())
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId, id])
 }

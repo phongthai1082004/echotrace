@@ -22,15 +22,18 @@ let saveInflight: Promise<{ ok: boolean; error?: string; id?: number }> | null =
 export function useAutoSave() {
   const api = useStudioAPI();
 
-  const saveFull = (token?: string): Promise<{ ok: boolean; error?: string; id?: number }> =>
-    guardedSave(api, token);
+  const saveFull = (
+    token?: string,
+    opts?: { flush?: boolean },
+  ): Promise<{ ok: boolean; error?: string; id?: number }> => guardedSave(api, token, opts);
 
-  return { saveFull };
+  return { saveFull, sendBeacon: () => sendBeaconSave(api) };
 }
 
 async function runSaveFull(
   api: StudioAPI,
   token?: string,
+  opts?: { flush?: boolean },
 ): Promise<{ ok: boolean; error?: string; id?: number }> {
   const s = useCanvasStore.getState();
     const c = s.canvas;
@@ -124,6 +127,8 @@ async function runSaveFull(
       gsm: s.bookMeta.gsm || 200,
       spineWidth,
     };
+    // save tay: ép backend flush delta treo ngay trong request.
+    if (opts?.flush) payload.flush = true;
 
     const bookKey = String(s.bookMeta.id ?? "new");
     const prev = lastSavedBooks.get(bookKey);
@@ -174,9 +179,10 @@ async function runSaveFull(
 function guardedSave(
   api: StudioAPI,
   token?: string,
+  opts?: { flush?: boolean },
 ): Promise<{ ok: boolean; error?: string; id?: number }> {
   if (saveInflight) return saveInflight;
-  saveInflight = runSaveFull(api, token).finally(() => {
+  saveInflight = runSaveFull(api, token, opts).finally(() => {
     saveInflight = null;
   });
   return saveInflight;
@@ -184,15 +190,19 @@ function guardedSave(
 
 // saveFull already returns early with zero network when nothing changed, so an
 // idle tab costs a local serialize per tick and nothing else.
-export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
-  const { saveFull } = useAutoSave();
+export function useAutoSaveLoop(token?: string, intervalMs = 60_000, idleMs = 8_000) {
+  const { saveFull, sendBeacon } = useAutoSave();
   const saveRef = useRef(saveFull);
   const tokenRef = useRef(token);
   const busyRef = useRef(false);
+  const beaconRef = useRef(sendBeacon);
+  // undoStack dài ra = có thao tác sửa (pushUndo chỉ push khi state khác).
+  const undoDepth = useCanvasStore((s) => s.undoStack.length);
 
   useEffect(() => {
     saveRef.current = saveFull;
     tokenRef.current = token;
+    beaconRef.current = sendBeacon;
   });
 
   useEffect(() => {
@@ -209,8 +219,12 @@ export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
       }
     };
     const id = setInterval(tick, intervalMs);
+    // đóng tab: fetch thường bị kill giữa chừng — beacon thì browser đảm bảo gửi.
     const flush = () => {
-      if (!busyRef.current && tokenRef.current) void saveRef.current(tokenRef.current).catch(() => {});
+      if (busyRef.current) return;
+      try {
+        beaconRef.current();
+      } catch {}
     };
     window.addEventListener("pagehide", flush);
     return () => {
@@ -218,6 +232,69 @@ export function useAutoSaveLoop(token?: string, intervalMs = 60_000) {
       window.removeEventListener("pagehide", flush);
     };
   }, [token, intervalMs]);
+
+  // debounce sau thao tác cuối: sửa xong ~8s là save, khỏi chờ tick 60s.
+  useEffect(() => {
+    if (!token || undoDepth === 0) return;
+    const id = setTimeout(() => {
+      if (busyRef.current || !tokenRef.current) return;
+      busyRef.current = true;
+      saveRef
+        .current(tokenRef.current)
+        .catch((err) => console.warn("[autosave] idle save failed:", (err as Error)?.message || err))
+        .finally(() => {
+          busyRef.current = false;
+        });
+    }, idleMs);
+    return () => clearTimeout(id);
+  }, [token, undoDepth, idleMs]);
+}
+
+// Gói payload save hiện tại (đồng bộ, bỏ upload thumb) rồi beacon qua proxy
+// same-origin (cookie đi kèm, backend merge như save thường, không cần response).
+function sendBeaconSave(api: StudioAPI) {
+  if (typeof navigator === "undefined" || typeof navigator.sendBeacon !== "function") return;
+  if (!api.beaconPath || !api.beaconTitleField) return;
+  try {
+    const s = useCanvasStore.getState();
+    const c = s.canvas;
+    const id = s.bookMeta.id;
+    if (!c || !id) return;
+    const pageCount = s.pages.length;
+    const currentJson = serializeCanvasState(c);
+    const updatedPages = [...s.pages];
+    if (!isCoverPage(s.activePageIndex, pageCount) && c.getWidth() > 400) {
+      const rightIdx = Math.min(s.activePageIndex + 1, pageCount - 1);
+      const { leftJson, rightJson } = splitCanvasForView(
+        currentJson,
+        c.getWidth() / 2,
+        s.viewMode,
+        s.pages[s.activePageIndex]?.canvasJson,
+        s.pages[rightIdx]?.canvasJson,
+      );
+      updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: leftJson };
+      updatedPages[rightIdx] = { ...updatedPages[rightIdx], canvasJson: rightJson };
+    } else {
+      updatedPages[s.activePageIndex] = { ...updatedPages[s.activePageIndex], canvasJson: currentJson };
+    }
+    const pagesAll = updatedPages.map((p) => ({
+      index: p.index,
+      layout: p.layout,
+      spreadLayout: p.spreadLayout,
+      canvasJson: p.canvasJson,
+      thumbnailUrl: p.thumbnailUrl,
+      locked: p.locked ?? false,
+      elements: serializePage(p.canvasJson, p.index)?.elements ?? [],
+    }));
+    const fmt = resolveFormat({ format: s.bookMeta.format, width: s.bookMeta.width, height: s.bookMeta.height });
+    const body = JSON.stringify({
+      content: { pages: pagesAll },
+      [api.beaconTitleField]: s.bookMeta.title,
+      paperHeight: Math.round(fmt.height / 4),
+      paperWidth: Math.round(fmt.width / 4),
+    });
+    navigator.sendBeacon(`/api/proxy?path=${encodeURIComponent(api.beaconPath(id))}`, new Blob([body], { type: "application/json" }));
+  } catch {}
 }
 
 type PageSnapshot = {

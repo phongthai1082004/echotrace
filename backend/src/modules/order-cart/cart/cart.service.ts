@@ -4,6 +4,7 @@ import { ErrorCode, CartDTO, CartItem, composeCartItem, computeCouponDiscount, P
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { CartRepository, BOOK_SELECT } from './cart.repository.js';
 import type { IPrintOptionService, PrintOptionRawRow } from '../../product/print-options/print-options.service.js';
+import type { IBookService } from '../../product/books/books.service.js';
 import type { ICouponService } from '../coupons/coupons.service.js';
 import type { ISampleBookService } from '../../product/sample-books/sample-books.service.js';
 
@@ -75,7 +76,16 @@ export class CartService implements ICartService {	constructor(
 		@inject('IPrintOptionService') private printOptionService: IPrintOptionService,
 		@inject('ICouponService') private couponService: ICouponService,
 		@inject('ISampleBookService') private sampleBookService: ISampleBookService,
+		@inject('IBookService') private bookService: IBookService,
 	) {}
+
+	// đắp delta autosave đang treo vào book trước khi compose (không ghi DB).
+	private async composeRows(rows: any[], optMap: OptKeyMap) {
+		const books = rows.map((r: any) => r.book).filter(Boolean);
+		const merged = await this.bookService.withPendingList(books);
+		const byId = new Map(merged.map((b: any) => [b.id, b]));
+		return rows.map((row: any) => applyItemPrice(composeCartItem(row, byId.get(row.book?.id) ?? row.book), optMap));
+	}
 
 	async getCart(userId: number): Promise<CartDTO> {
 		const [cart, optRows] = await Promise.all([
@@ -84,7 +94,7 @@ export class CartService implements ICartService {	constructor(
 		]);
 		const optMap = toOptKeyMap(optRows);
 		const resolved = cart ?? (await this.cartRepo.createCart(userId));
-		const parsedItems = resolved.items.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
+		const parsedItems = await this.composeRows(resolved.items as any[], optMap);
 		return {
 			id: resolved.id,
 			userId,
@@ -95,6 +105,8 @@ export class CartService implements ICartService {	constructor(
 	}
 
 	async upsertItem(userId: number, input: Partial<CartItem> & { bookId: number }): Promise<CartItem> {
+		// thêm vào giỏ = ép flush delta treo của sách trước (đơn/giỏ không đọc đồ cũ).
+		await this.bookService.flushBooks([input.bookId]);
 		return this.cartRepo.client.$transaction(async (tx) => this.upsertItemTx(tx, userId, input));
 	}
 
@@ -127,8 +139,9 @@ export class CartService implements ICartService {	constructor(
 			},
 			include: { book: { select: BOOK_SELECT } },
 		});
-		const optMap = toOptKeyMap(await this.printOptionService.listRaw(tx));
-		return applyItemPrice(composeCartItem(row, row.book), optMap);
+			const optMap = toOptKeyMap(await this.printOptionService.listRaw(tx));
+			const [composed] = await this.composeRows([row], optMap);
+			return composed;
 	}
 
 	async patchItem(
@@ -139,14 +152,15 @@ export class CartService implements ICartService {	constructor(
 		const cart = await this.cartRepo.findCart(userId);
 		if (!cart) throw new AppError(ErrorCode.NOT_FOUND, 404);
 		try {
-			const [row, optMap] = await Promise.all([
+			const [rows, optMap] = await Promise.all([
 				this.cartRepo.updateCartItem(cart.id, bookId, {
 					...patch,
 					...(patch.quantity != null ? { quantity: clampQty(patch.quantity) } : {}),
-				}),
+				}).then((r) => [r]),
 				this.printOptionService.listRaw().then(toOptKeyMap),
 			]);
-			return applyItemPrice(composeCartItem(row, row.book), optMap);
+			const [composed] = await this.composeRows(rows, optMap);
+			return composed;
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') throw new AppError(ErrorCode.NOT_FOUND, 404);
 			throw e;
@@ -208,9 +222,10 @@ export class CartService implements ICartService {	constructor(
 		const resolved = cart ?? (await this.cartRepo.createCart(userId));
 
 		const ids = Array.isArray(bookIds) && bookIds.length ? new Set(bookIds) : null;
-		const items: CartItem[] = (resolved?.items ?? [])
-			.filter((row: any) => !ids || ids.has(row.bookId))
-			.map((row: any) => applyItemPrice(composeCartItem(row, row.book), optMap));
+		const items: CartItem[] = await this.composeRows(
+			(resolved?.items ?? []).filter((row: any) => !ids || ids.has(row.bookId)),
+			optMap,
+		);
 
 		const incomplete = items.find((i) => i.price == null);
 		if (incomplete) throw new AppError(ErrorCode.MISSING_BOOK_OPTIONS, 400, { bookId: incomplete.bookId, title: incomplete.title });

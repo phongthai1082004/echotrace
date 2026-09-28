@@ -1,6 +1,7 @@
 import type { DependencyContainer } from 'tsyringe';
 import { BookService } from './books/books.service.js';
 import { BookRepository } from './books/books.repository.js';
+import { BookPageDeltaRepository } from './books/book-delta.repository.js';
 import { SampleBookService } from './sample-books/sample-books.service.js';
 import { SampleBookRepository } from './sample-books/sample-books.repository.js';
 import { StockService } from './sample-books/stock.service.js';
@@ -18,6 +19,7 @@ export function registerProduct(container: DependencyContainer): void {
 	container.registerSingleton('ISampleBookCacheService', SampleBookCacheService);
 	container.registerSingleton('IBookService', BookService);
 	container.registerSingleton('BookRepository', BookRepository);
+	container.registerSingleton('BookPageDeltaRepository', BookPageDeltaRepository);
 	container.registerSingleton('ISampleBookService', SampleBookService);
 	container.registerSingleton('SampleBookRepository', SampleBookRepository);
 	container.registerSingleton('IStockService', StockService);

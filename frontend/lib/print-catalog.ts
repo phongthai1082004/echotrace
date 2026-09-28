@@ -22,8 +22,3 @@ export async function fetchPrintCatalog(token: string): Promise<PrintCatalog> {
     sizes: d?.sizes ?? [],
   };
 }
-
-export function priceForCode(list: PrintCatalogEntry[], code: string): number | null {
-  const o = list.find((x) => x.code === code);
-  return o?.price ?? null;
-}

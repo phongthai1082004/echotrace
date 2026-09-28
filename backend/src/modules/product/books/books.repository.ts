@@ -14,6 +14,10 @@ export class BookRepository {
 		return this.client.book.findUnique({ where: { id } });
 	}
 
+	findBookOwner(id: number) {
+		return this.client.book.findUnique({ where: { id }, select: { id: true, userId: true } });
+	}
+
 	findBooksByIds(ids: number[]) {
 		if (!ids.length) return Promise.resolve([]);
 		return this.client.book.findMany({ where: { id: { in: [...new Set(ids)] } } });
@@ -31,7 +35,7 @@ export class BookRepository {
 		return this.client.book.delete({ where: { id } });
 	}
 
-	updateBook(id: number, data: Record<string, unknown>) {
-		return this.client.book.update({ where: { id }, data: data as Prisma.BookUpdateInput });
+	updateBook(id: number, data: Record<string, unknown>, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).book.update({ where: { id }, data: data as Prisma.BookUpdateInput });
 	}
 }

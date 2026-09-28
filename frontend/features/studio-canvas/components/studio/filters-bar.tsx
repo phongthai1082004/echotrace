@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../../hooks/useCanvasState";
@@ -18,6 +18,37 @@ export function FiltersBar() {
   const selectedSrc = isImage ? (selected as fabric.FabricImage).getSrc() : null;
   const scrollRef = useRef<HTMLDivElement>(null);
   const presets = FILTER_PRESETS;
+
+  // 1 thumb 96px dùng chung cho mọi preset thay vì decode ảnh gốc N lần.
+  const [thumb, setThumb] = useState<string | null>(null);
+  useEffect(() => {
+    if (!selectedSrc) {
+      setThumb(null);
+      return;
+    }
+    let alive = true;
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      try {
+        const s = 96 / Math.max(image.width, image.height);
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(image.width * s));
+        c.height = Math.max(1, Math.round(image.height * s));
+        c.getContext("2d")!.drawImage(image, 0, 0, c.width, c.height);
+        if (alive) setThumb(c.toDataURL("image/jpeg", 0.7));
+      } catch {
+        if (alive) setThumb(null);
+      }
+    };
+    image.onerror = () => {
+      if (alive) setThumb(null);
+    };
+    image.src = selectedSrc;
+    return () => {
+      alive = false;
+    };
+  }, [selectedSrc]);
 
   const scroll = (dir: -1 | 1) => {
     const el = scrollRef.current;
@@ -61,7 +92,7 @@ export function FiltersBar() {
             >
               <div className="w-12 h-12 rounded-[3px] border-[1.5px] border-[#222] overflow-hidden relative">
                 <img
-                  src={selectedSrc}
+                  src={thumb ?? selectedSrc}
                   alt=""
                   loading="lazy"
                   decoding="async"

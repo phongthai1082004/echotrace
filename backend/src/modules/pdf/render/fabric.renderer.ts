@@ -7,6 +7,7 @@ import {isRenderableBookType} from './pdf.types.js';
 import type {IOrderPdfRenderer} from './pdf.types.js';
 import { OrderRepository } from '../../order-cart/repositories/order.repository.js';
 import { BookRepository } from '../../product/books/books.repository.js';
+import type { IBookService } from '../../product/books/books.service.js';
 
 const GRAY_1X1 =
 	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
@@ -134,6 +135,7 @@ export class FabricRenderer implements IOrderPdfRenderer {
 	constructor(
 		@inject('OrderRepository') private orderRepo: OrderRepository,
 		@inject('BookRepository') private bookRepo: BookRepository,
+		@inject('IBookService') private bookService: IBookService,
 	) {}
 
 	async renderOrderToPdf(orderId: number): Promise<Buffer> {
@@ -145,6 +147,8 @@ export class FabricRenderer implements IOrderPdfRenderer {
 		const pdf = await PDFDocument.create();
 
 		const bookIds = items.map((i) => i?.bookId).filter((id) => typeof id === 'number');
+		// in đúng bản mới nhất: ép flush delta treo trước khi đọc content.
+		await this.bookService.flushBooks(bookIds);
 		const books = await this.bookRepo.findBooksByIds(bookIds);
 		const byId = new Map(books.map((b: any) => [b.id, b]));
 		for (const item of items) {

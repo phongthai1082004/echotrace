@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useDrag } from "react-dnd";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { placeFreeImage, isCoarsePointer } from "../../../lib/photos";
+import { r2Thumb } from "@/lib/upload";
 import { isPageLocked } from "../../../lib/layout-engine";
 import { useSession } from "next-auth/react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@echotrace/shared";
@@ -48,7 +49,7 @@ function DraggableStickerImg({ url, name }: { url: string; name: string }) {
       onClick={handleTapAdd}
       className={`aspect-square flex items-center justify-center cursor-grab active:cursor-grabbing transition-all rounded-[6px] border-2 border-[#222] shadow-[2px_2px_0_#222] hover:translate-x-px hover:translate-y-[1px] hover:shadow-[1px_1px_0_#222] overflow-hidden bg-white p-1 ${isDragging ? "opacity-40" : ""}`}
     >
-      <img src={url} alt="" className="w-full h-full object-contain" loading="lazy" />
+      <img src={r2Thumb(url, 200)} alt="" className="w-full h-full object-contain" loading="lazy" />
     </div>
   );
 }

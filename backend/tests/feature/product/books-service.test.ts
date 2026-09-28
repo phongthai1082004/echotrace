@@ -6,7 +6,14 @@ import { mock } from "jest-mock-extended";
 import { BookService } from "../../../src/modules/product/books/books.service.js";
 import { BookController } from "../../../src/modules/product/books/books.controller.js";
 import { BookRepository } from "../../../src/modules/product/books/books.repository.js";
+import { BookPageDeltaRepository } from "../../../src/modules/product/books/book-delta.repository.js";
 import type { IBookService } from "../../../src/modules/product/books/books.service.js";
+
+jest.mock("../../../src/modules/order-cart/queue/redis-delayed-queue.js", () => ({
+  scheduleDelayedJob: jest.fn(),
+  FLUSH_IDLE_MS: 600000,
+  FLUSH_MAX_PENDING: 50,
+}));
 
 const row = (over: any = {}) => ({
   id: 1,
@@ -25,7 +32,11 @@ const row = (over: any = {}) => ({
 
 const build = () => {
   const repo = mock<BookRepository>();
-  return { svc: new BookService(repo), repo };
+  const deltas = mock<BookPageDeltaRepository>();
+  deltas.listPending.mockResolvedValue([]);
+  deltas.listPendingForBooks.mockResolvedValue([]);
+  deltas.countPending.mockResolvedValue(0);
+  return { svc: new BookService(repo, deltas), repo, deltas };
 };
 
 const res = () => {
@@ -90,7 +101,7 @@ describe("BookService owner/rights (B-3)", () => {
 
   it("B-3b: updatePages another user's book -> 403, no update call", async () => {
     const { svc, repo } = build();
-    (repo.findBookById as jest.Mock).mockResolvedValue(row({ userId: 2 }));
+    (repo.findBookOwner as jest.Mock).mockResolvedValue({ id: 1, userId: 2 });
     await expect(svc.updatePages(1, 1, { title: "x" } as any)).rejects.toMatchObject({ statusCode: 403 });
     expect(repo.updateBook).not.toHaveBeenCalled();
   });
@@ -104,18 +115,17 @@ describe("BookService owner/rights (B-3)", () => {
     await expect(svc.delete(1, 1)).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it("B-3d: updatePages merges changedPages via resolveContent + forwards fields", async () => {
-    const { svc, repo } = build();
-    (repo.findBookById as jest.Mock).mockResolvedValue(
-      row({ content: { pages: [{ index: 0, canvasJson: "a" }, { index: 1, canvasJson: "b" }] } }),
-    );
+  it("B-3d: updatePages with changedPages queues deltas (no base read, no merge yet)", async () => {
+    const { svc, repo, deltas } = build();
+    (repo.findBookOwner as jest.Mock).mockResolvedValue({ id: 1, userId: 1 });
     (repo.updateBook as jest.Mock).mockResolvedValue({});
+    (deltas.countPending as jest.Mock).mockResolvedValue(1);
     await svc.updatePages(1, 1, { content: { changedPages: [{ index: 1, canvasJson: "B!" }] }, title: "N" } as any);
+    expect(repo.findBookById).not.toHaveBeenCalled();
+    expect(deltas.queueDeltas).toHaveBeenCalledWith(1, [{ pageIndex: 1, payload: { index: 1, canvasJson: "B!" } }]);
     const update = (repo.updateBook as jest.Mock).mock.calls[0][1];
     expect(update.title).toBe("N");
-    expect(update.content.pages[1].canvasJson).toBe("B!");
-    expect(update.content.pages[0].canvasJson).toBe("a");
-    expect(update.content).not.toHaveProperty("changedPages");
+    expect(update).not.toHaveProperty("content");
   });
 });
 

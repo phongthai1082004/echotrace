@@ -60,13 +60,15 @@ export function useUsers(initialUsers?: UserResponse["users"], initialNextCursor
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch
     setLoading(true);
-    apiFetch<UserResponse>(queryUrl, token)
+    const ctrl = new AbortController();
+    apiFetch<UserResponse>(queryUrl, token, { signal: ctrl.signal })
       .then((d) => {
         setUsers(d?.users ?? []);
         setNextCursor(d?.nextCursor || null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [token, queryUrl]);
 
   // Reset pagination whenever search/filter changes

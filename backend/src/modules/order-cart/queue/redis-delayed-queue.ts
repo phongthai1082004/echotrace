@@ -7,6 +7,11 @@ import type {IStockService} from "../../product/sample-books/stock.service.js";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const QUEUE_KEY = "echotrace:delayed_jobs";
 
+// Chu kỳ gom delta autosave: quá từng này không có delta mới mới flush xuống DB.
+export const FLUSH_IDLE_MS = 10 * 60 * 1000;
+// Trần an toàn: quá từng này delta treo thì flush ngay trong request.
+export const FLUSH_MAX_PENDING = 50;
+
 let redis: Redis | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let started = false;
@@ -34,6 +39,7 @@ async function processDue(): Promise<void> {
     try {
       const job = JSON.parse(member) as { name: string; payload: { orderId: number } };
       if (job.name === "order_expiry") await handleOrderExpiry(job.payload.orderId);
+      else if (job.name === "book_flush") await handleBookFlush((job.payload as any).bookId);
     } catch (e) {
       console.error("[delayed] job failed", member, e);
     }
@@ -54,8 +60,13 @@ export async function handleOrderExpiry(orderId: number): Promise<void> {
   });
 }
 
-export function startDelayedWorker(): void {
-  if (started) return;
+export async function handleBookFlush(bookId: number): Promise<void> {
+	if (!Number.isFinite(bookId)) return;
+	const books = container.resolve<{ flushBookIfStale(id: number): Promise<unknown> }>('IBookService');
+	await books.flushBookIfStale(bookId);
+}
+
+export function startDelayedWorker(): void {  if (started) return;
   started = true;
   timer = setInterval(() => {
     processDue().catch((e) => console.error("[delayed] poll error", e));

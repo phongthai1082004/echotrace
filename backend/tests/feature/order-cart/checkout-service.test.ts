@@ -11,6 +11,7 @@ import type { IPdfQueue } from "../../../src/modules/pdf/render/pdf.types.js";
 import type { IStockService } from "../../../src/modules/product/sample-books/stock.service.js";
 import type { ISampleBookService } from "../../../src/modules/product/sample-books/sample-books.service.js";
 import type { ICouponService } from "../../../src/modules/order-cart/coupons/coupons.service.js";
+import type { IBookService } from "../../../src/modules/product/books/books.service.js";
 import type { NotificationSubject } from "../../../src/modules/notification/notification.subject.js";
 import { IdempotencyKeyType, OrderStatus, PaymentPlan } from "@echotrace/shared";
 
@@ -38,7 +39,9 @@ const build = () => {
 	const samples = mock<ISampleBookService>();
 	const coupons = mock<ICouponService>();
 	const subject = mock<NotificationSubject>();
-	const svc = new CheckoutService(cart as any, payment, pdf, orderRepo, stock, samples, coupons, subject);
+	const books = mock<IBookService>();
+	books.flushBooks.mockResolvedValue({ flushed: 0 });
+	const svc = new CheckoutService(cart as any, books, payment, pdf, orderRepo, stock, samples, coupons, subject);
 
 	orderRepo.getIdempotencyKey.mockResolvedValue(null);
 	orderRepo.getUserContact.mockResolvedValue({ name: "A", email: "a@b.c", phone: "0912345678", address: "X" });

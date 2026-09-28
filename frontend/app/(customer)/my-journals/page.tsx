@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth.config";
 import { apiFetch } from "@/lib/api.fetch";
+import { getPageContext } from "@/lib/page-context";
 import { getT } from "@/lib/i18n-server";
 import { neoBtnPrimary } from "@/lib/styles";
 import type { JournalBook } from "./_hooks/use-my-books";
@@ -12,8 +11,7 @@ import { MyJournalsClient } from "./_components/my-journals-client";
 export default async function MyJournalsPage() {
   const lng = (await cookies()).get("i18nextLng")?.value ?? "vi";
   const t = getT(lng);
-  const session = await getServerSession(authOptions);
-  const token = (session as any)?.accessToken as string | undefined;
+  const { token } = await getPageContext();
 
   let initialJournals: JournalBook[] | undefined;
   let initialError: string | null = null;

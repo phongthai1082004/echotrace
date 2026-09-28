@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Lock } from "lucide-react";
 import { useCanvasStore } from "../../../hooks/useCanvasState";
 import { usePageManager } from "../../../hooks/usePageManager";
 import { isPageLocked } from "../../../lib/layout-engine";
 
-function PageThumb({
+const PageThumb = memo(function PageThumb({
   thumb,
   idx,
   active,
@@ -32,20 +32,21 @@ function PageThumb({
       {active && <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#222]" />}
     </button>
   );
-}
+});
 
 type Item = { idx: number; type: "single" | "spread"; leftIdx: number; rightIdx: number; isCover: boolean };
 
 export function PagesSlider() {
   const pages = useCanvasStore((s) => s.pages);
   const activePageIndex = useCanvasStore((s) => s.activePageIndex);
-  const bookMeta = useCanvasStore((s) => s.bookMeta);
+  const ratio = useCanvasStore((s) =>
+    s.bookMeta.width && s.bookMeta.height ? s.bookMeta.width / s.bookMeta.height : 210 / 297,
+  );
   const pageClipboard = useCanvasStore((s) => s.pageClipboard);
   const { switchPage, addPage, deletePage, moveSpread, duplicateSpread, copySpread, pasteCopiedSpread, togglePageLock } =
     usePageManager();
   const n = pages.length;
   const h = 54;
-  const ratio = bookMeta.width && bookMeta.height ? bookMeta.width / bookMeta.height : 210 / 297;
   const singleW = Math.round(h * ratio); // thumbnail keeps the canvas aspect ratio
   const spreadW = singleW * 2 + 1; // 2 pages + spine
 
@@ -80,18 +81,21 @@ export function PagesSlider() {
   }, [menu]);
 
   // items: cover pages are singles, content pages are spreads
-  const items: Item[] = [];
-  let i = 0;
-  while (i < n) {
-    if (i === 0 || i === n - 1) {
-      items.push({ idx: i, type: "single", leftIdx: i, rightIdx: i, isCover: true });
-      i++;
-    } else {
-      const rightIdx = Math.min(i + 1, n - 1);
-      items.push({ idx: i, type: "spread", leftIdx: i, rightIdx, isCover: false });
-      i += 2;
+  const items: Item[] = useMemo(() => {
+    const out: Item[] = [];
+    let i = 0;
+    while (i < n) {
+      if (i === 0 || i === n - 1) {
+        out.push({ idx: i, type: "single", leftIdx: i, rightIdx: i, isCover: true });
+        i++;
+      } else {
+        const rightIdx = Math.min(i + 1, n - 1);
+        out.push({ idx: i, type: "spread", leftIdx: i, rightIdx, isCover: false });
+        i += 2;
+      }
     }
-  }
+    return out;
+  }, [n]);
 
   const handleDelete = (item: (typeof items)[0]) => {
     // deletePage đã chặn trang khóa; đây chỉ ẩn nút × cho gọn.

@@ -436,7 +436,7 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
         <button
             onClick={async () => {
               if (editingTitle) commitTitle();
-              const r = await saveFull(token);
+              const r = await saveFull(token, { flush: true });
               if (r.ok && r.id && token) {
                 try {
                   const s = useCanvasStore.getState();
@@ -473,6 +473,11 @@ export function StudioTopbar({ hideOrder }: Props = {}) {
                   showToast("No canvas", "error");
                   return;
                 }
+                // đặt hàng = ép lưu DB trước (tạo book nếu chưa có + flush delta treo),
+                // đơn không bao giờ đọc content cũ. Lỗi save thì vẫn cho đặt tiếp.
+                try {
+                  await saveFull(token);
+                } catch {}
                 const activeIdx = useCanvasStore.getState().activePageIndex;
                 useCanvasStore.getState().setPage(activeIdx, { canvasJson: serializeCanvasState(c) });
                 let thumb: string | null = null;

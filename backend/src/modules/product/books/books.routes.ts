@@ -30,5 +30,10 @@ router.patch(
 	'/books/:id/pages',
 	asyncHandler((req, res) => bookCtrl.updatePages(req, res)),
 );
+// Alias POST cho sendBeacon lúc đóng tab (beacon không đổi method được).
+router.post(
+	'/books/:id/pages',
+	asyncHandler((req, res) => bookCtrl.updatePages(req, res)),
+);
 
 export default router;

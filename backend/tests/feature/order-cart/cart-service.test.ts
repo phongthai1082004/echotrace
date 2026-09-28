@@ -9,6 +9,7 @@ import { CartRepository } from "../../../src/modules/order-cart/cart/cart.reposi
 import type { IPrintOptionService } from "../../../src/modules/product/print-options/print-options.service.js";
 import type { ICouponService } from "../../../src/modules/order-cart/coupons/coupons.service.js";
 import type { ISampleBookService } from "../../../src/modules/product/sample-books/sample-books.service.js";
+import type { IBookService } from "../../../src/modules/product/books/books.service.js";
 import { ErrorCode, PaymentPlan } from "@echotrace/shared";
 
 const OPTS = [
@@ -48,7 +49,10 @@ const build = () => {
   const printOptions = mock<IPrintOptionService>();
   const coupons = mock<ICouponService>();
   const samples = mock<ISampleBookService>();
-  const svc = new CartService(cartRepo, printOptions, coupons, samples);
+  const books = mock<IBookService>();
+  books.withPendingList.mockImplementation(async (b: any) => b);
+  books.flushBooks.mockResolvedValue({ flushed: 0 });
+  const svc = new CartService(cartRepo, printOptions, coupons, samples, books);
   cartRepo.getCartWithItems.mockResolvedValue({ items: [] } as any);
   cartRepo.createCart.mockResolvedValue({ items: [] } as any);
   printOptions.listRaw.mockResolvedValue(OPTS as any);

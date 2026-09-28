@@ -159,7 +159,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
   pushUndoPages: () => {
     const { pages, activePageIndex, activeLayout, viewMode, undoStack } = get();
-    const snapshot = JSON.parse(JSON.stringify(pages));
+    const snapshot = structuredClone(pages);
     const entry: UndoEntry = {
       type: "pages",
       pages: snapshot,

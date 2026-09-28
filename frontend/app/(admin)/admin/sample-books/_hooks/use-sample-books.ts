@@ -54,16 +54,19 @@ export function useSampleBooks(initialItems?: SampleBookDTO[], initialNextCursor
 // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap fetch / reset pagination
     setLoading(true);
     setFetchError(null);
-    apiFetch<ListResponse>(queryUrl, accessToken)
+    const ctrl = new AbortController();
+    apiFetch<ListResponse>(queryUrl, accessToken, { signal: ctrl.signal })
       .then((d) => {
         setItems(d?.items || []);
         setNextCursor(d?.nextCursor ?? null);
       })
       .catch((err) => {
+        if ((err as Error)?.name === "AbortError") return;
         console.warn("[admin sample-books] fetch failed:", err);
         setFetchError(String(err));
       })
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [accessToken, queryUrl]);
 
   // reset pagination whenever a filter/search changes

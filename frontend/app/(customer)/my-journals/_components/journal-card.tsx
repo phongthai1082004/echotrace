@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
 import { card, cardHover } from "@/lib/styles";
@@ -15,8 +16,7 @@ export function JournalCard({ j, onDelete }: { j: JournalBook; onDelete: (j: Jou
       <Link href={`/studio?id=${j.id}`} className="block">
         <div className="relative overflow-hidden bg-[#e8e6e0] aspect-[3/4]">
           {thumb ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumb} alt={j.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+            <Image src={thumb} alt={j.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span

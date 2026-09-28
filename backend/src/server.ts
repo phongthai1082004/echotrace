@@ -112,11 +112,16 @@ apiRouter.use('/', directoryRoutes);
 
 			app.use(errorMiddleware);
 
-			if (opts.jobs ?? true) {
-				// Background jobs (skipped in integration tests)
-				startDelayedWorker();
-				startOrderExpiryCron();
-				container.resolve(PdfWorker).start();
+		if (opts.jobs ?? true) {
+			// Background jobs (skipped in integration tests)
+			startDelayedWorker();
+			startOrderExpiryCron();
+			container.resolve(PdfWorker).start();
+			// Delta autosave treo từ lần chạy trước (crash/deploy) flush bù, không chờ.
+			void container
+				.resolve<{ flushAllPending(): Promise<unknown> }>('IBookService')
+				.flushAllPending()
+				.catch((e) => console.error('[books] boot sweep failed:', (e as Error)?.message || e));
 
 				// Register webhook URL with PayOS (idempotent). Re-run on deploy or URL change,
 				// otherwise payment notifications are never sent. Requires WEBHOOK_URL publicly reachable.
@@ -157,8 +162,21 @@ async function bootstrap() {
 	});
 
 	process.on('uncaughtException', (error: Error) => {
-		console.error('💥 UNCAUGHT EXCEPTION:', error);
+		console.error('💥 UNCAUGHT EXCEPTION:', error.message);
 		// Don't exit - allow health checks to continue
+	});
+
+	// Deploy/tắt: flush delta autosave đang treo rồi mới thoát (không mất save).
+	process.on('SIGTERM', () => {
+		void (async () => {
+			try {
+				await container.resolve<{ flushAllPending(): Promise<unknown> }>('IBookService').flushAllPending();
+			} catch (e) {
+				console.error('[books] shutdown flush failed:', (e as Error)?.message || e);
+			} finally {
+				process.exit(0);
+			}
+		})();
 	});
 }
 

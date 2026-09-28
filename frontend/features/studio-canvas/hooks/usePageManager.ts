@@ -157,7 +157,7 @@ export function usePageManager() {
 
   const clonePages = (idxs: number[]) => {
     const { pages } = useCanvasStore.getState();
-    return idxs.map((i) => JSON.parse(JSON.stringify(pages[i])));
+    return idxs.map((i) => structuredClone(pages[i]));
   };
 
   // duplicate a spread chunk right after itself (copy becomes the next pages)
@@ -198,7 +198,7 @@ export function usePageManager() {
     // insert right after the active spread (or after source if active is a cover)
     const chunk = chunkOfPage(st.activePageIndex);
     const at = chunk ? chunk.rightIdx + 1 : pages.length - 1;
-    const clones = JSON.parse(JSON.stringify(pageClipboard));
+    const clones = structuredClone(pageClipboard ?? []);
     const updated = [...pages.slice(0, at), ...clones, ...pages.slice(at)].map((p, i) => ({ ...p, index: i }));
     setPages(updated);
     setActivePageIndex(at);

@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signIn, useSession, getSession } from "next-auth/react";
+import { useTranslation } from "react-i18next";
 import { apiFetch } from "@/lib/api.fetch";
 import { roleHome, withLang, langFromPath } from "@/lib/routing";
 import { useToast } from "@/components/toast";
 import { labelSm, neoBtnPrimary, neoBtn, input } from "@/lib/styles";
 import logoImg from "@/assets/images/Logo.png";
 
-function validateEmail(e: string): string | null {
-  if (!e) return "Email is required";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "Invalid email format";
+function validateEmail(e: string, t: (key: string) => string): string | null {
+  if (!e) return t("auth.page.errEmailRequired");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return t("auth.page.errEmailInvalid");
   return null;
 }
 
 export default function AuthPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { data: session, status } = useSession();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -49,20 +51,20 @@ export default function AuthPage() {
   }, [status, session]);
 
   const handleSendOtp = async () => {
-    const eErr = validateEmail(email);
+    const eErr = validateEmail(email, t);
     if (eErr) {
       setError(eErr);
       showToast(eErr, "error");
       return;
     }
     if (password !== confirmPassword) {
-      const msg = "Passwords do not match";
+      const msg = t("auth.page.errPwMatch");
       setError(msg);
       showToast(msg, "error");
       return;
     }
     if (password.length < 6) {
-      const msg = "Password must be at least 6 characters";
+      const msg = t("auth.page.errPwShort");
       setError(msg);
       showToast(msg, "error");
       return;
@@ -73,9 +75,9 @@ export default function AuthPage() {
     try {
       await apiFetch("/api/auth/send-otp", "", { method: "POST", body: JSON.stringify({ email }) });
       setShowOtp(true);
-      showToast("OTP sent to your email", "success");
+      showToast(t("auth.page.errOtpSent"), "success");
     } catch (err: any) {
-      const msg = err.message || "Failed to send OTP";
+      const msg = err.message || t("auth.page.errOtpSendFail");
       setError(msg);
       showToast(msg, "error");
     }
@@ -84,7 +86,7 @@ export default function AuthPage() {
 
   const handleVerifyOtp = async () => {
     if (otpValue.length !== 6) {
-      const msg = "Enter the 6-digit OTP";
+      const msg = t("auth.page.errOtpEnter");
       setError(msg);
       showToast(msg, "error");
       return;
@@ -98,12 +100,12 @@ export default function AuthPage() {
       });
 
       const result = await signIn("credentials", { email, password, redirect: false });
-      if (result?.error) throw new Error("Login failed, please try signing in");
+      if (result?.error) throw new Error(t("auth.page.errLoginFail"));
       // thiếu role là rớt về landing rồi kẹt ở đó tới khi bấm link customer.
       const fresh = await getSession();
       goHome((fresh?.user as { role?: string } | undefined)?.role ?? data?.user?.role);
     } catch (err: any) {
-      const msg = err.message || "Verification failed";
+      const msg = err.message || t("auth.page.errVerifyFail");
       setError(msg);
       showToast(msg, "error");
     }
@@ -112,7 +114,7 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const eErr = validateEmail(email);
+    const eErr = validateEmail(email, t);
     if (eErr) {
       setError(eErr);
       showToast(eErr, "error");
@@ -132,7 +134,7 @@ export default function AuthPage() {
       const fresh = await getSession();
       goHome((fresh?.user as { role?: string } | undefined)?.role ?? data?.user?.role);
     } catch (err: any) {
-      const msg = err.message || "Account not found or invalid password";
+      const msg = err.message || t("auth.page.errAccountNotFound");
       setError(msg);
       showToast(msg, "error");
     }
@@ -186,7 +188,7 @@ export default function AuthPage() {
         </p>
 
         <div className="flex gap-2 mb-8">
-          {(["Sign In", "Create Account"] as const).map((label, i) => {
+          {([t("auth.page.tabSignIn"), t("auth.page.tabSignUp")] as const).map((label, i) => {
             const active = isSignUp === (i === 1);
             return (
               <button
@@ -207,18 +209,16 @@ export default function AuthPage() {
         </div>
 
         <h1 className="text-3xl lg:text-4xl font-bold mb-1 leading-tight">
-          {isSignUp ? "Begin Your Archive." : "Welcome Back."}
+          {isSignUp ? t("auth.page.titleSignUp") : t("auth.page.titleSignIn")}
         </h1>
         <p className="text-sm mb-8 text-[#666]">
-          {isSignUp
-            ? "Create an account to start designing your first travel journal."
-            : "Sign in to continue building your journal."}
+          {isSignUp ? t("auth.page.subSignUp") : t("auth.page.subSignIn")}
         </p>
 
         {isSignUp && showOtp ? (
           <div className="space-y-5 max-w-sm">
             <p className="text-sm font-bold">
-              Enter the 6-digit code sent to <span className="text-[#222]">{email}</span>
+              {t("auth.page.otpPrompt")} <span className="text-[#222]">{email}</span>
             </p>
             <div className="flex gap-2 justify-center">
               {otp.map((d, i) => (
@@ -240,7 +240,7 @@ export default function AuthPage() {
               disabled={loading || otpValue.length !== 6}
               className={`${neoBtnPrimary} w-full py-3.5 disabled:opacity-50`}
             >
-              {loading ? "Verifying..." : "Verify & Create Account"}
+              {loading ? t("auth.page.verifying") : t("auth.page.verify")}
             </button>
             <button
               onClick={() => {
@@ -250,7 +250,7 @@ export default function AuthPage() {
               type="button"
               className={`${neoBtn} ${labelSm} w-full py-3`}
             >
-              Back
+              {t("auth.page.back")}
             </button>
           </div>
         ) : (
@@ -266,7 +266,7 @@ export default function AuthPage() {
             className="space-y-5 max-w-sm"
           >
             <div>
-              <label className={`${labelSm} block mb-1.5 text-[#666]`}>Email</label>
+              <label className={`${labelSm} block mb-1.5 text-[#666]`}>{t("auth.page.emailLabel")}</label>
               <input
                 type="email"
                 value={email}
@@ -276,7 +276,7 @@ export default function AuthPage() {
               />
             </div>
             <div>
-              <label className={`${labelSm} block mb-1.5 text-[#666]`}>Password</label>
+              <label className={`${labelSm} block mb-1.5 text-[#666]`}>{t("auth.page.passwordLabel")}</label>
               <input
                 type="password"
                 value={password}
@@ -287,7 +287,7 @@ export default function AuthPage() {
             </div>
             {isSignUp && (
               <div>
-                <label className={`${labelSm} block mb-1.5 text-[#666]`}>Re-enter Password</label>
+                <label className={`${labelSm} block mb-1.5 text-[#666]`}>{t("auth.page.confirmLabel")}</label>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -299,7 +299,7 @@ export default function AuthPage() {
             )}
             {error && <p className="font-mono text-[10px] font-bold text-[#B54843]">{error}</p>}
             <button type="submit" disabled={loading} className={`${neoBtnPrimary} w-full py-3.5 disabled:opacity-50`}>
-              {loading ? "Please wait…" : isSignUp ? "Sign Up" : "Sign In"}
+              {loading ? t("auth.page.wait") : isSignUp ? t("auth.page.submitUp") : t("auth.page.submitIn")}
             </button>
           </form>
         )}
@@ -308,7 +308,7 @@ export default function AuthPage() {
           <>
             <div className="flex items-center gap-4 my-5 max-w-sm">
               <div className="flex-1 h-[3px] bg-[#222]" />
-              <span className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">or</span>
+              <span className="font-mono text-[10px] font-bold tracking-widest uppercase text-[#999]">{t("auth.page.or")}</span>
               <div className="flex-1 h-[3px] bg-[#222]" />
             </div>
             <div className="max-w-sm">
@@ -321,7 +321,7 @@ export default function AuthPage() {
                   type="button"
                   className={`${neoBtn} ${labelSm} w-full py-3.5 flex items-center justify-center gap-2 text-[#222]`}
                 >
-                  Sign In
+                  {t("auth.page.submitIn")}
                 </button>
               ) : (
                 <button
@@ -335,7 +335,7 @@ export default function AuthPage() {
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
-                  Continue with Google
+                  {t("auth.page.google")}
                 </button>
               )}
             </div>
