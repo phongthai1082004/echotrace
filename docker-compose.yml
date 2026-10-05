@@ -9,8 +9,9 @@ services:
     image: redis:alpine
     container_name: ${REDIS_HOST:-redis-service}
     command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
+    # ponytail: bind localhost — publish 0.0.0.0:6379 không password = bị bắt làm slave (đã dính 119.45.248.246).
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped

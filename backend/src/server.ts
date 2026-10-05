@@ -67,7 +67,9 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			app.use(helmet());
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
 			app.use(cors({ origin: allowedOrigins, credentials: true }));
-		app.use(express.json({ limit: '1mb' }));
+		// ponytail: studio PATCH gửi kèm thumbnail base64 (vài MB) — 1mb gây PayloadTooLargeError.
+		app.use(express.json({ limit: '50mb' }));
+		app.use(express.urlencoded({ limit: '50mb', extended: true }));
 		// (middleware pin TS khác root) nên structural check báo thừa; runtime cùng 1 object.
 		app.use(handle(i18next as unknown as Parameters<typeof handle>[0]));
 		// Đăng ký trước routers để bao hết; /health nông đăng ký sớm hơn nên luôn sống.

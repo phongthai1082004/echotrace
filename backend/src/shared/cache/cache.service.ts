@@ -30,9 +30,14 @@ export class CacheService {
 
 	async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
 		try {
-			await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds ?? this.ttlSeconds);
+			const raw = JSON.stringify(value);
+			// ponytail: DTO book kèm thumbnail base64 (MBs) — cache nó tràn 96mb redis, bỏ qua.
+			// add khi cần cache book lớn: strip thumbnail base64 trước khi set.
+			if (raw.length > 512 * 1024) return;
+			await this.client.set(key, raw, 'EX', ttlSeconds ?? this.ttlSeconds);
 		} catch (err) {
-			console.error('[redis] set failed:', err);
+			// ponytail: READONLY replica / redis down — fail-open, log 1 dòng (không dump args MBs).
+			console.warn('[redis] set failed:', key, (err as Error)?.message || err);
 		}
 	}
 
