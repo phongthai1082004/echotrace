@@ -7,6 +7,9 @@ import { ErrorCode } from '@echotrace/shared';
 import { CreateSupplierDTO } from '@echotrace/shared';
 import { UpdateSupplierDTO } from '@echotrace/shared';
 import type {ISupplierService} from './suppliers.service.js';
+import { parseField, parseId, parseLimit, parseOrder } from '../../../shared/middleware/parse-params.js';
+
+const SUPPLIER_SORT_FIELDS = ['name', 'email', 'createdAt', 'totalDebt'] as const;
 
 @injectable()
 export class SupplierController {
@@ -20,9 +23,9 @@ export class SupplierController {
 		const result = await this.supplierService.getSupplierList(
 			{
 				search: search as string | undefined,
-				field: field as string | undefined,
-				order: (order as string) || 'desc',
-				limit: limit ? Number(limit) : 50,
+				field: parseField(field, SUPPLIER_SORT_FIELDS),
+				order: parseOrder(order),
+				limit: parseLimit(limit, 50) ?? 50,
 				cursor: cursor ? Number(cursor) : undefined,
 			},
 			extraWhere,
@@ -31,7 +34,7 @@ export class SupplierController {
 	};
 
 	getSupplierById = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const result = await this.supplierService.getSupplierById(id);
 		res.json(ApiResponse.success(result));
 	};
@@ -43,14 +46,14 @@ export class SupplierController {
 	};
 
 	updateSupplier = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const updateData = req.body as UpdateSupplierDTO;
 		const result = await this.supplierService.updateSupplier(id, updateData);
 		res.json(ApiResponse.success(result));
 	};
 
 	updateSupplierStatus = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const { status } = req.body;
 		if (!status || !['active', 'banned'].includes(status)) {
 			throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);
@@ -60,7 +63,7 @@ export class SupplierController {
 	};
 
 	updateSupplierInfo = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const updateData = req.body as UpdateSupplierDTO;
 
 		const allowedFields = ['name', 'contact', 'email', 'bankName', 'bankAccountNumber', 'bankAccountName', 'status'];
@@ -75,7 +78,7 @@ export class SupplierController {
 	};
 
 	deleteSupplier = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		await this.supplierService.deleteSupplier(id);
 		res.json(ApiResponse.success({ deleted: true }));
 	};
@@ -86,14 +89,17 @@ export class SupplierController {
 	};
 
 	updateSupplierOptions = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const { optionIds } = req.body;
-		await this.supplierService.updateSupplierOptions(id, Array.isArray(optionIds) ? optionIds : []);
+		const ids = Array.isArray(optionIds) ? optionIds.map(Number).filter(Number.isInteger) : [];
+		if (ids.length !== (optionIds?.length ?? 0)) throw new AppError(ErrorCode.VALIDATION_FAILED, 400, { optionIds: ['must be integer ids'] });
+		await this.supplierService.updateSupplierOptions(id, ids);
 		res.json(ApiResponse.success({ id, updated: true }));
 	};
 
 	getOptionCatalog = async (req: AuthRequest, res: Response) => {
-		const type = String(req.query.type ?? '');
+		const type = parseField(req.query.type, ['paperSize', 'paper', 'cover'] as const);
+		if (!type) throw new AppError(ErrorCode.VALIDATION_FAILED, 400, { type: ['unknown catalog type'] });
 		const result = await this.supplierService.getOptionCatalog(type);
 		res.json(ApiResponse.success({ items: result }));
 	};

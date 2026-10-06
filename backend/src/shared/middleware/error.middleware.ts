@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from './app.error.js';
 import { ApiResponse } from './api.response.js';
 
-// ponytail: 401 auth noise (expired tab, polling without token) — trả 401 nhưng không spam log.
+// Known-noisy 401s (expired tab, unauthenticated polling): return 401 without log spam.
 const SILENT_CODES = new Set(['AUTH_MISSING_TOKEN', 'AUTH_REFRESH_TOKEN_REVOKED']);
 
 export const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
@@ -13,9 +13,9 @@ export const errorMiddleware = (error: Error, req: Request, res: Response, next:
 	if (error instanceof AppError) {
 		statusCode = error.statusCode;
 		errorCode = error.errorCode;
-		details = error.details;
+		if (process.env.NODE_ENV !== 'production') details = error.details;
 	} else if ((error as any)?.type === 'entity.too.large' || (error as any)?.status === 413) {
-		// ponytail: body-parser limit — trả 413 thay vì 500 để client hiểu là payload quá lớn.
+		// Body-parser limit hit: return 413 (not 500) so the client knows the payload is too large.
 		statusCode = 413;
 		errorCode = 'PAYLOAD_TOO_LARGE';
 	}

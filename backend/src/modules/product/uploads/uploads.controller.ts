@@ -7,6 +7,7 @@ import { ErrorCode } from '@echotrace/shared';
 import type {IR2ImageService} from '../../../shared/r2/r2.service.js';
 import { isR2PublicUrl } from '../../../shared/r2/r2.service.js';
 import type {IUserImageService} from './user-images.service.js';
+import { parseField, parseId } from '../../../shared/middleware/parse-params.js';
 
 @injectable()
 export class UploadController {
@@ -16,10 +17,10 @@ export class UploadController {
 	) {}
 
 	getSignature = async (req: AuthRequest, res: Response) => {
-		const { type } = req.query as { type: 'gallery' | 'sticker' | 'book-thumb' };
+		const type = parseField(req.query.type, ['gallery', 'sticker', 'book-thumb'] as const, 'gallery');
 		const userId = req.userId!;
 
-		// sticker là kho chung, chỉ admin được ký upload vào.
+		// Stickers are a shared library: only admins may sign uploads into it.
 		if (type === 'sticker' && req.userRole !== 'admin') {
 			throw new AppError(ErrorCode.ADMIN_ACCESS_REQUIRED, 403);
 		}
@@ -56,7 +57,7 @@ export class UploadController {
 
 	listImages = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
-		const bookId = req.query.bookId ? parseInt(req.query.bookId as string) : undefined;
+		const bookId = req.query.bookId ? parseId(req.query.bookId) : undefined;
 
 		const images = await this.userImageService.listByUser(userId, bookId);
 
@@ -65,7 +66,7 @@ export class UploadController {
 
 	deleteImage = async (req: AuthRequest, res: Response) => {
 		const userId = parseInt(req.userId!);
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		await this.userImageService.delete(id, userId);
 		res.json(ApiResponse.message('Image deleted'));
 	};

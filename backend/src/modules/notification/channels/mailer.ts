@@ -21,10 +21,6 @@ const otpTemplate = (otp: string) => `
 </html>`;
 
 export async function sendOtpEmail(to: string, otp: string) {
-	if (process.env.OTP_DEBUG_LOG === '1') {
-		console.log(`[Mailer:debug] OTP for ${to}: ${otp}`);
-	}
-
 	const apiKey = process.env.RESEND_API_KEY;
 	if (!apiKey) {
 		console.log(`[Mailer] Set RESEND_API_KEY in .env to send real emails`);
@@ -48,7 +44,6 @@ export async function sendOtpEmail(to: string, otp: string) {
 	if (res.ok) {
 		console.log(`[Mailer] Sent via Resend`);
 	} else {
-		const err = await res.text();
-		console.log(`[Mailer] Resend failed: ${err}`);
+		console.log(`[Mailer] Resend failed: status ${res.status}`);
 	}
 }

@@ -7,8 +7,13 @@ async function main() {
 	const supplierCount = await prisma.supplier.count();
 
 	if (userCount === 0) {
-		const adminHash = await bcrypt.hash("123", 10);
-		const userHash = await bcrypt.hash('user123', 10);
+		const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+		const userPassword = process.env.SEED_USER_PASSWORD;
+		if (!adminPassword || !userPassword) {
+			throw new Error('SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD must be set');
+		}
+		const adminHash = await bcrypt.hash(adminPassword, 10);
+		const userHash = await bcrypt.hash(userPassword, 10);
 
 		await prisma.user.createMany({
 			data: [
@@ -228,7 +233,7 @@ async function main() {
 		console.log(`Suppliers table has ${supplierCount} records — skipping.`);
 	}
 
-	// Options giờ là danh mục GLOBAL (PrintOption) + link per-supplier (SupplierPrintOption).
+	// Options are a GLOBAL catalog (PrintOption) + per-supplier links (SupplierPrintOption).
 	type Opt = { code: string; name: { vi: string; en: string; es: string }; width?: number; height?: number; price?: number };
 	const kitsBySupplier: { type: string; options: Opt[] }[][] = [
 		[
@@ -255,7 +260,7 @@ async function main() {
 				],
 			},
 		],
-		// Supplier 2 — Công ty In ấn Việt Đức: phân khúc cao cấp (tái dùng option đã có).
+		// Supplier 2: premium segment (reuses existing options).
 		[
 			{
 				type: 'paperSize',

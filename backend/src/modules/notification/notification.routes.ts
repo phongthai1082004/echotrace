@@ -3,8 +3,10 @@ import { Router } from 'express';
 import { NotificationController } from './notification.controller.js';
 import { route } from '../../shared/middleware/route.js';
 import { BroadcastNotificationDTO } from '@echotrace/shared';
+import { apiLimiter } from '../authentication/shared/rate-limit.js';
 
 const router = Router();
+router.use(apiLimiter);
 const ctrl = container.resolve(NotificationController);
 
 route(router, 'get', '/notifications', (req, res) => ctrl.list(req, res), { auth: true });

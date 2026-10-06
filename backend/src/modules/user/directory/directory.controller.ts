@@ -5,6 +5,7 @@ import type {IDirectoryService} from './directory.service.js';
 import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
+import { parseId, parseLimit, parseOrder } from '../../../shared/middleware/parse-params.js';
 
 @injectable()
 export class DirectoryController {
@@ -18,12 +19,14 @@ export class DirectoryController {
 		if (status === 'banned') extraWhere.isDelete = true;
 		else if (status === 'active') extraWhere.isDelete = false;
 		else extraWhere.isDelete = undefined;
+		const cid = customerId !== undefined ? Number(customerId) : undefined;
+		const cur = cursor !== undefined ? Number(cursor) : undefined;
 		const params = {
-			customerId: customerId ? Number(customerId) : undefined,
+			customerId: Number.isInteger(cid) ? cid : undefined,
 			search: search as string | undefined,
-			order: (order as string) || 'desc',
-			limit: Number.isFinite(Number(limit)) ? Math.min(100, Math.max(1, Math.floor(Number(limit)))) : 20,
-			cursor: cursor ? Number(cursor) : undefined,
+			order: parseOrder(order),
+			limit: parseLimit(limit, 20) ?? 20,
+			cursor: Number.isFinite(cur) ? cur : undefined,
 		};
 		const searchFields =
 			field === 'name' ? ['name'] : field === 'email' ? ['email'] : field === 'phone' ? ['phone'] : ['name', 'email', 'phone'];
@@ -33,7 +36,7 @@ export class DirectoryController {
 	};
 
 	updateUserStatus = async (req: AuthRequest, res: Response) => {
-		const id = parseInt(String(req.params.id));
+		const id = parseId(req.params.id);
 		const { status } = req.body;
 		if (!status || !['active', 'banned'].includes(status)) {
 			throw new AppError(ErrorCode.ADMIN_INVALID_STATUS, 400);

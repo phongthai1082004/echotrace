@@ -31,12 +31,12 @@ export class CacheService {
 	async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
 		try {
 			const raw = JSON.stringify(value);
-			// ponytail: DTO book kèm thumbnail base64 (MBs) — cache nó tràn 96mb redis, bỏ qua.
-			// add khi cần cache book lớn: strip thumbnail base64 trước khi set.
+			// Skip large values: book DTOs embed base64 thumbnails (MBs) and would flood Redis.
+			// To cache large books later, strip base64 thumbnails before set.
 			if (raw.length > 512 * 1024) return;
 			await this.client.set(key, raw, 'EX', ttlSeconds ?? this.ttlSeconds);
 		} catch (err) {
-			// ponytail: READONLY replica / redis down — fail-open, log 1 dòng (không dump args MBs).
+			// Fail-open when Redis is down or read-only; log one line without dumping args.
 			console.warn('[redis] set failed:', key, (err as Error)?.message || err);
 		}
 	}

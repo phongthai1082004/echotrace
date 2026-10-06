@@ -5,13 +5,15 @@ import { ApiResponse } from '../../../shared/middleware/api.response.js';
 import { AppError } from '../../../shared/middleware/app.error.js';
 import { ErrorCode } from '@echotrace/shared';
 import type { IStickerService } from './stickers.service.js';
+import { parseId } from '../../../shared/middleware/parse-params.js';
 
 @injectable()
 export class StickerController {
 	constructor(@inject('IStickerService') private readonly stickerService: IStickerService) {}
 
 	list = async (req: AuthRequest, res: Response) => {
-		res.json(ApiResponse.success(await this.stickerService.list(req.query.category)));
+		const category = typeof req.query.category === 'string' ? req.query.category.slice(0, 50) : undefined;
+		res.json(ApiResponse.success(await this.stickerService.list(category)));
 	};
 
 	create = async (req: AuthRequest, res: Response) => {
@@ -22,7 +24,7 @@ export class StickerController {
 	};
 
 	remove = async (req: AuthRequest, res: Response) => {
-		await this.stickerService.remove(parseInt(String(req.params.id)));
+		await this.stickerService.remove(parseId(req.params.id));
 		res.json(ApiResponse.message('Sticker deleted'));
 	};
 }

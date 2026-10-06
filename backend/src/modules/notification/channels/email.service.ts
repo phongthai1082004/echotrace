@@ -19,7 +19,7 @@ export class EmailService implements IEmailService {
 					html: msg.html,
 				}),
 			});
-			if (!res.ok) console.error('[email] send failed:', await res.text());
+			if (!res.ok) console.error('[email] send failed: status', res.status);
 		} catch (e: any) {
 			console.error('[email] send error:', e?.message || e);
 		}

@@ -5,8 +5,10 @@ import { CouponController } from './coupons.controller.js';
 import { authGuard, AuthRequest } from '../../../shared/middleware/auth.middleware.js';
 import { validateDto } from '../../../shared/middleware/validator.middleware.js';
 import { CreateCouponDTO } from '@echotrace/shared';
+import { apiLimiter } from '../../authentication/shared/rate-limit.js';
 
 const router = Router();
+router.use(apiLimiter);
 const couponCtrl = container.resolve(CouponController);
 
 

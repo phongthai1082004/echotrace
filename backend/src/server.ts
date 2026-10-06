@@ -37,7 +37,7 @@ const PORT = process.env.BACKEND_PORT;
 const SUPPORTED_LANGS = ['en', 'vi', 'es'];
 const DEFAULT_LANG = 'en';
 
-// thật mà không listen/không chạy workers. opts.jobs=false trong test.
+// Build the app without listening or starting workers. opts.jobs=false in tests.
 export async function buildApp(opts: { jobs?: boolean } = {}) {
 	const app = express();
 
@@ -67,12 +67,18 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			app.use(helmet());
 			const allowedOrigins = process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : [];
 			app.use(cors({ origin: allowedOrigins, credentials: true }));
-		// ponytail: studio PATCH gửi kèm thumbnail base64 (vài MB) — 1mb gây PayloadTooLargeError.
-		app.use(express.json({ limit: '50mb' }));
-		app.use(express.urlencoded({ limit: '50mb', extended: true }));
-		// (middleware pin TS khác root) nên structural check báo thừa; runtime cùng 1 object.
+		// studio book payloads carry base64 thumbnails, get 50mb:
+	// PATCH/POST /books/:id/pages (autosave) + POST /books (create with full content)
+		const stdBody = express.json({ limit: '1mb' });
+		const bigBody = express.json({ limit: '50mb' });
+		const stdForm = express.urlencoded({ limit: '1mb', extended: true });
+		const isBigBookBody = (req: express.Request) =>
+			/\/books\/[^/]+\/pages$/.test(req.path) || (req.method === 'POST' && /\/api\/([a-z-]+\/)?books$/.test(req.path));
+		app.use((req, res, next) => ((isBigBookBody(req) ? bigBody : stdBody) as any)(req, res, next));
+		app.use((req, res, next) => (stdForm as any)(req, res, next));
+		// The middleware pins a different TS version than root, so the structural check may flag it; same object at runtime.
 		app.use(handle(i18next as unknown as Parameters<typeof handle>[0]));
-		// Đăng ký trước routers để bao hết; /health nông đăng ký sớm hơn nên luôn sống.
+		// Register before routers so it covers everything; the shallow /health above stays alive regardless.
 		app.use(maintenanceMiddleware);
 
 		app.use('/health', healthRoutes); // deep check (DB + Redis); shallow /health handled above
@@ -88,8 +94,8 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 			// Webhook MUST be mounted first: several routers call router.use(authGuard()) and are
 			// mounted on '/' — a later mount would 401 the PayOS webhook before it matches.
 			apiRouter.use('/', paymentRoutes);
-			// cùng lý do webhook, mount sớm kẻo dính authGuard('/') của router khác.
-			apiRouter.use('/', maintenanceRoutes);
+		// Same webhook reason: mount early so another router's authGuard('/') doesn't block it.
+		apiRouter.use('/', maintenanceRoutes);
 
 apiRouter.use('/auth', passwordRoutes);
 apiRouter.use('/auth', sessionsRoutes);
@@ -119,8 +125,8 @@ apiRouter.use('/', directoryRoutes);
 			startDelayedWorker();
 			startOrderExpiryCron();
 			container.resolve(PdfWorker).start();
-			// Delta autosave treo từ lần chạy trước (crash/deploy) flush bù, không chờ.
-			void container
+		// Flush leftover delta autosaves from a previous run (crash/deploy); don't wait.
+		void container
 				.resolve<{ flushAllPending(): Promise<unknown> }>('IBookService')
 				.flushAllPending()
 				.catch((e) => console.error('[books] boot sweep failed:', (e as Error)?.message || e));
@@ -168,7 +174,7 @@ async function bootstrap() {
 		// Don't exit - allow health checks to continue
 	});
 
-	// Deploy/tắt: flush delta autosave đang treo rồi mới thoát (không mất save).
+	// On deploy/shutdown: flush pending delta autosaves before exiting (no save is lost).
 	process.on('SIGTERM', () => {
 		void (async () => {
 			try {

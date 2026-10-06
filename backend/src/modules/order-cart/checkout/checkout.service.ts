@@ -1,4 +1,5 @@
 import { inject, injectable } from 'tsyringe';
+import { randomInt } from 'crypto';
 import { Prisma } from '../../../../generated/prisma/client.js';
 import { OrderRepository } from '../repositories/order.repository.js';
 import {
@@ -92,7 +93,7 @@ export class CheckoutService implements ICheckoutService {
 			if (custErr.length) throw new AppError(custErr.join('; '), 400);
 
 			const bookIds = createOrderDto.items.map((i) => i.bookId);
-			// ép flush delta treo trước khi snapshot đơn (đơn không đọc đồ cũ).
+			// Force-flush pending deltas before the order snapshot (orders must not read stale data).
 			await this.bookService.flushBooks(bookIds);
 			const quote = await this.cartService.calculateCart(
 				userId,
@@ -154,7 +155,7 @@ export class CheckoutService implements ICheckoutService {
 					}
 
 				const itemsSnapshot = quote.items.map((item) => toOrderItem(item));
-				// đơn nhiều sách khác camp thì lấy book đầu tiên có UTM
+				// Multi-book order with mixed campaigns: take the first book that has UTM.
 				const pinned = await this.orderRepo.findBooksAttribution(bookIds, tx);
 				const byId = new Map(pinned.map((b) => [b.id, b]));
 				const first = bookIds.map((id) => byId.get(id)).find((b) => b?.utmSource);
@@ -297,7 +298,7 @@ export class CheckoutService implements ICheckoutService {
 			couponCode: input.couponCode ?? null,
 		});
 		return this.createOrder(`admin-album-${customerId}-${sampleBookId}-${Date.now()}`, body, customerId).then(async (result) => {
-			// Không chọn thì giữ nguyên (sách online → đúng kênh, thuần offline → unknown).
+			// No selection: keep as-is (online book → its channel, pure offline → unknown).
 			const source = String(input.utmSource ?? '').trim().toLowerCase().slice(0, 64);
 			if (source) {
 				await this.orderRepo.updateOrder(result.orderId, {
@@ -311,6 +312,6 @@ export class CheckoutService implements ICheckoutService {
 	}
 
 	private createOrderCode(): number {
-		return Number(`${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`);
+		return Number(`${Date.now()}${randomInt(0, 1000).toString().padStart(3, '0')}`);
 	}
 }

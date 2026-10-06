@@ -6,8 +6,10 @@ import { authGuard, AuthRequest } from '../../../shared/middleware/auth.middlewa
 import { validateDto } from '../../../shared/middleware/validator.middleware.js';
 import { CreateSupplierDTO } from '@echotrace/shared';
 import { UpdateSupplierDTO } from '@echotrace/shared';
+import { apiLimiter } from '../../authentication/shared/rate-limit.js';
 
 const router = Router();
+router.use(apiLimiter);
 const supplierCtrl = container.resolve(SupplierController);
 
 

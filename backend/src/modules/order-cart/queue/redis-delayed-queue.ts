@@ -43,7 +43,7 @@ async function processDue(): Promise<void> {
       if (job.name === "order_expiry") await handleOrderExpiry(job.payload.orderId);
       else if (job.name === "book_flush") await handleBookFlush((job.payload as any).bookId);
     } catch (e) {
-      console.error("[delayed] job failed", member, e);
+		console.error('[delayed] job failed', String(member).slice(0, 120), (e as Error)?.message || e);
     }
   }
 }
