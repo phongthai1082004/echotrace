@@ -14,7 +14,7 @@ export const errorMiddleware = (error: Error, req: Request, res: Response, next:
 		statusCode = error.statusCode;
 		errorCode = error.errorCode;
 		if (process.env.NODE_ENV !== 'production') details = error.details;
-	} else if ((error as any)?.type === 'entity.too.large' || (error as any)?.status === 413) {
+	} else if ((error as any)?.type === 'entity.too.large' || (error as any)?.status === 413 || (error as any)?.statusCode === 413) {
 		// Body-parser limit hit: return 413 (not 500) so the client knows the payload is too large.
 		statusCode = 413;
 		errorCode = 'PAYLOAD_TOO_LARGE';

@@ -73,7 +73,9 @@ export async function buildApp(opts: { jobs?: boolean } = {}) {
 		const bigBody = express.json({ limit: '50mb' });
 		const stdForm = express.urlencoded({ limit: '1mb', extended: true });
 		const isBigBookBody = (req: express.Request) =>
-			/\/books\/[^/]+\/pages$/.test(req.path) || (req.method === 'POST' && /\/api\/([a-z-]+\/)?books$/.test(req.path));
+			/\/books\/[^/]+\/pages$/.test(req.path) ||
+			/sample-books/.test(req.path) ||
+			(req.method === 'POST' && /\/api\/([a-z-]+\/)?books$/.test(req.path));
 		app.use((req, res, next) => ((isBigBookBody(req) ? bigBody : stdBody) as any)(req, res, next));
 		app.use((req, res, next) => (stdForm as any)(req, res, next));
 		// The middleware pins a different TS version than root, so the structural check may flag it; same object at runtime.
