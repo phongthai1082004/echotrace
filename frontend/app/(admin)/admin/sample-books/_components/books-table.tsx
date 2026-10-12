@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Pencil, PenTool } from "lucide-react";
+import { Pencil, PenTool, Trash2 } from "lucide-react";
 import { SampleBookDTO } from "@echotrace/shared";
-import { chip, neoBtn } from "@/lib/styles";
+import { chip, neoBtn, neoBtnDanger } from "@/lib/styles";
 import { AdminList } from "@/components/admin-list";
 import { AdminPagination } from "@/components/admin-pagination";
 import { EmptyStateMinimal } from "@/components/ui/empty-state";
@@ -24,6 +24,7 @@ export function BooksTable({
   onNext,
   onPrevious,
   onEdit,
+  onDelete,
 }: {
   items: SampleBookDTO[];
   loading: boolean;
@@ -33,6 +34,7 @@ export function BooksTable({
   onNext: () => void;
   onPrevious: () => void;
   onEdit: (s: SampleBookDTO) => void;
+  onDelete: (s: SampleBookDTO) => void;
 }) {
   const { t } = useTranslation();
 
@@ -95,6 +97,9 @@ export function BooksTable({
             </Link>
             <button onClick={() => onEdit(s)} title={t("admin.sampleBooks.editInfo")} className={`${neoBtn} p-1.5`}>
               <Pencil size={14} />
+            </button>
+            <button onClick={() => onDelete(s)} title={t("common.delete")} aria-label={t("common.delete")} className={`${neoBtnDanger} p-1.5`}>
+              <Trash2 size={14} />
             </button>
           </div>
         </>

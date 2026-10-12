@@ -123,8 +123,12 @@ export class SampleBookService implements ISampleBookService {
 	}
 
 	async remove(id: number) {
-		const res = await this.sampleRepo.archive(id);
-		if (res.count === 0) throw new AppError(ErrorCode.NOT_FOUND, 404);
+		try {
+			await this.sampleRepo.remove(id);
+		} catch (e: any) {
+			if (e?.code === 'P2025') throw new AppError(ErrorCode.NOT_FOUND, 404);
+			throw e;
+		}
 		await this.sampleCache.invalidateSample(id);
 		await this.sampleCache.invalidateSamples();
 	}

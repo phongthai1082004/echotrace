@@ -9,6 +9,7 @@ import { AdminHeader } from "@/components/admin-header";
 import { AdminSearch } from "@/components/admin-search";
 import { neoBtnPrimary } from "@/lib/styles";
 import { useToast } from "@/components/toast";
+import { YesNoPopup } from "@/components/yes-no-popup";
 import { apiFetch } from "@/lib/api.fetch";
 import { useSampleBooks } from "../_hooks/use-sample-books";
 import { FilterGroup } from "./filter-group";
@@ -51,6 +52,8 @@ export function SampleBooksClient({
   } = useSampleBooks(initialItems, initialNextCursor);
 
   const [editing, setEditing] = useState<SampleBookDTO | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SampleBookDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async (body: { type: "ALBUM" | "TEMPLATE"; quantity: number | null; status: string; category: string | null }) => {
     if (!editing) return;
@@ -64,6 +67,21 @@ export function SampleBooksClient({
       showToast(t("admin.sampleBooks.updated"), "success");
     } catch {
       showToast(t("admin.sampleBooks.updateFailed"), "error");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/admin/sample-books/${deleteTarget.id}`, accessToken, { method: "DELETE" });
+      setItems(items.filter((b) => b.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      showToast(t("admin.sampleBooks.deleted"), "success");
+    } catch {
+      showToast(t("admin.sampleBooks.deleteFailed"), "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -126,11 +144,24 @@ export function SampleBooksClient({
             onNext={handleNext}
             onPrevious={handlePrevious}
             onEdit={setEditing}
+            onDelete={setDeleteTarget}
           />
         </div>
       </div>
 
       {editing && <EditModal book={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
+
+      {deleteTarget && (
+        <YesNoPopup
+          open
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+          title={t("admin.sampleBooks.deleteTitle")}
+          message={t("admin.sampleBooks.deleteConfirm", { title: deleteTarget.name || "Untitled" })}
+          confirmLabel={deleting ? t("admin.sampleBooks.deleting") : t("common.delete")}
+        />
+      )}
     </div>
   );
 }

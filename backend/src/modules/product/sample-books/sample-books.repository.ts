@@ -47,6 +47,10 @@ export class SampleBookRepository {
 	archive(id: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.updateMany({ where: { id, isDelete: false }, data: { status: 'archive', isActive: false } });
 	}
+	// ponytail: xóa cứng khỏi DB; Book.sampleBookId FK là ON DELETE SET NULL nên không kẹt
+	remove(id: number, tx?: Prisma.TransactionClient) {
+		return (tx ?? this.client).sampleBook.delete({ where: { id } });
+	}
 
 	findForStock(id: number, quantity: number, tx?: Prisma.TransactionClient) {
 		return (tx ?? this.client).sampleBook.findFirst({
