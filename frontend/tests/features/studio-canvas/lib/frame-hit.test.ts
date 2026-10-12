@@ -1,6 +1,6 @@
 // Frame drop fit: shape-aware hit-test + replace-occupied.
 import * as fabric from "fabric";
-import { shapeContainsPoint, frameLocalPoint } from "@/features/studio-canvas/lib/frames";
+import { shapeContainsPoint, frameLocalPoint, hitTestFrame } from "@/features/studio-canvas/lib/frames";
 import { reviveObject } from "@/features/studio-canvas/lib/frames";
 import { canvasPointer } from "@/features/studio-canvas/lib/fabric-core";
 import {
@@ -11,6 +11,7 @@ import {
   unlockPhotoInFrame,
 } from "@/features/studio-canvas/lib/photos";
 import { useCanvasStore } from "@/features/studio-canvas/hooks/useCanvasState";
+import { makeShapeFrame } from "@/features/studio-canvas/lib/shapes";
 
 describe("shapeContainsPoint", () => {
   it("circle: center in, bbox corner out", () => {
@@ -59,6 +60,17 @@ describe("frameLocalPoint", () => {
     const c = frameLocalPoint(f as any, 200, 200);
     expect(c!.x).toBeCloseTo(100, 0);
     expect(c!.y).toBeCloseTo(100, 0);
+  });
+});
+
+describe("hitTestFrame on Path frames", () => {
+  it("triangle: center/apex hit, transparent corner misses", () => {
+    const frame: any = makeShapeFrame("Triangle", 0, 0, 100);
+    frame.setCoords();
+    const canvas: any = { getObjects: () => [frame] };
+    expect(hitTestFrame(canvas, 50, 50)).toBe(frame);
+    expect(hitTestFrame(canvas, 50, 90)).toBe(frame);
+    expect(hitTestFrame(canvas, 5, 5)).toBeUndefined();
   });
 });
 

@@ -217,7 +217,14 @@ export function frameLocalPoint(frame: any, x: number, y: number): Pt | null {
     const m = frame.calcTransformMatrix();
     const inv = (fabric as any).util.invertTransform(m);
     const p = (fabric as any).util.transformPoint(new (fabric as any).Point(x, y), inv);
-    return { x: p.x, y: p.y };
+    // ponytail: Path frames (triangle/star/...) bake pathOffset (bbox center) into
+    // the matrix, so raw inverse lands in center-origin coords — shift back to
+    // top-left box coords to match Rect and shapeContainsPoint.
+    const po = frame.pathOffset;
+    return {
+      x: p.x + (typeof po?.x === "number" ? po.x : 0),
+      y: p.y + (typeof po?.y === "number" ? po.y : 0),
+    };
   } catch {
     return null;
   }

@@ -4,6 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const BACKEND = process.env.BACKEND_URL ?? (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001");
 
+// ponytail: hạn thật từ exp trong JWT trừ 30s; fallback 14m (backend ký 15m)
+function accessExpiryMs(t: string, fb: number) {
+  try { const e = JSON.parse(atob(t.split(".")[1])).exp; return typeof e === "number" ? e * 1000 - 30_000 : fb; } catch { return fb; }
+}
+
 async function refreshAccessToken(token: any) {
   const res = await fetch(`${BACKEND}/api/auth/refresh`, {
     method: "POST",
@@ -16,7 +21,7 @@ async function refreshAccessToken(token: any) {
     ...token,
     accessToken: data.data.accessToken,
     refreshToken: data.data.refreshToken ?? token.refreshToken,
-    accessTokenExpires: Date.now() + 10 * 60 * 1000,
+    accessTokenExpires: accessExpiryMs(data.data.accessToken, Date.now() + 14 * 60 * 1000),
   };
 }
 
@@ -85,7 +90,7 @@ export const authOptions = {
         token.refreshToken = user.refreshToken;
         token.role = user.role;
         token.dbId = user.dbId;
-        token.accessTokenExpires = Date.now() + 10 * 60 * 1000;
+        token.accessTokenExpires = accessExpiryMs(user.accessToken, Date.now() + 14 * 60 * 1000);
         if (user.image) token.picture = user.image;
         return token;
       }
@@ -100,18 +105,16 @@ export const authOptions = {
       return token;
     },
   async session({ session, token }: any) {
-    // is injected server-side by /api/proxy. We expose an inert placeholder here
-    // so guards/type-checks pass without ever leaking the secret to client JS.
-    if (!token) return session;
-    if (session.user) {
-      session.accessToken = "client";
-      session.user.id = token.sub;
-        session.user.role = token.role || "user";
-        session.user.dbId = token.dbId;
-        session.user.image = token.picture || null;
-      }
-      return session;
-    },
+    // ponytail: refresh chết (jwt return null) thì logout hẳn, đừng giữ session cũ
+    if (!token) return null;
+    if (!session.user) return session;
+    session.accessToken = "client";
+    session.user.id = token.sub;
+    session.user.role = token.role || "user";
+    session.user.dbId = token.dbId;
+    session.user.image = token.picture || null;
+    return session;
+  },
   },
   session: { strategy: "jwt" as const },
   pages: { signIn: "/auth" },

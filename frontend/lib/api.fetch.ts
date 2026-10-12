@@ -1,22 +1,17 @@
 const PROXY = "/api/proxy";
 
-// Lazy refresh: chỉ đổi access khi backend trả 401, khỏi poll định kỳ.
-// Single-flight: nhiều request 401 cùng lúc chỉ refresh 1 lần, còn lại chờ
-// chung promise rồi retry — không dội bom /refresh, không race xoay RT.
+// ponytail: single-flight — nhiều 401 cùng lúc chỉ refresh 1 lần rồi retry chung
 let refreshInflight: Promise<unknown> | null = null;
 function refreshSessionOnce() {
-  if (!refreshInflight) {
-    // getSession() chạy qua jwt() callback: quá hạn thì xoay token, cookie mới
-    // theo về browser (giá trị trả về chỉ là placeholder, không dùng).
-    refreshInflight = import("next-auth/react").then((m) => m.getSession()).finally(() => {
-      refreshInflight = null;
-    });
-  }
-  return refreshInflight;
+  return (refreshInflight ??= import("next-auth/react")
+    .then((m) => m.getSession())
+    .finally(() => (refreshInflight = null)));
 }
 
 // RT chết thật (refresh không cứu được) mới về đây: sign out rồi đá về /auth.
 function expireSession() {
+  // ponytail: chặn redirect lặp khi đã ở /auth
+  if (window.location.pathname.includes("/auth")) return;
   import("next-auth/react")
     .then(async (m) => {
       await m.signOut({ redirect: false });
@@ -38,10 +33,7 @@ export async function apiFetch<T = any>(
     : PROXY;
 
   // Add language code to API path for client requests
-  let apiPath = path;
-  if (!isServer && !path.startsWith("/en") && !path.startsWith("/es") && !path.startsWith("/vi")) {
-    apiPath = `/vi${path}`;
-  }
+  const apiPath = !isServer && !/^\/(en|es|vi)/.test(path) ? `/vi${path}` : path;
 
   // Client calls go through the same-origin proxy, which injects the bearer
   // token from the httpOnly session cookie. The token is never exposed to JS.
@@ -56,12 +48,9 @@ export async function apiFetch<T = any>(
 
   let res = await fetch(url, { ...options, headers });
 
-  // 401 → refresh lười 1 lần rồi retry với cookie mới; RT chết thì refresh
-  // cũng vô ích, retry vẫn 401 rồi rớt xuống expireSession.
+  // 401 → refresh lười 1 lần rồi retry; vẫn 401 = RT chết → logout
   if (!isServer && res.status === 401) {
-    try {
-      await refreshSessionOnce();
-    } catch {}
+    try { await refreshSessionOnce(); } catch {}
     res = await fetch(url, { ...options, headers });
   }
 
