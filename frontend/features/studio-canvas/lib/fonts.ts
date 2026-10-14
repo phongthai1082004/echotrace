@@ -49,6 +49,31 @@ const LOAD_NAMES = [
 const LOAD_SAMPLE = "Tiếng Việt có dấu 123";
 
 let started = false;
+const loadedFamilies = new Set<string>(LOAD_NAMES);
+
+// Bulk link caps out, so the ~500 catalog loads one family at a time on demand.
+export function ensureFontFamily(name: string): Promise<void> {
+  if (typeof document === "undefined") return Promise.resolve();
+  const load = () =>
+    (document.fonts?.load(`16px "${name}"`, LOAD_SAMPLE) as Promise<unknown> | undefined)?.catch(() => {});
+  if (loadedFamilies.has(name)) {
+    void load();
+    return Promise.resolve();
+  }
+  loadedFamilies.add(name);
+  return new Promise((resolve) => {
+    const done = () => {
+      void load();
+      resolve();
+    };
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, "+")}&display=swap`;
+    link.onload = done;
+    link.onerror = done;
+    document.head.appendChild(link);
+  });
+}
 
 export function ensureStudioFonts() {
   if (typeof document === "undefined" || started) return;

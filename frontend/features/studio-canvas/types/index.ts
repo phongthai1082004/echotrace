@@ -1,4 +1,5 @@
 import type { LayoutConfig } from "./layout";
+import { GOOGLE_FONT_NAMES } from "../lib/font-list";
 
 export type PaperSizeCategory = "square" | "landscape" | "portrait";
 
@@ -132,7 +133,7 @@ export type PageState = {
   locked?: boolean;
 };
 
-export const FONTS: { name: string; css: string; preview: string }[] = [
+const BASE_FONTS: { name: string; css: string; preview: string }[] = [
   { name: "Playfair Display", css: "'Playfair Display', serif", preview: "Playfair" },
   { name: "Cormorant Garamond", css: "'Cormorant Garamond', serif", preview: "Cormorant" },
   { name: "Space Grotesk", css: "'Space Grotesk', sans-serif", preview: "Grotesk" },
@@ -155,6 +156,16 @@ export const FONTS: { name: string; css: string; preview: string }[] = [
   { name: "Comfortaa", css: "'Comfortaa', sans-serif", preview: "Comfortaa" },
   { name: "Satisfy", css: "'Satisfy', cursive", preview: "Satisfy" },
   { name: "Allura", css: "'Allura', cursive", preview: "Allura" },
+];
+
+export const FONTS: { name: string; css: string; preview: string }[] = [
+  ...BASE_FONTS,
+  // ponytail: ~500-family catalog, loaded on demand (see ensureFontFamily).
+  ...GOOGLE_FONT_NAMES.filter((n) => !BASE_FONTS.some((f) => f.name === n)).map((n) => ({
+    name: n,
+    css: `'${n}'`,
+    preview: n,
+  })),
 ];
 
 export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0];

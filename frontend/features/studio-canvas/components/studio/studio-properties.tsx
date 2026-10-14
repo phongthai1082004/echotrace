@@ -6,6 +6,8 @@ import { NeoSelect } from "@/components/neo-select";
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
 import { useCanvasStore } from "../../hooks/useCanvasState";
 import { FONTS, TEXT_COLOR_PRESETS, resolveFormat } from "../../types";
+import { ensureFontFamily } from "../../lib/fonts";
+import { FontPreview } from "./font-preview";
 import { isPageLocked } from "../../lib/layout-engine";
 import * as fabric from "fabric";
 import { parseFilterSliders } from "../../lib/filters";
@@ -80,7 +82,11 @@ export function StudioProperties() {
     useCanvasStore.getState().incrementSelectionVersion();
   };
 
-  const applyFont = (fontFamily: string) => applyText({ fontFamily });
+  const applyFont = (fontFamily: string) => {
+    applyText({ fontFamily });
+    const name = FONTS.find((f) => f.css === fontFamily)?.name;
+    if (name) void ensureFontFamily(name).then(() => canvas?.renderAll());
+  };
   const applyBold = () =>
     applyText((txt) => ({ fontWeight: txt.fontWeight === "bold" ? "normal" : "bold" }));
   const applyItalic = () =>
@@ -216,7 +222,13 @@ export function StudioProperties() {
                 onChange={applyFont}
                 placeholder={t("customer.studio.font")}
                 className="w-full"
-                options={FONTS.map((f) => ({ value: f.css, label: f.name, style: { fontFamily: f.css } }))}
+                searchable
+                searchPlaceholder={t("customer.studio.searchFonts")}
+                options={FONTS.map((f) => ({
+                  value: f.css,
+                  label: <FontPreview name={f.name} css={f.css} />,
+                  keywords: f.name,
+                }))}
               />
             </div>
             {selected && (

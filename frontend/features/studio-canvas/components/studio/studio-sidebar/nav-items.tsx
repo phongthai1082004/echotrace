@@ -23,6 +23,16 @@ export const navItems: { label: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    label: "Text",
+    icon: (
+      <>
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </>
+    ),
+  },
+  {
     label: "Stickers",
     icon: (
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -54,6 +64,16 @@ export const navItems: { label: string; icon: React.ReactNode }[] = [
       <>
         <path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 1.4 3.4 1.4H18a2 2 0 0 0 2-2v-4.4c0-1.2-.5-2.4-1.4-3.2Z" />
         <path d="m5 2 5 5" />
+      </>
+    ),
+  },
+  {
+    label: "Layers",
+    icon: (
+      <>
+        <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
       </>
     ),
   },

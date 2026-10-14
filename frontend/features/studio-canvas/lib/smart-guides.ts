@@ -388,10 +388,11 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 	};
 
 	canvas.on("object:moving", onMoving);
-	canvas.on("object:modified", () => {
+	const onModified = () => {
 		dirty = true;
 		clear();
-	});
+	};
+	canvas.on("object:modified", onModified);
 	canvas.on("mouse:up", onUp);
 	canvas.on("object:added", markDirty);
 	canvas.on("object:removed", markDirty);
@@ -401,6 +402,7 @@ export function attachSmartGuides(canvas: fabric.Canvas) {
 	return {
 		detach() {
 			canvas.off("object:moving", onMoving);
+			canvas.off("object:modified", onModified);
 			canvas.off("mouse:up", onUp);
 			canvas.off("object:added", markDirty);
 			canvas.off("object:removed", markDirty);

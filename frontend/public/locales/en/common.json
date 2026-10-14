@@ -448,6 +448,8 @@
 			"sectionElements": "Elements",
 			"itemFrame": "Frame",
 			"itemText": "Text",
+			"addTextBox": "Add text box",
+			"searchFonts": "Search fonts",
 			"itemSticker": "Sticker",
 			"sliderBrightness": "Brightness",
 			"sliderContrast": "Contrast",

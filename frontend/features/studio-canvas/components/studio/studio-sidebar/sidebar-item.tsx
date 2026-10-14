@@ -7,9 +7,11 @@ const sidebarLabelKeys: Record<string, string> = {
   Layouts: "customer.studio.layouts",
   Photos: "customer.studio.image",
   Stickers: "customer.studio.sticker",
+  Text: "customer.studio.text",
   Frames: "customer.studio.sectionFrames",
   Filter: "customer.studio.smartFilters",
   Background: "customer.studio.background",
+  Layers: "customer.studio.layers",
 };
 
 export function SidebarItem({ label, children }: { label: string; children: React.ReactNode }) {
